@@ -1,0 +1,91 @@
+{
+  "ChantierId": "CHANTIER_TEST_001",
+  "Description": "Petit chantier de test pour EF01",
+  "DateDebutSouhaitee": "2028-06-30T00:00:00",
+  "DateFinSouhaitee": "2028-08-22T00:00:00",
+  "FlexibiliteDebut": "Flexible",
+  "FlexibiliteFin": "Flexible",
+  "CalendrierTravail": {
+    "JoursOuvres": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ],
+    "HeureDebutJournee": 8,
+    "HeuresTravailEffectifParJour": 7,
+    "JoursChomes": [ "2028-07-03T00:00:00" ]
+  },
+  "Metiers": [
+    {
+      "MetierId": "MACON",
+      "Nom": "Maçonnerie",
+      "PrerequisMetierIds": []
+    },
+    {
+      "MetierId": "PEINTRE",
+      "Nom": "Peinture",
+      "PrerequisMetierIds": [ "MACON" ]
+    }
+  ],
+  "Ouvriers": [
+    {
+      "OuvrierId": "OUV_01",
+      "Nom": "Durand",
+      "Prenom": "Jean",
+      "CoutJournalier": 300,
+      "Competences": [
+        {
+          "MetierId": "MACON",
+          "Niveau": "Confirme",
+          "PerformancePct": 100
+        }
+      ]
+    },
+    {
+      "OuvrierId": "OUV_02",
+      "Nom": "Dupont",
+      "Prenom": "Alice",
+      "CoutJournalier": 350,
+      "Competences": [
+        {
+          "MetierId": "PEINTRE",
+          "Niveau": "Expert",
+          "PerformancePct": 110
+        }
+      ]
+    }
+  ],
+  "Blocs": [
+    {
+      "BlocId": "BLOC_A",
+      "Nom": "Zone A RDC",
+      "CapaciteMaxOuvriers": 3
+    }
+  ],
+  "Taches": [
+    {
+      "TacheId": "TACHE_A1",
+      "Nom": "Murs Extérieurs",
+      "BlocId": "BLOC_A",
+      "HeuresHommeEstimees": 40,
+      "MetierId": "MACON",
+      "Dependencies": []
+    },
+    {
+      "TacheId": "TACHE_A2",
+      "Nom": "Peinture Extérieure",
+      "BlocId": "BLOC_A",
+      "HeuresHommeEstimees": 20,
+      "MetierId": "PEINTRE",
+      "Dependencies": [ "TACHE_A1" ]
+    }
+  ],
+  "Lots": [
+    {
+      "LotId": "LOT_GO",
+      "Nom": "Gros Oeuvre",
+      "Priorite": 1,
+      "BlocIds": [ "BLOC_A" ]
+    }
+  ],
+  "ConfigurationCdC": {
+    "OuvriersClefsIds": [ "OUV_01" ],
+    "MetiersClefsIds": []
+  }
+}

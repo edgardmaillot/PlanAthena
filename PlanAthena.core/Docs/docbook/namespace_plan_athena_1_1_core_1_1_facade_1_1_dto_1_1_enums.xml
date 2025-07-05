@@ -1,0 +1,124 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums" xml:lang="en-US">
+<title>PlanAthena.Core.Facade.Dto.Enums Namespace Reference</title>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary></indexterm>
+<simplesect>
+    <title>Enumerations    </title>
+        <itemizedlist>
+            <listitem><para>enum <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccb">FlexibiliteDate</link> { <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccbadfed4b73514ac8573fa71dfa811dbbcc">Imperative</link> = 0
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccba13b303a6c0d90897b5375ce901acc445">Flexible</link> = 1
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccba3cd26345da8d6c0b35e07ae6f682b034">Preferentielle</link> = 2
+ }</para>
+</listitem>
+            <listitem><para>enum <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319b">NiveauExpertise</link> { <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319ba5b5417577aa24172ac200296162e77ef">Debutant</link> = 1
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319ba87be3bf596031e8f6904929e47f8a91d">Confirme</link> = 2
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319ba0b84df4e0b66e9d55b22eefb55ca928f">Expert</link> = 3
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319ba528beb25acdeb27994310e1bc88490e6">Maitre</link> = 4
+ }</para>
+</listitem>
+            <listitem><para>enum <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ab163b8452d21e81928db82c701659177">EtatTraitementInput</link> { <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ab163b8452d21e81928db82c701659177a9ee75d741ac35acc8046b27bd02f62c1">Succes</link> = 0
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ab163b8452d21e81928db82c701659177a95f40ef721173e0e15738f12e9aa8541">SuccesAvecAvertissements</link> = 1
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ab163b8452d21e81928db82c701659177a342e75b275ff3dd42d1c478ad404d8b1">EchecValidation</link> = 2
+ }</para>
+</listitem>
+            <listitem><para>enum <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a5324d2c00245c35ddd232d4e51316d31">TypeMessageValidation</link> { <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a5324d2c00245c35ddd232d4e51316d31afe7d2cb7d4db59ae3c13b1d29aa2515e">Erreur</link> = 1
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a5324d2c00245c35ddd232d4e51316d31ab1ddfcd159764646a117ccae83bd19a9">Avertissement</link> = 2
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a5324d2c00245c35ddd232d4e51316d31a0f78b20318b5aef4dca6dbae5051960a">Suggestion</link> = 3
+ }</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Enumeration Type Documentation</title>
+<anchor xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ab163b8452d21e81928db82c701659177"/><section>
+    <title>EtatTraitementInput</title>
+<indexterm><primary>EtatTraitementInput</primary><secondary>PlanAthena.Core.Facade.Dto.Enums</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary><secondary>EtatTraitementInput</secondary></indexterm>
+<para><computeroutput>enum <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ab163b8452d21e81928db82c701659177">PlanAthena.Core.Facade.Dto.Enums.EtatTraitementInput</link></computeroutput></para><informaltable frame="all">
+<title>Enumerator</title>
+    <tgroup cols="2" align="left" colsep="1" rowsep="1">
+      <colspec colname='c1'/>
+      <colspec colname='c2'/>
+<tbody>
+<row><entry><indexterm><primary>Succes</primary><secondary>PlanAthena.Core.Facade.Dto.Enums</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary><secondary>Succes</secondary></indexterm>
+<anchor xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ab163b8452d21e81928db82c701659177a9ee75d741ac35acc8046b27bd02f62c1"/>Succes</entry><entry></entry></row><row><entry><indexterm><primary>SuccesAvecAvertissements</primary><secondary>PlanAthena.Core.Facade.Dto.Enums</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary><secondary>SuccesAvecAvertissements</secondary></indexterm>
+<anchor xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ab163b8452d21e81928db82c701659177a95f40ef721173e0e15738f12e9aa8541"/>SuccesAvecAvertissements</entry><entry></entry></row><row><entry><indexterm><primary>EchecValidation</primary><secondary>PlanAthena.Core.Facade.Dto.Enums</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary><secondary>EchecValidation</secondary></indexterm>
+<anchor xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ab163b8452d21e81928db82c701659177a342e75b275ff3dd42d1c478ad404d8b1"/>EchecValidation</entry><entry></entry></row>    </tbody>
+    </tgroup>
+</informaltable>
+<para>
+Definition at line <link linkend="__enums_8cs_source_1l00020">20</link> of file <link linkend="__enums_8cs_source">Enums.cs</link>.</para>
+</section>
+<anchor xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccb"/><section>
+    <title>FlexibiliteDate</title>
+<indexterm><primary>FlexibiliteDate</primary><secondary>PlanAthena.Core.Facade.Dto.Enums</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary><secondary>FlexibiliteDate</secondary></indexterm>
+<para><computeroutput>enum <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccb">PlanAthena.Core.Facade.Dto.Enums.FlexibiliteDate</link></computeroutput></para><informaltable frame="all">
+<title>Enumerator</title>
+    <tgroup cols="2" align="left" colsep="1" rowsep="1">
+      <colspec colname='c1'/>
+      <colspec colname='c2'/>
+<tbody>
+<row><entry><indexterm><primary>Imperative</primary><secondary>PlanAthena.Core.Facade.Dto.Enums</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary><secondary>Imperative</secondary></indexterm>
+<anchor xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccbadfed4b73514ac8573fa71dfa811dbbcc"/>Imperative</entry><entry></entry></row><row><entry><indexterm><primary>Flexible</primary><secondary>PlanAthena.Core.Facade.Dto.Enums</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary><secondary>Flexible</secondary></indexterm>
+<anchor xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccba13b303a6c0d90897b5375ce901acc445"/>Flexible</entry><entry></entry></row><row><entry><indexterm><primary>Preferentielle</primary><secondary>PlanAthena.Core.Facade.Dto.Enums</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary><secondary>Preferentielle</secondary></indexterm>
+<anchor xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccba3cd26345da8d6c0b35e07ae6f682b034"/>Preferentielle</entry><entry></entry></row>    </tbody>
+    </tgroup>
+</informaltable>
+<para>
+Definition at line <link linkend="__enums_8cs_source_1l00004">4</link> of file <link linkend="__enums_8cs_source">Enums.cs</link>.</para>
+</section>
+<anchor xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319b"/><section>
+    <title>NiveauExpertise</title>
+<indexterm><primary>NiveauExpertise</primary><secondary>PlanAthena.Core.Facade.Dto.Enums</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary><secondary>NiveauExpertise</secondary></indexterm>
+<para><computeroutput>enum <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319b">PlanAthena.Core.Facade.Dto.Enums.NiveauExpertise</link></computeroutput></para><informaltable frame="all">
+<title>Enumerator</title>
+    <tgroup cols="2" align="left" colsep="1" rowsep="1">
+      <colspec colname='c1'/>
+      <colspec colname='c2'/>
+<tbody>
+<row><entry><indexterm><primary>Debutant</primary><secondary>PlanAthena.Core.Facade.Dto.Enums</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary><secondary>Debutant</secondary></indexterm>
+<anchor xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319ba5b5417577aa24172ac200296162e77ef"/>Debutant</entry><entry></entry></row><row><entry><indexterm><primary>Confirme</primary><secondary>PlanAthena.Core.Facade.Dto.Enums</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary><secondary>Confirme</secondary></indexterm>
+<anchor xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319ba87be3bf596031e8f6904929e47f8a91d"/>Confirme</entry><entry></entry></row><row><entry><indexterm><primary>Expert</primary><secondary>PlanAthena.Core.Facade.Dto.Enums</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary><secondary>Expert</secondary></indexterm>
+<anchor xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319ba0b84df4e0b66e9d55b22eefb55ca928f"/>Expert</entry><entry></entry></row><row><entry><indexterm><primary>Maitre</primary><secondary>PlanAthena.Core.Facade.Dto.Enums</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary><secondary>Maitre</secondary></indexterm>
+<anchor xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319ba528beb25acdeb27994310e1bc88490e6"/>Maitre</entry><entry></entry></row>    </tbody>
+    </tgroup>
+</informaltable>
+<para>
+Definition at line <link linkend="__enums_8cs_source_1l00011">11</link> of file <link linkend="__enums_8cs_source">Enums.cs</link>.</para>
+</section>
+<anchor xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a5324d2c00245c35ddd232d4e51316d31"/><section>
+    <title>TypeMessageValidation</title>
+<indexterm><primary>TypeMessageValidation</primary><secondary>PlanAthena.Core.Facade.Dto.Enums</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary><secondary>TypeMessageValidation</secondary></indexterm>
+<para><computeroutput>enum <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a5324d2c00245c35ddd232d4e51316d31">PlanAthena.Core.Facade.Dto.Enums.TypeMessageValidation</link></computeroutput></para><informaltable frame="all">
+<title>Enumerator</title>
+    <tgroup cols="2" align="left" colsep="1" rowsep="1">
+      <colspec colname='c1'/>
+      <colspec colname='c2'/>
+<tbody>
+<row><entry><indexterm><primary>Erreur</primary><secondary>PlanAthena.Core.Facade.Dto.Enums</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary><secondary>Erreur</secondary></indexterm>
+<anchor xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a5324d2c00245c35ddd232d4e51316d31afe7d2cb7d4db59ae3c13b1d29aa2515e"/>Erreur</entry><entry></entry></row><row><entry><indexterm><primary>Avertissement</primary><secondary>PlanAthena.Core.Facade.Dto.Enums</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary><secondary>Avertissement</secondary></indexterm>
+<anchor xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a5324d2c00245c35ddd232d4e51316d31ab1ddfcd159764646a117ccae83bd19a9"/>Avertissement</entry><entry></entry></row><row><entry><indexterm><primary>Suggestion</primary><secondary>PlanAthena.Core.Facade.Dto.Enums</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.Dto.Enums</primary><secondary>Suggestion</secondary></indexterm>
+<anchor xml:id="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a5324d2c00245c35ddd232d4e51316d31a0f78b20318b5aef4dca6dbae5051960a"/>Suggestion</entry><entry></entry></row>    </tbody>
+    </tgroup>
+</informaltable>
+<para>
+Definition at line <link linkend="__enums_8cs_source_1l00027">27</link> of file <link linkend="__enums_8cs_source">Enums.cs</link>.</para>
+</section>
+</section>
+</section>

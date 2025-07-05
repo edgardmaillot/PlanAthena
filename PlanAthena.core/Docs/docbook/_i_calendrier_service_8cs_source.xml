@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__i_calendrier_service_8cs_source" xml:lang="en-US">
+<title>ICalendrierService.cs</title>
+<indexterm><primary>Application/Interfaces/ICalendrierService.cs</primary></indexterm>
+Go to the documentation of this file.<programlisting linenumbering="unnumbered"><anchor xml:id="__i_calendrier_service_8cs_source_1l00001"/>00001 <emphasis role="comment">//&#32;PlanAthena.Core.Application.Interfaces.ICalendrierService.cs</emphasis>
+<anchor xml:id="__i_calendrier_service_8cs_source_1l00002"/>00002 <emphasis role="keyword">using&#32;</emphasis>System;&#32;<emphasis role="comment">//&#32;Pour&#32;DateTime</emphasis>
+<anchor xml:id="__i_calendrier_service_8cs_source_1l00003"/>00003 <emphasis role="keyword">using&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects">PlanAthena.Core.Domain.ValueObjects</link>;&#32;<emphasis role="comment">//&#32;Pour&#32;CalendrierOuvreChantier</emphasis>
+<anchor xml:id="__i_calendrier_service_8cs_source_1l00004"/>00004 <emphasis role="keyword">using&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_input">PlanAthena.Core.Facade.Dto.Input</link>;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Pour&#32;CalendrierTravailDefinitionDto</emphasis>
+<anchor xml:id="__i_calendrier_service_8cs_source_1l00005"/>00005 
+<anchor xml:id="__i_calendrier_service_8cs_source_1l00006"/><link linkend="_namespace_plan_athena">00006</link> <emphasis role="keyword">namespace&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_application_1_1_interfaces">PlanAthena.Core.Application.Interfaces</link>
+<anchor xml:id="__i_calendrier_service_8cs_source_1l00007"/>00007 {
+<anchor xml:id="__i_calendrier_service_8cs_source_1l00011"/><link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_calendrier_service">00011</link> &#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<emphasis role="keyword">interface&#32;</emphasis><link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_calendrier_service">ICalendrierService</link>
+<anchor xml:id="__i_calendrier_service_8cs_source_1l00012"/>00012 &#32;&#32;&#32;&#32;{
+<anchor xml:id="__i_calendrier_service_8cs_source_1l00022"/><link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_calendrier_service_1a9348b2b1c5deeea8f55f636443f46162">00022</link> &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1ae9cb26e6393b8c21862291b3000f7e3f">CalendrierOuvreChantier</link>&#32;<link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_calendrier_service_1a9348b2b1c5deeea8f55f636443f46162">CreerCalendrierOuvreChantier</link>(
+<anchor xml:id="__i_calendrier_service_8cs_source_1l00023"/>00023 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_input_1a82f38ff9f5edd829f18fa6a6f15ab45c">CalendrierTravailDefinitionDto</link>&#32;definitionDto,
+<anchor xml:id="__i_calendrier_service_8cs_source_1l00024"/>00024 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;DateTime?&#32;dateDebutSouhaiteeChantier,
+<anchor xml:id="__i_calendrier_service_8cs_source_1l00025"/>00025 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;DateTime?&#32;dateFinSouhaiteeChantier);
+<anchor xml:id="__i_calendrier_service_8cs_source_1l00026"/>00026 &#32;&#32;&#32;&#32;}
+<anchor xml:id="__i_calendrier_service_8cs_source_1l00027"/>00027 }
+</programlisting></section>

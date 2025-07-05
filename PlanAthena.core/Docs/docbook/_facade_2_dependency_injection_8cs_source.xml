@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__facade_2_dependency_injection_8cs_source" xml:lang="en-US">
+<title>DependencyInjection.cs</title>
+<indexterm><primary>Facade/DependencyInjection.cs</primary></indexterm>
+Go to the documentation of this file.<programlisting linenumbering="unnumbered"><anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00001"/>00001 <emphasis role="comment">//&#32;PlanAthena.Core.Application.DependencyInjection.cs&#32;(Bon&#32;emplacement&#32;car&#32;enregistre&#32;les&#32;services&#32;de&#32;l&apos;application)</emphasis>
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00002"/>00002 <emphasis role="keyword">using&#32;</emphasis>FluentValidation;
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00003"/>00003 <emphasis role="keyword">using&#32;</emphasis>Microsoft.Extensions.DependencyInjection;
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00004"/>00004 <emphasis role="keyword">using&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_application_1_1_interfaces">PlanAthena.Core.Application.Interfaces</link>;
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00005"/>00005 <emphasis role="keyword">using&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_application_1_1_services">PlanAthena.Core.Application.Services</link>;
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00006"/>00006 <emphasis role="keyword">using&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_application_1_1_use_cases">PlanAthena.Core.Application.UseCases</link>;
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00007"/>00007 <emphasis role="keyword">using&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_application_1_1_validation">PlanAthena.Core.Application.Validation</link>;
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00008"/>00008 <emphasis role="keyword">using&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_input">PlanAthena.Core.Facade.Dto.Input</link>;&#32;<emphasis role="comment">//&#32;Pour&#32;le&#32;validateur&#32;ChantierSetupInputDtoValidator</emphasis>
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00009"/>00009 <emphasis role="comment">//&#32;using&#32;PlanAthena.Core.Infrastructure.Services;&#32;//&#32;Décommenter&#32;quand&#32;CalendrierService&#32;sera&#32;là</emphasis>
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00010"/>00010 
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00011"/>00011 <emphasis role="keyword">namespace&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_application">PlanAthena.Core.Application</link>&#32;<emphasis role="comment">//&#32;Ou&#32;un&#32;namespace&#32;spécifique&#32;pour&#32;DI</emphasis>
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00012"/>00012 {
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00013"/>00013 &#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<emphasis role="keyword">static</emphasis>&#32;<emphasis role="keyword">class&#32;</emphasis>DependencyInjection
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00014"/>00014 &#32;&#32;&#32;&#32;{
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00015"/>00015 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<emphasis role="keyword">static</emphasis>&#32;IServiceCollection&#32;AddApplicationServices(<emphasis role="keyword">this</emphasis>&#32;IServiceCollection&#32;services)
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00016"/>00016 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00017"/>00017 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Enregistrer&#32;les&#32;Validateurs&#32;FluentValidation</emphasis>
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00018"/>00018 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;services.AddTransient&lt;IValidator&lt;ChantierSetupInputDto&gt;,&#32;ChantierSetupInputDtoValidator&gt;();</emphasis>
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00019"/>00019 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Ou,&#32;si&#32;vous&#32;avez&#32;plusieurs&#32;validateurs&#32;dans&#32;l&apos;assembly&#32;où&#32;se&#32;trouve&#32;ChantierSetupInputDtoValidator:</emphasis>
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00020"/>00020 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;services.AddValidatorsFromAssemblyContaining&lt;ChantierSetupInputDtoValidator&gt;(ServiceLifetime.Transient);
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00021"/>00021 
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00022"/>00022 
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00023"/>00023 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Enregistrer&#32;les&#32;Mappers</emphasis>
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00024"/>00024 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;services.AddTransient&lt;IChantierSetupInputMapper,&#32;ChantierSetupInputMapper&gt;();
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00025"/>00025 
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00026"/>00026 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Enregistrer&#32;les&#32;Services&#32;de&#32;Validation&#32;et&#32;d&apos;Analyse&#32;(Squelettes&#32;pour&#32;l&apos;instant)</emphasis>
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00027"/>00027 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;services.AddTransient&lt;IChantierValidationService,&#32;ChantierValidationService&gt;();
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00028"/>00028 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;services.AddTransient&lt;IInitialFeasibilityAnalysisService,&#32;InitialFeasibilityAnalysisService&gt;();
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00029"/>00029 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;services.AddTransient&lt;IKeyResourceSuggestionService,&#32;KeyResourceSuggestionService&gt;();
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00030"/>00030 
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00031"/>00031 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Enregistrer&#32;les&#32;Cas&#32;d&apos;Usage</emphasis>
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00032"/>00032 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;services.AddTransient&lt;IInitializeAndAnalyzeChantierUseCase,&#32;InitializeAndAnalyzeChantierUseCase&gt;();
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00033"/>00033 
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00034"/>00034 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Les&#32;services&#32;d&apos;Infrastructure&#32;(comme&#32;ICalendrierService)&#32;seront&#32;enregistrés</emphasis>
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00035"/>00035 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;par&#32;une&#32;méthode&#32;similaire&#32;dans&#32;le&#32;projet&#32;Infrastructure.</emphasis>
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00036"/>00036 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Par&#32;exemple,&#32;dans&#32;Infrastructure/DependencyInjection.cs&#32;:</emphasis>
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00037"/>00037 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;services.AddTransient&lt;ICalendrierService,&#32;CalendrierService&gt;();</emphasis>
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00038"/>00038 
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00039"/>00039 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;services;
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00040"/>00040 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00041"/>00041 &#32;&#32;&#32;&#32;}
+<anchor xml:id="__facade_2_dependency_injection_8cs_source_1l00042"/>00042 }
+</programlisting></section>

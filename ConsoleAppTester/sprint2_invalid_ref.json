@@ -1,0 +1,61 @@
+{
+  "ChantierId": "CHANTIER_INV_REF_001",
+  "Description": "Chantier de test avec une référence invalide",
+  "DateDebutSouhaitee": "2028-07-01T00:00:00",
+  "DateFinSouhaitee": "2028-09-01T00:00:00",
+  "FlexibiliteDebut": 0,
+  "FlexibiliteFin": 0,
+  "CalendrierTravail": {
+    "JoursOuvres": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ],
+    "HeureDebutJournee": 8,
+    "HeuresTravailEffectifParJour": 7,
+    "JoursChomes": []
+  },
+  "Metiers": [
+    {
+      "MetierId": "MACON",
+      "Nom": "Maçonnerie",
+      "PrerequisMetierIds": []
+    }
+  ],
+  "Ouvriers": [
+    {
+      "OuvrierId": "OUV_01",
+      "Nom": "Durand",
+      "Prenom": "Jean",
+      "CoutJournalier": 300,
+      "Competences": [
+        {
+          "MetierId": "MACON",
+          "Niveau": 1
+        }
+      ]
+    }
+  ],
+  "Blocs": [
+    {
+      "BlocId": "BLOC_A",
+      "Nom": "Zone A",
+      "CapaciteMaxOuvriers": 2
+    }
+  ],
+  "Taches": [
+    {
+      "TacheId": "TACHE_A1",
+      "Nom": "Tirer les câbles",
+      "BlocId": "BLOC_A",
+      "HeuresHommeEstimees": 16,
+      "MetierId": "ELECTRICIEN",
+      "Dependencies": []
+    }
+  ],
+  "Lots": [
+    {
+      "LotId": "LOT_GO",
+      "Nom": "Gros Oeuvre",
+      "Priorite": 1,
+      "BlocIds": [ "BLOC_A" ]
+    }
+  ],
+  "ConfigurationCdC": null
+}

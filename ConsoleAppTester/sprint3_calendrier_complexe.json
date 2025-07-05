@@ -1,0 +1,61 @@
+{
+  "ChantierId": "CHANTIER_CAL_002",
+  "Description": "Chantier de test avec un calendrier complexe pour EF02",
+  "DateDebutSouhaitee": "2028-07-10T00:00:00",
+  "DateFinSouhaitee": "2028-07-16T00:00:00",
+  "FlexibiliteDebut": "Imperative",
+  "FlexibiliteFin": "Imperative",
+  "CalendrierTravail": {
+    "JoursOuvres": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ],
+    "HeureDebutJournee": 9,
+    "HeuresTravailEffectifParJour": 8,
+    "JoursChomes": [ "2028-07-14T00:00:00" ]
+  },
+  "Metiers": [
+    {
+      "MetierId": "TESTEUR",
+      "Nom": "Testeur de Calendrier",
+      "PrerequisMetierIds": []
+    }
+  ],
+  "Ouvriers": [
+    {
+      "OuvrierId": "OUV_TEST",
+      "Nom": "Paul",
+      "Prenom": "Le Testeur",
+      "CoutJournalier": 100,
+      "Competences": [
+        {
+          "MetierId": "TESTEUR",
+          "Niveau": "Expert"
+        }
+      ]
+    }
+  ],
+  "Blocs": [
+    {
+      "BlocId": "BLOC_TEST",
+      "Nom": "Zone de Test",
+      "CapaciteMaxOuvriers": 1
+    }
+  ],
+  "Taches": [
+    {
+      "TacheId": "TACHE_TEST",
+      "Nom": "Valider le calendrier",
+      "BlocId": "BLOC_TEST",
+      "HeuresHommeEstimees": 30,
+      "MetierId": "TESTEUR",
+      "Dependencies": []
+    }
+  ],
+  "Lots": [
+    {
+      "LotId": "LOT_TEST",
+      "Nom": "Lot de Test Calendrier",
+      "Priorite": 1,
+      "BlocIds": [ "BLOC_TEST" ]
+    }
+  ],
+  "ConfigurationCdC": null
+}

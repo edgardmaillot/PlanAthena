@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__configuration_chantier_8cs_source" xml:lang="en-US">
+<title>ConfigurationChantier.cs</title>
+<indexterm><primary>Domain/ValueObjects/ConfigurationChantier.cs</primary></indexterm>
+Go to the documentation of this file.<programlisting linenumbering="unnumbered"><anchor xml:id="__configuration_chantier_8cs_source_1l00001"/>00001 <emphasis role="comment">//&#32;PlanAthena.Core.Domain.ValueObjects.ConfigurationChantier.cs</emphasis>
+<anchor xml:id="__configuration_chantier_8cs_source_1l00002"/>00002 <emphasis role="keyword">using&#32;</emphasis>System;
+<anchor xml:id="__configuration_chantier_8cs_source_1l00003"/>00003 <emphasis role="keyword">using&#32;</emphasis>System.Collections.Generic;
+<anchor xml:id="__configuration_chantier_8cs_source_1l00004"/>00004 <emphasis role="keyword">using&#32;</emphasis>System.Linq;&#32;<emphasis role="comment">//&#32;Pour&#32;Select&#32;et&#32;ToList/ToHashSet</emphasis>
+<anchor xml:id="__configuration_chantier_8cs_source_1l00005"/>00005 
+<anchor xml:id="__configuration_chantier_8cs_source_1l00006"/>00006 <emphasis role="keyword">namespace&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects">PlanAthena.Core.Domain.ValueObjects</link>
+<anchor xml:id="__configuration_chantier_8cs_source_1l00007"/>00007 {
+<anchor xml:id="__configuration_chantier_8cs_source_1l00008"/>00008 &#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Ce&#32;VO&#32;représente&#32;la&#32;configuration&#32;fournie&#32;par&#32;le&#32;CdC,&#32;mappée&#32;depuis&#32;ConfigurationChefChantierDto.</emphasis>
+<anchor xml:id="__configuration_chantier_8cs_source_1l00009"/>00009 &#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Il&#32;est&#32;simple&#32;et&#32;contient&#32;des&#32;listes&#32;d&apos;IDs&#32;typés.</emphasis>
+<anchor xml:id="__configuration_chantier_8cs_source_1l00010"/><link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1a1a56b2269f08ee307c320f8806d6d43b">00010</link> &#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;record&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1a1a56b2269f08ee307c320f8806d6d43b">ConfigurationChantier</link>
+<anchor xml:id="__configuration_chantier_8cs_source_1l00011"/>00011 &#32;&#32;&#32;&#32;{
+<anchor xml:id="__configuration_chantier_8cs_source_1l00012"/>00012 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;IReadOnlySet&lt;OuvrierId&gt;&#32;OuvriersClefs&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;}
+<anchor xml:id="__configuration_chantier_8cs_source_1l00013"/>00013 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;IReadOnlySet&lt;MetierId&gt;&#32;MetiersClefs&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;}
+<anchor xml:id="__configuration_chantier_8cs_source_1l00014"/>00014 
+<anchor xml:id="__configuration_chantier_8cs_source_1l00015"/>00015 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Note&#32;Edgard:&#32;Si&#32;nous&#32;avions&#32;gardé&#32;les&#32;Jalons,&#32;ils&#32;seraient&#32;ici&#32;sous&#32;forme&#32;de&#32;VOs&#32;Domaine.</emphasis>
+<anchor xml:id="__configuration_chantier_8cs_source_1l00016"/>00016 
+<anchor xml:id="__configuration_chantier_8cs_source_1l00017"/>00017 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1a1a56b2269f08ee307c320f8806d6d43b">ConfigurationChantier</link>(
+<anchor xml:id="__configuration_chantier_8cs_source_1l00018"/>00018 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;IEnumerable&lt;OuvrierId&gt;?&#32;ouvriersClefs&#32;=&#32;<emphasis role="keyword">null</emphasis>,
+<anchor xml:id="__configuration_chantier_8cs_source_1l00019"/>00019 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;IEnumerable&lt;MetierId&gt;?&#32;metiersClefs&#32;=&#32;<emphasis role="keyword">null</emphasis>)
+<anchor xml:id="__configuration_chantier_8cs_source_1l00020"/>00020 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__configuration_chantier_8cs_source_1l00021"/>00021 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;OuvriersClefs&#32;=&#32;ouvriersClefs?.ToHashSet()&#32;??&#32;<emphasis role="keyword">new</emphasis>&#32;HashSet&lt;OuvrierId&gt;();
+<anchor xml:id="__configuration_chantier_8cs_source_1l00022"/>00022 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;MetiersClefs&#32;=&#32;metiersClefs?.ToHashSet()&#32;??&#32;<emphasis role="keyword">new</emphasis>&#32;HashSet&lt;MetierId&gt;();
+<anchor xml:id="__configuration_chantier_8cs_source_1l00023"/>00023 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__configuration_chantier_8cs_source_1l00024"/>00024 
+<anchor xml:id="__configuration_chantier_8cs_source_1l00025"/>00025 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Constructeur&#32;pratique&#32;pour&#32;mapper&#32;depuis&#32;les&#32;listes&#32;de&#32;string&#32;du&#32;DTO</emphasis>
+<anchor xml:id="__configuration_chantier_8cs_source_1l00026"/>00026 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<emphasis role="keyword">static</emphasis>&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1a1a56b2269f08ee307c320f8806d6d43b">ConfigurationChantier</link>&#32;CreerDepuisIds(
+<anchor xml:id="__configuration_chantier_8cs_source_1l00027"/>00027 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;IEnumerable&lt;string&gt;?&#32;ouvriersClefsIds,
+<anchor xml:id="__configuration_chantier_8cs_source_1l00028"/>00028 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;IEnumerable&lt;string&gt;?&#32;metiersClefsIds)
+<anchor xml:id="__configuration_chantier_8cs_source_1l00029"/>00029 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__configuration_chantier_8cs_source_1l00030"/>00030 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;var&#32;ouvrierIds&#32;=&#32;ouvriersClefsIds?.Select(<emphasis role="keywordtype">id</emphasis>&#32;=&gt;&#32;<emphasis role="keyword">new</emphasis>&#32;<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id">OuvrierId</link>(<emphasis role="keywordtype">id</emphasis>))&#32;??&#32;Enumerable.Empty&lt;<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id">OuvrierId</link>&gt;();
+<anchor xml:id="__configuration_chantier_8cs_source_1l00031"/>00031 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;var&#32;metierIds&#32;=&#32;metiersClefsIds?.Select(<emphasis role="keywordtype">id</emphasis>&#32;=&gt;&#32;<emphasis role="keyword">new</emphasis>&#32;<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link>(<emphasis role="keywordtype">id</emphasis>))&#32;??&#32;Enumerable.Empty&lt;<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link>&gt;();
+<anchor xml:id="__configuration_chantier_8cs_source_1l00032"/>00032 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;<emphasis role="keyword">new</emphasis>&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1a1a56b2269f08ee307c320f8806d6d43b">ConfigurationChantier</link>(ouvrierIds,&#32;metierIds);
+<anchor xml:id="__configuration_chantier_8cs_source_1l00033"/>00033 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__configuration_chantier_8cs_source_1l00034"/>00034 
+<anchor xml:id="__configuration_chantier_8cs_source_1l00035"/>00035 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<emphasis role="keywordtype">bool</emphasis>&#32;AUneConfigurationSpecifique&#32;=&gt;&#32;OuvriersClefs.Any()&#32;||&#32;MetiersClefs.Any();
+<anchor xml:id="__configuration_chantier_8cs_source_1l00036"/>00036 &#32;&#32;&#32;&#32;}
+<anchor xml:id="__configuration_chantier_8cs_source_1l00037"/>00037 }
+</programlisting></section>

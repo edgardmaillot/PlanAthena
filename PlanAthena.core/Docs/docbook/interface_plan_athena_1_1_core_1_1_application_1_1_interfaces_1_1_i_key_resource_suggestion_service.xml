@@ -1,0 +1,86 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_key_resource_suggestion_service" xml:lang="en-US">
+<title>PlanAthena.Core.Application.Interfaces.IKeyResourceSuggestionService Interface Reference</title>
+<indexterm><primary>PlanAthena.Core.Application.Interfaces.IKeyResourceSuggestionService</primary></indexterm>
+<para>
+
+<para>Analyse le chantier pour suggérer des ressources (ouvriers) clés si non entièrement fournies ou pour valider celles fournies par le CdC. </para>
+ 
+</para>
+Inheritance diagram for PlanAthena.Core.Application.Interfaces.IKeyResourceSuggestionService:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_key_resource_suggestion_service__inherit__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+Collaboration diagram for PlanAthena.Core.Application.Interfaces.IKeyResourceSuggestionService:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_key_resource_suggestion_service__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para>Task&lt; List&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id">OuvrierId</link> &gt; &gt; <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_key_resource_suggestion_service_1a2d757cad66a1c1079570cd44915465c3">SuggererOuvriersClesAsync</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link> chantier)</para>
+
+<para>Suggère des ouvriers clés pour le chantier. </para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+
+<para>Analyse le chantier pour suggérer des ressources (ouvriers) clés si non entièrement fournies ou pour valider celles fournies par le CdC. </para>
+<para>
+Definition at line <link linkend="__i_key_resource_suggestion_service_8cs_source_1l00014">14</link> of file <link linkend="__i_key_resource_suggestion_service_8cs_source">IKeyResourceSuggestionService.cs</link>.</para>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_key_resource_suggestion_service_1a2d757cad66a1c1079570cd44915465c3"/><section>
+    <title>SuggererOuvriersClesAsync()</title>
+<indexterm><primary>SuggererOuvriersClesAsync</primary><secondary>PlanAthena.Core.Application.Interfaces.IKeyResourceSuggestionService</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Application.Interfaces.IKeyResourceSuggestionService</primary><secondary>SuggererOuvriersClesAsync</secondary></indexterm>
+<para><computeroutput>Task&lt; List&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id">OuvrierId</link> &gt; &gt; PlanAthena.Core.Application.Interfaces.IKeyResourceSuggestionService.SuggererOuvriersClesAsync (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link> chantier)</computeroutput></para><para>
+
+<para>Suggère des ouvriers clés pour le chantier. </para>
+</para>
+
+<para>
+                <formalpara>
+                    <title>
+Parameters</title>
+                    <para>
+                    <table frame="all">
+                        <tgroup cols="2" align="left" colsep="1" rowsep="1">
+                        <colspec colwidth="1*"/>
+                        <colspec colwidth="4*"/>
+                        <tbody>
+                            <row>
+<entry>chantier</entry><entry>
+<para>L&apos;agrégat <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link> du domaine, supposé valide et complet.</para>
+</entry>
+                            </row>
+                        </tbody>
+                        </tgroup>
+                    </table>
+                    </para>
+                </formalpara>
+                <formalpara><title>Returns</title>
+
+<para>Une liste d&apos;<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id">OuvrierId</link> des ouvriers suggérés comme clés.</para>
+</formalpara>
+</para>
+<para>
+Implemented in <link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_key_resource_suggestion_service_1a517c003ea49a39e59472b241887f4d5e">PlanAthena.Core.Application.Services.KeyResourceSuggestionService</link>.</para>
+</section>
+<para>
+The documentation for this interface was generated from the following file:</para>
+Application/Interfaces/<link linkend="__i_key_resource_suggestion_service_8cs">IKeyResourceSuggestionService.cs</link></section>
+</section>

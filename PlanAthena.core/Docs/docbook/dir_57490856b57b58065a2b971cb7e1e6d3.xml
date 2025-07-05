@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_dir_57490856b57b58065a2b971cb7e1e6d3" xml:lang="en-US">
+<title>Facade/Dto/Enums Directory Reference</title>
+<indexterm><primary>Facade/Dto/Enums Directory Reference</primary></indexterm>
+Directory dependency graph for Enums:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="dir_57490856b57b58065a2b971cb7e1e6d3_dep.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Files    </title>
+        <itemizedlist>
+            <listitem><para>file <link linkend="__enums_8cs">Enums.cs</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

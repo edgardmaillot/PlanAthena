@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__i_chantier_setup_input_mapper_8cs" xml:lang="en-US">
+<title>Application/Interfaces/IChantierSetupInputMapper.cs File Reference</title>
+<indexterm><primary>Application/Interfaces/IChantierSetupInputMapper.cs</primary></indexterm>
+<simplesect>
+    <title>Classes    </title>
+        <itemizedlist>
+            <listitem><para>interface <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_chantier_setup_input_mapper">PlanAthena.Core.Application.Interfaces.IChantierSetupInputMapper</link></para>
+
+<para>Responsable du mapping des DTOs d&apos;entrée vers le modèle de domaine (Agrégat <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link>). Peut également effectuer des validations de format de base et retourner des erreurs de mapping. </para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Namespaces    </title>
+        <itemizedlist>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena">PlanAthena</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core">PlanAthena.Core</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_application">PlanAthena.Core.Application</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_application_1_1_interfaces">PlanAthena.Core.Application.Interfaces</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

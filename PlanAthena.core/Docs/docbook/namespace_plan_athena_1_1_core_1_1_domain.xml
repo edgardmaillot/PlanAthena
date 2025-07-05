@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_namespace_plan_athena_1_1_core_1_1_domain" xml:lang="en-US">
+<title>PlanAthena.Core.Domain Namespace Reference</title>
+<indexterm><primary>PlanAthena.Core.Domain</primary></indexterm>
+<simplesect>
+    <title>Namespaces    </title>
+        <itemizedlist>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_shared">Shared</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects">ValueObjects</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Classes    </title>
+        <itemizedlist>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail">BlocTravail</link></para>
+</listitem>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link></para>
+</listitem>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_competence">Competence</link></para>
+</listitem>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">Entity&lt; TId &gt;</link></para>
+
+<para>Classe de base pour les entités du domaine. Fournit une gestion de l&apos;identité et de l&apos;égalité basée sur l&apos;ID. </para>
+</listitem>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux">LotTravaux</link></para>
+</listitem>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier">Metier</link></para>
+</listitem>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_ouvrier">Ouvrier</link></para>
+</listitem>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_tache">Tache</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

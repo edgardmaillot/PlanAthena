@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__ouvrier_dto_8cs" xml:lang="en-US">
+<title>Facade/Dto/Input/OuvrierDto.cs File Reference</title>
+<indexterm><primary>Facade/Dto/Input/OuvrierDto.cs</primary></indexterm>
+<simplesect>
+    <title>Namespaces    </title>
+        <itemizedlist>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena">PlanAthena</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core">PlanAthena.Core</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_facade">PlanAthena.Core.Facade</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto">PlanAthena.Core.Facade.Dto</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_input">PlanAthena.Core.Facade.Dto.Input</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Variables    </title>
+        <itemizedlist>
+            <listitem><para>record <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_input_1aee22599565cca66404a9b4e92fefa6fb">PlanAthena.Core.Facade.Dto.Input.OuvrierDto</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

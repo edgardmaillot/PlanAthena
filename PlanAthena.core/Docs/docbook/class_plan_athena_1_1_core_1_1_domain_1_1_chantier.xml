@@ -1,0 +1,183 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier" xml:lang="en-US">
+<title>PlanAthena.Core.Domain.Chantier Class Reference</title>
+<indexterm><primary>PlanAthena.Core.Domain.Chantier</primary></indexterm>
+Inheritance diagram for PlanAthena.Core.Domain.Chantier:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_domain_1_1_chantier__inherit__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+Collaboration diagram for PlanAthena.Core.Domain.Chantier:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_domain_1_1_chantier__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1a8a2c8a6a925fcebdc35c5ab831a89f39">Chantier</link> (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_chantier_id">ChantierId</link> id, string description, PeriodePlanification periodeSouhaitee, CalendrierOuvreChantier calendrier, IEnumerable&lt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier">Metier</link> &gt; metiers, IEnumerable&lt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_ouvrier">Ouvrier</link> &gt; ouvriers, IEnumerable&lt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail">BlocTravail</link> &gt; blocs, IEnumerable&lt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux">LotTravaux</link> &gt; lots, ConfigurationChantier? configCdC=null)</para>
+</listitem>
+            <listitem><para>IEnumerable&lt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_tache">Tache</link> &gt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1a6e269d9bdd8c78a832b5bb14d855585c">ObtenirToutesLesTaches</link> ()</para>
+</listitem>
+            <listitem><para><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1ae2028988ad8fe8c1e6be735535156dad">CalculerChargeGlobaleHeuresHomme</link> ()</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+Public Member Functions inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para>override bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1ab22cd62f66d6349a4b6821db8754dfaf">Equals</link> (object? obj)</para>
+</listitem>
+            <listitem><para>virtual bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a2e3f012f7d67dc2c6865170de7c36377">Equals</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt;? other)</para>
+</listitem>
+            <listitem><para>override int <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1ab742cb22b4a37ce4ee645507a5ed380a">GetHashCode</link> ()</para>
+</listitem>
+        </itemizedlist>
+<simplesect>
+    <title>Properties    </title>
+        <itemizedlist>
+            <listitem><para>string <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1a67d76d7ef752d4988ad76ea5533a3a94">Description</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para>PeriodePlanification <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1a2a9434702ae9a48e8e4bc4539dec5207">PeriodeSouhaitee</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para>CalendrierOuvreChantier <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1aaa4dea2ae4fb19c8ef336c84111f9e86">Calendrier</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para>ConfigurationChantier? <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1a077aaede7a4edf7f8b78abb2ce94824e">ConfigCdC</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para>IReadOnlyDictionary&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link>, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier">Metier</link> &gt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1af1f34006463e3f428eb9a8728c960e6d">Metiers</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para>IReadOnlyDictionary&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id">OuvrierId</link>, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_ouvrier">Ouvrier</link> &gt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1accadb484958f731489ce83dfcd982ba0">Ouvriers</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para>IReadOnlyDictionary&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_bloc_id">BlocId</link>, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail">BlocTravail</link> &gt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1abe091e701a481f9502003ba9dc82c5a3">Blocs</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para>IReadOnlyDictionary&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id">LotId</link>, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux">LotTravaux</link> &gt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1a03047db873313a1614e1c993eeea8bb4">Lots</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+Properties inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para>TId <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a898f9cc5b41db570a94009b2e919fad9">Id</link><computeroutput> [get, protected set]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+<simplesect>
+    <title>Additional Inherited Members    </title>
+Static Public Member Functions inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para>static bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a14ddee7a3905c3b7c818d600bec1e2f4">operator==</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; left, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; right)</para>
+</listitem>
+            <listitem><para>static bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a2d11ed5b8b82cbee52024de335eb6741">operator!=</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; left, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; right)</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+Protected Member Functions inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link> (TId id)</para>
+</listitem>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a1b1e54a6b442f08688e95331dfd6d277">Entity</link> ()</para>
+</listitem>
+        </itemizedlist>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__chantier_8cs_source_1l00009">9</link> of file <link linkend="__chantier_8cs_source">Chantier.cs</link>.</para>
+</section>
+<section>
+<title>Constructor &amp; Destructor Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1a8a2c8a6a925fcebdc35c5ab831a89f39"/><section>
+    <title>Chantier()</title>
+<indexterm><primary>Chantier</primary><secondary>PlanAthena.Core.Domain.Chantier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Chantier</primary><secondary>Chantier</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Domain.Chantier.Chantier (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_chantier_id">ChantierId</link> id, string description, PeriodePlanification periodeSouhaitee, CalendrierOuvreChantier calendrier, IEnumerable&lt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier">Metier</link> &gt; metiers, IEnumerable&lt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_ouvrier">Ouvrier</link> &gt; ouvriers, IEnumerable&lt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail">BlocTravail</link> &gt; blocs, IEnumerable&lt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux">LotTravaux</link> &gt; lots, ConfigurationChantier? configCdC = <computeroutput>null</computeroutput>
+)</computeroutput></para><para>
+Definition at line <link linkend="__chantier_8cs_source_1l00031">31</link> of file <link linkend="__chantier_8cs_source">Chantier.cs</link>.</para>
+</section>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1ae2028988ad8fe8c1e6be735535156dad"/><section>
+    <title>CalculerChargeGlobaleHeuresHomme()</title>
+<indexterm><primary>CalculerChargeGlobaleHeuresHomme</primary><secondary>PlanAthena.Core.Domain.Chantier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Chantier</primary><secondary>CalculerChargeGlobaleHeuresHomme</secondary></indexterm>
+<para><computeroutput><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> PlanAthena.Core.Domain.Chantier.CalculerChargeGlobaleHeuresHomme ( )</computeroutput></para><para>
+Definition at line <link linkend="__chantier_8cs_source_1l00134">134</link> of file <link linkend="__chantier_8cs_source">Chantier.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1a6e269d9bdd8c78a832b5bb14d855585c"/><section>
+    <title>ObtenirToutesLesTaches()</title>
+<indexterm><primary>ObtenirToutesLesTaches</primary><secondary>PlanAthena.Core.Domain.Chantier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Chantier</primary><secondary>ObtenirToutesLesTaches</secondary></indexterm>
+<para><computeroutput>IEnumerable&lt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_tache">Tache</link> &gt; PlanAthena.Core.Domain.Chantier.ObtenirToutesLesTaches ( )</computeroutput></para></section>
+</section>
+<section>
+<title>Property Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1abe091e701a481f9502003ba9dc82c5a3"/><section>
+    <title>Blocs</title>
+<indexterm><primary>Blocs</primary><secondary>PlanAthena.Core.Domain.Chantier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Chantier</primary><secondary>Blocs</secondary></indexterm>
+<para><computeroutput>IReadOnlyDictionary&lt;<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_bloc_id">BlocId</link>, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail">BlocTravail</link>&gt; PlanAthena.Core.Domain.Chantier.Blocs<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__chantier_8cs_source_1l00023">23</link> of file <link linkend="__chantier_8cs_source">Chantier.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1aaa4dea2ae4fb19c8ef336c84111f9e86"/><section>
+    <title>Calendrier</title>
+<indexterm><primary>Calendrier</primary><secondary>PlanAthena.Core.Domain.Chantier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Chantier</primary><secondary>Calendrier</secondary></indexterm>
+<para><computeroutput>CalendrierOuvreChantier PlanAthena.Core.Domain.Chantier.Calendrier<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__chantier_8cs_source_1l00013">13</link> of file <link linkend="__chantier_8cs_source">Chantier.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1a077aaede7a4edf7f8b78abb2ce94824e"/><section>
+    <title>ConfigCdC</title>
+<indexterm><primary>ConfigCdC</primary><secondary>PlanAthena.Core.Domain.Chantier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Chantier</primary><secondary>ConfigCdC</secondary></indexterm>
+<para><computeroutput>ConfigurationChantier? PlanAthena.Core.Domain.Chantier.ConfigCdC<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__chantier_8cs_source_1l00014">14</link> of file <link linkend="__chantier_8cs_source">Chantier.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1a67d76d7ef752d4988ad76ea5533a3a94"/><section>
+    <title>Description</title>
+<indexterm><primary>Description</primary><secondary>PlanAthena.Core.Domain.Chantier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Chantier</primary><secondary>Description</secondary></indexterm>
+<para><computeroutput>string PlanAthena.Core.Domain.Chantier.Description<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__chantier_8cs_source_1l00011">11</link> of file <link linkend="__chantier_8cs_source">Chantier.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1a03047db873313a1614e1c993eeea8bb4"/><section>
+    <title>Lots</title>
+<indexterm><primary>Lots</primary><secondary>PlanAthena.Core.Domain.Chantier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Chantier</primary><secondary>Lots</secondary></indexterm>
+<para><computeroutput>IReadOnlyDictionary&lt;<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id">LotId</link>, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux">LotTravaux</link>&gt; PlanAthena.Core.Domain.Chantier.Lots<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__chantier_8cs_source_1l00026">26</link> of file <link linkend="__chantier_8cs_source">Chantier.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1af1f34006463e3f428eb9a8728c960e6d"/><section>
+    <title>Metiers</title>
+<indexterm><primary>Metiers</primary><secondary>PlanAthena.Core.Domain.Chantier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Chantier</primary><secondary>Metiers</secondary></indexterm>
+<para><computeroutput>IReadOnlyDictionary&lt;<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link>, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier">Metier</link>&gt; PlanAthena.Core.Domain.Chantier.Metiers<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__chantier_8cs_source_1l00017">17</link> of file <link linkend="__chantier_8cs_source">Chantier.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1accadb484958f731489ce83dfcd982ba0"/><section>
+    <title>Ouvriers</title>
+<indexterm><primary>Ouvriers</primary><secondary>PlanAthena.Core.Domain.Chantier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Chantier</primary><secondary>Ouvriers</secondary></indexterm>
+<para><computeroutput>IReadOnlyDictionary&lt;<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id">OuvrierId</link>, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_ouvrier">Ouvrier</link>&gt; PlanAthena.Core.Domain.Chantier.Ouvriers<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__chantier_8cs_source_1l00020">20</link> of file <link linkend="__chantier_8cs_source">Chantier.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier_1a2a9434702ae9a48e8e4bc4539dec5207"/><section>
+    <title>PeriodeSouhaitee</title>
+<indexterm><primary>PeriodeSouhaitee</primary><secondary>PlanAthena.Core.Domain.Chantier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Chantier</primary><secondary>PeriodeSouhaitee</secondary></indexterm>
+<para><computeroutput>PeriodePlanification PlanAthena.Core.Domain.Chantier.PeriodeSouhaitee<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__chantier_8cs_source_1l00012">12</link> of file <link linkend="__chantier_8cs_source">Chantier.cs</link>.</para>
+</section>
+<para>
+The documentation for this class was generated from the following file:</para>
+Domain/<link linkend="__chantier_8cs">Chantier.cs</link></section>
+</section>

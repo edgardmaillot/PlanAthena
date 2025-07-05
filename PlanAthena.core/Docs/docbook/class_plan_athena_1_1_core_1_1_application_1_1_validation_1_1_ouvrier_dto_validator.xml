@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_ouvrier_dto_validator" xml:lang="en-US">
+<title>PlanAthena.Core.Application.Validation.OuvrierDtoValidator Class Reference</title>
+<indexterm><primary>PlanAthena.Core.Application.Validation.OuvrierDtoValidator</primary></indexterm>
+Inheritance diagram for PlanAthena.Core.Application.Validation.OuvrierDtoValidator:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_ouvrier_dto_validator__inherit__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+Collaboration diagram for PlanAthena.Core.Application.Validation.OuvrierDtoValidator:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_ouvrier_dto_validator__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_ouvrier_dto_validator_1a20442df4648ab9371fe7d9e20bfd8325">OuvrierDtoValidator</link> ()</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__input_dto_validators_8cs_source_1l00155">155</link> of file <link linkend="__input_dto_validators_8cs_source">InputDtoValidators.cs</link>.</para>
+</section>
+<section>
+<title>Constructor &amp; Destructor Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_ouvrier_dto_validator_1a20442df4648ab9371fe7d9e20bfd8325"/><section>
+    <title>OuvrierDtoValidator()</title>
+<indexterm><primary>OuvrierDtoValidator</primary><secondary>PlanAthena.Core.Application.Validation.OuvrierDtoValidator</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Application.Validation.OuvrierDtoValidator</primary><secondary>OuvrierDtoValidator</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Application.Validation.OuvrierDtoValidator.OuvrierDtoValidator ( )</computeroutput></para><para>
+Definition at line <link linkend="__input_dto_validators_8cs_source_1l00157">157</link> of file <link linkend="__input_dto_validators_8cs_source">InputDtoValidators.cs</link>.</para>
+</section>
+<para>
+The documentation for this class was generated from the following file:</para>
+Application/Validation/<link linkend="__input_dto_validators_8cs">InputDtoValidators.cs</link></section>
+</section>

@@ -1,0 +1,86 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_initial_feasibility_analysis_service" xml:lang="en-US">
+<title>PlanAthena.Core.Application.Interfaces.IInitialFeasibilityAnalysisService Interface Reference</title>
+<indexterm><primary>PlanAthena.Core.Application.Interfaces.IInitialFeasibilityAnalysisService</primary></indexterm>
+<para>
+
+<para>Effectue une analyse préliminaire de faisabilité sur un chantier validé. Identifie les alertes majeures (ex: couverture des métiers, déséquilibres charge/capacité initiaux). </para>
+ 
+</para>
+Inheritance diagram for PlanAthena.Core.Application.Interfaces.IInitialFeasibilityAnalysisService:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_initial_feasibility_analysis_service__inherit__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+Collaboration diagram for PlanAthena.Core.Application.Interfaces.IInitialFeasibilityAnalysisService:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_initial_feasibility_analysis_service__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para>Task&lt; List&lt; MessageValidationDto &gt; &gt; <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_initial_feasibility_analysis_service_1a4dd9e44f4b01d0a47ce587dac91eac3b">AnalyserFaisabiliteAsync</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link> chantier)</para>
+
+<para>Analyse la faisabilité préliminaire du chantier. </para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+
+<para>Effectue une analyse préliminaire de faisabilité sur un chantier validé. Identifie les alertes majeures (ex: couverture des métiers, déséquilibres charge/capacité initiaux). </para>
+<para>
+Definition at line <link linkend="__i_initial_feasibility_analysis_service_8cs_source_1l00014">14</link> of file <link linkend="__i_initial_feasibility_analysis_service_8cs_source">IInitialFeasibilityAnalysisService.cs</link>.</para>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_initial_feasibility_analysis_service_1a4dd9e44f4b01d0a47ce587dac91eac3b"/><section>
+    <title>AnalyserFaisabiliteAsync()</title>
+<indexterm><primary>AnalyserFaisabiliteAsync</primary><secondary>PlanAthena.Core.Application.Interfaces.IInitialFeasibilityAnalysisService</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Application.Interfaces.IInitialFeasibilityAnalysisService</primary><secondary>AnalyserFaisabiliteAsync</secondary></indexterm>
+<para><computeroutput>Task&lt; List&lt; MessageValidationDto &gt; &gt; PlanAthena.Core.Application.Interfaces.IInitialFeasibilityAnalysisService.AnalyserFaisabiliteAsync (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link> chantier)</computeroutput></para><para>
+
+<para>Analyse la faisabilité préliminaire du chantier. </para>
+</para>
+
+<para>
+                <formalpara>
+                    <title>
+Parameters</title>
+                    <para>
+                    <table frame="all">
+                        <tgroup cols="2" align="left" colsep="1" rowsep="1">
+                        <colspec colwidth="1*"/>
+                        <colspec colwidth="4*"/>
+                        <tbody>
+                            <row>
+<entry>chantier</entry><entry>
+<para>L&apos;agrégat <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link> du domaine, supposé valide et complet.</para>
+</entry>
+                            </row>
+                        </tbody>
+                        </tgroup>
+                    </table>
+                    </para>
+                </formalpara>
+                <formalpara><title>Returns</title>
+
+<para>Une liste de messages de validation (typiquement des Avertissements) concernant la faisabilité.</para>
+</formalpara>
+</para>
+<para>
+Implemented in <link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_initial_feasibility_analysis_service_1a5ec19c914e27ac4783a24976ffcf695b">PlanAthena.Core.Application.Services.InitialFeasibilityAnalysisService</link>.</para>
+</section>
+<para>
+The documentation for this interface was generated from the following file:</para>
+Application/Interfaces/<link linkend="__i_initial_feasibility_analysis_service_8cs">IInitialFeasibilityAnalysisService.cs</link></section>
+</section>

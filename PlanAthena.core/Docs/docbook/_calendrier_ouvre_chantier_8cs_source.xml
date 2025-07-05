@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__calendrier_ouvre_chantier_8cs_source" xml:lang="en-US">
+<title>CalendrierOuvreChantier.cs</title>
+<indexterm><primary>Domain/ValueObjects/CalendrierOuvreChantier.cs</primary></indexterm>
+Go to the documentation of this file.<programlisting linenumbering="unnumbered"><anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00001"/>00001 <emphasis role="comment">//&#32;PlanAthena.Core.Domain.ValueObjects.CalendrierOuvreChantier.cs</emphasis>
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00002"/>00002 <emphasis role="keyword">using&#32;</emphasis>System;
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00003"/>00003 <emphasis role="keyword">using&#32;</emphasis>System.Collections.Generic;
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00004"/>00004 <emphasis role="keyword">using&#32;</emphasis>System.Linq;
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00005"/>00005 <emphasis role="keyword">using&#32;</emphasis>NodaTime;
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00006"/>00006 
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00007"/><link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects">00007</link> <emphasis role="keyword">namespace&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects">PlanAthena.Core.Domain.ValueObjects</link>
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00008"/>00008 {
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00009"/><link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1ae9cb26e6393b8c21862291b3000f7e3f">00009</link> &#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;record&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1ae9cb26e6393b8c21862291b3000f7e3f">CalendrierOuvreChantier</link>
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00010"/>00010 &#32;&#32;&#32;&#32;{
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00011"/>00011 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;IReadOnlySet&lt;IsoDayOfWeek&gt;&#32;JoursOuvres&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;}
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00012"/>00012 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;LocalTime&#32;HeureDebutTravail&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;}
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00013"/>00013 
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00014"/>00014 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;On&#32;revient&#32;à&#32;Duration,&#32;qui&#32;est&#32;le&#32;type&#32;correct&#32;pour&#32;une&#32;durée&#32;fixe.</emphasis>
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00015"/>00015 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;Duration&#32;DureeTravailEffectiveParJour&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;}
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00016"/>00016 
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00017"/>00017 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;On&#32;supprime&#32;la&#32;propriété&#32;HeureFinTravail&#32;qui&#32;causait&#32;les&#32;problèmes.</emphasis>
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00018"/>00018 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Elle&#32;sera&#32;calculée&#32;à&#32;la&#32;volée&#32;si&#32;nécessaire.</emphasis>
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00019"/>00019 
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00020"/>00020 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;IReadOnlySet&lt;LocalDate&gt;&#32;JoursChomes&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;}
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00021"/>00021 
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00022"/>00022 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1ae9cb26e6393b8c21862291b3000f7e3f">CalendrierOuvreChantier</link>(
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00023"/>00023 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;IReadOnlySet&lt;IsoDayOfWeek&gt;&#32;joursOuvres,
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00024"/>00024 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;LocalTime&#32;heureDebutTravail,
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00025"/>00025 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;Duration&#32;dureeTravailEffectiveParJour,
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00026"/>00026 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;IReadOnlySet&lt;LocalDate&gt;&#32;joursChomes)
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00027"/>00027 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00028"/>00028 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(joursOuvres&#32;==&#32;<emphasis role="keyword">null</emphasis>&#32;||&#32;joursOuvres.Count&#32;==&#32;0)
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00029"/>00029 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">throw</emphasis>&#32;<emphasis role="keyword">new</emphasis>&#32;ArgumentException(<emphasis role="stringliteral">&quot;Au&#32;moins&#32;un&#32;jour&#32;ouvré&#32;doit&#32;être&#32;défini.&quot;</emphasis>,&#32;nameof(joursOuvres));
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00030"/>00030 
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00031"/>00031 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;CORRECTION&#32;FINALE:&#32;La&#32;validation&#32;correcte&#32;avec&#32;Duration.</emphasis>
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00032"/>00032 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(dureeTravailEffectiveParJour&#32;&lt;=&#32;Duration.Zero)
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00033"/>00033 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">throw</emphasis>&#32;<emphasis role="keyword">new</emphasis>&#32;ArgumentOutOfRangeException(nameof(dureeTravailEffectiveParJour),&#32;<emphasis role="stringliteral">&quot;La&#32;durée&#32;de&#32;travail&#32;doit&#32;être&#32;positive.&quot;</emphasis>);
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00034"/>00034 
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00035"/>00035 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;JoursOuvres&#32;=&#32;joursOuvres;
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00036"/>00036 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;HeureDebutTravail&#32;=&#32;heureDebutTravail;
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00037"/>00037 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;DureeTravailEffectiveParJour&#32;=&#32;dureeTravailEffectiveParJour;
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00038"/>00038 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;JoursChomes&#32;=&#32;joursChomes&#32;??&#32;<emphasis role="keyword">new</emphasis>&#32;HashSet&lt;LocalDate&gt;();
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00039"/>00039 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00040"/>00040 
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00041"/>00041 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<emphasis role="keywordtype">bool</emphasis>&#32;EstJourOuvre(LocalDate&#32;date)
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00042"/>00042 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00043"/>00043 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(JoursChomes.Contains(date))&#32;<emphasis role="keywordflow">return</emphasis>&#32;<emphasis role="keyword">false</emphasis>;
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00044"/>00044 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;JoursOuvres.Contains(date.DayOfWeek);
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00045"/>00045 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00046"/>00046 &#32;&#32;&#32;&#32;}
+<anchor xml:id="__calendrier_ouvre_chantier_8cs_source_1l00047"/>00047 }
+</programlisting></section>

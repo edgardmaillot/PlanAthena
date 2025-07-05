@@ -1,0 +1,85 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers" xml:lang="en-US">
+<title>PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers Struct Reference</title>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers</primary></indexterm>
+Collaboration diagram for PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers_1ace23a797d426658012b9e6e3ab33ff5a">CapaciteOuvriers</link> (int value)</para>
+</listitem>
+            <listitem><para>override string <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers_1aeac81fc34eb320826a49326dc2694e17">ToString</link> ()</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Static Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para>static implicit <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers_1af87e963be7a3e23c3805861c39a7974d">operator int</link> (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers">CapaciteOuvriers</link> capacite)</para>
+</listitem>
+            <listitem><para>static implicit <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers_1ad80e78ca10be93739b9a40b6a451a708">operator CapaciteOuvriers</link> (int value)</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Properties    </title>
+        <itemizedlist>
+            <listitem><para>int <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers_1a2637254782c5d1a55c3e6a4c58a68324">Value</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__capacite_ouvriers_8cs_source_1l00006">6</link> of file <link linkend="__capacite_ouvriers_8cs_source">CapaciteOuvriers.cs</link>.</para>
+</section>
+<section>
+<title>Constructor &amp; Destructor Documentation</title>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers_1ace23a797d426658012b9e6e3ab33ff5a"/><section>
+    <title>CapaciteOuvriers()</title>
+<indexterm><primary>CapaciteOuvriers</primary><secondary>PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers</primary><secondary>CapaciteOuvriers</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers.CapaciteOuvriers (int value)</computeroutput></para><para>
+Definition at line <link linkend="__capacite_ouvriers_8cs_source_1l00010">10</link> of file <link linkend="__capacite_ouvriers_8cs_source">CapaciteOuvriers.cs</link>.</para>
+</section>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers_1ad80e78ca10be93739b9a40b6a451a708"/><section>
+    <title>operator CapaciteOuvriers()</title>
+<indexterm><primary>operator CapaciteOuvriers</primary><secondary>PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers</primary><secondary>operator CapaciteOuvriers</secondary></indexterm>
+<para><computeroutput>implicit PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers.operator <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers">CapaciteOuvriers</link> (int value)<computeroutput>[static]</computeroutput></computeroutput></para></section>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers_1af87e963be7a3e23c3805861c39a7974d"/><section>
+    <title>operator int()</title>
+<indexterm><primary>operator int</primary><secondary>PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers</primary><secondary>operator int</secondary></indexterm>
+<para><computeroutput>implicit PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers.operator int (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers">CapaciteOuvriers</link> capacite)<computeroutput>[static]</computeroutput></computeroutput></para></section>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers_1aeac81fc34eb320826a49326dc2694e17"/><section>
+    <title>ToString()</title>
+<indexterm><primary>ToString</primary><secondary>PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers</primary><secondary>ToString</secondary></indexterm>
+<para><computeroutput>override string PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers.ToString ( )</computeroutput></para></section>
+</section>
+<section>
+<title>Property Documentation</title>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers_1a2637254782c5d1a55c3e6a4c58a68324"/><section>
+    <title>Value</title>
+<indexterm><primary>Value</primary><secondary>PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers</primary><secondary>Value</secondary></indexterm>
+<para><computeroutput>int PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers.Value<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__capacite_ouvriers_8cs_source_1l00008">8</link> of file <link linkend="__capacite_ouvriers_8cs_source">CapaciteOuvriers.cs</link>.</para>
+</section>
+<para>
+The documentation for this struct was generated from the following file:</para>
+Domain/ValueObjects/<link linkend="__capacite_ouvriers_8cs">CapaciteOuvriers.cs</link></section>
+</section>

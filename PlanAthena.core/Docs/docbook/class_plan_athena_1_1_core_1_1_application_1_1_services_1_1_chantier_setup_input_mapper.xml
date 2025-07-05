@@ -1,0 +1,93 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_chantier_setup_input_mapper" xml:lang="en-US">
+<title>PlanAthena.Core.Application.Services.ChantierSetupInputMapper Class Reference</title>
+<indexterm><primary>PlanAthena.Core.Application.Services.ChantierSetupInputMapper</primary></indexterm>
+Inheritance diagram for PlanAthena.Core.Application.Services.ChantierSetupInputMapper:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_chantier_setup_input_mapper__inherit__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+Collaboration diagram for PlanAthena.Core.Application.Services.ChantierSetupInputMapper:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_chantier_setup_input_mapper__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_chantier_setup_input_mapper_1a8bca0105b065c402fa139ea2d1329159">ChantierSetupInputMapper</link> (<link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_calendrier_service">ICalendrierService</link> calendrierService)</para>
+</listitem>
+            <listitem><para>Task&lt;(<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link>? chantier, List&lt; MessageValidationDto &gt; messages)&gt; <link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_chantier_setup_input_mapper_1a007560d0bb26995e8b2feecdabddf8a6">MapToDomainAsync</link> (ChantierSetupInputDto inputDto)</para>
+
+<para>Mappe le DTO d&apos;entrée vers l&apos;agrégat racine <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link> du domaine. </para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__chantier_setup_input_mapper_8cs_source_1l00015">15</link> of file <link linkend="__chantier_setup_input_mapper_8cs_source">ChantierSetupInputMapper.cs</link>.</para>
+</section>
+<section>
+<title>Constructor &amp; Destructor Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_chantier_setup_input_mapper_1a8bca0105b065c402fa139ea2d1329159"/><section>
+    <title>ChantierSetupInputMapper()</title>
+<indexterm><primary>ChantierSetupInputMapper</primary><secondary>PlanAthena.Core.Application.Services.ChantierSetupInputMapper</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Application.Services.ChantierSetupInputMapper</primary><secondary>ChantierSetupInputMapper</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Application.Services.ChantierSetupInputMapper.ChantierSetupInputMapper (<link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_calendrier_service">ICalendrierService</link> calendrierService)</computeroutput></para><para>
+Definition at line <link linkend="__chantier_setup_input_mapper_8cs_source_1l00020">20</link> of file <link linkend="__chantier_setup_input_mapper_8cs_source">ChantierSetupInputMapper.cs</link>.</para>
+</section>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_chantier_setup_input_mapper_1a007560d0bb26995e8b2feecdabddf8a6"/><section>
+    <title>MapToDomainAsync()</title>
+<indexterm><primary>MapToDomainAsync</primary><secondary>PlanAthena.Core.Application.Services.ChantierSetupInputMapper</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Application.Services.ChantierSetupInputMapper</primary><secondary>MapToDomainAsync</secondary></indexterm>
+<para><computeroutput>Task&lt;(<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link>? chantier, List&lt; MessageValidationDto &gt; messages)&gt; PlanAthena.Core.Application.Services.ChantierSetupInputMapper.MapToDomainAsync (ChantierSetupInputDto inputDto)</computeroutput></para><para>
+
+<para>Mappe le DTO d&apos;entrée vers l&apos;agrégat racine <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link> du domaine. </para>
+</para>
+
+<para>
+                <formalpara>
+                    <title>
+Parameters</title>
+                    <para>
+                    <table frame="all">
+                        <tgroup cols="2" align="left" colsep="1" rowsep="1">
+                        <colspec colwidth="1*"/>
+                        <colspec colwidth="4*"/>
+                        <tbody>
+                            <row>
+<entry>inputDto</entry><entry>
+<para>Le DTO d&apos;entrée contenant les données du chantier.</para>
+</entry>
+                            </row>
+                        </tbody>
+                        </tgroup>
+                    </table>
+                    </para>
+                </formalpara>
+                <formalpara><title>Returns</title>
+
+<para>Un tuple contenant l&apos;objet <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link> du domaine (s&apos;il a pu être construit, même partiellement) et une liste de messages de validation (erreurs ou avertissements) survenus pendant le mapping ou la construction des objets du domaine due à des données invalides. Si des erreurs critiques sont rencontrées, l&apos;objet <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link> peut être null. </para>
+</formalpara>
+</para>
+<para>
+Implements <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_chantier_setup_input_mapper_1afa69efb2fd2d45c704b38327c1839be4">PlanAthena.Core.Application.Interfaces.IChantierSetupInputMapper</link>.</para>
+<para>
+Definition at line <link linkend="__chantier_setup_input_mapper_8cs_source_1l00025">25</link> of file <link linkend="__chantier_setup_input_mapper_8cs_source">ChantierSetupInputMapper.cs</link>.</para>
+</section>
+<para>
+The documentation for this class was generated from the following file:</para>
+Application/Services/<link linkend="__chantier_setup_input_mapper_8cs">ChantierSetupInputMapper.cs</link></section>
+</section>

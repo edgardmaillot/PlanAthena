@@ -1,0 +1,116 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_competence" xml:lang="en-US">
+<title>PlanAthena.Core.Domain.Competence Class Reference</title>
+<indexterm><primary>PlanAthena.Core.Domain.Competence</primary></indexterm>
+Inheritance diagram for PlanAthena.Core.Domain.Competence:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_domain_1_1_competence__inherit__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+Collaboration diagram for PlanAthena.Core.Domain.Competence:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_domain_1_1_competence__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_competence_1a386a434675bb6f5b2703d11984dc2902">Competence</link> (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link> metierId, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319b">NiveauExpertise</link> niveau, int? performancePctInput=null)</para>
+</listitem>
+            <listitem><para>bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_competence_1a895389aa9e93726feed55d181c9a5822">Equals</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_competence">Competence</link>? other)</para>
+</listitem>
+            <listitem><para>override bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_competence_1a267d8a1229aca00b0dc6636b1d8f99af">Equals</link> (object? obj)</para>
+</listitem>
+            <listitem><para>override int <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_competence_1a002a9a8177e1a6fd450c51e24fc5e617">GetHashCode</link> ()</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Properties    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link> <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_competence_1a87f11a8913b141d086eac11d8a87c55c">MetierId</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para><link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319b">NiveauExpertise</link> <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_competence_1a5330ed21f1fdb34671eb96727c5888f0">Niveau</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para>int <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_competence_1a0d1ad102628b1c5b2d04d32c6ed1eda0">PerformanceEffectivePct</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__competence_8cs_source_1l00008">8</link> of file <link linkend="__competence_8cs_source">Competence.cs</link>.</para>
+</section>
+<section>
+<title>Constructor &amp; Destructor Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_competence_1a386a434675bb6f5b2703d11984dc2902"/><section>
+    <title>Competence()</title>
+<indexterm><primary>Competence</primary><secondary>PlanAthena.Core.Domain.Competence</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Competence</primary><secondary>Competence</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Domain.Competence.Competence (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link> metierId, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319b">NiveauExpertise</link> niveau, int? performancePctInput = <computeroutput>null</computeroutput>
+)</computeroutput></para><para>
+Definition at line <link linkend="__competence_8cs_source_1l00014">14</link> of file <link linkend="__competence_8cs_source">Competence.cs</link>.</para>
+</section>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_competence_1a895389aa9e93726feed55d181c9a5822"/><section>
+    <title>Equals()<computeroutput>[1/2]</computeroutput></title>
+<indexterm><primary>Equals</primary><secondary>PlanAthena.Core.Domain.Competence</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Competence</primary><secondary>Equals</secondary></indexterm>
+<para><computeroutput>bool PlanAthena.Core.Domain.Competence.Equals (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_competence">Competence</link>? other)</computeroutput></para><para>
+Definition at line <link linkend="__competence_8cs_source_1l00031">31</link> of file <link linkend="__competence_8cs_source">Competence.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_competence_1a267d8a1229aca00b0dc6636b1d8f99af"/><section>
+    <title>Equals()<computeroutput>[2/2]</computeroutput></title>
+<indexterm><primary>Equals</primary><secondary>PlanAthena.Core.Domain.Competence</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Competence</primary><secondary>Equals</secondary></indexterm>
+<para><computeroutput>override bool PlanAthena.Core.Domain.Competence.Equals (object? obj)</computeroutput></para><para>
+Definition at line <link linkend="__competence_8cs_source_1l00040">40</link> of file <link linkend="__competence_8cs_source">Competence.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_competence_1a002a9a8177e1a6fd450c51e24fc5e617"/><section>
+    <title>GetHashCode()</title>
+<indexterm><primary>GetHashCode</primary><secondary>PlanAthena.Core.Domain.Competence</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Competence</primary><secondary>GetHashCode</secondary></indexterm>
+<para><computeroutput>override int PlanAthena.Core.Domain.Competence.GetHashCode ( )</computeroutput></para><para>
+Definition at line <link linkend="__competence_8cs_source_1l00045">45</link> of file <link linkend="__competence_8cs_source">Competence.cs</link>.</para>
+</section>
+</section>
+<section>
+<title>Property Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_competence_1a87f11a8913b141d086eac11d8a87c55c"/><section>
+    <title>MetierId</title>
+<indexterm><primary>MetierId</primary><secondary>PlanAthena.Core.Domain.Competence</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Competence</primary><secondary>MetierId</secondary></indexterm>
+<para><computeroutput><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link> PlanAthena.Core.Domain.Competence.MetierId<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__competence_8cs_source_1l00010">10</link> of file <link linkend="__competence_8cs_source">Competence.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_competence_1a5330ed21f1fdb34671eb96727c5888f0"/><section>
+    <title>Niveau</title>
+<indexterm><primary>Niveau</primary><secondary>PlanAthena.Core.Domain.Competence</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Competence</primary><secondary>Niveau</secondary></indexterm>
+<para><computeroutput><link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319b">NiveauExpertise</link> PlanAthena.Core.Domain.Competence.Niveau<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__competence_8cs_source_1l00011">11</link> of file <link linkend="__competence_8cs_source">Competence.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_competence_1a0d1ad102628b1c5b2d04d32c6ed1eda0"/><section>
+    <title>PerformanceEffectivePct</title>
+<indexterm><primary>PerformanceEffectivePct</primary><secondary>PlanAthena.Core.Domain.Competence</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Competence</primary><secondary>PerformanceEffectivePct</secondary></indexterm>
+<para><computeroutput>int PlanAthena.Core.Domain.Competence.PerformanceEffectivePct<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__competence_8cs_source_1l00012">12</link> of file <link linkend="__competence_8cs_source">Competence.cs</link>.</para>
+</section>
+<para>
+The documentation for this class was generated from the following file:</para>
+Domain/<link linkend="__competence_8cs">Competence.cs</link></section>
+</section>

@@ -1,0 +1,87 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_dependency_graph-1-g" xml:lang="en-US">
+<title>PlanAthena.Core.Domain.Shared.DependencyGraph&lt; TId &gt; Class Template Reference</title>
+<indexterm><primary>PlanAthena.Core.Domain.Shared.DependencyGraph&lt; TId &gt;</primary></indexterm>
+<para>
+
+<para>Représente un graphe de dépendances et fournit des méthodes pour l&apos;analyser, notamment pour la détection de cycles. Cet objet est immuable. </para>
+ 
+</para>
+Collaboration diagram for PlanAthena.Core.Domain.Shared.DependencyGraph&lt; TId &gt;:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_dependency_graph-1-g__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_dependency_graph-1-g_1aa0eb6777b71bef3acdefebbcd11d0b2c">DependencyGraph</link> (IEnumerable&lt; IHaveDependencies&lt; TId &gt; &gt; entities)</para>
+</listitem>
+            <listitem><para>IReadOnlyList&lt; IReadOnlyList&lt; TId &gt; &gt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_dependency_graph-1-g_1a5fc16ceaa4a10a48f840cb471f4cb0cc">DetectCycles</link> ()</para>
+
+<para>Détecte tous les cycles dans le graphe en utilisant un algorithme de parcours en profondeur (DFS). </para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+
+<para>Représente un graphe de dépendances et fournit des méthodes pour l&apos;analyser, notamment pour la détection de cycles. Cet objet est immuable. </para>
+
+
+
+<para>
+                <formalpara>
+                    <title>
+Template Parameters</title>
+                    <para>
+                    <table frame="all">
+                        <tgroup cols="2" align="left" colsep="1" rowsep="1">
+                        <colspec colwidth="1*"/>
+                        <colspec colwidth="4*"/>
+                        <tbody>
+                            <row>
+<entry>TId</entry><entry>
+<para>Le type de l&apos;identifiant des noeuds du graphe.</para>
+</entry>
+                            </row>
+                        </tbody>
+                        </tgroup>
+                    </table>
+                    </para>
+                </formalpara>
+                </para>
+<simplesect><title>Type Constraints</title>
+<para><emphasis role="strong">TId:notnull</emphasis></para>
+</simplesect>
+<para>
+Definition at line <link linkend="__dependency_graph_8cs_source_1l00011">11</link> of file <link linkend="__dependency_graph_8cs_source">DependencyGraph.cs</link>.</para>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_dependency_graph-1-g_1aa0eb6777b71bef3acdefebbcd11d0b2c"/><section>
+    <title>DependencyGraph()</title>
+<indexterm><primary>DependencyGraph</primary><secondary>PlanAthena.Core.Domain.Shared.DependencyGraph&lt; TId &gt;</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Shared.DependencyGraph&lt; TId &gt;</primary><secondary>DependencyGraph</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Domain.Shared.DependencyGraph&lt; TId &gt;.DependencyGraph (IEnumerable&lt; IHaveDependencies&lt; TId &gt; &gt; entities)</computeroutput></para><para>
+Definition at line <link linkend="__dependency_graph_8cs_source_1l00019">19</link> of file <link linkend="__dependency_graph_8cs_source">DependencyGraph.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_dependency_graph-1-g_1a5fc16ceaa4a10a48f840cb471f4cb0cc"/><section>
+    <title>DetectCycles()</title>
+<indexterm><primary>DetectCycles</primary><secondary>PlanAthena.Core.Domain.Shared.DependencyGraph&lt; TId &gt;</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Shared.DependencyGraph&lt; TId &gt;</primary><secondary>DetectCycles</secondary></indexterm>
+<para><computeroutput>IReadOnlyList&lt; IReadOnlyList&lt; TId &gt; &gt; PlanAthena.Core.Domain.Shared.DependencyGraph&lt; TId &gt;.DetectCycles ( )</computeroutput></para><para>
+
+<para>Détecte tous les cycles dans le graphe en utilisant un algorithme de parcours en profondeur (DFS). </para>
+</para>
+<para>
+Definition at line <link linkend="__dependency_graph_8cs_source_1l00042">42</link> of file <link linkend="__dependency_graph_8cs_source">DependencyGraph.cs</link>.</para>
+</section>
+<para>
+The documentation for this class was generated from the following file:</para>
+Domain/Shared/<link linkend="__dependency_graph_8cs">DependencyGraph.cs</link></section>
+</section>

@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_dir_42b3084e5efb2145e06273ba8d4563bc" xml:lang="en-US">
+<title>Domain/ValueObjects Directory Reference</title>
+<indexterm><primary>Domain/ValueObjects Directory Reference</primary></indexterm>
+Directory dependency graph for ValueObjects:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="dir_42b3084e5efb2145e06273ba8d4563bc_dep.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Files    </title>
+        <itemizedlist>
+            <listitem><para>file <link linkend="__calendrier_ouvre_chantier_8cs">CalendrierOuvreChantier.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__capacite_ouvriers_8cs">CapaciteOuvriers.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__configuration_chantier_8cs">ConfigurationChantier.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__cout_journalier_8cs">CoutJournalier.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__duree_heures_homme_8cs">DureeHeuresHomme.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__identifiants_8cs">Identifiants.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__periode_planification_8cs">PeriodePlanification.cs</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

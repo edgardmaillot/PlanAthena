@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_namespace_plan_athena_1_1_core_1_1_domain_1_1_shared" xml:lang="en-US">
+<title>PlanAthena.Core.Domain.Shared Namespace Reference</title>
+<indexterm><primary>PlanAthena.Core.Domain.Shared</primary></indexterm>
+<simplesect>
+    <title>Classes    </title>
+        <itemizedlist>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_dependency_graph-1-g">DependencyGraph&lt; TId &gt;</link></para>
+
+<para>Représente un graphe de dépendances et fournit des méthodes pour l&apos;analyser, notamment pour la détection de cycles. Cet objet est immuable. </para>
+</listitem>
+            <listitem><para>interface <link linkend="_interface_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_i_have_dependencies-1-g">IHaveDependencies&lt; TId &gt;</link></para>
+
+<para>Définit une entité qui possède une identité et une liste de dépendances vers d&apos;autres entités du même type. Permet une gestion générique des graphes de dépendances. </para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

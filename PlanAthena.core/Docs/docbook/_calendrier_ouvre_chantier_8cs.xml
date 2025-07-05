@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__calendrier_ouvre_chantier_8cs" xml:lang="en-US">
+<title>Domain/ValueObjects/CalendrierOuvreChantier.cs File Reference</title>
+<indexterm><primary>Domain/ValueObjects/CalendrierOuvreChantier.cs</primary></indexterm>
+<simplesect>
+    <title>Namespaces    </title>
+        <itemizedlist>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena">PlanAthena</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core">PlanAthena.Core</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_domain">PlanAthena.Core.Domain</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects">PlanAthena.Core.Domain.ValueObjects</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Variables    </title>
+        <itemizedlist>
+            <listitem><para>record <link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1ae9cb26e6393b8c21862291b3000f7e3f">PlanAthena.Core.Domain.ValueObjects.CalendrierOuvreChantier</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

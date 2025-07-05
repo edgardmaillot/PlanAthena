@@ -1,0 +1,141 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_tache" xml:lang="en-US">
+<title>PlanAthena.Core.Domain.Tache Class Reference</title>
+<indexterm><primary>PlanAthena.Core.Domain.Tache</primary></indexterm>
+Inheritance diagram for PlanAthena.Core.Domain.Tache:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_domain_1_1_tache__inherit__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+Collaboration diagram for PlanAthena.Core.Domain.Tache:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_domain_1_1_tache__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_tache_1a74d8a141431c8f9497b9266530a5771b">Tache</link> (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_tache_id">TacheId</link> id, string nom, <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_bloc_id">BlocId</link> blocParentId, <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> heuresHommeEstimees, <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link> metierRequisId, IEnumerable&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_tache_id">TacheId</link> &gt;? dependencies=null)</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+Public Member Functions inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para>override bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1ab22cd62f66d6349a4b6821db8754dfaf">Equals</link> (object? obj)</para>
+</listitem>
+            <listitem><para>virtual bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a2e3f012f7d67dc2c6865170de7c36377">Equals</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt;? other)</para>
+</listitem>
+            <listitem><para>override int <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1ab742cb22b4a37ce4ee645507a5ed380a">GetHashCode</link> ()</para>
+</listitem>
+        </itemizedlist>
+<simplesect>
+    <title>Properties    </title>
+        <itemizedlist>
+            <listitem><para>string <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_tache_1a5719ce1bd6a48c71e60caee7d040505e">Nom</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_bloc_id">BlocId</link> <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_tache_1a8ec2359bdfd6c445cb4e29cbbbc53da9">BlocParentId</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_tache_1a372af34ade9bda819f460cc76a4bcbf1">HeuresHommeEstimees</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link> <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_tache_1a225472a810608296c5e44f9ade523ddc">MetierRequisId</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para>IReadOnlySet&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_tache_id">TacheId</link> &gt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_tache_1aafe4cc877046ed38ed4f951650de7848">Dependencies</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+Properties inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para>TId <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a898f9cc5b41db570a94009b2e919fad9">Id</link><computeroutput> [get, protected set]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+Properties inherited from <link linkend="_interface_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_i_have_dependencies-1-g">PlanAthena.Core.Domain.Shared.IHaveDependencies&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para>TId <link linkend="_interface_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_i_have_dependencies-1-g_1a4eb637b99814866a8c51d646f4ce16b6">Id</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+<simplesect>
+    <title>Additional Inherited Members    </title>
+Static Public Member Functions inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para>static bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a14ddee7a3905c3b7c818d600bec1e2f4">operator==</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; left, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; right)</para>
+</listitem>
+            <listitem><para>static bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a2d11ed5b8b82cbee52024de335eb6741">operator!=</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; left, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; right)</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+Protected Member Functions inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link> (TId id)</para>
+</listitem>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a1b1e54a6b442f08688e95331dfd6d277">Entity</link> ()</para>
+</listitem>
+        </itemizedlist>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__tache_8cs_source_1l00010">10</link> of file <link linkend="__tache_8cs_source">Tache.cs</link>.</para>
+</section>
+<section>
+<title>Constructor &amp; Destructor Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_tache_1a74d8a141431c8f9497b9266530a5771b"/><section>
+    <title>Tache()</title>
+<indexterm><primary>Tache</primary><secondary>PlanAthena.Core.Domain.Tache</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Tache</primary><secondary>Tache</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Domain.Tache.Tache (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_tache_id">TacheId</link> id, string nom, <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_bloc_id">BlocId</link> blocParentId, <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> heuresHommeEstimees, <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link> metierRequisId, IEnumerable&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_tache_id">TacheId</link> &gt;? dependencies = <computeroutput>null</computeroutput>
+)</computeroutput></para><para>
+Definition at line <link linkend="__tache_8cs_source_1l00023">23</link> of file <link linkend="__tache_8cs_source">Tache.cs</link>.</para>
+</section>
+</section>
+<section>
+<title>Property Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_tache_1a8ec2359bdfd6c445cb4e29cbbbc53da9"/><section>
+    <title>BlocParentId</title>
+<indexterm><primary>BlocParentId</primary><secondary>PlanAthena.Core.Domain.Tache</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Tache</primary><secondary>BlocParentId</secondary></indexterm>
+<para><computeroutput><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_bloc_id">BlocId</link> PlanAthena.Core.Domain.Tache.BlocParentId<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__tache_8cs_source_1l00013">13</link> of file <link linkend="__tache_8cs_source">Tache.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_tache_1aafe4cc877046ed38ed4f951650de7848"/><section>
+    <title>Dependencies</title>
+<indexterm><primary>Dependencies</primary><secondary>PlanAthena.Core.Domain.Tache</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Tache</primary><secondary>Dependencies</secondary></indexterm>
+<para><computeroutput>IReadOnlySet&lt;<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_tache_id">TacheId</link>&gt; PlanAthena.Core.Domain.Tache.Dependencies<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Implements <link linkend="_interface_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_i_have_dependencies-1-g_1aeb6027718bf4bd8f5ac7278e96cf56d0">PlanAthena.Core.Domain.Shared.IHaveDependencies&lt; TId &gt;</link>.</para>
+<para>
+Definition at line <link linkend="__tache_8cs_source_1l00018">18</link> of file <link linkend="__tache_8cs_source">Tache.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_tache_1a372af34ade9bda819f460cc76a4bcbf1"/><section>
+    <title>HeuresHommeEstimees</title>
+<indexterm><primary>HeuresHommeEstimees</primary><secondary>PlanAthena.Core.Domain.Tache</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Tache</primary><secondary>HeuresHommeEstimees</secondary></indexterm>
+<para><computeroutput><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> PlanAthena.Core.Domain.Tache.HeuresHommeEstimees<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__tache_8cs_source_1l00014">14</link> of file <link linkend="__tache_8cs_source">Tache.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_tache_1a225472a810608296c5e44f9ade523ddc"/><section>
+    <title>MetierRequisId</title>
+<indexterm><primary>MetierRequisId</primary><secondary>PlanAthena.Core.Domain.Tache</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Tache</primary><secondary>MetierRequisId</secondary></indexterm>
+<para><computeroutput><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link> PlanAthena.Core.Domain.Tache.MetierRequisId<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__tache_8cs_source_1l00015">15</link> of file <link linkend="__tache_8cs_source">Tache.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_tache_1a5719ce1bd6a48c71e60caee7d040505e"/><section>
+    <title>Nom</title>
+<indexterm><primary>Nom</primary><secondary>PlanAthena.Core.Domain.Tache</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Tache</primary><secondary>Nom</secondary></indexterm>
+<para><computeroutput>string PlanAthena.Core.Domain.Tache.Nom<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__tache_8cs_source_1l00012">12</link> of file <link linkend="__tache_8cs_source">Tache.cs</link>.</para>
+</section>
+<para>
+The documentation for this class was generated from the following file:</para>
+Domain/<link linkend="__tache_8cs">Tache.cs</link></section>
+</section>

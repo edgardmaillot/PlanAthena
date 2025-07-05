@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_dir_8c888e3f1190d8e08b273c29d1443e32" xml:lang="en-US">
+<title>Domain Directory Reference</title>
+<indexterm><primary>Domain Directory Reference</primary></indexterm>
+<simplesect>
+    <title>Directories    </title>
+        <itemizedlist>
+            <listitem><para>directory <link linkend="_dir_1899caa4bf21aaea54c91a456355185d">Shared</link></para>
+</listitem>
+            <listitem><para>directory <link linkend="_dir_42b3084e5efb2145e06273ba8d4563bc">ValueObjects</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Files    </title>
+        <itemizedlist>
+            <listitem><para>file <link linkend="__bloc_travail_8cs">BlocTravail.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__chantier_8cs">Chantier.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__competence_8cs">Competence.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__entity_8cs">Entity.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__lot_travaux_8cs">LotTravaux.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__metier_8cs">Metier.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__ouvrier_8cs">Ouvrier.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__tache_8cs">Tache.cs</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

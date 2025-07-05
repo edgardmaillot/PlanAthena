@@ -1,0 +1,172 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<book xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_index" xml:lang="en-US">
+    <info>
+    <title>PlanAthena.core</title>
+    </info>
+<chapter>
+    <title>Namespace Documentation</title>
+<xi:include href="namespace_plan_athena.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="namespace_plan_athena_1_1_core.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="namespace_plan_athena_1_1_core_1_1_application.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="namespace_plan_athena_1_1_core_1_1_application_1_1_interfaces.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="namespace_plan_athena_1_1_core_1_1_application_1_1_services.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="namespace_plan_athena_1_1_core_1_1_application_1_1_use_cases.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="namespace_plan_athena_1_1_core_1_1_application_1_1_validation.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="namespace_plan_athena_1_1_core_1_1_domain.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="namespace_plan_athena_1_1_core_1_1_domain_1_1_shared.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="namespace_plan_athena_1_1_core_1_1_facade.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="namespace_plan_athena_1_1_core_1_1_facade_1_1_dto.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_input.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_output.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="namespace_plan_athena_1_1_core_1_1_infrastructure.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+<xi:include href="namespace_plan_athena_1_1_core_1_1_infrastructure_1_1_services.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+</chapter>
+<chapter>
+    <title>Class Documentation</title>
+    <xi:include href="struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_bloc_id.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_bloc_travail_dto_validator.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_infrastructure_1_1_services_1_1_calendrier_service.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_calendrier_travail_definition_dto_validator.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_domain_1_1_chantier.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_chantier_id.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_chantier_setup_input_dto_validator.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_chantier_setup_input_mapper.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_chantier_validation_service.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_domain_1_1_competence.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_competence_dto_validator.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_configuration_chef_chantier_dto_validator.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_cout_journalier.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_dependency_graph-1-g.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_calendrier_service.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_chantier_setup_input_mapper.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_chantier_validation_service.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="interface_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_i_have_dependencies-1-g.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_initial_feasibility_analysis_service.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_initialize_and_analyze_chantier_use_case.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_key_resource_suggestion_service.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_initial_feasibility_analysis_service.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_application_1_1_use_cases_1_1_initialize_and_analyze_chantier_use_case.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_key_resource_suggestion_service.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_lot_travaux_dto_validator.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_domain_1_1_metier.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_metier_dto_validator.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_domain_1_1_ouvrier.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_ouvrier_dto_validator.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_facade_1_1_plan_athena_core_facade.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_domain_1_1_tache.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_tache_dto_validator.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_tache_id.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+</chapter>
+<chapter>
+    <title>File Documentation</title>
+    <xi:include href="_i_calendrier_service_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_i_calendrier_service_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_i_chantier_setup_input_mapper_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_i_chantier_setup_input_mapper_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_i_chantier_validation_service_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_i_chantier_validation_service_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_i_initial_feasibility_analysis_service_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_i_initial_feasibility_analysis_service_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_i_initialize_and_analyze_chantier_use_case_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_i_initialize_and_analyze_chantier_use_case_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_i_key_resource_suggestion_service_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_i_key_resource_suggestion_service_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_chantier_setup_input_mapper_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_chantier_setup_input_mapper_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_chantier_validation_service_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_chantier_validation_service_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_initial_feasibility_analysis_service_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_initial_feasibility_analysis_service_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_initialize_and_analyze_chantier_use_case_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_initialize_and_analyze_chantier_use_case_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_key_resource_suggestion_service_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_key_resource_suggestion_service_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_input_dto_validators_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_input_dto_validators_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_bloc_travail_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_bloc_travail_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_chantier_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_chantier_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_competence_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_competence_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_entity_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_entity_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_lot_travaux_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_lot_travaux_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_metier_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_metier_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_ouvrier_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_ouvrier_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_dependency_graph_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_dependency_graph_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_i_have_dependencies_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_i_have_dependencies_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_tache_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_tache_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_calendrier_ouvre_chantier_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_calendrier_ouvre_chantier_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_capacite_ouvriers_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_capacite_ouvriers_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_configuration_chantier_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_configuration_chantier_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_cout_journalier_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_cout_journalier_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_duree_heures_homme_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_duree_heures_homme_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_identifiants_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_identifiants_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_periode_planification_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_periode_planification_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_facade_2_dependency_injection_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_facade_2_dependency_injection_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_infrastructure_2_dependency_injection_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_infrastructure_2_dependency_injection_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_enums_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_enums_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_bloc_travail_dto_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_bloc_travail_dto_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_calendrier_travail_definition_dto_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_calendrier_travail_definition_dto_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_chantier_setup_input_dto_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_chantier_setup_input_dto_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_competence_dto_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_competence_dto_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_configuration_chef_chantier_dto_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_configuration_chef_chantier_dto_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_lot_travaux_dto_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_lot_travaux_dto_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_metier_dto_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_metier_dto_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_ouvrier_dto_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_ouvrier_dto_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_tache_dto_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_tache_dto_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_analyse_ressources_resultat_dto_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_analyse_ressources_resultat_dto_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_chantier_setup_analysis_result_dto_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_chantier_setup_analysis_result_dto_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_message_validation_dto_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_message_validation_dto_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_plan_athena_core_facade_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_plan_athena_core_facade_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_calendrier_service_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_calendrier_service_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_8_n_e_t_core_app_00_version_0av8_80_8_assembly_attributes_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_8_n_e_t_core_app_00_version_0av8_80_8_assembly_attributes_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_plan_athena_8core_8_assembly_info_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_plan_athena_8core_8_assembly_info_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_plan_athena_8core_8_global_usings_8g_8cs.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="_plan_athena_8core_8_global_usings_8g_8cs_source.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+</chapter>
+<index/>
+</book>

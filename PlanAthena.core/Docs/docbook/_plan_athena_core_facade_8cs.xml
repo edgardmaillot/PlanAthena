@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__plan_athena_core_facade_8cs" xml:lang="en-US">
+<title>Facade/PlanAthenaCoreFacade.cs File Reference</title>
+<indexterm><primary>Facade/PlanAthenaCoreFacade.cs</primary></indexterm>
+<simplesect>
+    <title>Classes    </title>
+        <itemizedlist>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_facade_1_1_plan_athena_core_facade">PlanAthena.Core.Facade.PlanAthenaCoreFacade</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Namespaces    </title>
+        <itemizedlist>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena">PlanAthena</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core">PlanAthena.Core</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_facade">PlanAthena.Core.Facade</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

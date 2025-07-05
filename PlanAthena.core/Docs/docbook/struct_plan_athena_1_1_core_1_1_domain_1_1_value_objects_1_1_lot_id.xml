@@ -1,0 +1,85 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id" xml:lang="en-US">
+<title>PlanAthena.Core.Domain.ValueObjects.LotId Struct Reference</title>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.LotId</primary></indexterm>
+Collaboration diagram for PlanAthena.Core.Domain.ValueObjects.LotId:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id_1afa06f913d553b6a8eed1ad0f68812b44">LotId</link> (string value)</para>
+</listitem>
+            <listitem><para>override string <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id_1a1b62896006f33727ded64a8f008242d0">ToString</link> ()</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Static Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para>static implicit <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id_1a2ab968ece38914861266bcdda5ee09ee">operator string</link> (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id">LotId</link> id)</para>
+</listitem>
+            <listitem><para>static implicit <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id_1ab37f22cfdf2e241bbed70f922b6c8744">operator LotId</link> (string value)</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Properties    </title>
+        <itemizedlist>
+            <listitem><para>string <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id_1a3a3159f09da77e192cec5c97dc16d0d0">Value</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__identifiants_8cs_source_1l00057">57</link> of file <link linkend="__identifiants_8cs_source">Identifiants.cs</link>.</para>
+</section>
+<section>
+<title>Constructor &amp; Destructor Documentation</title>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id_1afa06f913d553b6a8eed1ad0f68812b44"/><section>
+    <title>LotId()</title>
+<indexterm><primary>LotId</primary><secondary>PlanAthena.Core.Domain.ValueObjects.LotId</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.LotId</primary><secondary>LotId</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Domain.ValueObjects.LotId.LotId (string value)</computeroutput></para><para>
+Definition at line <link linkend="__identifiants_8cs_source_1l00061">61</link> of file <link linkend="__identifiants_8cs_source">Identifiants.cs</link>.</para>
+</section>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id_1ab37f22cfdf2e241bbed70f922b6c8744"/><section>
+    <title>operator LotId()</title>
+<indexterm><primary>operator LotId</primary><secondary>PlanAthena.Core.Domain.ValueObjects.LotId</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.LotId</primary><secondary>operator LotId</secondary></indexterm>
+<para><computeroutput>implicit PlanAthena.Core.Domain.ValueObjects.LotId.operator <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id">LotId</link> (string value)<computeroutput>[static]</computeroutput></computeroutput></para></section>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id_1a2ab968ece38914861266bcdda5ee09ee"/><section>
+    <title>operator string()</title>
+<indexterm><primary>operator string</primary><secondary>PlanAthena.Core.Domain.ValueObjects.LotId</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.LotId</primary><secondary>operator string</secondary></indexterm>
+<para><computeroutput>implicit PlanAthena.Core.Domain.ValueObjects.LotId.operator string (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id">LotId</link> id)<computeroutput>[static]</computeroutput></computeroutput></para></section>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id_1a1b62896006f33727ded64a8f008242d0"/><section>
+    <title>ToString()</title>
+<indexterm><primary>ToString</primary><secondary>PlanAthena.Core.Domain.ValueObjects.LotId</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.LotId</primary><secondary>ToString</secondary></indexterm>
+<para><computeroutput>override string PlanAthena.Core.Domain.ValueObjects.LotId.ToString ( )</computeroutput></para></section>
+</section>
+<section>
+<title>Property Documentation</title>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id_1a3a3159f09da77e192cec5c97dc16d0d0"/><section>
+    <title>Value</title>
+<indexterm><primary>Value</primary><secondary>PlanAthena.Core.Domain.ValueObjects.LotId</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.LotId</primary><secondary>Value</secondary></indexterm>
+<para><computeroutput>string PlanAthena.Core.Domain.ValueObjects.LotId.Value<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__identifiants_8cs_source_1l00059">59</link> of file <link linkend="__identifiants_8cs_source">Identifiants.cs</link>.</para>
+</section>
+<para>
+The documentation for this struct was generated from the following file:</para>
+Domain/ValueObjects/<link linkend="__identifiants_8cs">Identifiants.cs</link></section>
+</section>

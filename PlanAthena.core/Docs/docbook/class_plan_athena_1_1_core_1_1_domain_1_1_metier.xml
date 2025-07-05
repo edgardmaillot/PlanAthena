@@ -1,0 +1,118 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_metier" xml:lang="en-US">
+<title>PlanAthena.Core.Domain.Metier Class Reference</title>
+<indexterm><primary>PlanAthena.Core.Domain.Metier</primary></indexterm>
+Inheritance diagram for PlanAthena.Core.Domain.Metier:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_domain_1_1_metier__inherit__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+Collaboration diagram for PlanAthena.Core.Domain.Metier:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_domain_1_1_metier__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1a172dd3d69f7f04a320a49ec3d742bb26">Metier</link> (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link> id, string nom, IEnumerable&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link> &gt;? prerequisMetierIds=null)</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+Public Member Functions inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para>override bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1ab22cd62f66d6349a4b6821db8754dfaf">Equals</link> (object? obj)</para>
+</listitem>
+            <listitem><para>virtual bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a2e3f012f7d67dc2c6865170de7c36377">Equals</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt;? other)</para>
+</listitem>
+            <listitem><para>override int <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1ab742cb22b4a37ce4ee645507a5ed380a">GetHashCode</link> ()</para>
+</listitem>
+        </itemizedlist>
+<simplesect>
+    <title>Protected Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1ac0868e81e7e3a3f7eba8e2e195b51368">Metier</link> ()</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+Protected Member Functions inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link> (TId id)</para>
+</listitem>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a1b1e54a6b442f08688e95331dfd6d277">Entity</link> ()</para>
+</listitem>
+        </itemizedlist>
+<simplesect>
+    <title>Properties    </title>
+        <itemizedlist>
+            <listitem><para>string <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1ac40514d321abf35d2afc3c6ddebfbf23">Nom</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para>IReadOnlySet&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link> &gt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1ab973fcb0206c5355450255a83686f5cd">PrerequisMetierIds</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+Properties inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para>TId <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a898f9cc5b41db570a94009b2e919fad9">Id</link><computeroutput> [get, protected set]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+<simplesect>
+    <title>Additional Inherited Members    </title>
+Static Public Member Functions inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para>static bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a14ddee7a3905c3b7c818d600bec1e2f4">operator==</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; left, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; right)</para>
+</listitem>
+            <listitem><para>static bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a2d11ed5b8b82cbee52024de335eb6741">operator!=</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; left, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; right)</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__metier_8cs_source_1l00009">9</link> of file <link linkend="__metier_8cs_source">Metier.cs</link>.</para>
+</section>
+<section>
+<title>Constructor &amp; Destructor Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1a172dd3d69f7f04a320a49ec3d742bb26"/><section>
+    <title>Metier()<computeroutput>[1/2]</computeroutput></title>
+<indexterm><primary>Metier</primary><secondary>PlanAthena.Core.Domain.Metier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Metier</primary><secondary>Metier</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Domain.Metier.Metier (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link> id, string nom, IEnumerable&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link> &gt;? prerequisMetierIds = <computeroutput>null</computeroutput>
+)</computeroutput></para><para>
+Definition at line <link linkend="__metier_8cs_source_1l00014">14</link> of file <link linkend="__metier_8cs_source">Metier.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1ac0868e81e7e3a3f7eba8e2e195b51368"/><section>
+    <title>Metier()<computeroutput>[2/2]</computeroutput></title>
+<indexterm><primary>Metier</primary><secondary>PlanAthena.Core.Domain.Metier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Metier</primary><secondary>Metier</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Domain.Metier.Metier ( )<computeroutput>[protected]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__metier_8cs_source_1l00040">40</link> of file <link linkend="__metier_8cs_source">Metier.cs</link>.</para>
+</section>
+</section>
+<section>
+<title>Property Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1ac40514d321abf35d2afc3c6ddebfbf23"/><section>
+    <title>Nom</title>
+<indexterm><primary>Nom</primary><secondary>PlanAthena.Core.Domain.Metier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Metier</primary><secondary>Nom</secondary></indexterm>
+<para><computeroutput>string PlanAthena.Core.Domain.Metier.Nom<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__metier_8cs_source_1l00011">11</link> of file <link linkend="__metier_8cs_source">Metier.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1ab973fcb0206c5355450255a83686f5cd"/><section>
+    <title>PrerequisMetierIds</title>
+<indexterm><primary>PrerequisMetierIds</primary><secondary>PlanAthena.Core.Domain.Metier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Metier</primary><secondary>PrerequisMetierIds</secondary></indexterm>
+<para><computeroutput>IReadOnlySet&lt;<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link>&gt; PlanAthena.Core.Domain.Metier.PrerequisMetierIds<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__metier_8cs_source_1l00012">12</link> of file <link linkend="__metier_8cs_source">Metier.cs</link>.</para>
+</section>
+<para>
+The documentation for this class was generated from the following file:</para>
+Domain/<link linkend="__metier_8cs">Metier.cs</link></section>
+</section>

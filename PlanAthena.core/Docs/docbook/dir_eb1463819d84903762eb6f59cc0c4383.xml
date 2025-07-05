@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_dir_eb1463819d84903762eb6f59cc0c4383" xml:lang="en-US">
+<title>Application Directory Reference</title>
+<indexterm><primary>Application Directory Reference</primary></indexterm>
+<simplesect>
+    <title>Directories    </title>
+        <itemizedlist>
+            <listitem><para>directory <link linkend="_dir_3a791696e16e15231c17d911ae92556b">Interfaces</link></para>
+</listitem>
+            <listitem><para>directory <link linkend="_dir_c44328763ed218496ecd4f791fb360e9">Services</link></para>
+</listitem>
+            <listitem><para>directory <link linkend="_dir_8e9dd8051ac93b94df5bf0f2975a7b69">Validation</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

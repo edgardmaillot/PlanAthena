@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__analyse_ressources_resultat_dto_8cs_source" xml:lang="en-US">
+<title>AnalyseRessourcesResultatDto.cs</title>
+<indexterm><primary>Facade/Dto/Output/AnalyseRessourcesResultatDto.cs</primary></indexterm>
+Go to the documentation of this file.<programlisting linenumbering="unnumbered"><anchor xml:id="__analyse_ressources_resultat_dto_8cs_source_1l00001"/>00001 <emphasis role="comment">//&#32;PlanAthena.Core.Facade.Dto.Output.AnalyseRessourcesResultatDto.cs</emphasis>
+<anchor xml:id="__analyse_ressources_resultat_dto_8cs_source_1l00002"/>00002 <emphasis role="keyword">using&#32;</emphasis>System;&#32;<emphasis role="comment">//&#32;Pour&#32;Array.Empty</emphasis>
+<anchor xml:id="__analyse_ressources_resultat_dto_8cs_source_1l00003"/>00003 <emphasis role="keyword">using&#32;</emphasis>System.Collections.Generic;
+<anchor xml:id="__analyse_ressources_resultat_dto_8cs_source_1l00004"/>00004 
+<anchor xml:id="__analyse_ressources_resultat_dto_8cs_source_1l00005"/><link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_output">00005</link> <emphasis role="keyword">namespace&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_output">PlanAthena.Core.Facade.Dto.Output</link>
+<anchor xml:id="__analyse_ressources_resultat_dto_8cs_source_1l00006"/>00006 {
+<anchor xml:id="__analyse_ressources_resultat_dto_8cs_source_1l00007"/>00007 &#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;DTO&#32;simplifié&#32;pour&#32;les&#32;résultats&#32;de&#32;l&apos;analyse&#32;P5/P6&#32;pour&#32;le&#32;MVP</emphasis>
+<anchor xml:id="__analyse_ressources_resultat_dto_8cs_source_1l00008"/><link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_output_1a879198eb16ae0bdb9cf6d5c4b7f7921e">00008</link> &#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;record&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_output_1a879198eb16ae0bdb9cf6d5c4b7f7921e">AnalyseRessourcesResultatDto</link>
+<anchor xml:id="__analyse_ressources_resultat_dto_8cs_source_1l00009"/>00009 &#32;&#32;&#32;&#32;{
+<anchor xml:id="__analyse_ressources_resultat_dto_8cs_source_1l00010"/>00010 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Liste&#32;des&#32;OuvrierId&#32;suggérés&#32;comme&#32;ressources&#32;clés.</emphasis>
+<anchor xml:id="__analyse_ressources_resultat_dto_8cs_source_1l00011"/>00011 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;IReadOnlyList&lt;string&gt;&#32;OuvriersClesSuggereIds&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;init;&#32;}&#32;=&#32;Array.Empty&lt;<emphasis role="keywordtype">string</emphasis>&gt;();
+<anchor xml:id="__analyse_ressources_resultat_dto_8cs_source_1l00012"/>00012 
+<anchor xml:id="__analyse_ressources_resultat_dto_8cs_source_1l00013"/>00013 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;D&apos;autres&#32;résultats&#32;d&apos;analyse&#32;simples&#32;pourraient&#32;être&#32;ajoutés&#32;ici&#32;à&#32;l&apos;avenir.</emphasis>
+<anchor xml:id="__analyse_ressources_resultat_dto_8cs_source_1l00014"/>00014 &#32;&#32;&#32;&#32;}
+<anchor xml:id="__analyse_ressources_resultat_dto_8cs_source_1l00015"/>00015 }
+</programlisting></section>

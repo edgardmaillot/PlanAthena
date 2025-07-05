@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_dir_3a791696e16e15231c17d911ae92556b" xml:lang="en-US">
+<title>Application/Interfaces Directory Reference</title>
+<indexterm><primary>Application/Interfaces Directory Reference</primary></indexterm>
+Directory dependency graph for Interfaces:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="dir_3a791696e16e15231c17d911ae92556b_dep.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Files    </title>
+        <itemizedlist>
+            <listitem><para>file <link linkend="__i_calendrier_service_8cs">ICalendrierService.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__i_chantier_setup_input_mapper_8cs">IChantierSetupInputMapper.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__i_chantier_validation_service_8cs">IChantierValidationService.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__i_initial_feasibility_analysis_service_8cs">IInitialFeasibilityAnalysisService.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__i_initialize_and_analyze_chantier_use_case_8cs">IInitializeAndAnalyzeChantierUseCase.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__i_key_resource_suggestion_service_8cs">IKeyResourceSuggestionService.cs</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

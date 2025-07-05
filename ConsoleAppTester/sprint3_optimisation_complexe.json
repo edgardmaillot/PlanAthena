@@ -1,0 +1,157 @@
+{
+  "ChantierId": "CHANTIER_OPTIM_COMPLEXE_01",
+  "Description": "Chantier de test avec plusieurs ouvriers et tâches pour analyse détaillée",
+  "DateDebutSouhaitee": "2028-07-03T00:00:00",
+  "DateFinSouhaitee": "2028-07-31T00:00:00",
+  "CalendrierTravail": {
+    "JoursOuvres": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ],
+    "HeureDebutJournee": 8,
+    "HeuresTravailEffectifParJour": 8,
+    "JoursChomes": []
+  },
+  "Metiers": [
+    {
+      "MetierId": "PLAQUISTE",
+      "Nom": "Plaquisterie"
+    },
+    {
+      "MetierId": "PEINTRE",
+      "Nom": "Peinture"
+    }
+  ],
+  "Ouvriers": [
+    {
+      "OuvrierId": "OUV_PLAQUISTE_1",
+      "Nom": "Martin",
+      "Prenom": "Pierre",
+      "CoutJournalier": 300,
+      "Competences": [
+        {
+          "MetierId": "PLAQUISTE",
+          "Niveau": "Expert"
+        }
+      ]
+    },
+    {
+      "OuvrierId": "OUV_PEINTRE_1",
+      "Nom": "Bernard",
+      "Prenom": "Lucie",
+      "CoutJournalier": 250,
+      "Competences": [
+        {
+          "MetierId": "PEINTRE",
+          "Niveau": "Expert"
+        }
+      ]
+    },
+    {
+      "OuvrierId": "OUV_PEINTRE_2",
+      "Nom": "Thomas",
+      "Prenom": "Jean",
+      "CoutJournalier": 300,
+      "Competences": [
+        {
+          "MetierId": "PEINTRE",
+          "Niveau": "Expert"
+        }
+      ]
+    }
+  ],
+  "Blocs": [
+    {
+      "BlocId": "BLOC_A",
+      "Nom": "Zone Principale",
+      "CapaciteMaxOuvriers": 5
+    }
+  ],
+  "Taches": [
+    {
+      "TacheId": "TACHE_PLACO_1",
+      "Nom": "Placo",
+      "BlocId": "BLOC_A",
+      "HeuresHommeEstimees": 8,
+      "MetierId": "PLAQUISTE",
+      "Dependencies": []
+    },
+    {
+      "TacheId": "TACHE_PEINTURE_1",
+      "Nom": "Peinture Placo",
+      "BlocId": "BLOC_A",
+      "HeuresHommeEstimees": 7,
+      "MetierId": "PEINTRE",
+      "Dependencies": [ "TACHE_PLACO_1" ]
+    },
+    {
+      "TacheId": "TACHE_PEINTURE_2",
+      "Nom": "Peinture Mur 1",
+      "BlocId": "BLOC_A",
+      "HeuresHommeEstimees": 7,
+      "MetierId": "PEINTRE",
+      "Dependencies": []
+    },
+    {
+      "TacheId": "TACHE_PEINTURE_3",
+      "Nom": "Peinture Mur 2",
+      "BlocId": "BLOC_A",
+      "HeuresHommeEstimees": 7,
+      "MetierId": "PEINTRE",
+      "Dependencies": []
+    },
+    {
+      "TacheId": "TACHE_PEINTURE_4",
+      "Nom": "Peinture Mur 3",
+      "BlocId": "BLOC_A",
+      "HeuresHommeEstimees": 7,
+      "MetierId": "PEINTRE",
+      "Dependencies": []
+    },
+    {
+      "TacheId": "TACHE_PEINTURE_5",
+      "Nom": "Peinture Mur 4",
+      "BlocId": "BLOC_A",
+      "HeuresHommeEstimees": 7,
+      "MetierId": "PEINTRE",
+      "Dependencies": []
+    },
+    {
+      "TacheId": "TACHE_PEINTURE_6",
+      "Nom": "Peinture Mur 5",
+      "BlocId": "BLOC_A",
+      "HeuresHommeEstimees": 7,
+      "MetierId": "PEINTRE",
+      "Dependencies": []
+    },
+    {
+      "TacheId": "TACHE_PEINTURE_7",
+      "Nom": "Peinture Mur 6",
+      "BlocId": "BLOC_A",
+      "HeuresHommeEstimees": 7,
+      "MetierId": "PEINTRE",
+      "Dependencies": []
+    },
+    {
+      "TacheId": "TACHE_PEINTURE_8",
+      "Nom": "Finitions 1",
+      "BlocId": "BLOC_A",
+      "HeuresHommeEstimees": 3,
+      "MetierId": "PEINTRE",
+      "Dependencies": []
+    },
+    {
+      "TacheId": "TACHE_PEINTURE_9",
+      "Nom": "Finitions 2",
+      "BlocId": "BLOC_A",
+      "HeuresHommeEstimees": 3,
+      "MetierId": "PEINTRE",
+      "Dependencies": []
+    }
+  ],
+  "Lots": [
+    {
+      "LotId": "LOT_PRINCIPAL\",",
+      "Nom": "Lot Principal",
+      "Priorite": 1,
+      "BlocIds": [ "BLOC_A" ]
+    }
+  ]
+}

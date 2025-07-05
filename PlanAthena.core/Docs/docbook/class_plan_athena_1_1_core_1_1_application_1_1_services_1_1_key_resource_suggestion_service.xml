@@ -1,0 +1,81 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_key_resource_suggestion_service" xml:lang="en-US">
+<title>PlanAthena.Core.Application.Services.KeyResourceSuggestionService Class Reference</title>
+<indexterm><primary>PlanAthena.Core.Application.Services.KeyResourceSuggestionService</primary></indexterm>
+Inheritance diagram for PlanAthena.Core.Application.Services.KeyResourceSuggestionService:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_key_resource_suggestion_service__inherit__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+Collaboration diagram for PlanAthena.Core.Application.Services.KeyResourceSuggestionService:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_key_resource_suggestion_service__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para>Task&lt; List&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id">OuvrierId</link> &gt; &gt; <link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_key_resource_suggestion_service_1a517c003ea49a39e59472b241887f4d5e">SuggererOuvriersClesAsync</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link> chantier)</para>
+
+<para>Suggère des ouvriers clés pour le chantier en se basant sur la charge de travail et la rareté des compétences requises. </para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__key_resource_suggestion_service_8cs_source_1l00010">10</link> of file <link linkend="__key_resource_suggestion_service_8cs_source">KeyResourceSuggestionService.cs</link>.</para>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_key_resource_suggestion_service_1a517c003ea49a39e59472b241887f4d5e"/><section>
+    <title>SuggererOuvriersClesAsync()</title>
+<indexterm><primary>SuggererOuvriersClesAsync</primary><secondary>PlanAthena.Core.Application.Services.KeyResourceSuggestionService</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Application.Services.KeyResourceSuggestionService</primary><secondary>SuggererOuvriersClesAsync</secondary></indexterm>
+<para><computeroutput>Task&lt; List&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id">OuvrierId</link> &gt; &gt; PlanAthena.Core.Application.Services.KeyResourceSuggestionService.SuggererOuvriersClesAsync (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link> chantier)</computeroutput></para><para>
+
+<para>Suggère des ouvriers clés pour le chantier en se basant sur la charge de travail et la rareté des compétences requises. </para>
+</para>
+
+<para>
+                <formalpara>
+                    <title>
+Parameters</title>
+                    <para>
+                    <table frame="all">
+                        <tgroup cols="2" align="left" colsep="1" rowsep="1">
+                        <colspec colwidth="1*"/>
+                        <colspec colwidth="4*"/>
+                        <tbody>
+                            <row>
+<entry>chantier</entry><entry>
+<para>L&apos;agrégat <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link> du domaine, supposé valide et complet.</para>
+</entry>
+                            </row>
+                        </tbody>
+                        </tgroup>
+                    </table>
+                    </para>
+                </formalpara>
+                <formalpara><title>Returns</title>
+
+<para>Une liste d&apos;<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id">OuvrierId</link> des ouvriers suggérés comme clés.</para>
+</formalpara>
+</para>
+<para>
+Implements <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_key_resource_suggestion_service_1a2d757cad66a1c1079570cd44915465c3">PlanAthena.Core.Application.Interfaces.IKeyResourceSuggestionService</link>.</para>
+<para>
+Definition at line <link linkend="__key_resource_suggestion_service_8cs_source_1l00020">20</link> of file <link linkend="__key_resource_suggestion_service_8cs_source">KeyResourceSuggestionService.cs</link>.</para>
+</section>
+<para>
+The documentation for this class was generated from the following file:</para>
+Application/Services/<link linkend="__key_resource_suggestion_service_8cs">KeyResourceSuggestionService.cs</link></section>
+</section>

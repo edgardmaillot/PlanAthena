@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__calendrier_service_8cs_source" xml:lang="en-US">
+<title>CalendrierService.cs</title>
+<indexterm><primary>Infrastructure/Services/CalendrierService.cs</primary></indexterm>
+Go to the documentation of this file.<programlisting linenumbering="unnumbered"><anchor xml:id="__calendrier_service_8cs_source_1l00001"/>00001 <emphasis role="comment">//&#32;PlanAthena.Core.Infrastructure.Services.CalendrierService.cs</emphasis>
+<anchor xml:id="__calendrier_service_8cs_source_1l00002"/>00002 <emphasis role="keyword">using&#32;</emphasis>System;
+<anchor xml:id="__calendrier_service_8cs_source_1l00003"/>00003 <emphasis role="keyword">using&#32;</emphasis>System.Collections.Generic;
+<anchor xml:id="__calendrier_service_8cs_source_1l00004"/>00004 <emphasis role="keyword">using&#32;</emphasis>System.Linq;
+<anchor xml:id="__calendrier_service_8cs_source_1l00005"/>00005 <emphasis role="keyword">using&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_application_1_1_interfaces">PlanAthena.Core.Application.Interfaces</link>;
+<anchor xml:id="__calendrier_service_8cs_source_1l00006"/>00006 <emphasis role="keyword">using&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects">PlanAthena.Core.Domain.ValueObjects</link>;
+<anchor xml:id="__calendrier_service_8cs_source_1l00007"/>00007 <emphasis role="keyword">using&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_input">PlanAthena.Core.Facade.Dto.Input</link>;
+<anchor xml:id="__calendrier_service_8cs_source_1l00008"/>00008 <emphasis role="keyword">using&#32;</emphasis>NodaTime;
+<anchor xml:id="__calendrier_service_8cs_source_1l00009"/>00009 
+<anchor xml:id="__calendrier_service_8cs_source_1l00010"/><link linkend="_namespace_plan_athena_1_1_core_1_1_infrastructure_1_1_services">00010</link> <emphasis role="keyword">namespace&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_infrastructure_1_1_services">PlanAthena.Core.Infrastructure.Services</link>
+<anchor xml:id="__calendrier_service_8cs_source_1l00011"/>00011 {
+<anchor xml:id="__calendrier_service_8cs_source_1l00012"/><link linkend="_class_plan_athena_1_1_core_1_1_infrastructure_1_1_services_1_1_calendrier_service">00012</link> &#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<emphasis role="keyword">class&#32;</emphasis><link linkend="_class_plan_athena_1_1_core_1_1_infrastructure_1_1_services_1_1_calendrier_service">CalendrierService</link>&#32;:&#32;<link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_calendrier_service">ICalendrierService</link>
+<anchor xml:id="__calendrier_service_8cs_source_1l00013"/>00013 &#32;&#32;&#32;&#32;{
+<anchor xml:id="__calendrier_service_8cs_source_1l00014"/><link linkend="_class_plan_athena_1_1_core_1_1_infrastructure_1_1_services_1_1_calendrier_service_1aff651190b753b33472a9d3e3a36bb854">00014</link> &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1ae9cb26e6393b8c21862291b3000f7e3f">CalendrierOuvreChantier</link>&#32;<link linkend="_class_plan_athena_1_1_core_1_1_infrastructure_1_1_services_1_1_calendrier_service_1aff651190b753b33472a9d3e3a36bb854">CreerCalendrierOuvreChantier</link>(
+<anchor xml:id="__calendrier_service_8cs_source_1l00015"/>00015 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_input_1a82f38ff9f5edd829f18fa6a6f15ab45c">CalendrierTravailDefinitionDto</link>&#32;definitionDto,
+<anchor xml:id="__calendrier_service_8cs_source_1l00016"/>00016 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;DateTime?&#32;dateDebutSouhaiteeChantier,
+<anchor xml:id="__calendrier_service_8cs_source_1l00017"/>00017 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;DateTime?&#32;dateFinSouhaiteeChantier)
+<anchor xml:id="__calendrier_service_8cs_source_1l00018"/>00018 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__calendrier_service_8cs_source_1l00019"/>00019 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;ArgumentNullException.ThrowIfNull(definitionDto);
+<anchor xml:id="__calendrier_service_8cs_source_1l00020"/>00020 
+<anchor xml:id="__calendrier_service_8cs_source_1l00021"/>00021 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;var&#32;joursOuvresSet&#32;=&#32;definitionDto.JoursOuvres
+<anchor xml:id="__calendrier_service_8cs_source_1l00022"/>00022 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;.Select(d&#32;=&gt;&#32;(IsoDayOfWeek)d)
+<anchor xml:id="__calendrier_service_8cs_source_1l00023"/>00023 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;.ToHashSet();
+<anchor xml:id="__calendrier_service_8cs_source_1l00024"/>00024 
+<anchor xml:id="__calendrier_service_8cs_source_1l00025"/>00025 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;var&#32;heureDebut&#32;=&#32;<emphasis role="keyword">new</emphasis>&#32;LocalTime(definitionDto.HeureDebutJournee,&#32;0);
+<anchor xml:id="__calendrier_service_8cs_source_1l00026"/>00026 
+<anchor xml:id="__calendrier_service_8cs_source_1l00027"/>00027 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;On&#32;revient&#32;à&#32;Duration.</emphasis>
+<anchor xml:id="__calendrier_service_8cs_source_1l00028"/>00028 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;var&#32;dureeTravail&#32;=&#32;Duration.FromHours(definitionDto.HeuresTravailEffectifParJour);
+<anchor xml:id="__calendrier_service_8cs_source_1l00029"/>00029 
+<anchor xml:id="__calendrier_service_8cs_source_1l00030"/>00030 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;var&#32;joursChomesSet&#32;=&#32;definitionDto.JoursChomes
+<anchor xml:id="__calendrier_service_8cs_source_1l00031"/>00031 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;.Select(d&#32;=&gt;&#32;LocalDate.FromDateTime(d))
+<anchor xml:id="__calendrier_service_8cs_source_1l00032"/>00032 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;.ToHashSet();
+<anchor xml:id="__calendrier_service_8cs_source_1l00033"/>00033 
+<anchor xml:id="__calendrier_service_8cs_source_1l00034"/>00034 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">try</emphasis>
+<anchor xml:id="__calendrier_service_8cs_source_1l00035"/>00035 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__calendrier_service_8cs_source_1l00036"/>00036 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;<emphasis role="keyword">new</emphasis>&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1ae9cb26e6393b8c21862291b3000f7e3f">CalendrierOuvreChantier</link>(
+<anchor xml:id="__calendrier_service_8cs_source_1l00037"/>00037 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;joursOuvresSet,
+<anchor xml:id="__calendrier_service_8cs_source_1l00038"/>00038 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;heureDebut,
+<anchor xml:id="__calendrier_service_8cs_source_1l00039"/>00039 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;dureeTravail,
+<anchor xml:id="__calendrier_service_8cs_source_1l00040"/>00040 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;joursChomesSet);
+<anchor xml:id="__calendrier_service_8cs_source_1l00041"/>00041 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__calendrier_service_8cs_source_1l00042"/>00042 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">catch</emphasis>&#32;(ArgumentException&#32;ex)
+<anchor xml:id="__calendrier_service_8cs_source_1l00043"/>00043 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__calendrier_service_8cs_source_1l00044"/>00044 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">throw</emphasis>&#32;<emphasis role="keyword">new</emphasis>&#32;InvalidOperationException($<emphasis role="stringliteral">&quot;La&#32;définition&#32;du&#32;calendrier&#32;est&#32;invalide&#32;:&#32;{ex.Message}&quot;</emphasis>,&#32;ex);
+<anchor xml:id="__calendrier_service_8cs_source_1l00045"/>00045 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__calendrier_service_8cs_source_1l00046"/>00046 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__calendrier_service_8cs_source_1l00047"/>00047 &#32;&#32;&#32;&#32;}
+<anchor xml:id="__calendrier_service_8cs_source_1l00048"/>00048 }
+</programlisting></section>

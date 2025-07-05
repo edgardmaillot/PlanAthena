@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__facade_2_dependency_injection_8cs" xml:lang="en-US">
+<title>Facade/DependencyInjection.cs File Reference</title>
+<indexterm><primary>Facade/DependencyInjection.cs</primary></indexterm>
+<simplesect>
+    <title>Classes    </title>
+        <itemizedlist>
+            <listitem><para>class <emphasis role="strong">PlanAthena.Core.Application.DependencyInjection</emphasis></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Namespaces    </title>
+        <itemizedlist>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena">PlanAthena</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core">PlanAthena.Core</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_application">PlanAthena.Core.Application</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

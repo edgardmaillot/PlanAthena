@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_dir_54ee5af532192e10024d0ad833a99138" xml:lang="en-US">
+<title>Facade/Dto/Input Directory Reference</title>
+<indexterm><primary>Facade/Dto/Input Directory Reference</primary></indexterm>
+Directory dependency graph for Input:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="dir_54ee5af532192e10024d0ad833a99138_dep.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Files    </title>
+        <itemizedlist>
+            <listitem><para>file <link linkend="__bloc_travail_dto_8cs">BlocTravailDto.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__calendrier_travail_definition_dto_8cs">CalendrierTravailDefinitionDto.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__chantier_setup_input_dto_8cs">ChantierSetupInputDto.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__competence_dto_8cs">CompetenceDto.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__configuration_chef_chantier_dto_8cs">ConfigurationChefChantierDto.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__lot_travaux_dto_8cs">LotTravauxDto.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__metier_dto_8cs">MetierDto.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__ouvrier_dto_8cs">OuvrierDto.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__tache_dto_8cs">TacheDto.cs</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

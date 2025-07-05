@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__periode_planification_8cs" xml:lang="en-US">
+<title>Domain/ValueObjects/PeriodePlanification.cs File Reference</title>
+<indexterm><primary>Domain/ValueObjects/PeriodePlanification.cs</primary></indexterm>
+<simplesect>
+    <title>Namespaces    </title>
+        <itemizedlist>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena">PlanAthena</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core">PlanAthena.Core</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_domain">PlanAthena.Core.Domain</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects">PlanAthena.Core.Domain.ValueObjects</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Variables    </title>
+        <itemizedlist>
+            <listitem><para>record <link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1a5bd67eaf5bc5937af2a7774ff6c5e075">PlanAthena.Core.Domain.ValueObjects.PeriodePlanification</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

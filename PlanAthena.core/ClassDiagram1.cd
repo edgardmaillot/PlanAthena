@@ -1,0 +1,266 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="PlanAthena.Core.Application.Services.ChantierSetupInputMapper" BaseTypeListCollapsed="true">
+    <Position X="36.75" Y="8.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAACAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Application\Services\ChantierSetupInputMapper.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="PlanAthena.Core.Application.Services.ChantierValidationService" BaseTypeListCollapsed="true">
+    <Position X="33.5" Y="7.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AEAAAAAAAAAAAAAAAAAAAAAAEAAABAIAQAgEEAAAAAA=</HashCode>
+      <FileName>Application\Services\ChantierValidationService.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="PlanAthena.Core.Application.Services.InitialFeasibilityAnalysisService" BaseTypeListCollapsed="true">
+    <Position X="29.5" Y="8.75" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Application\Services\InitialFeasibilityAnalysisService.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="PlanAthena.Core.Application.Services.KeyResourceSuggestionService" BaseTypeListCollapsed="true">
+    <Position X="29.5" Y="6.75" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAABAAAAAAAAAAIAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Application\Services\KeyResourceSuggestionService.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="PlanAthena.Core.Application.Validation.ChantierSetupInputDtoValidator">
+    <Position X="29.75" Y="0.5" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAEAAAAAAAAAAAAAAAAAAAAAAAAAgAASAAAgAAAABA=</HashCode>
+      <FileName>Application\Validation\InputDtoValidators.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Application.Validation.CalendrierTravailDefinitionDtoValidator">
+    <Position X="32.75" Y="0.5" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Application\Validation\InputDtoValidators.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Application.Validation.BlocTravailDtoValidator">
+    <Position X="43.75" Y="0.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Application\Validation\InputDtoValidators.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Application.Validation.TacheDtoValidator">
+    <Position X="36" Y="2.25" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAIBAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Application\Validation\InputDtoValidators.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Application.Validation.LotTravauxDtoValidator">
+    <Position X="39" Y="0.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Application\Validation\InputDtoValidators.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Application.Validation.CompetenceDtoValidator">
+    <Position X="36.5" Y="0.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Application\Validation\InputDtoValidators.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Application.Validation.OuvrierDtoValidator">
+    <Position X="32.75" Y="2.25" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAA=</HashCode>
+      <FileName>Application\Validation\InputDtoValidators.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Application.Validation.MetierDtoValidator">
+    <Position X="41.5" Y="0.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAIBAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Application\Validation\InputDtoValidators.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Application.Validation.ConfigurationChefChantierDtoValidator">
+    <Position X="26.5" Y="0.5" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Application\Validation\InputDtoValidators.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Domain.BlocTravail">
+    <Position X="29.5" Y="3.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEAAAAAAAAAAAAAAAAQAACIAAAAAAABAAAgAAAA=</HashCode>
+      <FileName>Domain\BlocTravail.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Domain.Chantier">
+    <Position X="26" Y="3.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAEQBBAgBIAAQAAAABAAIA0AAAAgAAAAAAAIAQA=</HashCode>
+      <FileName>Domain\Chantier.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Domain.Competence" BaseTypeListCollapsed="true">
+    <Position X="23" Y="5.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAIAAAIAAAAAAAAgAAAAAAAAAAAAIAAAAAAAACAAAA=</HashCode>
+      <FileName>Domain\Competence.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="PlanAthena.Core.Domain.Entity&lt;TId&gt;">
+    <Position X="21.75" Y="0.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAgAAAAAAAAAAAAIAAAAAAAAAAAiA=</HashCode>
+      <FileName>Domain\Entity.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="PlanAthena.Core.Domain.LotTravaux">
+    <Position X="20" Y="3.5" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>IAAAAAAAAAAAQAQAAAAAAAACACEAAAAQAAAAAAAAAAA=</HashCode>
+      <FileName>Domain\LotTravaux.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Domain.Metier">
+    <Position X="23.25" Y="3.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAQAAAAAAAAAA=</HashCode>
+      <FileName>Domain\Metier.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Domain.Ouvrier">
+    <Position X="17.25" Y="3.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAABAAAAAAAAAAAAAAAAABAAACgQQAAAACAACAAAAAA=</HashCode>
+      <FileName>Domain\Ouvrier.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Domain.Tache">
+    <Position X="13.25" Y="3.5" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAgAAAAAACAAAAAAAAIACAAAAAgAAABAAAAAAA=</HashCode>
+      <FileName>Domain\Tache.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="PlanAthena.Core.Facade.PlanAthenaCoreFacade">
+    <Position X="33.5" Y="5.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAA=</HashCode>
+      <FileName>Facade\PlanAthenaCoreFacade.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Infrastructure.Services.OrTools.ConstructeurProblemeOrTools" BaseTypeListCollapsed="true">
+    <Position X="45" Y="3.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Services\OrTools\ConstructeurProblemeOrTools.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="PlanAthena.Core.Infrastructure.Services.OrTools.CoutModelBuilder">
+    <Position X="45" Y="7" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAQAAQAAAACAAAAAgAAAAAAAAAAAAAAE=</HashCode>
+      <FileName>Infrastructure\Services\OrTools\CoutModelBuilder.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Infrastructure.Services.OrTools.ReglesCoutHeuresSupp">
+    <Position X="45" Y="9.25" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAIAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Services\OrTools\CoutModelBuilder.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Infrastructure.Services.OrTools.TacheModelBuilder">
+    <Position X="45" Y="4.75" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAAIAAAAAQAAAIAAAAAAAAAAAAAIAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Services\OrTools\TacheModelBuilder.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Infrastructure.Services.CalendrierService" BaseTypeListCollapsed="true">
+    <Position X="40" Y="8.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAQ=</HashCode>
+      <FileName>Infrastructure\Services\CalendrierService.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="PlanAthena.Core.Application.UseCases.ProcessChantierUseCase">
+    <Position X="39.75" Y="3.5" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>iAAAAAgAAAAACCAAAAAgAAAFAAAgAAAAAAAEAAAAAEA=</HashCode>
+      <FileName>Application\UseCases\ProcessChantierUseCase.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Interface Name="PlanAthena.Core.Application.Interfaces.ICalendrierService">
+    <Position X="13.25" Y="8.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAA=</HashCode>
+      <FileName>Application\Interfaces\ICalendrierService.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="PlanAthena.Core.Application.Interfaces.IChantierSetupInputMapper">
+    <Position X="15.75" Y="8.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Application\Interfaces\IChantierSetupInputMapper.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="PlanAthena.Core.Application.Interfaces.IChantierValidationService">
+    <Position X="21" Y="8.75" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAA=</HashCode>
+      <FileName>Application\Interfaces\IChantierValidationService.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="PlanAthena.Core.Application.Interfaces.IConstructeurProblemeOrTools">
+    <Position X="26.25" Y="8.75" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Application\Interfaces\IConstructeurProblemeOrTools.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="PlanAthena.Core.Application.Interfaces.IInitialFeasibilityAnalysisService">
+    <Position X="18.25" Y="8.75" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Application\Interfaces\IInitialFeasibilityAnalysisService.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="PlanAthena.Core.Application.Interfaces.IProcessChantierUseCase">
+    <Position X="23.25" Y="8.75" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEA=</HashCode>
+      <FileName>Application\Interfaces\IProcessChantierUseCase.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="PlanAthena.Core.Application.Interfaces.IKeyResourceSuggestionService">
+    <Position X="26.25" Y="10" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Application\Interfaces\IKeyResourceSuggestionService.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="PlanAthena.Core.Domain.Shared.IHaveDependencies&lt;TId&gt;">
+    <Position X="21" Y="10" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Domain\Shared\IHaveDependencies.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

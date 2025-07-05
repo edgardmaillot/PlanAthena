@@ -1,0 +1,92 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__dependency_graph_8cs_source" xml:lang="en-US">
+<title>DependencyGraph.cs</title>
+<indexterm><primary>Domain/Shared/DependencyGraph.cs</primary></indexterm>
+Go to the documentation of this file.<programlisting linenumbering="unnumbered"><anchor xml:id="__dependency_graph_8cs_source_1l00001"/>00001 <emphasis role="keyword">using&#32;</emphasis>System.Collections.Generic;
+<anchor xml:id="__dependency_graph_8cs_source_1l00002"/>00002 <emphasis role="keyword">using&#32;</emphasis>System.Linq;
+<anchor xml:id="__dependency_graph_8cs_source_1l00003"/>00003 
+<anchor xml:id="__dependency_graph_8cs_source_1l00004"/><link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_shared">00004</link> <emphasis role="keyword">namespace&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_shared">PlanAthena.Core.Domain.Shared</link>
+<anchor xml:id="__dependency_graph_8cs_source_1l00005"/>00005 {
+<anchor xml:id="__dependency_graph_8cs_source_1l00011"/><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_dependency_graph-1-g">00011</link> &#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<emphasis role="keyword">sealed</emphasis>&#32;<emphasis role="keyword">class&#32;</emphasis><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_dependency_graph-1-g_1aa0eb6777b71bef3acdefebbcd11d0b2c">DependencyGraph</link>&lt;TId&gt;&#32;where&#32;TId&#32;:&#32;notnull
+<anchor xml:id="__dependency_graph_8cs_source_1l00012"/>00012 &#32;&#32;&#32;&#32;{
+<anchor xml:id="__dependency_graph_8cs_source_1l00013"/>00013 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">private</emphasis>&#32;readonly&#32;IReadOnlyDictionary&lt;TId,&#32;IReadOnlyList&lt;TId&gt;&gt;&#32;_adjacencyList;
+<anchor xml:id="__dependency_graph_8cs_source_1l00014"/>00014 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">private</emphasis>&#32;readonly&#32;IReadOnlyList&lt;TId&gt;&#32;_nodes;
+<anchor xml:id="__dependency_graph_8cs_source_1l00015"/>00015 
+<anchor xml:id="__dependency_graph_8cs_source_1l00016"/>00016 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">private</emphasis>&#32;<emphasis role="keyword">enum</emphasis>&#32;NodeColor&#32;{&#32;White,&#32;Gray,&#32;Black&#32;}
+<anchor xml:id="__dependency_graph_8cs_source_1l00017"/>00017 
+<anchor xml:id="__dependency_graph_8cs_source_1l00018"/>00018 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;CONSTRUCTEUR&#32;CORRIGÉ&#32;(que&#32;tu&#32;as&#32;déjà)</emphasis>
+<anchor xml:id="__dependency_graph_8cs_source_1l00019"/><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_dependency_graph-1-g_1aa0eb6777b71bef3acdefebbcd11d0b2c">00019</link> &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_dependency_graph-1-g_1aa0eb6777b71bef3acdefebbcd11d0b2c">DependencyGraph</link>(IEnumerable&lt;IHaveDependencies&lt;TId&gt;&gt;&#32;entities)
+<anchor xml:id="__dependency_graph_8cs_source_1l00020"/>00020 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__dependency_graph_8cs_source_1l00021"/>00021 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;var&#32;entityList&#32;=&#32;entities.ToList();
+<anchor xml:id="__dependency_graph_8cs_source_1l00022"/>00022 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;var&#32;adjList&#32;=&#32;entityList.ToDictionary(e&#32;=&gt;&#32;e.Id,&#32;e&#32;=&gt;&#32;<emphasis role="keyword">new</emphasis>&#32;List&lt;TId&gt;());
+<anchor xml:id="__dependency_graph_8cs_source_1l00023"/>00023 
+<anchor xml:id="__dependency_graph_8cs_source_1l00024"/>00024 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">foreach</emphasis>&#32;(var&#32;entity&#32;<emphasis role="keywordflow">in</emphasis>&#32;entityList)
+<anchor xml:id="__dependency_graph_8cs_source_1l00025"/>00025 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__dependency_graph_8cs_source_1l00026"/>00026 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">foreach</emphasis>&#32;(var&#32;dependencyId&#32;<emphasis role="keywordflow">in</emphasis>&#32;entity.Dependencies)
+<anchor xml:id="__dependency_graph_8cs_source_1l00027"/>00027 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__dependency_graph_8cs_source_1l00028"/>00028 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(adjList.ContainsKey(dependencyId))
+<anchor xml:id="__dependency_graph_8cs_source_1l00029"/>00029 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__dependency_graph_8cs_source_1l00030"/>00030 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;adjList[dependencyId].Add(entity.Id);
+<anchor xml:id="__dependency_graph_8cs_source_1l00031"/>00031 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__dependency_graph_8cs_source_1l00032"/>00032 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__dependency_graph_8cs_source_1l00033"/>00033 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__dependency_graph_8cs_source_1l00034"/>00034 
+<anchor xml:id="__dependency_graph_8cs_source_1l00035"/>00035 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;_nodes&#32;=&#32;entityList.Select(e&#32;=&gt;&#32;e.Id).ToList();
+<anchor xml:id="__dependency_graph_8cs_source_1l00036"/>00036 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;_adjacencyList&#32;=&#32;adjList.ToDictionary(kvp&#32;=&gt;&#32;kvp.Key,&#32;kvp&#32;=&gt;&#32;(IReadOnlyList&lt;TId&gt;)kvp.Value.AsReadOnly());
+<anchor xml:id="__dependency_graph_8cs_source_1l00037"/>00037 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__dependency_graph_8cs_source_1l00038"/>00038 
+<anchor xml:id="__dependency_graph_8cs_source_1l00042"/><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_dependency_graph-1-g_1a5fc16ceaa4a10a48f840cb471f4cb0cc">00042</link> &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;IReadOnlyList&lt;IReadOnlyList&lt;TId&gt;&gt;&#32;<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_dependency_graph-1-g_1a5fc16ceaa4a10a48f840cb471f4cb0cc">DetectCycles</link>()
+<anchor xml:id="__dependency_graph_8cs_source_1l00043"/>00043 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__dependency_graph_8cs_source_1l00044"/>00044 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;var&#32;cycles&#32;=&#32;<emphasis role="keyword">new</emphasis>&#32;List&lt;IReadOnlyList&lt;TId&gt;&gt;();
+<anchor xml:id="__dependency_graph_8cs_source_1l00045"/>00045 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;var&#32;colors&#32;=&#32;_nodes.ToDictionary(n&#32;=&gt;&#32;n,&#32;_&#32;=&gt;&#32;NodeColor.White);
+<anchor xml:id="__dependency_graph_8cs_source_1l00046"/>00046 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;var&#32;parent&#32;=&#32;<emphasis role="keyword">new</emphasis>&#32;Dictionary&lt;TId,&#32;TId&gt;();
+<anchor xml:id="__dependency_graph_8cs_source_1l00047"/>00047 
+<anchor xml:id="__dependency_graph_8cs_source_1l00048"/>00048 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">foreach</emphasis>&#32;(var&#32;node&#32;<emphasis role="keywordflow">in</emphasis>&#32;_nodes)
+<anchor xml:id="__dependency_graph_8cs_source_1l00049"/>00049 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__dependency_graph_8cs_source_1l00050"/>00050 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(colors[node]&#32;==&#32;NodeColor.White)
+<anchor xml:id="__dependency_graph_8cs_source_1l00051"/>00051 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__dependency_graph_8cs_source_1l00052"/>00052 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;DetectCyclesDfs(node,&#32;colors,&#32;parent,&#32;cycles);
+<anchor xml:id="__dependency_graph_8cs_source_1l00053"/>00053 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__dependency_graph_8cs_source_1l00054"/>00054 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__dependency_graph_8cs_source_1l00055"/>00055 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">return</emphasis>&#32;cycles;
+<anchor xml:id="__dependency_graph_8cs_source_1l00056"/>00056 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__dependency_graph_8cs_source_1l00057"/>00057 
+<anchor xml:id="__dependency_graph_8cs_source_1l00058"/>00058 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;MÉTHODE&#32;DE&#32;DÉTECTION&#32;CORRIGÉE&#32;(la&#32;ligne&#32;fautive&#32;est&#32;supprimée)</emphasis>
+<anchor xml:id="__dependency_graph_8cs_source_1l00059"/>00059 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">private</emphasis>&#32;<emphasis role="keywordtype">void</emphasis>&#32;DetectCyclesDfs(TId&#32;u,&#32;Dictionary&lt;TId,&#32;NodeColor&gt;&#32;colors,&#32;Dictionary&lt;TId,&#32;TId&gt;&#32;parent,&#32;List&lt;IReadOnlyList&lt;TId&gt;&gt;&#32;cycles)
+<anchor xml:id="__dependency_graph_8cs_source_1l00060"/>00060 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__dependency_graph_8cs_source_1l00061"/>00061 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;colors[u]&#32;=&#32;NodeColor.Gray;
+<anchor xml:id="__dependency_graph_8cs_source_1l00062"/>00062 
+<anchor xml:id="__dependency_graph_8cs_source_1l00063"/>00063 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(_adjacencyList.TryGetValue(u,&#32;out&#32;var&#32;neighbors))
+<anchor xml:id="__dependency_graph_8cs_source_1l00064"/>00064 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__dependency_graph_8cs_source_1l00065"/>00065 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">foreach</emphasis>&#32;(var&#32;v&#32;<emphasis role="keywordflow">in</emphasis>&#32;neighbors)
+<anchor xml:id="__dependency_graph_8cs_source_1l00066"/>00066 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__dependency_graph_8cs_source_1l00067"/>00067 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;La&#32;ligne&#32;&quot;if&#32;(!colors.ContainsKey(v))&quot;&#32;a&#32;été&#32;DÉFINITIVEMENT&#32;supprimée.</emphasis>
+<anchor xml:id="__dependency_graph_8cs_source_1l00068"/>00068 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;C&apos;était&#32;le&#32;bug&#32;qui&#32;subsistait.</emphasis>
+<anchor xml:id="__dependency_graph_8cs_source_1l00069"/>00069 
+<anchor xml:id="__dependency_graph_8cs_source_1l00070"/>00070 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(colors[v]&#32;==&#32;NodeColor.Gray)
+<anchor xml:id="__dependency_graph_8cs_source_1l00071"/>00071 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__dependency_graph_8cs_source_1l00072"/>00072 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Cycle&#32;détecté</emphasis>
+<anchor xml:id="__dependency_graph_8cs_source_1l00073"/>00073 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;var&#32;cycle&#32;=&#32;<emphasis role="keyword">new</emphasis>&#32;List&lt;TId&gt;&#32;{&#32;v&#32;};
+<anchor xml:id="__dependency_graph_8cs_source_1l00074"/>00074 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;var&#32;current&#32;=&#32;u;
+<anchor xml:id="__dependency_graph_8cs_source_1l00075"/>00075 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">while</emphasis>&#32;(!current.Equals(v))
+<anchor xml:id="__dependency_graph_8cs_source_1l00076"/>00076 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__dependency_graph_8cs_source_1l00077"/>00077 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;cycle.Add(current);
+<anchor xml:id="__dependency_graph_8cs_source_1l00078"/>00078 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;current&#32;=&#32;parent[current];
+<anchor xml:id="__dependency_graph_8cs_source_1l00079"/>00079 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__dependency_graph_8cs_source_1l00080"/>00080 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;cycle.Add(v);
+<anchor xml:id="__dependency_graph_8cs_source_1l00081"/>00081 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;cycle.Reverse();
+<anchor xml:id="__dependency_graph_8cs_source_1l00082"/>00082 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;cycles.Add(cycle);
+<anchor xml:id="__dependency_graph_8cs_source_1l00083"/>00083 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__dependency_graph_8cs_source_1l00084"/>00084 
+<anchor xml:id="__dependency_graph_8cs_source_1l00085"/>00085 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(colors[v]&#32;==&#32;NodeColor.White)
+<anchor xml:id="__dependency_graph_8cs_source_1l00086"/>00086 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__dependency_graph_8cs_source_1l00087"/>00087 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;parent[v]&#32;=&#32;u;
+<anchor xml:id="__dependency_graph_8cs_source_1l00088"/>00088 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;DetectCyclesDfs(v,&#32;colors,&#32;parent,&#32;cycles);
+<anchor xml:id="__dependency_graph_8cs_source_1l00089"/>00089 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__dependency_graph_8cs_source_1l00090"/>00090 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__dependency_graph_8cs_source_1l00091"/>00091 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__dependency_graph_8cs_source_1l00092"/>00092 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;colors[u]&#32;=&#32;NodeColor.Black;
+<anchor xml:id="__dependency_graph_8cs_source_1l00093"/>00093 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__dependency_graph_8cs_source_1l00094"/>00094 &#32;&#32;&#32;&#32;}
+<anchor xml:id="__dependency_graph_8cs_source_1l00095"/>00095 }
+</programlisting></section>

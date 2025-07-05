@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__enums_8cs" xml:lang="en-US">
+<title>Facade/Dto/Enums/Enums.cs File Reference</title>
+<indexterm><primary>Facade/Dto/Enums/Enums.cs</primary></indexterm>
+<simplesect>
+    <title>Namespaces    </title>
+        <itemizedlist>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena">PlanAthena</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core">PlanAthena.Core</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_facade">PlanAthena.Core.Facade</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto">PlanAthena.Core.Facade.Dto</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums">PlanAthena.Core.Facade.Dto.Enums</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Enumerations    </title>
+        <itemizedlist>
+            <listitem><para>enum <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccb">PlanAthena.Core.Facade.Dto.Enums.FlexibiliteDate</link> { <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccbadfed4b73514ac8573fa71dfa811dbbcc">PlanAthena.Core.Facade.Dto.Enums.Imperative</link> = 0
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccba13b303a6c0d90897b5375ce901acc445">PlanAthena.Core.Facade.Dto.Enums.Flexible</link> = 1
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccba3cd26345da8d6c0b35e07ae6f682b034">PlanAthena.Core.Facade.Dto.Enums.Preferentielle</link> = 2
+ }</para>
+</listitem>
+            <listitem><para>enum <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319b">PlanAthena.Core.Facade.Dto.Enums.NiveauExpertise</link> { <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319ba5b5417577aa24172ac200296162e77ef">PlanAthena.Core.Facade.Dto.Enums.Debutant</link> = 1
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319ba87be3bf596031e8f6904929e47f8a91d">PlanAthena.Core.Facade.Dto.Enums.Confirme</link> = 2
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319ba0b84df4e0b66e9d55b22eefb55ca928f">PlanAthena.Core.Facade.Dto.Enums.Expert</link> = 3
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319ba528beb25acdeb27994310e1bc88490e6">PlanAthena.Core.Facade.Dto.Enums.Maitre</link> = 4
+ }</para>
+</listitem>
+            <listitem><para>enum <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ab163b8452d21e81928db82c701659177">PlanAthena.Core.Facade.Dto.Enums.EtatTraitementInput</link> { <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ab163b8452d21e81928db82c701659177a9ee75d741ac35acc8046b27bd02f62c1">PlanAthena.Core.Facade.Dto.Enums.Succes</link> = 0
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ab163b8452d21e81928db82c701659177a95f40ef721173e0e15738f12e9aa8541">PlanAthena.Core.Facade.Dto.Enums.SuccesAvecAvertissements</link> = 1
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ab163b8452d21e81928db82c701659177a342e75b275ff3dd42d1c478ad404d8b1">PlanAthena.Core.Facade.Dto.Enums.EchecValidation</link> = 2
+ }</para>
+</listitem>
+            <listitem><para>enum <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a5324d2c00245c35ddd232d4e51316d31">PlanAthena.Core.Facade.Dto.Enums.TypeMessageValidation</link> { <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a5324d2c00245c35ddd232d4e51316d31afe7d2cb7d4db59ae3c13b1d29aa2515e">PlanAthena.Core.Facade.Dto.Enums.Erreur</link> = 1
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a5324d2c00245c35ddd232d4e51316d31ab1ddfcd159764646a117ccae83bd19a9">PlanAthena.Core.Facade.Dto.Enums.Avertissement</link> = 2
+, <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a5324d2c00245c35ddd232d4e51316d31a0f78b20318b5aef4dca6dbae5051960a">PlanAthena.Core.Facade.Dto.Enums.Suggestion</link> = 3
+ }</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

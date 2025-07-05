@@ -1,0 +1,136 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail" xml:lang="en-US">
+<title>PlanAthena.Core.Domain.BlocTravail Class Reference</title>
+<indexterm><primary>PlanAthena.Core.Domain.BlocTravail</primary></indexterm>
+Inheritance diagram for PlanAthena.Core.Domain.BlocTravail:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail__inherit__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+Collaboration diagram for PlanAthena.Core.Domain.BlocTravail:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail_1a37dc507aa8b4dafb45e943856a00b2bc">BlocTravail</link> (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_bloc_id">BlocId</link> id, string nom, <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers">CapaciteOuvriers</link> capaciteMaxOuvriers, IEnumerable&lt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_tache">Tache</link> &gt;? tachesInitiales=null)</para>
+</listitem>
+            <listitem><para><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail_1ad1ca4281a06569133f8282692b43956c">CalculerChargeTotalHeuresHomme</link> ()</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+Public Member Functions inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para>override bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1ab22cd62f66d6349a4b6821db8754dfaf">Equals</link> (object? obj)</para>
+</listitem>
+            <listitem><para>virtual bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a2e3f012f7d67dc2c6865170de7c36377">Equals</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt;? other)</para>
+</listitem>
+            <listitem><para>override int <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1ab742cb22b4a37ce4ee645507a5ed380a">GetHashCode</link> ()</para>
+</listitem>
+        </itemizedlist>
+<simplesect>
+    <title>Properties    </title>
+        <itemizedlist>
+            <listitem><para>string <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail_1a7602162a74d7418c8ceaf4e05e453040">Nom</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers">CapaciteOuvriers</link> <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail_1ab67474f3af622d1eb1774298c6741996">CapaciteMaxOuvriers</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para>IReadOnlyDictionary&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_tache_id">TacheId</link>, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_tache">Tache</link> &gt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail_1a81675936818c7c2f78f1c56a0a7de2e7">Taches</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id">LotId</link>? <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail_1acaa93a79aeeab940a8ff548a3510483b">LotParentId</link><computeroutput> [get, set]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+Properties inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para>TId <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a898f9cc5b41db570a94009b2e919fad9">Id</link><computeroutput> [get, protected set]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+<simplesect>
+    <title>Additional Inherited Members    </title>
+Static Public Member Functions inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para>static bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a14ddee7a3905c3b7c818d600bec1e2f4">operator==</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; left, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; right)</para>
+</listitem>
+            <listitem><para>static bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a2d11ed5b8b82cbee52024de335eb6741">operator!=</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; left, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; right)</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+Protected Member Functions inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link> (TId id)</para>
+</listitem>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a1b1e54a6b442f08688e95331dfd6d277">Entity</link> ()</para>
+</listitem>
+        </itemizedlist>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__bloc_travail_8cs_source_1l00009">9</link> of file <link linkend="__bloc_travail_8cs_source">BlocTravail.cs</link>.</para>
+</section>
+<section>
+<title>Constructor &amp; Destructor Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail_1a37dc507aa8b4dafb45e943856a00b2bc"/><section>
+    <title>BlocTravail()</title>
+<indexterm><primary>BlocTravail</primary><secondary>PlanAthena.Core.Domain.BlocTravail</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.BlocTravail</primary><secondary>BlocTravail</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Domain.BlocTravail.BlocTravail (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_bloc_id">BlocId</link> id, string nom, <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers">CapaciteOuvriers</link> capaciteMaxOuvriers, IEnumerable&lt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_tache">Tache</link> &gt;? tachesInitiales = <computeroutput>null</computeroutput>
+)</computeroutput></para><para>
+Definition at line <link linkend="__bloc_travail_8cs_source_1l00024">24</link> of file <link linkend="__bloc_travail_8cs_source">BlocTravail.cs</link>.</para>
+</section>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail_1ad1ca4281a06569133f8282692b43956c"/><section>
+    <title>CalculerChargeTotalHeuresHomme()</title>
+<indexterm><primary>CalculerChargeTotalHeuresHomme</primary><secondary>PlanAthena.Core.Domain.BlocTravail</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.BlocTravail</primary><secondary>CalculerChargeTotalHeuresHomme</secondary></indexterm>
+<para><computeroutput><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> PlanAthena.Core.Domain.BlocTravail.CalculerChargeTotalHeuresHomme ( )</computeroutput></para><para>
+Definition at line <link linkend="__bloc_travail_8cs_source_1l00053">53</link> of file <link linkend="__bloc_travail_8cs_source">BlocTravail.cs</link>.</para>
+</section>
+</section>
+<section>
+<title>Property Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail_1ab67474f3af622d1eb1774298c6741996"/><section>
+    <title>CapaciteMaxOuvriers</title>
+<indexterm><primary>CapaciteMaxOuvriers</primary><secondary>PlanAthena.Core.Domain.BlocTravail</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.BlocTravail</primary><secondary>CapaciteMaxOuvriers</secondary></indexterm>
+<para><computeroutput><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_capacite_ouvriers">CapaciteOuvriers</link> PlanAthena.Core.Domain.BlocTravail.CapaciteMaxOuvriers<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__bloc_travail_8cs_source_1l00012">12</link> of file <link linkend="__bloc_travail_8cs_source">BlocTravail.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail_1acaa93a79aeeab940a8ff548a3510483b"/><section>
+    <title>LotParentId</title>
+<indexterm><primary>LotParentId</primary><secondary>PlanAthena.Core.Domain.BlocTravail</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.BlocTravail</primary><secondary>LotParentId</secondary></indexterm>
+<para><computeroutput><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id">LotId</link>? PlanAthena.Core.Domain.BlocTravail.LotParentId<computeroutput>[get]</computeroutput>, <computeroutput>[set]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__bloc_travail_8cs_source_1l00022">22</link> of file <link linkend="__bloc_travail_8cs_source">BlocTravail.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail_1a7602162a74d7418c8ceaf4e05e453040"/><section>
+    <title>Nom</title>
+<indexterm><primary>Nom</primary><secondary>PlanAthena.Core.Domain.BlocTravail</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.BlocTravail</primary><secondary>Nom</secondary></indexterm>
+<para><computeroutput>string PlanAthena.Core.Domain.BlocTravail.Nom<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__bloc_travail_8cs_source_1l00011">11</link> of file <link linkend="__bloc_travail_8cs_source">BlocTravail.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_bloc_travail_1a81675936818c7c2f78f1c56a0a7de2e7"/><section>
+    <title>Taches</title>
+<indexterm><primary>Taches</primary><secondary>PlanAthena.Core.Domain.BlocTravail</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.BlocTravail</primary><secondary>Taches</secondary></indexterm>
+<para><computeroutput>IReadOnlyDictionary&lt;<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_tache_id">TacheId</link>, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_tache">Tache</link>&gt; PlanAthena.Core.Domain.BlocTravail.Taches<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__bloc_travail_8cs_source_1l00017">17</link> of file <link linkend="__bloc_travail_8cs_source">BlocTravail.cs</link>.</para>
+</section>
+<para>
+The documentation for this class was generated from the following file:</para>
+Domain/<link linkend="__bloc_travail_8cs">BlocTravail.cs</link></section>
+</section>

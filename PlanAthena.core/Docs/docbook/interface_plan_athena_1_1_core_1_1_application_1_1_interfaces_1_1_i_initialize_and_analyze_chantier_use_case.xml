@@ -1,0 +1,86 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_initialize_and_analyze_chantier_use_case" xml:lang="en-US">
+<title>PlanAthena.Core.Application.Interfaces.IInitializeAndAnalyzeChantierUseCase Interface Reference</title>
+<indexterm><primary>PlanAthena.Core.Application.Interfaces.IInitializeAndAnalyzeChantierUseCase</primary></indexterm>
+<para>
+
+<para>Orchestre le cas d&apos;usage d&apos;initialisation, validation et analyse préliminaire d&apos;un chantier. </para>
+ 
+</para>
+Inheritance diagram for PlanAthena.Core.Application.Interfaces.IInitializeAndAnalyzeChantierUseCase:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_initialize_and_analyze_chantier_use_case__inherit__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+Collaboration diagram for PlanAthena.Core.Application.Interfaces.IInitializeAndAnalyzeChantierUseCase:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_initialize_and_analyze_chantier_use_case__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para>Task&lt; ChantierSetupAnalysisResultDto &gt; <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_initialize_and_analyze_chantier_use_case_1aef3df0bdc0357ed3f0b518a97b504a9d">ExecuteAsync</link> (ChantierSetupInputDto inputDto)</para>
+
+<para>Exécute le processus d&apos;initialisation et d&apos;analyse. </para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+
+<para>Orchestre le cas d&apos;usage d&apos;initialisation, validation et analyse préliminaire d&apos;un chantier. </para>
+<para>
+Definition at line <link linkend="__i_initialize_and_analyze_chantier_use_case_8cs_source_1l00011">11</link> of file <link linkend="__i_initialize_and_analyze_chantier_use_case_8cs_source">IInitializeAndAnalyzeChantierUseCase.cs</link>.</para>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_initialize_and_analyze_chantier_use_case_1aef3df0bdc0357ed3f0b518a97b504a9d"/><section>
+    <title>ExecuteAsync()</title>
+<indexterm><primary>ExecuteAsync</primary><secondary>PlanAthena.Core.Application.Interfaces.IInitializeAndAnalyzeChantierUseCase</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Application.Interfaces.IInitializeAndAnalyzeChantierUseCase</primary><secondary>ExecuteAsync</secondary></indexterm>
+<para><computeroutput>Task&lt; ChantierSetupAnalysisResultDto &gt; PlanAthena.Core.Application.Interfaces.IInitializeAndAnalyzeChantierUseCase.ExecuteAsync (ChantierSetupInputDto inputDto)</computeroutput></para><para>
+
+<para>Exécute le processus d&apos;initialisation et d&apos;analyse. </para>
+</para>
+
+<para>
+                <formalpara>
+                    <title>
+Parameters</title>
+                    <para>
+                    <table frame="all">
+                        <tgroup cols="2" align="left" colsep="1" rowsep="1">
+                        <colspec colwidth="1*"/>
+                        <colspec colwidth="4*"/>
+                        <tbody>
+                            <row>
+<entry>inputDto</entry><entry>
+<para>Les données d&apos;entrée du chantier.</para>
+</entry>
+                            </row>
+                        </tbody>
+                        </tgroup>
+                    </table>
+                    </para>
+                </formalpara>
+                <formalpara><title>Returns</title>
+
+<para>Le résultat de l&apos;analyse et de la validation.</para>
+</formalpara>
+</para>
+<para>
+Implemented in <link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_use_cases_1_1_initialize_and_analyze_chantier_use_case_1abd89881be7139b275b80936991e1e5a7">PlanAthena.Core.Application.UseCases.InitializeAndAnalyzeChantierUseCase</link>.</para>
+</section>
+<para>
+The documentation for this interface was generated from the following file:</para>
+Application/Interfaces/<link linkend="__i_initialize_and_analyze_chantier_use_case_8cs">IInitializeAndAnalyzeChantierUseCase.cs</link></section>
+</section>

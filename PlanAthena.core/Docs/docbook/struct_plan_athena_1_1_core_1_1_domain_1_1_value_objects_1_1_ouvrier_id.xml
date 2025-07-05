@@ -1,0 +1,85 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id" xml:lang="en-US">
+<title>PlanAthena.Core.Domain.ValueObjects.OuvrierId Struct Reference</title>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.OuvrierId</primary></indexterm>
+Collaboration diagram for PlanAthena.Core.Domain.ValueObjects.OuvrierId:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id_1a272e25aa2c66692ef7cd507f89b1370d">OuvrierId</link> (string value)</para>
+</listitem>
+            <listitem><para>override string <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id_1ab71ffb75ba10ec337bca618cbb2f8817">ToString</link> ()</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Static Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para>static implicit <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id_1afe326834da4b939193c156d6d29758fd">operator string</link> (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id">OuvrierId</link> id)</para>
+</listitem>
+            <listitem><para>static implicit <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id_1aac8867398f514383e6b9df7ea9ebae25">operator OuvrierId</link> (string value)</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Properties    </title>
+        <itemizedlist>
+            <listitem><para>string <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id_1a3877f8f84e0aab91efbd1eba150831a3">Value</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__identifiants_8cs_source_1l00073">73</link> of file <link linkend="__identifiants_8cs_source">Identifiants.cs</link>.</para>
+</section>
+<section>
+<title>Constructor &amp; Destructor Documentation</title>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id_1a272e25aa2c66692ef7cd507f89b1370d"/><section>
+    <title>OuvrierId()</title>
+<indexterm><primary>OuvrierId</primary><secondary>PlanAthena.Core.Domain.ValueObjects.OuvrierId</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.OuvrierId</primary><secondary>OuvrierId</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Domain.ValueObjects.OuvrierId.OuvrierId (string value)</computeroutput></para><para>
+Definition at line <link linkend="__identifiants_8cs_source_1l00077">77</link> of file <link linkend="__identifiants_8cs_source">Identifiants.cs</link>.</para>
+</section>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id_1aac8867398f514383e6b9df7ea9ebae25"/><section>
+    <title>operator OuvrierId()</title>
+<indexterm><primary>operator OuvrierId</primary><secondary>PlanAthena.Core.Domain.ValueObjects.OuvrierId</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.OuvrierId</primary><secondary>operator OuvrierId</secondary></indexterm>
+<para><computeroutput>implicit PlanAthena.Core.Domain.ValueObjects.OuvrierId.operator <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id">OuvrierId</link> (string value)<computeroutput>[static]</computeroutput></computeroutput></para></section>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id_1afe326834da4b939193c156d6d29758fd"/><section>
+    <title>operator string()</title>
+<indexterm><primary>operator string</primary><secondary>PlanAthena.Core.Domain.ValueObjects.OuvrierId</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.OuvrierId</primary><secondary>operator string</secondary></indexterm>
+<para><computeroutput>implicit PlanAthena.Core.Domain.ValueObjects.OuvrierId.operator string (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id">OuvrierId</link> id)<computeroutput>[static]</computeroutput></computeroutput></para></section>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id_1ab71ffb75ba10ec337bca618cbb2f8817"/><section>
+    <title>ToString()</title>
+<indexterm><primary>ToString</primary><secondary>PlanAthena.Core.Domain.ValueObjects.OuvrierId</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.OuvrierId</primary><secondary>ToString</secondary></indexterm>
+<para><computeroutput>override string PlanAthena.Core.Domain.ValueObjects.OuvrierId.ToString ( )</computeroutput></para></section>
+</section>
+<section>
+<title>Property Documentation</title>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_ouvrier_id_1a3877f8f84e0aab91efbd1eba150831a3"/><section>
+    <title>Value</title>
+<indexterm><primary>Value</primary><secondary>PlanAthena.Core.Domain.ValueObjects.OuvrierId</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.OuvrierId</primary><secondary>Value</secondary></indexterm>
+<para><computeroutput>string PlanAthena.Core.Domain.ValueObjects.OuvrierId.Value<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__identifiants_8cs_source_1l00075">75</link> of file <link linkend="__identifiants_8cs_source">Identifiants.cs</link>.</para>
+</section>
+<para>
+The documentation for this struct was generated from the following file:</para>
+Domain/ValueObjects/<link linkend="__identifiants_8cs">Identifiants.cs</link></section>
+</section>

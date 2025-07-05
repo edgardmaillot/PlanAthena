@@ -1,0 +1,120 @@
+Structure du dossier
+Le numéro de série du volume est BEF2-C5D3
+D:.
+¦   ClassDiagram1.cd
+¦   Doxyfile
+¦   file.txt
+¦   PlanAthena.core.csproj
+¦   
++---Application
+¦   +---Interfaces
+¦   ¦       ICalendrierService.cs
+¦   ¦       IChantierSetupInputMapper.cs
+¦   ¦       IChantierValidationService.cs
+¦   ¦       IConstructeurProblemeOrTools.cs
+¦   ¦       IInitialFeasibilityAnalysisService.cs
+¦   ¦       IInitializeAndAnalyzeChantierUseCase.cs
+¦   ¦       IKeyResourceSuggestionService.cs
+¦   ¦       
+¦   +---InternalDto
+¦   ¦       ModeleCpSat.cs
+¦   ¦       ProblemeOptimisation.cs
+¦   ¦       
+¦   +---Services
+¦   ¦       ChantierSetupInputMapper.cs
+¦   ¦       ChantierValidationService.cs
+¦   ¦       InitialFeasibilityAnalysisService.cs
+¦   ¦       InitializeAndAnalyzeChantierUseCase.cs
+¦   ¦       KeyResourceSuggestionService.cs
+¦   ¦       
+¦   +---Validation
+¦           InputDtoValidators.cs
+¦           
++---Domain
+¦   ¦   BlocTravail.cs
+¦   ¦   Chantier.cs
+¦   ¦   Competence.cs
+¦   ¦   Entity.cs
+¦   ¦   LotTravaux.cs
+¦   ¦   Metier.cs
+¦   ¦   Ouvrier.cs
+¦   ¦   Tache.cs
+¦   ¦   
+¦   +---Shared
+¦   ¦       DependencyGraph.cs
+¦   ¦       IHaveDependencies.cs
+¦   ¦       
+¦   +---ValueObjects
+¦           CalendrierOuvreChantier.cs
+¦           CapaciteOuvriers.cs
+¦           ConfigurationChantier.cs
+¦           ConfigurationOptimisation.cs
+¦           CoutJournalier.cs
+¦           DureeHeuresHomme.cs
+¦           EchelleTempsOuvree.cs
+¦           Identifiants.cs
+¦           PeriodePlanification.cs
+¦           SlotTemporel.cs
+¦           
++---Facade
+¦   ¦   DependencyInjection.cs
+¦   ¦   PlanAthenaCoreFacade.cs
+¦   ¦   
+¦   +---Dto
+¦       +---Enums
+¦       ¦       Enums.cs
+¦       ¦       
+¦       +---Input
+¦       ¦       BlocTravailDto.cs
+¦       ¦       CalendrierTravailDefinitionDto.cs
+¦       ¦       ChantierOptimizationConfigInputDto.cs
+¦       ¦       ChantierSetupInputDto.cs
+¦       ¦       CompetenceDto.cs
+¦       ¦       ConfigurationChefChantierDto.cs
+¦       ¦       LotTravauxDto.cs
+¦       ¦       MetierDto.cs
+¦       ¦       OuvrierDto.cs
+¦       ¦       TacheDto.cs
+¦       ¦       
+¦       +---Output
+¦               AnalyseRessourcesResultatDto.cs
+¦               ChantierSetupAnalysisResultDto.cs
+¦               MessageValidationDto.cs
+¦               
++---Infrastructure
+¦   ¦   DependencyInjection.cs
+¦   ¦   
+¦   +---Services
+¦       ¦   CalendrierService.cs
+¦       ¦   
+¦       +---OrTools
+¦               ConstructeurProblemeOrTools.cs
+¦               
++---obj
+    ¦   PlanAthena.core.csproj.nuget.dgspec.json
+    ¦   PlanAthena.core.csproj.nuget.g.props
+    ¦   PlanAthena.core.csproj.nuget.g.targets
+    ¦   project.assets.json
+    ¦   project.nuget.cache
+    ¦   
+    +---Debug
+        +---net8.0
+            ¦   .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+            ¦   PlanAthena.core.AssemblyInfo.cs
+            ¦   PlanAthena.core.AssemblyInfoInputs.cache
+            ¦   PlanAthena.core.assets.cache
+            ¦   PlanAthena.core.csproj.AssemblyReference.cache
+            ¦   PlanAthena.core.csproj.BuildWithSkipAnalyzers
+            ¦   PlanAthena.core.csproj.CoreCompileInputs.cache
+            ¦   PlanAthena.core.csproj.FileListAbsolute.txt
+            ¦   PlanAthena.core.dll
+            ¦   PlanAthena.core.GeneratedMSBuildEditorConfig.editorconfig
+            ¦   PlanAthena.core.GlobalUsings.g.cs
+            ¦   PlanAthena.core.pdb
+            ¦   
+            +---ref
+            ¦       PlanAthena.core.dll
+            ¦       
+            +---refint
+                    PlanAthena.core.dll
+                    

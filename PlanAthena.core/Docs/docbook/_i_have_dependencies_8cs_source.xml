@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__i_have_dependencies_8cs_source" xml:lang="en-US">
+<title>IHaveDependencies.cs</title>
+<indexterm><primary>Domain/Shared/IHaveDependencies.cs</primary></indexterm>
+Go to the documentation of this file.<programlisting linenumbering="unnumbered"><anchor xml:id="__i_have_dependencies_8cs_source_1l00001"/>00001 <emphasis role="keyword">using&#32;</emphasis>System.Collections.Generic;
+<anchor xml:id="__i_have_dependencies_8cs_source_1l00002"/>00002 
+<anchor xml:id="__i_have_dependencies_8cs_source_1l00003"/>00003 <emphasis role="keyword">namespace&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_shared">PlanAthena.Core.Domain.Shared</link>
+<anchor xml:id="__i_have_dependencies_8cs_source_1l00004"/>00004 {
+<anchor xml:id="__i_have_dependencies_8cs_source_1l00010"/><link linkend="_interface_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_i_have_dependencies-1-g">00010</link> &#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<emphasis role="keyword">interface&#32;</emphasis>IHaveDependencies&lt;TId&gt;&#32;where&#32;TId&#32;:&#32;notnull
+<anchor xml:id="__i_have_dependencies_8cs_source_1l00011"/>00011 &#32;&#32;&#32;&#32;{
+<anchor xml:id="__i_have_dependencies_8cs_source_1l00012"/><link linkend="_interface_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_i_have_dependencies-1-g_1a4eb637b99814866a8c51d646f4ce16b6">00012</link> &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;TId&#32;<link linkend="_interface_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_i_have_dependencies-1-g_1a4eb637b99814866a8c51d646f4ce16b6">Id</link>&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;}
+<anchor xml:id="__i_have_dependencies_8cs_source_1l00013"/><link linkend="_interface_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_i_have_dependencies-1-g_1aeb6027718bf4bd8f5ac7278e96cf56d0">00013</link> &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;IReadOnlyCollection&lt;TId&gt;&#32;<link linkend="_interface_plan_athena_1_1_core_1_1_domain_1_1_shared_1_1_i_have_dependencies-1-g_1aeb6027718bf4bd8f5ac7278e96cf56d0">Dependencies</link>&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;}&#32;<emphasis role="comment">//&#32;Utilisation&#32;de&#32;IReadOnlyCollection,&#32;plus&#32;générique&#32;que&#32;List&#32;ou&#32;Set</emphasis>
+<anchor xml:id="__i_have_dependencies_8cs_source_1l00014"/>00014 &#32;&#32;&#32;&#32;}
+<anchor xml:id="__i_have_dependencies_8cs_source_1l00015"/>00015 }
+</programlisting></section>

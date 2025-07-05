@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__metier_8cs_source" xml:lang="en-US">
+<title>Metier.cs</title>
+<indexterm><primary>Domain/Metier.cs</primary></indexterm>
+Go to the documentation of this file.<programlisting linenumbering="unnumbered"><anchor xml:id="__metier_8cs_source_1l00001"/>00001 <emphasis role="comment">//&#32;PlanAthena.Core.Domain.Metier.cs</emphasis>
+<anchor xml:id="__metier_8cs_source_1l00002"/>00002 <emphasis role="keyword">using&#32;</emphasis>System;
+<anchor xml:id="__metier_8cs_source_1l00003"/>00003 <emphasis role="keyword">using&#32;</emphasis>System.Collections.Generic;
+<anchor xml:id="__metier_8cs_source_1l00004"/>00004 <emphasis role="keyword">using&#32;</emphasis>System.Linq;
+<anchor xml:id="__metier_8cs_source_1l00005"/>00005 <emphasis role="keyword">using&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects">PlanAthena.Core.Domain.ValueObjects</link>;
+<anchor xml:id="__metier_8cs_source_1l00006"/>00006 
+<anchor xml:id="__metier_8cs_source_1l00007"/>00007 <emphasis role="keyword">namespace&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_domain">PlanAthena.Core.Domain</link>
+<anchor xml:id="__metier_8cs_source_1l00008"/>00008 {
+<anchor xml:id="__metier_8cs_source_1l00009"/><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier">00009</link> &#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<emphasis role="keyword">class&#32;</emphasis><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1a172dd3d69f7f04a320a49ec3d742bb26">Metier</link>&#32;:&#32;<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt;MetierId&gt;
+<anchor xml:id="__metier_8cs_source_1l00010"/>00010 &#32;&#32;&#32;&#32;{
+<anchor xml:id="__metier_8cs_source_1l00011"/><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1ac40514d321abf35d2afc3c6ddebfbf23">00011</link> &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<emphasis role="keywordtype">string</emphasis>&#32;<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1ac40514d321abf35d2afc3c6ddebfbf23">Nom</link>&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;}&#32;<emphasis role="comment">//&#32;Pas&#32;de&#32;private&#32;set,&#32;initialisé&#32;au&#32;constructeur</emphasis>
+<anchor xml:id="__metier_8cs_source_1l00012"/><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1ab973fcb0206c5355450255a83686f5cd">00012</link> &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;IReadOnlySet&lt;MetierId&gt;&#32;<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1ab973fcb0206c5355450255a83686f5cd">PrerequisMetierIds</link>&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;}
+<anchor xml:id="__metier_8cs_source_1l00013"/>00013 
+<anchor xml:id="__metier_8cs_source_1l00014"/><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1a172dd3d69f7f04a320a49ec3d742bb26">00014</link> &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1a172dd3d69f7f04a320a49ec3d742bb26">Metier</link>(<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_metier_id">MetierId</link>&#32;<emphasis role="keywordtype">id</emphasis>,&#32;<emphasis role="keywordtype">string</emphasis>&#32;nom,&#32;IEnumerable&lt;MetierId&gt;?&#32;prerequisMetierIds&#32;=&#32;<emphasis role="keyword">null</emphasis>)
+<anchor xml:id="__metier_8cs_source_1l00015"/>00015 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;:&#32;base(id)
+<anchor xml:id="__metier_8cs_source_1l00016"/>00016 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__metier_8cs_source_1l00017"/>00017 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(<emphasis role="keywordtype">string</emphasis>.IsNullOrWhiteSpace(nom))
+<anchor xml:id="__metier_8cs_source_1l00018"/>00018 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">throw</emphasis>&#32;<emphasis role="keyword">new</emphasis>&#32;ArgumentException(<emphasis role="stringliteral">&quot;Le&#32;nom&#32;du&#32;métier&#32;ne&#32;peut&#32;pas&#32;être&#32;vide.&quot;</emphasis>,&#32;nameof(nom));
+<anchor xml:id="__metier_8cs_source_1l00019"/>00019 
+<anchor xml:id="__metier_8cs_source_1l00020"/>00020 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1ac40514d321abf35d2afc3c6ddebfbf23">Nom</link>&#32;=&#32;nom;
+<anchor xml:id="__metier_8cs_source_1l00021"/>00021 
+<anchor xml:id="__metier_8cs_source_1l00022"/>00022 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;var&#32;tempPrerequis&#32;=&#32;<emphasis role="keyword">new</emphasis>&#32;HashSet&lt;MetierId&gt;();
+<anchor xml:id="__metier_8cs_source_1l00023"/>00023 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(prerequisMetierIds&#32;!=&#32;<emphasis role="keyword">null</emphasis>)
+<anchor xml:id="__metier_8cs_source_1l00024"/>00024 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__metier_8cs_source_1l00025"/>00025 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">foreach</emphasis>&#32;(var&#32;prerequisId&#32;<emphasis role="keywordflow">in</emphasis>&#32;prerequisMetierIds)
+<anchor xml:id="__metier_8cs_source_1l00026"/>00026 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__metier_8cs_source_1l00027"/>00027 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(prerequisId.Equals(<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a898f9cc5b41db570a94009b2e919fad9">Id</link>))&#32;<emphasis role="comment">//&#32;Validation&#32;à&#32;la&#32;construction</emphasis>
+<anchor xml:id="__metier_8cs_source_1l00028"/>00028 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">throw</emphasis>&#32;<emphasis role="keyword">new</emphasis>&#32;InvalidOperationException(<emphasis role="stringliteral">&quot;Un&#32;métier&#32;ne&#32;peut&#32;pas&#32;être&#32;son&#32;propre&#32;prérequis.&quot;</emphasis>);
+<anchor xml:id="__metier_8cs_source_1l00029"/>00029 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;tempPrerequis.Add(prerequisId);
+<anchor xml:id="__metier_8cs_source_1l00030"/>00030 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__metier_8cs_source_1l00031"/>00031 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__metier_8cs_source_1l00032"/>00032 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1ab973fcb0206c5355450255a83686f5cd">PrerequisMetierIds</link>&#32;=&#32;tempPrerequis;&#32;<emphasis role="comment">//&#32;Assignation&#32;à&#32;la&#32;propriété&#32;IReadOnlySet</emphasis>
+<anchor xml:id="__metier_8cs_source_1l00033"/>00033 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__metier_8cs_source_1l00034"/>00034 
+<anchor xml:id="__metier_8cs_source_1l00035"/>00035 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Pas&#32;de&#32;méthodes&#32;de&#32;modification&#32;(ModifierNom,&#32;AjouterPrerequis,&#32;RetirerPrerequis)</emphasis>
+<anchor xml:id="__metier_8cs_source_1l00036"/>00036 
+<anchor xml:id="__metier_8cs_source_1l00037"/>00037 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Constructeur&#32;protégé&#32;pour&#32;ORM&#32;/&#32;sérialisation&#32;si&#32;un&#32;jour&#32;pertinent,&#32;mais&#32;inutile&#32;pour&#32;notre&#32;cas&#32;stateless.</emphasis>
+<anchor xml:id="__metier_8cs_source_1l00038"/>00038 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;On&#32;pourrait&#32;même&#32;le&#32;supprimer&#32;si&#32;on&#32;est&#32;stricts&#32;sur&#32;le&#32;fait&#32;qu&apos;il&#32;n&apos;y&#32;aura&#32;jamais&#32;de&#32;persistance/ORM&#32;dans&#32;PA.core.</emphasis>
+<anchor xml:id="__metier_8cs_source_1l00039"/>00039 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Pour&#32;l&apos;instant,&#32;le&#32;garder&#32;ne&#32;nuit&#32;pas.</emphasis>
+<anchor xml:id="__metier_8cs_source_1l00040"/><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1ac0868e81e7e3a3f7eba8e2e195b51368">00040</link> &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">protected</emphasis>&#32;<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_metier_1ac0868e81e7e3a3f7eba8e2e195b51368">Metier</link>()&#32;:&#32;base()&#32;{&#32;}
+<anchor xml:id="__metier_8cs_source_1l00041"/>00041 &#32;&#32;&#32;&#32;}
+<anchor xml:id="__metier_8cs_source_1l00042"/>00042 }
+</programlisting></section>

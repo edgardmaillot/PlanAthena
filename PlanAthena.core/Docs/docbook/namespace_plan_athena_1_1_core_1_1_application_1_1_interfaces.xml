@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_namespace_plan_athena_1_1_core_1_1_application_1_1_interfaces" xml:lang="en-US">
+<title>PlanAthena.Core.Application.Interfaces Namespace Reference</title>
+<indexterm><primary>PlanAthena.Core.Application.Interfaces</primary></indexterm>
+<simplesect>
+    <title>Classes    </title>
+        <itemizedlist>
+            <listitem><para>interface <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_calendrier_service">ICalendrierService</link></para>
+
+<para>Service responsable de la création et de la gestion de la logique du calendrier ouvré. </para>
+</listitem>
+            <listitem><para>interface <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_chantier_setup_input_mapper">IChantierSetupInputMapper</link></para>
+
+<para>Responsable du mapping des DTOs d&apos;entrée vers le modèle de domaine (Agrégat <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link>). Peut également effectuer des validations de format de base et retourner des erreurs de mapping. </para>
+</listitem>
+            <listitem><para>interface <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_chantier_validation_service">IChantierValidationService</link></para>
+
+<para>Service responsable de la validation complète des données d&apos;un chantier, incluant les validations structurelles, de références croisées et de cycles. </para>
+</listitem>
+            <listitem><para>interface <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_initial_feasibility_analysis_service">IInitialFeasibilityAnalysisService</link></para>
+
+<para>Effectue une analyse préliminaire de faisabilité sur un chantier validé. Identifie les alertes majeures (ex: couverture des métiers, déséquilibres charge/capacité initiaux). </para>
+</listitem>
+            <listitem><para>interface <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_initialize_and_analyze_chantier_use_case">IInitializeAndAnalyzeChantierUseCase</link></para>
+
+<para>Orchestre le cas d&apos;usage d&apos;initialisation, validation et analyse préliminaire d&apos;un chantier. </para>
+</listitem>
+            <listitem><para>interface <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_key_resource_suggestion_service">IKeyResourceSuggestionService</link></para>
+
+<para>Analyse le chantier pour suggérer des ressources (ouvriers) clés si non entièrement fournies ou pour valider celles fournies par le CdC. </para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_class_plan_athena_1_1_core_1_1_facade_1_1_plan_athena_core_facade" xml:lang="en-US">
+<title>PlanAthena.Core.Facade.PlanAthenaCoreFacade Class Reference</title>
+<indexterm><primary>PlanAthena.Core.Facade.PlanAthenaCoreFacade</primary></indexterm>
+Collaboration diagram for PlanAthena.Core.Facade.PlanAthenaCoreFacade:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_facade_1_1_plan_athena_core_facade__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_facade_1_1_plan_athena_core_facade_1a129a0aa5b1c48d21fd5f79a999c54a0b">PlanAthenaCoreFacade</link> (IServiceProvider serviceProvider)</para>
+</listitem>
+            <listitem><para>async Task&lt; ChantierSetupAnalysisResultDto &gt; <link linkend="_class_plan_athena_1_1_core_1_1_facade_1_1_plan_athena_core_facade_1ace93e754cb90a954204d712c3ede88fb">InitializeAndAnalyzeChantierAsync</link> (ChantierSetupInputDto inputDto)</para>
+
+<para>Point d&apos;entrée pour initialiser, valider et effectuer une analyse préliminaire d&apos;un chantier. </para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__plan_athena_core_facade_8cs_source_1l00011">11</link> of file <link linkend="__plan_athena_core_facade_8cs_source">PlanAthenaCoreFacade.cs</link>.</para>
+</section>
+<section>
+<title>Constructor &amp; Destructor Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_facade_1_1_plan_athena_core_facade_1a129a0aa5b1c48d21fd5f79a999c54a0b"/><section>
+    <title>PlanAthenaCoreFacade()</title>
+<indexterm><primary>PlanAthenaCoreFacade</primary><secondary>PlanAthena.Core.Facade.PlanAthenaCoreFacade</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.PlanAthenaCoreFacade</primary><secondary>PlanAthenaCoreFacade</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Facade.PlanAthenaCoreFacade.PlanAthenaCoreFacade (IServiceProvider serviceProvider)</computeroutput></para><para>
+Definition at line <link linkend="__plan_athena_core_facade_8cs_source_1l00018">18</link> of file <link linkend="__plan_athena_core_facade_8cs_source">PlanAthenaCoreFacade.cs</link>.</para>
+</section>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_facade_1_1_plan_athena_core_facade_1ace93e754cb90a954204d712c3ede88fb"/><section>
+    <title>InitializeAndAnalyzeChantierAsync()</title>
+<indexterm><primary>InitializeAndAnalyzeChantierAsync</primary><secondary>PlanAthena.Core.Facade.PlanAthenaCoreFacade</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Facade.PlanAthenaCoreFacade</primary><secondary>InitializeAndAnalyzeChantierAsync</secondary></indexterm>
+<para><computeroutput>async Task&lt; ChantierSetupAnalysisResultDto &gt; PlanAthena.Core.Facade.PlanAthenaCoreFacade.InitializeAndAnalyzeChantierAsync (ChantierSetupInputDto inputDto)</computeroutput></para><para>
+
+<para>Point d&apos;entrée pour initialiser, valider et effectuer une analyse préliminaire d&apos;un chantier. </para>
+</para>
+<para>
+Definition at line <link linkend="__plan_athena_core_facade_8cs_source_1l00026">26</link> of file <link linkend="__plan_athena_core_facade_8cs_source">PlanAthenaCoreFacade.cs</link>.</para>
+</section>
+<para>
+The documentation for this class was generated from the following file:</para>
+Facade/<link linkend="__plan_athena_core_facade_8cs">PlanAthenaCoreFacade.cs</link></section>
+</section>

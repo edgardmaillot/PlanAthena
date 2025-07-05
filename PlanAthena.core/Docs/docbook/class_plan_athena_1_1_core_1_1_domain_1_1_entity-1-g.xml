@@ -1,0 +1,163 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g" xml:lang="en-US">
+<title>PlanAthena.Core.Domain.Entity&lt; TId &gt; Class Template Reference</title>
+<indexterm><primary>PlanAthena.Core.Domain.Entity&lt; TId &gt;</primary></indexterm>
+<para>
+
+<para>Classe de base pour les entités du domaine. Fournit une gestion de l&apos;identité et de l&apos;égalité basée sur l&apos;ID. </para>
+ 
+</para>
+Inheritance diagram for PlanAthena.Core.Domain.Entity&lt; TId &gt;:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g__inherit__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+Collaboration diagram for PlanAthena.Core.Domain.Entity&lt; TId &gt;:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para>override bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1ab22cd62f66d6349a4b6821db8754dfaf">Equals</link> (object? obj)</para>
+</listitem>
+            <listitem><para>virtual bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a2e3f012f7d67dc2c6865170de7c36377">Equals</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt;? other)</para>
+</listitem>
+            <listitem><para>override int <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1ab742cb22b4a37ce4ee645507a5ed380a">GetHashCode</link> ()</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Static Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para>static bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a14ddee7a3905c3b7c818d600bec1e2f4">operator==</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; left, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; right)</para>
+</listitem>
+            <listitem><para>static bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a2d11ed5b8b82cbee52024de335eb6741">operator!=</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; left, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; right)</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Protected Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link> (TId id)</para>
+</listitem>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a1b1e54a6b442f08688e95331dfd6d277">Entity</link> ()</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Properties    </title>
+        <itemizedlist>
+            <listitem><para>TId <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a898f9cc5b41db570a94009b2e919fad9">Id</link><computeroutput> [get, protected set]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+
+<para>Classe de base pour les entités du domaine. Fournit une gestion de l&apos;identité et de l&apos;égalité basée sur l&apos;ID. </para>
+
+
+
+<para>
+                <formalpara>
+                    <title>
+Template Parameters</title>
+                    <para>
+                    <table frame="all">
+                        <tgroup cols="2" align="left" colsep="1" rowsep="1">
+                        <colspec colwidth="1*"/>
+                        <colspec colwidth="4*"/>
+                        <tbody>
+                            <row>
+<entry>TId</entry><entry>
+<para>Le type de l&apos;identifiant de l&apos;entité.</para>
+</entry>
+                            </row>
+                        </tbody>
+                        </tgroup>
+                    </table>
+                    </para>
+                </formalpara>
+                </para>
+<simplesect><title>Type Constraints</title>
+<para><emphasis role="strong">TId:notnull</emphasis></para>
+</simplesect>
+<para>
+Definition at line <link linkend="__entity_8cs_source_1l00011">11</link> of file <link linkend="__entity_8cs_source">Entity.cs</link>.</para>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a1b1e54a6b442f08688e95331dfd6d277"/><section>
+    <title>Entity()<computeroutput>[1/2]</computeroutput></title>
+<indexterm><primary>Entity</primary><secondary>PlanAthena.Core.Domain.Entity&lt; TId &gt;</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Entity&lt; TId &gt;</primary><secondary>Entity</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Domain.Entity&lt; TId &gt;.Entity ( )<computeroutput>[protected]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__entity_8cs_source_1l00029">29</link> of file <link linkend="__entity_8cs_source">Entity.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014"/><section>
+    <title>Entity()<computeroutput>[2/2]</computeroutput></title>
+<indexterm><primary>Entity</primary><secondary>PlanAthena.Core.Domain.Entity&lt; TId &gt;</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Entity&lt; TId &gt;</primary><secondary>Entity</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Domain.Entity&lt; TId &gt;.Entity (TId id)<computeroutput>[protected]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__entity_8cs_source_1l00016">16</link> of file <link linkend="__entity_8cs_source">Entity.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a2e3f012f7d67dc2c6865170de7c36377"/><section>
+    <title>Equals()<computeroutput>[1/2]</computeroutput></title>
+<indexterm><primary>Equals</primary><secondary>PlanAthena.Core.Domain.Entity&lt; TId &gt;</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Entity&lt; TId &gt;</primary><secondary>Equals</secondary></indexterm>
+<para><computeroutput>virtual bool PlanAthena.Core.Domain.Entity&lt; TId &gt;.Equals (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt;? other)<computeroutput>[virtual]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__entity_8cs_source_1l00037">37</link> of file <link linkend="__entity_8cs_source">Entity.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1ab22cd62f66d6349a4b6821db8754dfaf"/><section>
+    <title>Equals()<computeroutput>[2/2]</computeroutput></title>
+<indexterm><primary>Equals</primary><secondary>PlanAthena.Core.Domain.Entity&lt; TId &gt;</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Entity&lt; TId &gt;</primary><secondary>Equals</secondary></indexterm>
+<para><computeroutput>override bool PlanAthena.Core.Domain.Entity&lt; TId &gt;.Equals (object? obj)</computeroutput></para><para>
+Definition at line <link linkend="__entity_8cs_source_1l00032">32</link> of file <link linkend="__entity_8cs_source">Entity.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1ab742cb22b4a37ce4ee645507a5ed380a"/><section>
+    <title>GetHashCode()</title>
+<indexterm><primary>GetHashCode</primary><secondary>PlanAthena.Core.Domain.Entity&lt; TId &gt;</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Entity&lt; TId &gt;</primary><secondary>GetHashCode</secondary></indexterm>
+<para><computeroutput>override int PlanAthena.Core.Domain.Entity&lt; TId &gt;.GetHashCode ( )</computeroutput></para><para>
+Definition at line <link linkend="__entity_8cs_source_1l00069">69</link> of file <link linkend="__entity_8cs_source">Entity.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a2d11ed5b8b82cbee52024de335eb6741"/><section>
+    <title>operator!=()</title>
+<indexterm><primary>operator!=</primary><secondary>PlanAthena.Core.Domain.Entity&lt; TId &gt;</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Entity&lt; TId &gt;</primary><secondary>operator!=</secondary></indexterm>
+<para><computeroutput>bool PlanAthena.Core.Domain.Entity&lt; TId &gt;.operator!= (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; left, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; right)<computeroutput>[static]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__entity_8cs_source_1l00064">64</link> of file <link linkend="__entity_8cs_source">Entity.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a14ddee7a3905c3b7c818d600bec1e2f4"/><section>
+    <title>operator==()</title>
+<indexterm><primary>operator==</primary><secondary>PlanAthena.Core.Domain.Entity&lt; TId &gt;</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Entity&lt; TId &gt;</primary><secondary>operator==</secondary></indexterm>
+<para><computeroutput>bool PlanAthena.Core.Domain.Entity&lt; TId &gt;.operator== (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; left, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; right)<computeroutput>[static]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__entity_8cs_source_1l00055">55</link> of file <link linkend="__entity_8cs_source">Entity.cs</link>.</para>
+</section>
+</section>
+<section>
+<title>Property Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a898f9cc5b41db570a94009b2e919fad9"/><section>
+    <title>Id</title>
+<indexterm><primary>Id</primary><secondary>PlanAthena.Core.Domain.Entity&lt; TId &gt;</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.Entity&lt; TId &gt;</primary><secondary>Id</secondary></indexterm>
+<para><computeroutput>TId PlanAthena.Core.Domain.Entity&lt; TId &gt;.Id<computeroutput>[get]</computeroutput>, <computeroutput>[protected set]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__entity_8cs_source_1l00014">14</link> of file <link linkend="__entity_8cs_source">Entity.cs</link>.</para>
+</section>
+<para>
+The documentation for this class was generated from the following file:</para>
+Domain/<link linkend="__entity_8cs">Entity.cs</link></section>
+</section>

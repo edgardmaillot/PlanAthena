@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__analyse_ressources_resultat_dto_8cs" xml:lang="en-US">
+<title>Facade/Dto/Output/AnalyseRessourcesResultatDto.cs File Reference</title>
+<indexterm><primary>Facade/Dto/Output/AnalyseRessourcesResultatDto.cs</primary></indexterm>
+<simplesect>
+    <title>Namespaces    </title>
+        <itemizedlist>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena">PlanAthena</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core">PlanAthena.Core</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_facade">PlanAthena.Core.Facade</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto">PlanAthena.Core.Facade.Dto</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_output">PlanAthena.Core.Facade.Dto.Output</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Variables    </title>
+        <itemizedlist>
+            <listitem><para>record <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_output_1a879198eb16ae0bdb9cf6d5c4b7f7921e">PlanAthena.Core.Facade.Dto.Output.AnalyseRessourcesResultatDto</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

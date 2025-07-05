@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_dir_4ad6c4ce518a9fa81f4ccf8af5f59991" xml:lang="en-US">
+<title>obj/Debug/net8.0 Directory Reference</title>
+<indexterm><primary>obj/Debug/net8.0 Directory Reference</primary></indexterm>
+Directory dependency graph for net8.0:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="dir_4ad6c4ce518a9fa81f4ccf8af5f59991_dep.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Files    </title>
+        <itemizedlist>
+            <listitem><para>file <link linkend="__8_n_e_t_core_app_00_version_0av8_80_8_assembly_attributes_8cs">.NETCoreApp,Version=v8.0.AssemblyAttributes.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__plan_athena_8core_8_assembly_info_8cs">PlanAthena.core.AssemblyInfo.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__plan_athena_8core_8_global_usings_8g_8cs">PlanAthena.core.GlobalUsings.g.cs</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

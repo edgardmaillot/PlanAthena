@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_dir_c44328763ed218496ecd4f791fb360e9" xml:lang="en-US">
+<title>Application/Services Directory Reference</title>
+<indexterm><primary>Application/Services Directory Reference</primary></indexterm>
+Directory dependency graph for Services:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="dir_c44328763ed218496ecd4f791fb360e9_dep.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Files    </title>
+        <itemizedlist>
+            <listitem><para>file <link linkend="__chantier_setup_input_mapper_8cs">ChantierSetupInputMapper.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__chantier_validation_service_8cs">ChantierValidationService.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__initial_feasibility_analysis_service_8cs">InitialFeasibilityAnalysisService.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__initialize_and_analyze_chantier_use_case_8cs">InitializeAndAnalyzeChantierUseCase.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__key_resource_suggestion_service_8cs">KeyResourceSuggestionService.cs</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

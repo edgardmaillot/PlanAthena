@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__periode_planification_8cs_source" xml:lang="en-US">
+<title>PeriodePlanification.cs</title>
+<indexterm><primary>Domain/ValueObjects/PeriodePlanification.cs</primary></indexterm>
+Go to the documentation of this file.<programlisting linenumbering="unnumbered"><anchor xml:id="__periode_planification_8cs_source_1l00001"/>00001 <emphasis role="comment">//&#32;PlanAthena.Core.Domain.ValueObjects.PeriodePlanification.cs</emphasis>
+<anchor xml:id="__periode_planification_8cs_source_1l00002"/>00002 <emphasis role="keyword">using&#32;</emphasis>System;
+<anchor xml:id="__periode_planification_8cs_source_1l00003"/>00003 <emphasis role="keyword">using&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums">PlanAthena.Core.Facade.Dto.Enums</link>;&#32;<emphasis role="comment">//&#32;Pour&#32;FlexibiliteDate</emphasis>
+<anchor xml:id="__periode_planification_8cs_source_1l00004"/>00004 
+<anchor xml:id="__periode_planification_8cs_source_1l00005"/>00005 <emphasis role="keyword">namespace&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects">PlanAthena.Core.Domain.ValueObjects</link>
+<anchor xml:id="__periode_planification_8cs_source_1l00006"/>00006 {
+<anchor xml:id="__periode_planification_8cs_source_1l00007"/><link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1a5bd67eaf5bc5937af2a7774ff6c5e075">00007</link> &#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;record&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1a5bd67eaf5bc5937af2a7774ff6c5e075">PeriodePlanification</link>&#32;<emphasis role="comment">//&#32;record&#32;class&#32;pour&#32;nullabilité&#32;facile</emphasis>
+<anchor xml:id="__periode_planification_8cs_source_1l00008"/>00008 &#32;&#32;&#32;&#32;{
+<anchor xml:id="__periode_planification_8cs_source_1l00009"/>00009 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;DateTime?&#32;DateDebut&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;}
+<anchor xml:id="__periode_planification_8cs_source_1l00010"/>00010 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;DateTime?&#32;DateFin&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;}
+<anchor xml:id="__periode_planification_8cs_source_1l00011"/>00011 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccb">FlexibiliteDate</link>&#32;FlexibiliteDebut&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;}
+<anchor xml:id="__periode_planification_8cs_source_1l00012"/>00012 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccb">FlexibiliteDate</link>&#32;FlexibiliteFin&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;}
+<anchor xml:id="__periode_planification_8cs_source_1l00013"/>00013 
+<anchor xml:id="__periode_planification_8cs_source_1l00014"/>00014 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Constructeur&#32;pour&#32;initialiser&#32;les&#32;propriétés</emphasis>
+<anchor xml:id="__periode_planification_8cs_source_1l00015"/>00015 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1a5bd67eaf5bc5937af2a7774ff6c5e075">PeriodePlanification</link>(
+<anchor xml:id="__periode_planification_8cs_source_1l00016"/>00016 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;DateTime?&#32;dateDebut,
+<anchor xml:id="__periode_planification_8cs_source_1l00017"/>00017 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;DateTime?&#32;dateFin,
+<anchor xml:id="__periode_planification_8cs_source_1l00018"/>00018 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccb">FlexibiliteDate</link>&#32;flexibiliteDebut&#32;=&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccb">FlexibiliteDate</link>.Flexible,
+<anchor xml:id="__periode_planification_8cs_source_1l00019"/>00019 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccb">FlexibiliteDate</link>&#32;flexibiliteFin&#32;=&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ac0019bfa2486e29ec344584031479ccb">FlexibiliteDate</link>.Flexible)
+<anchor xml:id="__periode_planification_8cs_source_1l00020"/>00020 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__periode_planification_8cs_source_1l00021"/>00021 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">if</emphasis>&#32;(dateDebut.HasValue&#32;&amp;&amp;&#32;dateFin.HasValue&#32;&amp;&amp;&#32;dateDebut.Value&#32;&gt;&#32;dateFin.Value)
+<anchor xml:id="__periode_planification_8cs_source_1l00022"/>00022 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;{
+<anchor xml:id="__periode_planification_8cs_source_1l00023"/>00023 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keywordflow">throw</emphasis>&#32;<emphasis role="keyword">new</emphasis>&#32;ArgumentException(<emphasis role="stringliteral">&quot;La&#32;date&#32;de&#32;début&#32;ne&#32;peut&#32;pas&#32;être&#32;postérieure&#32;à&#32;la&#32;date&#32;de&#32;fin.&quot;</emphasis>);
+<anchor xml:id="__periode_planification_8cs_source_1l00024"/>00024 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__periode_planification_8cs_source_1l00025"/>00025 
+<anchor xml:id="__periode_planification_8cs_source_1l00026"/>00026 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;DateDebut&#32;=&#32;dateDebut;
+<anchor xml:id="__periode_planification_8cs_source_1l00027"/>00027 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;DateFin&#32;=&#32;dateFin;
+<anchor xml:id="__periode_planification_8cs_source_1l00028"/>00028 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;FlexibiliteDebut&#32;=&#32;flexibiliteDebut;
+<anchor xml:id="__periode_planification_8cs_source_1l00029"/>00029 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;FlexibiliteFin&#32;=&#32;flexibiliteFin;
+<anchor xml:id="__periode_planification_8cs_source_1l00030"/>00030 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+<anchor xml:id="__periode_planification_8cs_source_1l00031"/>00031 
+<anchor xml:id="__periode_planification_8cs_source_1l00032"/>00032 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<emphasis role="keywordtype">bool</emphasis>&#32;EstPeriodeDefinie&#32;=&gt;&#32;DateDebut.HasValue&#32;||&#32;DateFin.HasValue;
+<anchor xml:id="__periode_planification_8cs_source_1l00033"/>00033 &#32;&#32;&#32;&#32;}
+<anchor xml:id="__periode_planification_8cs_source_1l00034"/>00034 }
+</programlisting></section>

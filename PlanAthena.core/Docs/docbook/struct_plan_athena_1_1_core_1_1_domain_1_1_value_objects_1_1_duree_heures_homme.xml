@@ -1,0 +1,99 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme" xml:lang="en-US">
+<title>PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme Struct Reference</title>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme</primary></indexterm>
+Collaboration diagram for PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme_1ac88692420c824183b6766c8a26af2174">DureeHeuresHomme</link> (int value)</para>
+</listitem>
+            <listitem><para>override string <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme_1a304ec296b9f661feae6de61ed4b581df">ToString</link> ()</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Static Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para>static implicit <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme_1a61cdcac3bfc5202f068921edcc8b2c68">operator int</link> (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> duree)</para>
+</listitem>
+            <listitem><para>static implicit <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme_1ae3a934df2da02732e2fdf826fee05867">operator DureeHeuresHomme</link> (int value)</para>
+</listitem>
+            <listitem><para>static <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme_1a222707ee80a519e5bd1835421769f310">operator+</link> (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> a, <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> b)</para>
+</listitem>
+            <listitem><para>static <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme_1a01d63d554ae6537119d0bd5ae9b6e04b">operator-</link> (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> a, <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> b)</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Properties    </title>
+        <itemizedlist>
+            <listitem><para>int <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme_1a00ec8a708de2a8e20482141db7ff89be">Value</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__duree_heures_homme_8cs_source_1l00006">6</link> of file <link linkend="__duree_heures_homme_8cs_source">DureeHeuresHomme.cs</link>.</para>
+</section>
+<section>
+<title>Constructor &amp; Destructor Documentation</title>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme_1ac88692420c824183b6766c8a26af2174"/><section>
+    <title>DureeHeuresHomme()</title>
+<indexterm><primary>DureeHeuresHomme</primary><secondary>PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme</primary><secondary>DureeHeuresHomme</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme.DureeHeuresHomme (int value)</computeroutput></para><para>
+Definition at line <link linkend="__duree_heures_homme_8cs_source_1l00010">10</link> of file <link linkend="__duree_heures_homme_8cs_source">DureeHeuresHomme.cs</link>.</para>
+</section>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme_1ae3a934df2da02732e2fdf826fee05867"/><section>
+    <title>operator DureeHeuresHomme()</title>
+<indexterm><primary>operator DureeHeuresHomme</primary><secondary>PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme</primary><secondary>operator DureeHeuresHomme</secondary></indexterm>
+<para><computeroutput>implicit PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme.operator <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> (int value)<computeroutput>[static]</computeroutput></computeroutput></para></section>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme_1a61cdcac3bfc5202f068921edcc8b2c68"/><section>
+    <title>operator int()</title>
+<indexterm><primary>operator int</primary><secondary>PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme</primary><secondary>operator int</secondary></indexterm>
+<para><computeroutput>implicit PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme.operator int (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> duree)<computeroutput>[static]</computeroutput></computeroutput></para></section>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme_1a222707ee80a519e5bd1835421769f310"/><section>
+    <title>operator+()</title>
+<indexterm><primary>operator+</primary><secondary>PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme</primary><secondary>operator+</secondary></indexterm>
+<para><computeroutput><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme.operator+ (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> a, <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> b)<computeroutput>[static]</computeroutput></computeroutput></para></section>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme_1a01d63d554ae6537119d0bd5ae9b6e04b"/><section>
+    <title>operator-()</title>
+<indexterm><primary>operator-</primary><secondary>PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme</primary><secondary>operator-</secondary></indexterm>
+<para><computeroutput><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme.operator- (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> a, <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">DureeHeuresHomme</link> b)<computeroutput>[static]</computeroutput></computeroutput></para></section>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme_1a304ec296b9f661feae6de61ed4b581df"/><section>
+    <title>ToString()</title>
+<indexterm><primary>ToString</primary><secondary>PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme</primary><secondary>ToString</secondary></indexterm>
+<para><computeroutput>override string PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme.ToString ( )</computeroutput></para></section>
+</section>
+<section>
+<title>Property Documentation</title>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme_1a00ec8a708de2a8e20482141db7ff89be"/><section>
+    <title>Value</title>
+<indexterm><primary>Value</primary><secondary>PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme</primary><secondary>Value</secondary></indexterm>
+<para><computeroutput>int PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme.Value<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__duree_heures_homme_8cs_source_1l00008">8</link> of file <link linkend="__duree_heures_homme_8cs_source">DureeHeuresHomme.cs</link>.</para>
+</section>
+<para>
+The documentation for this struct was generated from the following file:</para>
+Domain/ValueObjects/<link linkend="__duree_heures_homme_8cs">DureeHeuresHomme.cs</link></section>
+</section>

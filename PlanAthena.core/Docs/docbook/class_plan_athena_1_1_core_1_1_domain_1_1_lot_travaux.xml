@@ -1,0 +1,145 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux" xml:lang="en-US">
+<title>PlanAthena.Core.Domain.LotTravaux Class Reference</title>
+<indexterm><primary>PlanAthena.Core.Domain.LotTravaux</primary></indexterm>
+Inheritance diagram for PlanAthena.Core.Domain.LotTravaux:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux__inherit__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+Collaboration diagram for PlanAthena.Core.Domain.LotTravaux:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux_1aaba587c324f91a379aa43c5a9da8a57c">LotTravaux</link> (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id">LotId</link> id, string nom, int priorite, IEnumerable&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_bloc_id">BlocId</link> &gt; blocIds, DateTime? dateDebutAuPlusTotSouhaitee=null, DateTime? dateFinAuPlusTardSouhaitee=null)</para>
+</listitem>
+            <listitem><para>bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux_1a4ef5f5b9b9301d946b0f2788eb622ef3">ContientBloc</link> (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_bloc_id">BlocId</link> blocId)</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+Public Member Functions inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para>override bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1ab22cd62f66d6349a4b6821db8754dfaf">Equals</link> (object? obj)</para>
+</listitem>
+            <listitem><para>virtual bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a2e3f012f7d67dc2c6865170de7c36377">Equals</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt;? other)</para>
+</listitem>
+            <listitem><para>override int <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1ab742cb22b4a37ce4ee645507a5ed380a">GetHashCode</link> ()</para>
+</listitem>
+        </itemizedlist>
+<simplesect>
+    <title>Properties    </title>
+        <itemizedlist>
+            <listitem><para>string <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux_1af11510058d6535984c994613972f3d64">Nom</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para>int <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux_1a49e796885841a09391307f46c05b619b">Priorite</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para>DateTime? <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux_1a061399b5fdebcaf8f38e89c1c3afb41d">DateDebutAuPlusTotSouhaitee</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para>DateTime? <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux_1a2bec8ba080d9b8b8e9d35eb6bc2c29f6">DateFinAuPlusTardSouhaitee</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para>IReadOnlySet&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_bloc_id">BlocId</link> &gt; <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux_1afcdb09c4ef2f78a656ad5155d1a8eb09">BlocIds</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+Properties inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para>TId <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a898f9cc5b41db570a94009b2e919fad9">Id</link><computeroutput> [get, protected set]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+<simplesect>
+    <title>Additional Inherited Members    </title>
+Static Public Member Functions inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para>static bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a14ddee7a3905c3b7c818d600bec1e2f4">operator==</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; left, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; right)</para>
+</listitem>
+            <listitem><para>static bool <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a2d11ed5b8b82cbee52024de335eb6741">operator!=</link> (<link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; left, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link>&lt; TId &gt; right)</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+Protected Member Functions inherited from <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g">PlanAthena.Core.Domain.Entity&lt; TId &gt;</link>        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a4ac8a7efcc665ce95e94f7b058b86014">Entity</link> (TId id)</para>
+</listitem>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_entity-1-g_1a1b1e54a6b442f08688e95331dfd6d277">Entity</link> ()</para>
+</listitem>
+        </itemizedlist>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__lot_travaux_8cs_source_1l00010">10</link> of file <link linkend="__lot_travaux_8cs_source">LotTravaux.cs</link>.</para>
+</section>
+<section>
+<title>Constructor &amp; Destructor Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux_1aaba587c324f91a379aa43c5a9da8a57c"/><section>
+    <title>LotTravaux()</title>
+<indexterm><primary>LotTravaux</primary><secondary>PlanAthena.Core.Domain.LotTravaux</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.LotTravaux</primary><secondary>LotTravaux</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Domain.LotTravaux.LotTravaux (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_lot_id">LotId</link> id, string nom, int priorite, IEnumerable&lt; <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_bloc_id">BlocId</link> &gt; blocIds, DateTime? dateDebutAuPlusTotSouhaitee = <computeroutput>null</computeroutput>
+, DateTime? dateFinAuPlusTardSouhaitee = <computeroutput>null</computeroutput>
+)</computeroutput></para><para>
+Definition at line <link linkend="__lot_travaux_8cs_source_1l00025">25</link> of file <link linkend="__lot_travaux_8cs_source">LotTravaux.cs</link>.</para>
+</section>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux_1a4ef5f5b9b9301d946b0f2788eb622ef3"/><section>
+    <title>ContientBloc()</title>
+<indexterm><primary>ContientBloc</primary><secondary>PlanAthena.Core.Domain.LotTravaux</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.LotTravaux</primary><secondary>ContientBloc</secondary></indexterm>
+<para><computeroutput>bool PlanAthena.Core.Domain.LotTravaux.ContientBloc (<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_bloc_id">BlocId</link> blocId)</computeroutput></para></section>
+</section>
+<section>
+<title>Property Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux_1afcdb09c4ef2f78a656ad5155d1a8eb09"/><section>
+    <title>BlocIds</title>
+<indexterm><primary>BlocIds</primary><secondary>PlanAthena.Core.Domain.LotTravaux</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.LotTravaux</primary><secondary>BlocIds</secondary></indexterm>
+<para><computeroutput>IReadOnlySet&lt;<link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_bloc_id">BlocId</link>&gt; PlanAthena.Core.Domain.LotTravaux.BlocIds<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__lot_travaux_8cs_source_1l00023">23</link> of file <link linkend="__lot_travaux_8cs_source">LotTravaux.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux_1a061399b5fdebcaf8f38e89c1c3afb41d"/><section>
+    <title>DateDebutAuPlusTotSouhaitee</title>
+<indexterm><primary>DateDebutAuPlusTotSouhaitee</primary><secondary>PlanAthena.Core.Domain.LotTravaux</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.LotTravaux</primary><secondary>DateDebutAuPlusTotSouhaitee</secondary></indexterm>
+<para><computeroutput>DateTime? PlanAthena.Core.Domain.LotTravaux.DateDebutAuPlusTotSouhaitee<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__lot_travaux_8cs_source_1l00017">17</link> of file <link linkend="__lot_travaux_8cs_source">LotTravaux.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux_1a2bec8ba080d9b8b8e9d35eb6bc2c29f6"/><section>
+    <title>DateFinAuPlusTardSouhaitee</title>
+<indexterm><primary>DateFinAuPlusTardSouhaitee</primary><secondary>PlanAthena.Core.Domain.LotTravaux</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.LotTravaux</primary><secondary>DateFinAuPlusTardSouhaitee</secondary></indexterm>
+<para><computeroutput>DateTime? PlanAthena.Core.Domain.LotTravaux.DateFinAuPlusTardSouhaitee<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__lot_travaux_8cs_source_1l00018">18</link> of file <link linkend="__lot_travaux_8cs_source">LotTravaux.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux_1af11510058d6535984c994613972f3d64"/><section>
+    <title>Nom</title>
+<indexterm><primary>Nom</primary><secondary>PlanAthena.Core.Domain.LotTravaux</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.LotTravaux</primary><secondary>Nom</secondary></indexterm>
+<para><computeroutput>string PlanAthena.Core.Domain.LotTravaux.Nom<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__lot_travaux_8cs_source_1l00012">12</link> of file <link linkend="__lot_travaux_8cs_source">LotTravaux.cs</link>.</para>
+</section>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_domain_1_1_lot_travaux_1a49e796885841a09391307f46c05b619b"/><section>
+    <title>Priorite</title>
+<indexterm><primary>Priorite</primary><secondary>PlanAthena.Core.Domain.LotTravaux</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.LotTravaux</primary><secondary>Priorite</secondary></indexterm>
+<para><computeroutput>int PlanAthena.Core.Domain.LotTravaux.Priorite<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__lot_travaux_8cs_source_1l00013">13</link> of file <link linkend="__lot_travaux_8cs_source">LotTravaux.cs</link>.</para>
+</section>
+<para>
+The documentation for this class was generated from the following file:</para>
+Domain/<link linkend="__lot_travaux_8cs">LotTravaux.cs</link></section>
+</section>

@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__i_chantier_validation_service_8cs" xml:lang="en-US">
+<title>Application/Interfaces/IChantierValidationService.cs File Reference</title>
+<indexterm><primary>Application/Interfaces/IChantierValidationService.cs</primary></indexterm>
+<simplesect>
+    <title>Classes    </title>
+        <itemizedlist>
+            <listitem><para>interface <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_chantier_validation_service">PlanAthena.Core.Application.Interfaces.IChantierValidationService</link></para>
+
+<para>Service responsable de la validation complète des données d&apos;un chantier, incluant les validations structurelles, de références croisées et de cycles. </para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Namespaces    </title>
+        <itemizedlist>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena">PlanAthena</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core">PlanAthena.Core</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_application">PlanAthena.Core.Application</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_application_1_1_interfaces">PlanAthena.Core.Application.Interfaces</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

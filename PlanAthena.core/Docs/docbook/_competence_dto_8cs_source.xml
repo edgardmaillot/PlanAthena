@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__competence_dto_8cs_source" xml:lang="en-US">
+<title>CompetenceDto.cs</title>
+<indexterm><primary>Facade/Dto/Input/CompetenceDto.cs</primary></indexterm>
+Go to the documentation of this file.<programlisting linenumbering="unnumbered"><anchor xml:id="__competence_dto_8cs_source_1l00001"/>00001 <emphasis role="comment">//&#32;PlanAthena.Core.Facade.Dto.Input.CompetenceDto.cs</emphasis>
+<anchor xml:id="__competence_dto_8cs_source_1l00002"/>00002 <emphasis role="keyword">using&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums">PlanAthena.Core.Facade.Dto.Enums</link>;&#32;<emphasis role="comment">//&#32;Pour&#32;NiveauExpertise</emphasis>
+<anchor xml:id="__competence_dto_8cs_source_1l00003"/>00003 
+<anchor xml:id="__competence_dto_8cs_source_1l00004"/>00004 <emphasis role="keyword">namespace&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_input">PlanAthena.Core.Facade.Dto.Input</link>
+<anchor xml:id="__competence_dto_8cs_source_1l00005"/>00005 {
+<anchor xml:id="__competence_dto_8cs_source_1l00006"/><link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_input_1afd768d3d240d98706ae291f37a19d98d">00006</link> &#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;record&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_input_1afd768d3d240d98706ae291f37a19d98d">CompetenceDto</link>
+<anchor xml:id="__competence_dto_8cs_source_1l00007"/>00007 &#32;&#32;&#32;&#32;{
+<anchor xml:id="__competence_dto_8cs_source_1l00008"/>00008 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;required&#32;<emphasis role="keywordtype">string</emphasis>&#32;MetierId&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;init;&#32;}
+<anchor xml:id="__competence_dto_8cs_source_1l00009"/>00009 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;required&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1a3f127df14a517a7e278f7e6269c1319b">NiveauExpertise</link>&#32;Niveau&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;init;&#32;}
+<anchor xml:id="__competence_dto_8cs_source_1l00010"/>00010 
+<anchor xml:id="__competence_dto_8cs_source_1l00014"/>00014 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<emphasis role="keywordtype">int</emphasis>?&#32;PerformancePct&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;init;&#32;}
+<anchor xml:id="__competence_dto_8cs_source_1l00015"/>00015 &#32;&#32;&#32;&#32;}
+<anchor xml:id="__competence_dto_8cs_source_1l00016"/>00016 }
+</programlisting></section>

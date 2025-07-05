@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__duree_heures_homme_8cs" xml:lang="en-US">
+<title>Domain/ValueObjects/DureeHeuresHomme.cs File Reference</title>
+<indexterm><primary>Domain/ValueObjects/DureeHeuresHomme.cs</primary></indexterm>
+<simplesect>
+    <title>Classes    </title>
+        <itemizedlist>
+            <listitem><para>struct <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_duree_heures_homme">PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Namespaces    </title>
+        <itemizedlist>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena">PlanAthena</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core">PlanAthena.Core</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_domain">PlanAthena.Core.Domain</link></para>
+</listitem>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_domain_1_1_value_objects">PlanAthena.Core.Domain.ValueObjects</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_metier_dto_validator" xml:lang="en-US">
+<title>PlanAthena.Core.Application.Validation.MetierDtoValidator Class Reference</title>
+<indexterm><primary>PlanAthena.Core.Application.Validation.MetierDtoValidator</primary></indexterm>
+Inheritance diagram for PlanAthena.Core.Application.Validation.MetierDtoValidator:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_metier_dto_validator__inherit__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+Collaboration diagram for PlanAthena.Core.Application.Validation.MetierDtoValidator:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_metier_dto_validator__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_metier_dto_validator_1a831ed69f12d51e455f492b3ef910bea0">MetierDtoValidator</link> ()</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__input_dto_validators_8cs_source_1l00173">173</link> of file <link linkend="__input_dto_validators_8cs_source">InputDtoValidators.cs</link>.</para>
+</section>
+<section>
+<title>Constructor &amp; Destructor Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_metier_dto_validator_1a831ed69f12d51e455f492b3ef910bea0"/><section>
+    <title>MetierDtoValidator()</title>
+<indexterm><primary>MetierDtoValidator</primary><secondary>PlanAthena.Core.Application.Validation.MetierDtoValidator</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Application.Validation.MetierDtoValidator</primary><secondary>MetierDtoValidator</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Application.Validation.MetierDtoValidator.MetierDtoValidator ( )</computeroutput></para><para>
+Definition at line <link linkend="__input_dto_validators_8cs_source_1l00175">175</link> of file <link linkend="__input_dto_validators_8cs_source">InputDtoValidators.cs</link>.</para>
+</section>
+<para>
+The documentation for this class was generated from the following file:</para>
+Application/Validation/<link linkend="__input_dto_validators_8cs">InputDtoValidators.cs</link></section>
+</section>

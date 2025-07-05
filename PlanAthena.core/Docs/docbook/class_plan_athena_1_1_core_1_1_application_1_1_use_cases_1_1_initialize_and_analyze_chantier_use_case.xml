@@ -1,0 +1,93 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_class_plan_athena_1_1_core_1_1_application_1_1_use_cases_1_1_initialize_and_analyze_chantier_use_case" xml:lang="en-US">
+<title>PlanAthena.Core.Application.UseCases.InitializeAndAnalyzeChantierUseCase Class Reference</title>
+<indexterm><primary>PlanAthena.Core.Application.UseCases.InitializeAndAnalyzeChantierUseCase</primary></indexterm>
+Inheritance diagram for PlanAthena.Core.Application.UseCases.InitializeAndAnalyzeChantierUseCase:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_application_1_1_use_cases_1_1_initialize_and_analyze_chantier_use_case__inherit__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+Collaboration diagram for PlanAthena.Core.Application.UseCases.InitializeAndAnalyzeChantierUseCase:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_application_1_1_use_cases_1_1_initialize_and_analyze_chantier_use_case__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_use_cases_1_1_initialize_and_analyze_chantier_use_case_1a7488d6249849e0e3b6e82a0ee2c954ea">InitializeAndAnalyzeChantierUseCase</link> (IValidator&lt; ChantierSetupInputDto &gt; fluentValidator, <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_chantier_setup_input_mapper">IChantierSetupInputMapper</link> inputMapper, <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_chantier_validation_service">IChantierValidationService</link> chantierValidationService, <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_initial_feasibility_analysis_service">IInitialFeasibilityAnalysisService</link> feasibilityService, <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_key_resource_suggestion_service">IKeyResourceSuggestionService</link> keyResourceService)</para>
+</listitem>
+            <listitem><para>async Task&lt; ChantierSetupAnalysisResultDto &gt; <link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_use_cases_1_1_initialize_and_analyze_chantier_use_case_1abd89881be7139b275b80936991e1e5a7">ExecuteAsync</link> (ChantierSetupInputDto inputDto)</para>
+
+<para>Exécute le processus d&apos;initialisation et d&apos;analyse. </para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__initialize_and_analyze_chantier_use_case_8cs_source_1l00015">15</link> of file <link linkend="__initialize_and_analyze_chantier_use_case_8cs_source">InitializeAndAnalyzeChantierUseCase.cs</link>.</para>
+</section>
+<section>
+<title>Constructor &amp; Destructor Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_application_1_1_use_cases_1_1_initialize_and_analyze_chantier_use_case_1a7488d6249849e0e3b6e82a0ee2c954ea"/><section>
+    <title>InitializeAndAnalyzeChantierUseCase()</title>
+<indexterm><primary>InitializeAndAnalyzeChantierUseCase</primary><secondary>PlanAthena.Core.Application.UseCases.InitializeAndAnalyzeChantierUseCase</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Application.UseCases.InitializeAndAnalyzeChantierUseCase</primary><secondary>InitializeAndAnalyzeChantierUseCase</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Application.UseCases.InitializeAndAnalyzeChantierUseCase.InitializeAndAnalyzeChantierUseCase (IValidator&lt; ChantierSetupInputDto &gt; fluentValidator, <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_chantier_setup_input_mapper">IChantierSetupInputMapper</link> inputMapper, <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_chantier_validation_service">IChantierValidationService</link> chantierValidationService, <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_initial_feasibility_analysis_service">IInitialFeasibilityAnalysisService</link> feasibilityService, <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_key_resource_suggestion_service">IKeyResourceSuggestionService</link> keyResourceService)</computeroutput></para><para>
+Definition at line <link linkend="__initialize_and_analyze_chantier_use_case_8cs_source_1l00023">23</link> of file <link linkend="__initialize_and_analyze_chantier_use_case_8cs_source">InitializeAndAnalyzeChantierUseCase.cs</link>.</para>
+</section>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_application_1_1_use_cases_1_1_initialize_and_analyze_chantier_use_case_1abd89881be7139b275b80936991e1e5a7"/><section>
+    <title>ExecuteAsync()</title>
+<indexterm><primary>ExecuteAsync</primary><secondary>PlanAthena.Core.Application.UseCases.InitializeAndAnalyzeChantierUseCase</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Application.UseCases.InitializeAndAnalyzeChantierUseCase</primary><secondary>ExecuteAsync</secondary></indexterm>
+<para><computeroutput>async Task&lt; ChantierSetupAnalysisResultDto &gt; PlanAthena.Core.Application.UseCases.InitializeAndAnalyzeChantierUseCase.ExecuteAsync (ChantierSetupInputDto inputDto)</computeroutput></para><para>
+
+<para>Exécute le processus d&apos;initialisation et d&apos;analyse. </para>
+</para>
+
+<para>
+                <formalpara>
+                    <title>
+Parameters</title>
+                    <para>
+                    <table frame="all">
+                        <tgroup cols="2" align="left" colsep="1" rowsep="1">
+                        <colspec colwidth="1*"/>
+                        <colspec colwidth="4*"/>
+                        <tbody>
+                            <row>
+<entry>inputDto</entry><entry>
+<para>Les données d&apos;entrée du chantier.</para>
+</entry>
+                            </row>
+                        </tbody>
+                        </tgroup>
+                    </table>
+                    </para>
+                </formalpara>
+                <formalpara><title>Returns</title>
+
+<para>Le résultat de l&apos;analyse et de la validation.</para>
+</formalpara>
+</para>
+<para>
+Implements <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_initialize_and_analyze_chantier_use_case_1aef3df0bdc0357ed3f0b518a97b504a9d">PlanAthena.Core.Application.Interfaces.IInitializeAndAnalyzeChantierUseCase</link>.</para>
+<para>
+Definition at line <link linkend="__initialize_and_analyze_chantier_use_case_8cs_source_1l00037">37</link> of file <link linkend="__initialize_and_analyze_chantier_use_case_8cs_source">InitializeAndAnalyzeChantierUseCase.cs</link>.</para>
+</section>
+<para>
+The documentation for this class was generated from the following file:</para>
+Application/Services/<link linkend="__initialize_and_analyze_chantier_use_case_8cs">InitializeAndAnalyzeChantierUseCase.cs</link></section>
+</section>

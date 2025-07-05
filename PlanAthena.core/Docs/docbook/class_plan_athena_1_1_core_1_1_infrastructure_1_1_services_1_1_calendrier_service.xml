@@ -1,0 +1,111 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_class_plan_athena_1_1_core_1_1_infrastructure_1_1_services_1_1_calendrier_service" xml:lang="en-US">
+<title>PlanAthena.Core.Infrastructure.Services.CalendrierService Class Reference</title>
+<indexterm><primary>PlanAthena.Core.Infrastructure.Services.CalendrierService</primary></indexterm>
+Inheritance diagram for PlanAthena.Core.Infrastructure.Services.CalendrierService:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_infrastructure_1_1_services_1_1_calendrier_service__inherit__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+Collaboration diagram for PlanAthena.Core.Infrastructure.Services.CalendrierService:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="class_plan_athena_1_1_core_1_1_infrastructure_1_1_services_1_1_calendrier_service__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para>CalendrierOuvreChantier <link linkend="_class_plan_athena_1_1_core_1_1_infrastructure_1_1_services_1_1_calendrier_service_1aff651190b753b33472a9d3e3a36bb854">CreerCalendrierOuvreChantier</link> (CalendrierTravailDefinitionDto definitionDto, DateTime? dateDebutSouhaiteeChantier, DateTime? dateFinSouhaiteeChantier)</para>
+
+<para>Crée un objet CalendrierOuvreChantier à partir de la définition fournie dans le DTO et des dates de début/fin souhaitées du chantier. </para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__calendrier_service_8cs_source_1l00012">12</link> of file <link linkend="__calendrier_service_8cs_source">CalendrierService.cs</link>.</para>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_class_plan_athena_1_1_core_1_1_infrastructure_1_1_services_1_1_calendrier_service_1aff651190b753b33472a9d3e3a36bb854"/><section>
+    <title>CreerCalendrierOuvreChantier()</title>
+<indexterm><primary>CreerCalendrierOuvreChantier</primary><secondary>PlanAthena.Core.Infrastructure.Services.CalendrierService</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Infrastructure.Services.CalendrierService</primary><secondary>CreerCalendrierOuvreChantier</secondary></indexterm>
+<para><computeroutput>CalendrierOuvreChantier PlanAthena.Core.Infrastructure.Services.CalendrierService.CreerCalendrierOuvreChantier (CalendrierTravailDefinitionDto definitionDto, DateTime? dateDebutSouhaiteeChantier, DateTime? dateFinSouhaiteeChantier)</computeroutput></para><para>
+
+<para>Crée un objet CalendrierOuvreChantier à partir de la définition fournie dans le DTO et des dates de début/fin souhaitées du chantier. </para>
+</para>
+
+<para>
+                <formalpara>
+                    <title>
+Parameters</title>
+                    <para>
+                    <table frame="all">
+                        <tgroup cols="2" align="left" colsep="1" rowsep="1">
+                        <colspec colwidth="1*"/>
+                        <colspec colwidth="4*"/>
+                        <tbody>
+                            <row>
+<entry>definitionDto</entry><entry>
+<para>La définition des règles du calendrier (jours ouvrés, heures, jours chômés).</para>
+</entry>
+                            </row>
+                            <row>
+<entry>dateDebutSouhaiteeChantier</entry><entry>
+<para>Date de début souhaitée pour le chantier (peut influencer la période du calendrier).</para>
+</entry>
+                            </row>
+                            <row>
+<entry>dateFinSouhaiteeChantier</entry><entry>
+<para>Date de fin souhaitée pour le chantier (peut influencer la période du calendrier).</para>
+</entry>
+                            </row>
+                        </tbody>
+                        </tgroup>
+                    </table>
+                    </para>
+                </formalpara>
+                <formalpara><title>Returns</title>
+
+<para>Une instance de CalendrierOuvreChantier.</para>
+</formalpara>
+
+                <formalpara>
+                    <title>
+Exceptions</title>
+                    <para>
+                    <table frame="all">
+                        <tgroup cols="2" align="left" colsep="1" rowsep="1">
+                        <colspec colwidth="1*"/>
+                        <colspec colwidth="4*"/>
+                        <tbody>
+                            <row>
+<entry>ArgumentException</entry><entry>
+<para>Si les données de définition du calendrier sont invalides.</para>
+</entry>
+                            </row>
+                        </tbody>
+                        </tgroup>
+                    </table>
+                    </para>
+                </formalpara>
+                </para>
+<para>
+Implements <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_calendrier_service_1a9348b2b1c5deeea8f55f636443f46162">PlanAthena.Core.Application.Interfaces.ICalendrierService</link>.</para>
+<para>
+Definition at line <link linkend="__calendrier_service_8cs_source_1l00014">14</link> of file <link linkend="__calendrier_service_8cs_source">CalendrierService.cs</link>.</para>
+</section>
+<para>
+The documentation for this class was generated from the following file:</para>
+Infrastructure/Services/<link linkend="__calendrier_service_8cs">CalendrierService.cs</link></section>
+</section>

@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_dir_fae8033a6b8e6a0b7572f34e83167cfe" xml:lang="en-US">
+<title>Infrastructure/Services Directory Reference</title>
+<indexterm><primary>Infrastructure/Services Directory Reference</primary></indexterm>
+Directory dependency graph for Services:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="dir_fae8033a6b8e6a0b7572f34e83167cfe_dep.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Files    </title>
+        <itemizedlist>
+            <listitem><para>file <link linkend="__calendrier_service_8cs">CalendrierService.cs</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_namespace_plan_athena_1_1_core_1_1_application_1_1_validation" xml:lang="en-US">
+<title>PlanAthena.Core.Application.Validation Namespace Reference</title>
+<indexterm><primary>PlanAthena.Core.Application.Validation</primary></indexterm>
+<simplesect>
+    <title>Classes    </title>
+        <itemizedlist>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_bloc_travail_dto_validator">BlocTravailDtoValidator</link></para>
+</listitem>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_calendrier_travail_definition_dto_validator">CalendrierTravailDefinitionDtoValidator</link></para>
+</listitem>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_chantier_setup_input_dto_validator">ChantierSetupInputDtoValidator</link></para>
+</listitem>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_competence_dto_validator">CompetenceDtoValidator</link></para>
+</listitem>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_configuration_chef_chantier_dto_validator">ConfigurationChefChantierDtoValidator</link></para>
+</listitem>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_lot_travaux_dto_validator">LotTravauxDtoValidator</link></para>
+</listitem>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_metier_dto_validator">MetierDtoValidator</link></para>
+</listitem>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_ouvrier_dto_validator">OuvrierDtoValidator</link></para>
+</listitem>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_validation_1_1_tache_dto_validator">TacheDtoValidator</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

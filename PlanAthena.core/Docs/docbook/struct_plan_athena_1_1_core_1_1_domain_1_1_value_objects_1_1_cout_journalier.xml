@@ -1,0 +1,77 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_cout_journalier" xml:lang="en-US">
+<title>PlanAthena.Core.Domain.ValueObjects.CoutJournalier Struct Reference</title>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.CoutJournalier</primary></indexterm>
+Collaboration diagram for PlanAthena.Core.Domain.ValueObjects.CoutJournalier:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_cout_journalier__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para><link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_cout_journalier_1ac944fed0160a40cce0fa8941fd5ca64b">CoutJournalier</link> (int value, string devise=&quot;EUR&quot;)</para>
+</listitem>
+            <listitem><para>override string <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_cout_journalier_1a6f96e946dfda9b7ff648b228be7af516">ToString</link> ()</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Properties    </title>
+        <itemizedlist>
+            <listitem><para>int <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_cout_journalier_1a79192f12bd9e6e04034ebca9c2fe968c">Value</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+            <listitem><para>string <link linkend="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_cout_journalier_1a915b14bdfb70660a7265cc84596f5ec8">Devise</link><computeroutput> [get]</computeroutput>
+</para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+<para>
+Definition at line <link linkend="__cout_journalier_8cs_source_1l00006">6</link> of file <link linkend="__cout_journalier_8cs_source">CoutJournalier.cs</link>.</para>
+</section>
+<section>
+<title>Constructor &amp; Destructor Documentation</title>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_cout_journalier_1ac944fed0160a40cce0fa8941fd5ca64b"/><section>
+    <title>CoutJournalier()</title>
+<indexterm><primary>CoutJournalier</primary><secondary>PlanAthena.Core.Domain.ValueObjects.CoutJournalier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.CoutJournalier</primary><secondary>CoutJournalier</secondary></indexterm>
+<para><computeroutput>PlanAthena.Core.Domain.ValueObjects.CoutJournalier.CoutJournalier (int value, string devise = <computeroutput>&quot;EUR&quot;</computeroutput>
+)</computeroutput></para><para>
+Definition at line <link linkend="__cout_journalier_8cs_source_1l00011">11</link> of file <link linkend="__cout_journalier_8cs_source">CoutJournalier.cs</link>.</para>
+</section>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_cout_journalier_1a6f96e946dfda9b7ff648b228be7af516"/><section>
+    <title>ToString()</title>
+<indexterm><primary>ToString</primary><secondary>PlanAthena.Core.Domain.ValueObjects.CoutJournalier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.CoutJournalier</primary><secondary>ToString</secondary></indexterm>
+<para><computeroutput>override string PlanAthena.Core.Domain.ValueObjects.CoutJournalier.ToString ( )</computeroutput></para></section>
+</section>
+<section>
+<title>Property Documentation</title>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_cout_journalier_1a915b14bdfb70660a7265cc84596f5ec8"/><section>
+    <title>Devise</title>
+<indexterm><primary>Devise</primary><secondary>PlanAthena.Core.Domain.ValueObjects.CoutJournalier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.CoutJournalier</primary><secondary>Devise</secondary></indexterm>
+<para><computeroutput>string PlanAthena.Core.Domain.ValueObjects.CoutJournalier.Devise<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__cout_journalier_8cs_source_1l00009">9</link> of file <link linkend="__cout_journalier_8cs_source">CoutJournalier.cs</link>.</para>
+</section>
+<anchor xml:id="_struct_plan_athena_1_1_core_1_1_domain_1_1_value_objects_1_1_cout_journalier_1a79192f12bd9e6e04034ebca9c2fe968c"/><section>
+    <title>Value</title>
+<indexterm><primary>Value</primary><secondary>PlanAthena.Core.Domain.ValueObjects.CoutJournalier</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Domain.ValueObjects.CoutJournalier</primary><secondary>Value</secondary></indexterm>
+<para><computeroutput>int PlanAthena.Core.Domain.ValueObjects.CoutJournalier.Value<computeroutput>[get]</computeroutput></computeroutput></para><para>
+Definition at line <link linkend="__cout_journalier_8cs_source_1l00008">8</link> of file <link linkend="__cout_journalier_8cs_source">CoutJournalier.cs</link>.</para>
+</section>
+<para>
+The documentation for this struct was generated from the following file:</para>
+Domain/ValueObjects/<link linkend="__cout_journalier_8cs">CoutJournalier.cs</link></section>
+</section>

@@ -1,0 +1,102 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_chantier_validation_service" xml:lang="en-US">
+<title>PlanAthena.Core.Application.Interfaces.IChantierValidationService Interface Reference</title>
+<indexterm><primary>PlanAthena.Core.Application.Interfaces.IChantierValidationService</primary></indexterm>
+<para>
+
+<para>Service responsable de la validation complète des données d&apos;un chantier, incluant les validations structurelles, de références croisées et de cycles. </para>
+ 
+</para>
+Inheritance diagram for PlanAthena.Core.Application.Interfaces.IChantierValidationService:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_chantier_validation_service__inherit__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+Collaboration diagram for PlanAthena.Core.Application.Interfaces.IChantierValidationService:<para>
+    <informalfigure>
+        <mediaobject>
+            <imageobject>
+                <imagedata width="50%" align="center" valign="middle" scalefit="0" fileref="interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_chantier_validation_service__coll__graph.png"></imagedata>
+            </imageobject>
+        </mediaobject>
+    </informalfigure>
+</para>
+<simplesect>
+    <title>Public Member Functions    </title>
+        <itemizedlist>
+            <listitem><para>Task&lt; List&lt; MessageValidationDto &gt; &gt; <link linkend="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_chantier_validation_service_1af9ef43d6279afbf6e7d013a76f88c368">ValiderChantierCompletAsync</link> (ChantierSetupInputDto inputDto, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link>? chantierDomaine=null)</para>
+
+<para>Valide l&apos;ensemble des données d&apos;entrée du chantier. Cette méthode englobe : </para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<section>
+<title>Detailed Description</title>
+
+<para>Service responsable de la validation complète des données d&apos;un chantier, incluant les validations structurelles, de références croisées et de cycles. </para>
+<para>
+Definition at line <link linkend="__i_chantier_validation_service_8cs_source_1l00014">14</link> of file <link linkend="__i_chantier_validation_service_8cs_source">IChantierValidationService.cs</link>.</para>
+</section>
+<section>
+<title>Member Function Documentation</title>
+<anchor xml:id="_interface_plan_athena_1_1_core_1_1_application_1_1_interfaces_1_1_i_chantier_validation_service_1af9ef43d6279afbf6e7d013a76f88c368"/><section>
+    <title>ValiderChantierCompletAsync()</title>
+<indexterm><primary>ValiderChantierCompletAsync</primary><secondary>PlanAthena.Core.Application.Interfaces.IChantierValidationService</secondary></indexterm>
+<indexterm><primary>PlanAthena.Core.Application.Interfaces.IChantierValidationService</primary><secondary>ValiderChantierCompletAsync</secondary></indexterm>
+<para><computeroutput>Task&lt; List&lt; MessageValidationDto &gt; &gt; PlanAthena.Core.Application.Interfaces.IChantierValidationService.ValiderChantierCompletAsync (ChantierSetupInputDto inputDto, <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link>? chantierDomaine = <computeroutput>null</computeroutput>
+)</computeroutput></para><para>
+
+<para>Valide l&apos;ensemble des données d&apos;entrée du chantier. Cette méthode englobe : </para>
+</para>
+
+<para><orderedlist>
+<listitem>
+<para>La validation syntaxique et structurelle des DTOs (P2 - souvent déléguée à FluentValidation en amont).</para>
+</listitem><listitem>
+<para>La validation des références croisées (P3 - ex: un TacheDto.BlocId existe bien).</para>
+</listitem><listitem>
+<para>La détection de cycles de dépendances (P4 - ex: cycles entre TacheDto, cycles entre LotTravauxDto).</para>
+</listitem></orderedlist>
+</para>
+
+<para>
+                <formalpara>
+                    <title>
+Parameters</title>
+                    <para>
+                    <table frame="all">
+                        <tgroup cols="2" align="left" colsep="1" rowsep="1">
+                        <colspec colwidth="1*"/>
+                        <colspec colwidth="4*"/>
+                        <tbody>
+                            <row>
+<entry>inputDto</entry><entry>
+<para>Les données d&apos;entrée complètes du chantier.</para>
+</entry>
+                            </row>
+                            <row>
+<entry>chantierDomaine</entry><entry>
+<para>Optionnel: L&apos;objet <link linkend="_class_plan_athena_1_1_core_1_1_domain_1_1_chantier">Chantier</link> du domaine déjà mappé, si certaines validations sont plus faciles à effectuer sur le modèle de domaine.</para>
+</entry>
+                            </row>
+                        </tbody>
+                        </tgroup>
+                    </table>
+                    </para>
+                </formalpara>
+                <formalpara><title>Returns</title>
+
+<para>Une liste de messages de validation (erreurs ou avertissements).</para>
+</formalpara>
+</para>
+<para>
+Implemented in <link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_services_1_1_chantier_validation_service_1a5fc822e4c03e87d645b5b4c5eaa1d983">PlanAthena.Core.Application.Services.ChantierValidationService</link>.</para>
+</section>
+<para>
+The documentation for this interface was generated from the following file:</para>
+Application/Interfaces/<link linkend="__i_chantier_validation_service_8cs">IChantierValidationService.cs</link></section>
+</section>

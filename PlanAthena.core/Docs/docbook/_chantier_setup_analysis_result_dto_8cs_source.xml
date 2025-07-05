@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__chantier_setup_analysis_result_dto_8cs_source" xml:lang="en-US">
+<title>ChantierSetupAnalysisResultDto.cs</title>
+<indexterm><primary>Facade/Dto/Output/ChantierSetupAnalysisResultDto.cs</primary></indexterm>
+Go to the documentation of this file.<programlisting linenumbering="unnumbered"><anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00001"/>00001 <emphasis role="comment">//&#32;PlanAthena.Core.Facade.Dto.Output.ChantierSetupAnalysisResultDto.cs</emphasis>
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00002"/>00002 <emphasis role="keyword">using&#32;</emphasis>System;
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00003"/>00003 <emphasis role="keyword">using&#32;</emphasis>System.Collections.Generic;
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00004"/>00004 <emphasis role="keyword">using&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums">PlanAthena.Core.Facade.Dto.Enums</link>;&#32;<emphasis role="comment">//&#32;Pour&#32;EtatTraitementInput</emphasis>
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00005"/>00005 
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00006"/>00006 <emphasis role="keyword">namespace&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_output">PlanAthena.Core.Facade.Dto.Output</link>
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00007"/>00007 {
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00008"/><link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_output_1ad6310c13036b7e4bf9a8859074b2f948">00008</link> &#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;record&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_output_1ad6310c13036b7e4bf9a8859074b2f948">ChantierSetupAnalysisResultDto</link>
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00009"/>00009 &#32;&#32;&#32;&#32;{
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00010"/>00010 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;required&#32;<emphasis role="keywordtype">string</emphasis>&#32;ChantierId&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;init;&#32;}&#32;<emphasis role="comment">//&#32;Rappel&#32;de&#32;l&apos;ID&#32;du&#32;chantier&#32;traité</emphasis>
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00011"/>00011 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;required&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_enums_1ab163b8452d21e81928db82c701659177">EtatTraitementInput</link>&#32;Etat&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;init;&#32;}
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00012"/>00012 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;DateTime&#32;DateAnalyse&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;init;&#32;}&#32;=&#32;DateTime.UtcNow;
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00013"/>00013 
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00014"/>00014 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;IReadOnlyList&lt;MessageValidationDto&gt;&#32;Messages&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;init;&#32;}&#32;=&#32;Array.Empty&lt;<link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_output_1ac156abf19bbf999d1b25f45a12d19f60">MessageValidationDto</link>&gt;();
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00015"/>00015 
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00016"/>00016 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Contient&#32;les&#32;résultats&#32;de&#32;l&apos;analyse&#32;si&#32;l&apos;état&#32;n&apos;est&#32;pas&#32;EchecValidation.</emphasis>
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00017"/>00017 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Peut&#32;être&#32;null&#32;si&#32;aucune&#32;analyse&#32;pertinente&#32;n&apos;a&#32;pu&#32;être&#32;faite&#32;ou&#32;si&#32;échec&#32;précoce.</emphasis>
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00018"/>00018 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_output_1a879198eb16ae0bdb9cf6d5c4b7f7921e">AnalyseRessourcesResultatDto</link>?&#32;AnalyseRessources&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;init;&#32;}
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00019"/>00019 &#32;&#32;&#32;&#32;}
+<anchor xml:id="__chantier_setup_analysis_result_dto_8cs_source_1l00020"/>00020 }
+</programlisting></section>

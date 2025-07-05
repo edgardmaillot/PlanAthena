@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_namespace_plan_athena_1_1_core_1_1_facade" xml:lang="en-US">
+<title>PlanAthena.Core.Facade Namespace Reference</title>
+<indexterm><primary>PlanAthena.Core.Facade</primary></indexterm>
+<simplesect>
+    <title>Namespaces    </title>
+        <itemizedlist>
+            <listitem><para>namespace <link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto">Dto</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Classes    </title>
+        <itemizedlist>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_facade_1_1_plan_athena_core_facade">PlanAthenaCoreFacade</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_dir_ae68b40b72b4be1b2438dde39ef5a96e" xml:lang="en-US">
+<title>Facade Directory Reference</title>
+<indexterm><primary>Facade Directory Reference</primary></indexterm>
+<simplesect>
+    <title>Directories    </title>
+        <itemizedlist>
+            <listitem><para>directory <link linkend="_dir_97804c534db56ef6ea2f32d5ee9fd1a0">Dto</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+<simplesect>
+    <title>Files    </title>
+        <itemizedlist>
+            <listitem><para>file <link linkend="__facade_2_dependency_injection_8cs">DependencyInjection.cs</link></para>
+</listitem>
+            <listitem><para>file <link linkend="__plan_athena_core_facade_8cs">PlanAthenaCoreFacade.cs</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

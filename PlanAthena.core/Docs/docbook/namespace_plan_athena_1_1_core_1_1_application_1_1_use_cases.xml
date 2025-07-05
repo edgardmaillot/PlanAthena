@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="_namespace_plan_athena_1_1_core_1_1_application_1_1_use_cases" xml:lang="en-US">
+<title>PlanAthena.Core.Application.UseCases Namespace Reference</title>
+<indexterm><primary>PlanAthena.Core.Application.UseCases</primary></indexterm>
+<simplesect>
+    <title>Classes    </title>
+        <itemizedlist>
+            <listitem><para>class <link linkend="_class_plan_athena_1_1_core_1_1_application_1_1_use_cases_1_1_initialize_and_analyze_chantier_use_case">InitializeAndAnalyzeChantierUseCase</link></para>
+</listitem>
+        </itemizedlist>
+</simplesect>
+</section>

@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink" xml:id="__tache_dto_8cs_source" xml:lang="en-US">
+<title>TacheDto.cs</title>
+<indexterm><primary>Facade/Dto/Input/TacheDto.cs</primary></indexterm>
+Go to the documentation of this file.<programlisting linenumbering="unnumbered"><anchor xml:id="__tache_dto_8cs_source_1l00001"/>00001 <emphasis role="comment">//&#32;PlanAthena.Core.Facade.Dto.Input.TacheDto.cs</emphasis>
+<anchor xml:id="__tache_dto_8cs_source_1l00002"/>00002 <emphasis role="keyword">using&#32;</emphasis>System.Collections.Generic;
+<anchor xml:id="__tache_dto_8cs_source_1l00003"/>00003 <emphasis role="keyword">using&#32;</emphasis>System;&#32;<emphasis role="comment">//&#32;Pour&#32;Array.Empty</emphasis>
+<anchor xml:id="__tache_dto_8cs_source_1l00004"/>00004 
+<anchor xml:id="__tache_dto_8cs_source_1l00005"/>00005 <emphasis role="keyword">namespace&#32;</emphasis><link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_input">PlanAthena.Core.Facade.Dto.Input</link>
+<anchor xml:id="__tache_dto_8cs_source_1l00006"/>00006 {
+<anchor xml:id="__tache_dto_8cs_source_1l00007"/><link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_input_1a3fe4985c6d0e9cd3b92d1c8e520eb7c5">00007</link> &#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;record&#32;<link linkend="_namespace_plan_athena_1_1_core_1_1_facade_1_1_dto_1_1_input_1a3fe4985c6d0e9cd3b92d1c8e520eb7c5">TacheDto</link>
+<anchor xml:id="__tache_dto_8cs_source_1l00008"/>00008 &#32;&#32;&#32;&#32;{
+<anchor xml:id="__tache_dto_8cs_source_1l00009"/>00009 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;required&#32;<emphasis role="keywordtype">string</emphasis>&#32;TacheId&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;init;&#32;}
+<anchor xml:id="__tache_dto_8cs_source_1l00010"/>00010 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;required&#32;<emphasis role="keywordtype">string</emphasis>&#32;Nom&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;init;&#32;}
+<anchor xml:id="__tache_dto_8cs_source_1l00011"/>00011 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;required&#32;<emphasis role="keywordtype">string</emphasis>&#32;BlocId&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;init;&#32;}
+<anchor xml:id="__tache_dto_8cs_source_1l00012"/>00012 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;required&#32;<emphasis role="keywordtype">int</emphasis>&#32;HeuresHommeEstimees&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;init;&#32;}&#32;<emphasis role="comment">//&#32;Peut&#32;être&#32;0.</emphasis>
+<anchor xml:id="__tache_dto_8cs_source_1l00013"/>00013 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;required&#32;<emphasis role="keywordtype">string</emphasis>&#32;MetierId&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;init;&#32;}
+<anchor xml:id="__tache_dto_8cs_source_1l00014"/>00014 
+<anchor xml:id="__tache_dto_8cs_source_1l00015"/>00015 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="comment">//&#32;Liste&#32;des&#32;TacheId&#32;des&#32;tâches&#32;(du&#32;même&#32;BlocId)&#32;dont&#32;cette&#32;tâche&#32;dépend&#32;directement.</emphasis>
+<anchor xml:id="__tache_dto_8cs_source_1l00016"/>00016 &#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;<emphasis role="keyword">public</emphasis>&#32;IReadOnlyList&lt;string&gt;&#32;Dependencies&#32;{&#32;<emphasis role="keyword">get</emphasis>;&#32;init;&#32;}&#32;=&#32;Array.Empty&lt;<emphasis role="keywordtype">string</emphasis>&gt;();
+<anchor xml:id="__tache_dto_8cs_source_1l00017"/>00017 &#32;&#32;&#32;&#32;}
+<anchor xml:id="__tache_dto_8cs_source_1l00018"/>00018 }
+</programlisting></section>
