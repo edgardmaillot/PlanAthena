@@ -1,11 +1,11 @@
-// Fichier : CoutModelBuilder.cs (Version optimisée + Coût Indirect)
+// Fichier : CoutModelBuilder.cs (Version ultra-optimisée)
 
 using Google.OrTools.Sat;
 using NodaTime;
 using PlanAthena.core.Application.InternalDto;
 using PlanAthena.Core.Domain;
 using PlanAthena.Core.Domain.ValueObjects;
-using System; // Ajout pour Console.WriteLine
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,25 +13,29 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
 {
     public class CoutModelBuilder
     {
+        // Cache pour éviter les recalculs
+        private readonly Dictionary<LocalDate, (int start, int end)> _bornesParJour = new();
+
         public IntVar Construire(
             CpModel model,
             ProblemeOptimisation probleme,
             IReadOnlyDictionary<TacheId, IntervalVar> tachesIntervals,
             IReadOnlyDictionary<(TacheId, OuvrierId), BoolVar> tachesAssignables)
         {
-            // --- PARTIE 1 : Calcul du Coût des Ressources Humaines (votre code fonctionnel) ---
-            var coutsJournaliersOuvriers = CalculerCoutsOuvriers(model, probleme, tachesIntervals, tachesAssignables);
+            // Pré-calcul des données communes
+            var contextOptimisation = CreerContexteOptimisation(probleme, tachesIntervals);
 
-            // --- PARTIE 2 : NOUVEAU - Calcul du Coût Indirect du Chantier ---
-            var coutsIndirectsJournaliers = ConstruireCoutsIndirects(model, probleme, tachesIntervals);
+            // Calcul des coûts avec le contexte partagé
+            var coutsOuvriers = CalculerCoutsOuvriers(model, contextOptimisation, tachesAssignables);
+            var coutsIndirects = CalculerCoutsIndirects(model, contextOptimisation);
 
-            // --- PARTIE 3 : Objectif Final Combiné ---
+            // Objectif final
             var coutTotal = model.NewIntVar(0, 1_000_000_000, "cout_total_chantier");
-            var tousLesCouts = new List<LinearExpr>();
-            tousLesCouts.AddRange(coutsJournaliersOuvriers);
-            tousLesCouts.AddRange(coutsIndirectsJournaliers);
+            var tousLesCouts = new List<LinearExpr>(coutsOuvriers.Count + coutsIndirects.Count);
+            tousLesCouts.AddRange(coutsOuvriers);
+            tousLesCouts.AddRange(coutsIndirects);
 
-            if (tousLesCouts.Any())
+            if (tousLesCouts.Count > 0)
             {
                 model.Add(coutTotal == LinearExpr.Sum(tousLesCouts));
             }
@@ -41,114 +45,152 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
             }
 
             Console.WriteLine($"[DEBUG] Modèle de coût construit avec {tousLesCouts.Count} termes de coût au total.");
-
             return coutTotal;
         }
 
-        private List<LinearExpr> CalculerCoutsOuvriers(
-            CpModel model,
+        private ContexteOptimisation CreerContexteOptimisation(
             ProblemeOptimisation probleme,
-            IReadOnlyDictionary<TacheId, IntervalVar> tachesIntervals,
-            IReadOnlyDictionary<(TacheId, OuvrierId), BoolVar> tachesAssignables)
+            IReadOnlyDictionary<TacheId, IntervalVar> tachesIntervals)
         {
             var chantier = probleme.Chantier;
             var echelleTemps = probleme.EchelleTemps;
 
-            // --- OPTIMISATION 1 : Pré-filtrage des données ---
-            var tachesReelles = chantier.ObtenirToutesLesTaches().ToList();
-            var ouvriersReels = chantier.Ouvriers.Values.ToList();
-            var joursDuPlanning = echelleTemps.Slots.Select(s => s.Debut.Date).Distinct().OrderBy(d => d).ToList();
+            // Pré-calcul des jours et slots
+            var joursDuPlanning = echelleTemps.Slots
+                .Select(s => s.Debut.Date)
+                .Distinct()
+                .OrderBy(d => d)
+                .ToArray(); // Array pour meilleure performance
 
             var slotsByDay = joursDuPlanning.ToDictionary(
                 jour => jour,
-                jour => echelleTemps.Slots.Where(s => s.Debut.Date == jour).ToList()
+                jour => echelleTemps.Slots.Where(s => s.Debut.Date == jour).ToArray()
             );
 
-            Console.WriteLine($"[DEBUG] Optimisation des coûts pour {tachesReelles.Count} tâches, {ouvriersReels.Count} ouvriers, {joursDuPlanning.Count} jours");
+            // Pré-calcul des bornes par jour (cache)
+            _bornesParJour.Clear();
+            foreach (var jour in joursDuPlanning)
+            {
+                var slots = slotsByDay[jour];
+                if (slots.Length > 0)
+                {
+                    _bornesParJour[jour] = (slots.Min(s => s.Index), slots.Max(s => s.Index) + 1);
+                }
+            }
 
-            // --- OPTIMISATION 2 : Créer uniquement les variables nécessaires ---
-            var ouvrierTravailleLeJour = new Dictionary<(OuvrierId, LocalDate), BoolVar>();
-            var assignationsParOuvrier = new Dictionary<OuvrierId, List<(TacheId, BoolVar)>>();
+            // Pré-filtrage des données
+            var tachesReelles = chantier.ObtenirToutesLesTaches().ToArray();
+            var ouvriersReels = chantier.Ouvriers.Values.ToArray();
 
+            return new ContexteOptimisation
+            {
+                Chantier = chantier,
+                JoursDuPlanning = joursDuPlanning,
+                SlotsByDay = slotsByDay,
+                TachesReelles = tachesReelles,
+                OuvriersReels = ouvriersReels,
+                TachesIntervals = tachesIntervals,
+                CoutIndirectParJour = probleme.Configuration.CoutIndirectJournalierEnCentimes
+            };
+        }
+
+        private List<LinearExpr> CalculerCoutsOuvriers(
+            CpModel model,
+            ContexteOptimisation contexte,
+            IReadOnlyDictionary<(TacheId, OuvrierId), BoolVar> tachesAssignables)
+        {
+            Console.WriteLine($"[DEBUG] Calcul coûts ouvriers pour {contexte.TachesReelles.Length} tâches, {contexte.OuvriersReels.Length} ouvriers, {contexte.JoursDuPlanning.Length} jours");
+
+            // Optimisation: Pré-groupement des assignations par ouvrier
+            var assignationsParOuvrier = GrouperAssignationsParOuvrier(contexte.OuvriersReels, tachesAssignables);
+
+            // Création des variables de travail journalier (uniquement pour les ouvriers ayant des tâches)
+            var ouvrierTravailleLeJour = CreerVariablesTravailJournalier(model, contexte, assignationsParOuvrier);
+
+            // Contraintes optimisées
+            DefinirContraintesTravailJournalier(model, contexte, assignationsParOuvrier, ouvrierTravailleLeJour);
+            AjouterContraintesRedondantes(model, contexte, assignationsParOuvrier, ouvrierTravailleLeJour);
+
+            // Calcul final des coûts
+            return CalculerCoutsJournaliersOuvriers(contexte, ouvrierTravailleLeJour);
+        }
+
+        private Dictionary<OuvrierId, List<(TacheId, BoolVar)>> GrouperAssignationsParOuvrier(
+            Ouvrier[] ouvriersReels,
+            IReadOnlyDictionary<(TacheId, OuvrierId), BoolVar> tachesAssignables)
+        {
+            var assignationsParOuvrier = new Dictionary<OuvrierId, List<(TacheId, BoolVar)>>(ouvriersReels.Length);
+
+            // Initialisation avec capacité estimée
             foreach (var ouvrier in ouvriersReels)
             {
                 assignationsParOuvrier[ouvrier.Id] = new List<(TacheId, BoolVar)>();
             }
 
+            // Groupement efficace
             foreach (var ((tacheId, ouvrierId), assignVar) in tachesAssignables)
             {
-                if (assignationsParOuvrier.ContainsKey(ouvrierId))
+                if (assignationsParOuvrier.TryGetValue(ouvrierId, out var assignations))
                 {
-                    assignationsParOuvrier[ouvrierId].Add((tacheId, assignVar));
+                    assignations.Add((tacheId, assignVar));
                 }
             }
 
-            foreach (var ouvrier in ouvriersReels)
+            return assignationsParOuvrier;
+        }
+
+        private Dictionary<(OuvrierId, LocalDate), BoolVar> CreerVariablesTravailJournalier(
+            CpModel model,
+            ContexteOptimisation contexte,
+            Dictionary<OuvrierId, List<(TacheId, BoolVar)>> assignationsParOuvrier)
+        {
+            var ouvrierTravailleLeJour = new Dictionary<(OuvrierId, LocalDate), BoolVar>();
+
+            foreach (var ouvrier in contexte.OuvriersReels)
             {
+                // Optimisation: Skip les ouvriers sans assignations
                 if (!assignationsParOuvrier[ouvrier.Id].Any()) continue;
 
-                foreach (var jour in joursDuPlanning)
+                foreach (var jour in contexte.JoursDuPlanning)
                 {
-                    ouvrierTravailleLeJour.Add((ouvrier.Id, jour),
-                        model.NewBoolVar($"travail_o{ouvrier.Id.Value}_j{jour:yyyyMMdd}"));
+                    // Optimisation: Skip les jours sans slots
+                    if (!_bornesParJour.ContainsKey(jour)) continue;
+
+                    var varName = $"travail_o{ouvrier.Id.Value}_j{jour:yyyyMMdd}";
+                    ouvrierTravailleLeJour.Add((ouvrier.Id, jour), model.NewBoolVar(varName));
                 }
             }
 
             Console.WriteLine($"[DEBUG] Créé {ouvrierTravailleLeJour.Count} variables de travail journalier");
+            return ouvrierTravailleLeJour;
+        }
 
-            // --- OPTIMISATION 3 : Contraintes simplifiées avec réification directe ---
-            foreach (var ouvrier in ouvriersReels)
+        private void DefinirContraintesTravailJournalier(
+            CpModel model,
+            ContexteOptimisation contexte,
+            Dictionary<OuvrierId, List<(TacheId, BoolVar)>> assignationsParOuvrier,
+            Dictionary<(OuvrierId, LocalDate), BoolVar> ouvrierTravailleLeJour)
+        {
+            foreach (var ouvrier in contexte.OuvriersReels)
             {
                 if (!assignationsParOuvrier[ouvrier.Id].Any()) continue;
 
-                foreach (var jour in joursDuPlanning)
+                foreach (var jour in contexte.JoursDuPlanning)
                 {
-                    if (!ouvrierTravailleLeJour.ContainsKey((ouvrier.Id, jour))) continue;
+                    if (!ouvrierTravailleLeJour.TryGetValue((ouvrier.Id, jour), out var travailleCeJourVar))
+                        continue;
 
-                    var travailleCeJourVar = ouvrierTravailleLeJour[(ouvrier.Id, jour)];
-                    var jourSlots = slotsByDay[jour];
-
-                    if (!jourSlots.Any())
+                    if (!_bornesParJour.TryGetValue(jour, out var bornes))
                     {
                         model.Add(travailleCeJourVar == 0);
                         continue;
                     }
 
-                    var jourStart = jourSlots.Min(s => s.Index);
-                    var jourEnd = jourSlots.Max(s => s.Index) + 1;
+                    var tachesActivesCeJour = CreerVariablesTachesActivesCeJour(
+                        model, contexte, assignationsParOuvrier[ouvrier.Id],
+                        ouvrier.Id, jour, bornes);
 
-                    var tachesActivesCeJour = new List<BoolVar>();
-
-                    // --- OPTIMISATION 4 : Traitement uniquement des tâches assignables ---
-                    foreach (var (tacheId, assignVar) in assignationsParOuvrier[ouvrier.Id])
-                    {
-                        if (!tachesIntervals.ContainsKey(tacheId)) continue;
-
-                        var interval = tachesIntervals[tacheId];
-                        var tacheActiveCeJour = model.NewBoolVar($"active_{tacheId.Value}_o{ouvrier.Id.Value}_j{jour:yyyyMMdd}");
-
-                        var chevauche = model.NewBoolVar($"overlap_{tacheId.Value}_j{jour:yyyyMMdd}");
-
-                        var startOk = model.NewBoolVar($"start_ok_{tacheId.Value}_j{jour:yyyyMMdd}");
-                        var endOk = model.NewBoolVar($"end_ok_{tacheId.Value}_j{jour:yyyyMMdd}");
-
-                        model.Add(interval.StartExpr() < jourEnd).OnlyEnforceIf(startOk);
-                        model.Add(interval.StartExpr() >= jourEnd).OnlyEnforceIf(startOk.Not());
-
-                        model.Add(interval.EndExpr() > jourStart).OnlyEnforceIf(endOk);
-                        model.Add(interval.EndExpr() <= jourStart).OnlyEnforceIf(endOk.Not());
-
-                        model.AddBoolAnd(new[] { startOk, endOk }).OnlyEnforceIf(chevauche);
-                        model.AddBoolOr(new[] { startOk.Not(), endOk.Not() }).OnlyEnforceIf(chevauche.Not());
-
-                        model.AddBoolAnd(new[] { assignVar, chevauche }).OnlyEnforceIf(tacheActiveCeJour);
-                        model.AddBoolOr(new[] { assignVar.Not(), chevauche.Not() }).OnlyEnforceIf(tacheActiveCeJour.Not());
-
-                        tachesActivesCeJour.Add(tacheActiveCeJour);
-                    }
-
-                    // --- OPTIMISATION 6 : Contrainte de travail journalier simplifiée ---
-                    if (tachesActivesCeJour.Any())
+                    if (tachesActivesCeJour.Count > 0)
                     {
                         model.AddMaxEquality(travailleCeJourVar, tachesActivesCeJour);
                     }
@@ -158,82 +200,190 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
                     }
                 }
             }
+        }
 
-            // --- NOUVELLE OPTIMISATION : Contrainte Redondante ---
-            foreach (var ouvrier in ouvriersReels)
+        private List<BoolVar> CreerVariablesTachesActivesCeJour(
+            CpModel model,
+            ContexteOptimisation contexte,
+            List<(TacheId, BoolVar)> assignationsOuvrier,
+            OuvrierId ouvrierId,
+            LocalDate jour,
+            (int start, int end) bornesJour)
+        {
+            var tachesActivesCeJour = new List<BoolVar>();
+
+            foreach (var (tacheId, assignVar) in assignationsOuvrier)
             {
-                if (!assignationsParOuvrier.ContainsKey(ouvrier.Id) || !assignationsParOuvrier[ouvrier.Id].Any()) continue;
+                if (!contexte.TachesIntervals.TryGetValue(tacheId, out var interval))
+                    continue;
 
-                var heuresTotalesPossibles = assignationsParOuvrier[ouvrier.Id]
-                    .Sum(t => tachesReelles.First(tr => tr.Id == t.Item1).HeuresHommeEstimees.Value);
+                var tacheActiveCeJour = model.NewBoolVar($"active_{tacheId.Value}_o{ouvrierId.Value}_j{jour:yyyyMMdd}");
 
-                var maxJoursTravail = (int)Math.Ceiling((double)heuresTotalesPossibles / chantier.Calendrier.DureeTravailEffectiveParJour.TotalHours);
+                // Optimisation: Contraintes de chevauchement simplifiées
+                var chevauche = CreerContrainteChevauchement(model, interval, bornesJour, tacheId, jour);
 
-                var joursOuvrier = joursDuPlanning
-                    .Where(j => ouvrierTravailleLeJour.ContainsKey((ouvrier.Id, j)))
-                    .Select(j => ouvrierTravailleLeJour[(ouvrier.Id, j)])
-                    .ToList<LinearExpr>();
+                // Liaison assignation + chevauchement = tâche active
+                model.AddBoolAnd(new[] { assignVar, chevauche }).OnlyEnforceIf(tacheActiveCeJour);
+                model.AddBoolOr(new[] { assignVar.Not(), chevauche.Not() }).OnlyEnforceIf(tacheActiveCeJour.Not());
 
-                if (joursOuvrier.Any())
-                {
-                    model.Add(LinearExpr.Sum(joursOuvrier) <= maxJoursTravail);
-                }
+                tachesActivesCeJour.Add(tacheActiveCeJour);
             }
 
-            // --- OPTIMISATION 7 : Calcul de coût optimisé ---
-            var coutsJournaliers = new List<LinearExpr>();
+            return tachesActivesCeJour;
+        }
+
+        private BoolVar CreerContrainteChevauchement(
+            CpModel model,
+            IntervalVar interval,
+            (int start, int end) bornesJour,
+            TacheId tacheId,
+            LocalDate jour)
+        {
+            var chevauche = model.NewBoolVar($"overlap_{tacheId.Value}_j{jour:yyyyMMdd}");
+
+            // CORRECTION: Garder la même logique que l'original pour éviter les bugs
+            var startOk = model.NewBoolVar($"start_ok_{tacheId.Value}_j{jour:yyyyMMdd}");
+            var endOk = model.NewBoolVar($"end_ok_{tacheId.Value}_j{jour:yyyyMMdd}");
+
+            model.Add(interval.StartExpr() < bornesJour.end).OnlyEnforceIf(startOk);
+            model.Add(interval.StartExpr() >= bornesJour.end).OnlyEnforceIf(startOk.Not());
+
+            model.Add(interval.EndExpr() > bornesJour.start).OnlyEnforceIf(endOk);
+            model.Add(interval.EndExpr() <= bornesJour.start).OnlyEnforceIf(endOk.Not());
+
+            model.AddBoolAnd(new[] { startOk, endOk }).OnlyEnforceIf(chevauche);
+            model.AddBoolOr(new[] { startOk.Not(), endOk.Not() }).OnlyEnforceIf(chevauche.Not());
+
+            return chevauche;
+        }
+
+        private void AjouterContraintesRedondantes(
+            CpModel model,
+            ContexteOptimisation contexte,
+            Dictionary<OuvrierId, List<(TacheId, BoolVar)>> assignationsParOuvrier,
+            Dictionary<(OuvrierId, LocalDate), BoolVar> ouvrierTravailleLeJour)
+        {
+            var dureeTravailParJour = contexte.Chantier.Calendrier.DureeTravailEffectiveParJour.TotalHours;
+
+            foreach (var ouvrier in contexte.OuvriersReels)
+            {
+                if (!assignationsParOuvrier.TryGetValue(ouvrier.Id, out var assignations) || !assignations.Any())
+                    continue;
+
+                // CORRECTION: Garder la même logique que l'original pour les contraintes redondantes
+                var heuresTotalesPossibles = assignations.Sum(t =>
+                    contexte.TachesReelles.First(tr => tr.Id == t.Item1).HeuresHommeEstimees.Value);
+
+                var maxJoursTravail = (int)Math.Ceiling((double)heuresTotalesPossibles / dureeTravailParJour);
+
+                // Collecte des variables de jours de travail pour cet ouvrier
+                var joursOuvrierVars = new List<LinearExpr>();
+                foreach (var jour in contexte.JoursDuPlanning)
+                {
+                    if (ouvrierTravailleLeJour.TryGetValue((ouvrier.Id, jour), out var varJour))
+                    {
+                        joursOuvrierVars.Add(varJour);
+                    }
+                }
+
+                if (joursOuvrierVars.Count > 0)
+                {
+                    model.Add(LinearExpr.Sum(joursOuvrierVars) <= maxJoursTravail);
+                }
+            }
+        }
+
+        private List<LinearExpr> CalculerCoutsJournaliersOuvriers(
+            ContexteOptimisation contexte,
+            Dictionary<(OuvrierId, LocalDate), BoolVar> ouvrierTravailleLeJour)
+        {
+            var coutsJournaliers = new List<LinearExpr>(ouvrierTravailleLeJour.Count);
+
             foreach (var ((ouvrierId, _), travailleCeJourVar) in ouvrierTravailleLeJour)
             {
-                var coutJournalierOuvrier = (long)chantier.Ouvriers[ouvrierId].Cout.Value * 100;
-                coutsJournaliers.Add(travailleCeJourVar * coutJournalierOuvrier);
+                var coutJournalier = (long)contexte.Chantier.Ouvriers[ouvrierId].Cout.Value * 100;
+                coutsJournaliers.Add(travailleCeJourVar * coutJournalier);
             }
 
             return coutsJournaliers;
         }
 
-        private List<LinearExpr> ConstruireCoutsIndirects(
+        private List<LinearExpr> CalculerCoutsIndirects(
             CpModel model,
-            ProblemeOptimisation probleme,
-            IReadOnlyDictionary<TacheId, IntervalVar> tachesIntervals)
+            ContexteOptimisation contexte)
         {
             var coutsIndirects = new List<LinearExpr>();
-            long coutIndirectParJour = probleme.Configuration.CoutIndirectJournalierEnCentimes;
 
-            if (coutIndirectParJour <= 0) return coutsIndirects;
+            if (contexte.CoutIndirectParJour <= 0)
+                return coutsIndirects;
 
-            var echelleTemps = probleme.EchelleTemps;
-            var joursDuPlanning = echelleTemps.Slots.Select(s => s.Debut.Date).Distinct().OrderBy(d => d).ToList();
-            var slotsByDay = joursDuPlanning.ToDictionary(jour => jour, jour => echelleTemps.Slots.Where(s => s.Debut.Date == jour).ToList());
-
-            foreach (var jour in joursDuPlanning)
+            foreach (var jour in contexte.JoursDuPlanning)
             {
                 var jourActif = model.NewBoolVar($"jour_actif_{jour:yyyyMMdd}");
-                var jourSlots = slotsByDay[jour];
-                var jourStart = jourSlots.Min(s => s.Index);
-                var jourEnd = jourSlots.Max(s => s.Index) + 1;
 
-                var tachesActivesCeJour = new List<BoolVar>();
-                foreach (var interval in tachesIntervals.Values)
+                if (!_bornesParJour.TryGetValue(jour, out var bornes))
                 {
-                    var tacheActive = model.NewBoolVar($"tache_active_pour_cout_indirect_{interval.Name}_{jour:yyyyMMdd}");
-
-                    var startOk = model.NewBoolVar($"start_ok_indirect_{interval.Name}_j{jour:yyyyMMdd}");
-                    model.Add(interval.StartExpr() < jourEnd).OnlyEnforceIf(startOk);
-                    model.Add(interval.StartExpr() >= jourEnd).OnlyEnforceIf(startOk.Not());
-
-                    var endOk = model.NewBoolVar($"end_ok_indirect_{interval.Name}_j{jour:yyyyMMdd}");
-                    model.Add(interval.EndExpr() > jourStart).OnlyEnforceIf(endOk);
-                    model.Add(interval.EndExpr() <= jourStart).OnlyEnforceIf(endOk.Not());
-
-                    model.AddBoolAnd(new[] { startOk, endOk }).OnlyEnforceIf(tacheActive);
-                    tachesActivesCeJour.Add(tacheActive);
+                    model.Add(jourActif == 0);
+                    continue;
                 }
 
-                model.AddMaxEquality(jourActif, tachesActivesCeJour);
-                coutsIndirects.Add(jourActif * coutIndirectParJour);
+                var tachesActivesCeJour = CreerVariablesTachesActivesJourIndirect(
+                    model, contexte, jour, bornes);
+
+                if (tachesActivesCeJour.Count > 0)
+                {
+                    model.AddMaxEquality(jourActif, tachesActivesCeJour);
+                }
+                else
+                {
+                    model.Add(jourActif == 0);
+                }
+
+                coutsIndirects.Add(jourActif * contexte.CoutIndirectParJour);
             }
 
             return coutsIndirects;
+        }
+
+        private List<BoolVar> CreerVariablesTachesActivesJourIndirect(
+            CpModel model,
+            ContexteOptimisation contexte,
+            LocalDate jour,
+            (int start, int end) bornes)
+        {
+            var tachesActivesCeJour = new List<BoolVar>();
+
+            foreach (var (tacheId, interval) in contexte.TachesIntervals)
+            {
+                var tacheActive = model.NewBoolVar($"tache_active_ce_jour_{tacheId.Value}_{jour:yyyyMMdd}");
+
+                // CORRECTION: Utiliser la même logique que l'original - ne pas simplifier
+                var startOk = model.NewBoolVar($"start_ok_indirect_{tacheId.Value}_j{jour:yyyyMMdd}");
+                var endOk = model.NewBoolVar($"end_ok_indirect_{tacheId.Value}_j{jour:yyyyMMdd}");
+
+                model.Add(interval.StartExpr() < bornes.end).OnlyEnforceIf(startOk);
+                model.Add(interval.StartExpr() >= bornes.end).OnlyEnforceIf(startOk.Not());
+
+                model.Add(interval.EndExpr() > bornes.start).OnlyEnforceIf(endOk);
+                model.Add(interval.EndExpr() <= bornes.start).OnlyEnforceIf(endOk.Not());
+
+                model.AddBoolAnd(new[] { startOk, endOk }).OnlyEnforceIf(tacheActive);
+                tachesActivesCeJour.Add(tacheActive);
+            }
+
+            return tachesActivesCeJour;
+        }
+
+        // Classe pour encapsuler le contexte d'optimisation
+        private class ContexteOptimisation
+        {
+            public Chantier Chantier { get; set; }
+            public LocalDate[] JoursDuPlanning { get; set; }
+            public Dictionary<LocalDate, SlotTemporel[]> SlotsByDay { get; set; }
+            public Tache[] TachesReelles { get; set; }
+            public Ouvrier[] OuvriersReels { get; set; }
+            public IReadOnlyDictionary<TacheId, IntervalVar> TachesIntervals { get; set; }
+            public long CoutIndirectParJour { get; set; }
         }
     }
 }

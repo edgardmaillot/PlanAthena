@@ -35,13 +35,13 @@ public class CoutModelBuilderTests
         builder.Construire(model, probleme, tachesIntervals, tachesAssignables);
 
         // Assert
-        // CORRECTION : Utilisation de model.Model pour accéder au proto
-        var coutVars = model.Model.Variables.Count(v => v.Name.StartsWith("cout_") && v.Name.Contains("2028"));
-        coutVars.Should().Be(1);
+        // NOUVELLE LOGIQUE : On vérifie qu'une seule variable de coût total est créée.
+        var coutVar = model.Model.Variables.FirstOrDefault(v => v.Name == "cout_total_chantier");
+        coutVar.Should().NotBeNull();
     }
 
     [Fact]
-    public void Construire_CreeLeBonNombreDeVariablesDeDuree()
+    public void Construire_CreeLeBonNombreDeVariablesDeTravailJournalier()
     {
         // Arrange
         var (model, probleme, tachesIntervals, tachesAssignables) = GetTestContext();
@@ -51,9 +51,11 @@ public class CoutModelBuilderTests
         builder.Construire(model, probleme, tachesIntervals, tachesAssignables);
 
         // Assert
-        // CORRECTION : Le filtre est plus précis pour correspondre au nommage de votre code.
-        var dureeVars = model.Model.Variables.Count(v => v.Name.StartsWith("duree_o"));
-        dureeVars.Should().Be(1);
+        // NOUVELLE LOGIQUE : On vérifie que les variables "travail_o..." sont bien créées.
+        // Dans notre contexte de test, il y a 1 ouvrier et 1 jour de travail (défini dans CreerProblemeDeTest).
+        // On s'attend donc à une seule variable de ce type.
+        var travailVars = model.Model.Variables.Count(v => v.Name.StartsWith("travail_o"));
+        travailVars.Should().Be(1);
     }
 
     [Fact]
@@ -97,7 +99,7 @@ public class CoutModelBuilderTests
             new List<LotTravaux>()
         );
 
-        chantier.AppliquerConfigurationOptimisation(new ConfigurationOptimisation(7, 30.0m));
+        chantier.AppliquerConfigurationOptimisation(new ConfigurationOptimisation(7, 30.0m, 0));
 
         var slots = Enumerable.Range(0, 8)
             .Select(i => new SlotTemporel(i, new LocalDateTime(2028, 1, 1, 8, 0).PlusHours(i), new LocalDateTime()))
