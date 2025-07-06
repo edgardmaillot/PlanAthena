@@ -23,8 +23,8 @@ public class ConstructeurProblemeOrTools : IConstructeurProblemeOrTools
         var coutTotal = coutBuilder.Construire(model, probleme, tachesIntervals, tachesAssignables);
 
         // 3. Définir l'objectif final du modèle
-        //model.Minimize(coutTotal);
-        model.Minimize(makespan); //Si on veut réduire le makespan à la place du coût total
+        model.Minimize(coutTotal);
+        //model.Minimize(makespan); //Si on veut réduire le makespan à la place du coût total
 
         // 4. CORRECTION FINALE : On assigne bien TOUTES les propriétés au DTO de retour.
         return new ModeleCpSat

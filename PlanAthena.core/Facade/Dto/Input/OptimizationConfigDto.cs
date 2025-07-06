@@ -20,4 +20,8 @@ public record OptimizationConfigDto
     /// Pénalité de coût (en pourcentage) appliquée si une tâche change d'ouvrier.
     /// </summary>
     public decimal PenaliteChangementOuvrierPourcentage { get; init; } = 30.0m;
+
+    // Coût indirect en pourcentage de la masse salariale journalière.
+    // Optionnel : si null, une valeur par défaut sera appliquée.
+    public decimal? CoutIndirectJournalierPourcentage { get; init; }
 }

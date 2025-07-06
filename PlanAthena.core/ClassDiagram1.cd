@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
   <Class Name="PlanAthena.Core.Application.Services.ChantierSetupInputMapper" BaseTypeListCollapsed="true">
-    <Position X="36.75" Y="8.5" Width="2.75" />
+    <Position X="36.75" Y="9.75" Width="2.75" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAACAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Application\Services\ChantierSetupInputMapper.cs</FileName>
@@ -9,7 +9,7 @@
     <Lollipop Position="0.2" Collapsed="true" />
   </Class>
   <Class Name="PlanAthena.Core.Application.Services.ChantierValidationService" BaseTypeListCollapsed="true">
-    <Position X="33.5" Y="7.5" Width="2.75" />
+    <Position X="33.5" Y="8.75" Width="2.75" />
     <TypeIdentifier>
       <HashCode>AEAAAAAAAAAAAAAAAAAAAAAAEAAABAIAQAgEEAAAAAA=</HashCode>
       <FileName>Application\Services\ChantierValidationService.cs</FileName>
@@ -17,7 +17,7 @@
     <Lollipop Position="0.2" Collapsed="true" />
   </Class>
   <Class Name="PlanAthena.Core.Application.Services.InitialFeasibilityAnalysisService" BaseTypeListCollapsed="true">
-    <Position X="29.5" Y="8.75" Width="2.75" />
+    <Position X="33.5" Y="11.75" Width="2.75" />
     <TypeIdentifier>
       <HashCode>AAAAAAAEAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Application\Services\InitialFeasibilityAnalysisService.cs</FileName>
@@ -25,7 +25,7 @@
     <Lollipop Position="0.2" Collapsed="true" />
   </Class>
   <Class Name="PlanAthena.Core.Application.Services.KeyResourceSuggestionService" BaseTypeListCollapsed="true">
-    <Position X="29.5" Y="6.75" Width="2.75" />
+    <Position X="36.75" Y="11.75" Width="2.75" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAABAAAAAAAAAAIAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Application\Services\KeyResourceSuggestionService.cs</FileName>
@@ -40,49 +40,49 @@
     </TypeIdentifier>
   </Class>
   <Class Name="PlanAthena.Core.Application.Validation.CalendrierTravailDefinitionDtoValidator">
-    <Position X="32.75" Y="0.5" Width="3" />
+    <Position X="32.5" Y="0.5" Width="3" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Application\Validation\InputDtoValidators.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="PlanAthena.Core.Application.Validation.BlocTravailDtoValidator">
-    <Position X="43.75" Y="0.5" Width="2.25" />
+    <Position X="43" Y="0.5" Width="2.25" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Application\Validation\InputDtoValidators.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="PlanAthena.Core.Application.Validation.TacheDtoValidator">
-    <Position X="36" Y="2.25" Width="2" />
+    <Position X="45.5" Y="0.5" Width="2" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAIBAAAAAAAAAAAAAA=</HashCode>
       <FileName>Application\Validation\InputDtoValidators.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="PlanAthena.Core.Application.Validation.LotTravauxDtoValidator">
-    <Position X="39" Y="0.5" Width="2.25" />
+    <Position X="38.25" Y="0.5" Width="2.25" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAA=</HashCode>
       <FileName>Application\Validation\InputDtoValidators.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="PlanAthena.Core.Application.Validation.CompetenceDtoValidator">
-    <Position X="36.5" Y="0.5" Width="2.25" />
+    <Position X="35.75" Y="0.5" Width="2.25" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Application\Validation\InputDtoValidators.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="PlanAthena.Core.Application.Validation.OuvrierDtoValidator">
-    <Position X="32.75" Y="2.25" Width="2.75" />
+    <Position X="47.75" Y="0.5" Width="2.75" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAA=</HashCode>
       <FileName>Application\Validation\InputDtoValidators.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="PlanAthena.Core.Application.Validation.MetierDtoValidator">
-    <Position X="41.5" Y="0.5" Width="2" />
+    <Position X="40.75" Y="0.5" Width="2" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAIBAAAAAAAAAAAAAA=</HashCode>
       <FileName>Application\Validation\InputDtoValidators.cs</FileName>
@@ -133,7 +133,7 @@
     </TypeIdentifier>
   </Class>
   <Class Name="PlanAthena.Core.Domain.Metier">
-    <Position X="23.25" Y="3.5" Width="2" />
+    <Position X="23" Y="3.5" Width="2.25" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAQAAAAAAAAAA=</HashCode>
       <FileName>Domain\Metier.cs</FileName>
@@ -155,7 +155,7 @@
     <Lollipop Position="0.2" />
   </Class>
   <Class Name="PlanAthena.Core.Facade.PlanAthenaCoreFacade">
-    <Position X="33.5" Y="5.5" Width="2.75" />
+    <Position X="34.5" Y="4.5" Width="2.75" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAA=</HashCode>
       <FileName>Facade\PlanAthenaCoreFacade.cs</FileName>
@@ -205,6 +205,20 @@
       <FileName>Application\UseCases\ProcessChantierUseCase.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="PlanAthena.Core.Domain.Shared.DependencyGraph&lt;TId&gt;">
+    <Position X="29.25" Y="8.75" Width="2.25" />
+    <NestedTypes>
+      <Enum Name="PlanAthena.Core.Domain.Shared.DependencyGraph&lt;TId&gt;.NodeColor" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Domain\Shared\DependencyGraph.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAAAABAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAEQAAAA=</HashCode>
+      <FileName>Domain\Shared\DependencyGraph.cs</FileName>
+    </TypeIdentifier>
   </Class>
   <Interface Name="PlanAthena.Core.Application.Interfaces.ICalendrierService">
     <Position X="13.25" Y="8.75" Width="2.25" />
@@ -262,5 +276,40 @@
       <FileName>Domain\Shared\IHaveDependencies.cs</FileName>
     </TypeIdentifier>
   </Interface>
+  <Enum Name="PlanAthena.Core.Facade.Dto.Enums.FlexibiliteDate">
+    <Position X="17.75" Y="11.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAIAAAAAAAAAAAEAAAAAgAAAAAA=</HashCode>
+      <FileName>Facade\Dto\Enums\Enums.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="PlanAthena.Core.Facade.Dto.Enums.NiveauExpertise">
+    <Position X="19.5" Y="11.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEAAAAAAAAAAAAABAAAAAAAAAAAAAAAgAAAEAAA=</HashCode>
+      <FileName>Facade\Dto\Enums\Enums.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="PlanAthena.Core.Facade.Dto.Enums.EtatTraitementInput">
+    <Position X="16" Y="11.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAEAAAQAAAAAAAABAAAAAAAAAA=</HashCode>
+      <FileName>Facade\Dto\Enums\Enums.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="PlanAthena.Core.Facade.Dto.Enums.TypeMessageValidation">
+    <Position X="23" Y="11.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAggA=</HashCode>
+      <FileName>Facade\Dto\Enums\Enums.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="PlanAthena.Core.Facade.Dto.Enums.OptimizationStatus">
+    <Position X="21.25" Y="11.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAEAAAAAAAAAAAAAAAAAIBACAAAAAAAAAhA=</HashCode>
+      <FileName>Facade\Dto\Enums\Enums.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
   <Font Name="Segoe UI" Size="9" />
 </ClassDiagram>

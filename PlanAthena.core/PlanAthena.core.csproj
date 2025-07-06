@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Application\Services\j2e1asku.5pi~" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="FluentValidation" Version="12.0.0" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.0.0" />
     <PackageReference Include="Google.OrTools" Version="9.14.6206" />

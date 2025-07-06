@@ -7,14 +7,13 @@ using PlanAthena.Core.Domain;
 using PlanAthena.Core.Domain.ValueObjects;
 using PlanAthena.Core.Facade.Dto.Input;
 using PlanAthena.Core.Facade.Dto.Output;
-using PlanAthena.Core.Facade.Dto.Enums; // Pour NiveauExpertise (via Competence)
-using PlanAthena.Core.Application.Interfaces; // Pour l'interface
+using PlanAthena.Core.Facade.Dto.Enums;
+using PlanAthena.Core.Application.Interfaces;
 
-namespace PlanAthena.Core.Application.Services // Ou Mappers
+namespace PlanAthena.Core.Application.Services
 {
     public class ChantierSetupInputMapper : IChantierSetupInputMapper
     {
-        // Nous aurons besoin d'ICalendrierService pour créer le CalendrierOuvreChantier
         private readonly ICalendrierService _calendrierService;
 
         public ChantierSetupInputMapper(ICalendrierService calendrierService)
@@ -30,7 +29,7 @@ namespace PlanAthena.Core.Application.Services // Ou Mappers
             try
             {
                 // 1. Mapper les VOs simples du Chantier
-                var chantierId = new ChantierId(inputDto.ChantierId); // Peut lever une exception si inputDto.ChantierId est invalide
+                var chantierId = new ChantierId(inputDto.ChantierId);
                 var periodeSouhaitee = new PeriodePlanification(
                     inputDto.DateDebutSouhaitee,
                     inputDto.DateFinSouhaitee,
@@ -38,9 +37,6 @@ namespace PlanAthena.Core.Application.Services // Ou Mappers
                     inputDto.FlexibiliteFin);
 
                 // 2. Créer le CalendrierOuvreChantier via le service
-                // Ce service encapsulera la logique NodaTime et la création du VO complexe.
-                // Pour l'instant, ICalendrierService n'est pas encore implémenté,
-                // donc cette ligne est conceptuelle.
                 CalendrierOuvreChantier calendrierOuvre = _calendrierService.CreerCalendrierOuvreChantier(
                     inputDto.CalendrierTravail,
                     inputDto.DateDebutSouhaitee,
@@ -60,7 +56,7 @@ namespace PlanAthena.Core.Application.Services // Ou Mappers
                 foreach (var ouvrierDto in inputDto.Ouvriers)
                 {
                     var ouvrierId = new OuvrierId(ouvrierDto.OuvrierId);
-                    var coutJournalier = new CoutJournalier(ouvrierDto.CoutJournalier); // Devise par défaut EUR
+                    var coutJournalier = new CoutJournalier(ouvrierDto.CoutJournalier);
 
                     var competencesDomaine = new List<Competence>();
                     foreach (var compDto in ouvrierDto.Competences)
@@ -74,7 +70,6 @@ namespace PlanAthena.Core.Application.Services // Ou Mappers
                 }
 
                 // 5. Mapper Blocs et leurs Taches
-                // Il faut d'abord mapper toutes les tâches d'un bloc, puis créer le bloc.
                 var blocsDomaine = new List<BlocTravail>();
                 foreach (var blocDto in inputDto.Blocs)
                 {
@@ -82,7 +77,6 @@ namespace PlanAthena.Core.Application.Services // Ou Mappers
                     var capacite = new CapaciteOuvriers(blocDto.CapaciteMaxOuvriers);
 
                     var tachesPourCeBloc = new List<Tache>();
-                    // Filtrer les TacheDto qui appartiennent à ce bloc
                     var tachesDtoPourCeBloc = inputDto.Taches.Where(t => t.BlocId == blocDto.BlocId);
 
                     foreach (var tacheDto in tachesDtoPourCeBloc)
@@ -103,10 +97,6 @@ namespace PlanAthena.Core.Application.Services // Ou Mappers
                 {
                     var lotId = new LotId(lotDto.LotId);
                     var blocIdsPourCeLot = lotDto.BlocIds.Select(id => new BlocId(id)).ToList();
-                    // Ici, on suppose que les BlocId dans lotDto.BlocIds existent bien.
-                    // La validation des références croisées se fera plus tard par IChantierValidationService
-                    // ou directement par le constructeur de Chantier si on y déplace cette logique.
-
                     lotsDomaine.Add(new LotTravaux(
                         lotId,
                         lotDto.Nom,
@@ -126,31 +116,28 @@ namespace PlanAthena.Core.Application.Services // Ou Mappers
                 }
 
                 // 8. Créer l'agrégat Chantier
-                // C'est le constructeur de Chantier qui effectuera les validations de cohérence d'ensemble
-                // (ex: un bloc dans un lot existe, une tâche référence un métier existant, etc.)
                 chantierDomaine = new Chantier(
                     chantierId,
                     inputDto.Description,
                     periodeSouhaitee,
-                    calendrierOuvre, // Cet objet est crucial
+                    calendrierOuvre,
                     metiersDomaine,
                     ouvriersDomaine,
                     blocsDomaine,
                     lotsDomaine,
                     configCdCDomaine);
             }
-            catch (ArgumentException ex) // Capturer les exceptions de validation des VOs/Entités
+            catch (ArgumentException ex)
             {
                 messages.Add(new MessageValidationDto
                 {
                     Type = TypeMessageValidation.Erreur,
-                    CodeMessage = "ERR_MAP_ARGUMENT", // Code générique pour erreur d'argument au mapping
+                    CodeMessage = "ERR_MAP_ARGUMENT",
                     Message = $"Donnée invalide : {ex.Message}",
-                    ProprieteConcernee = ex.ParamName // Nom du paramètre qui a causé l'erreur
+                    ProprieteConcernee = ex.ParamName
                 });
-                // chantierDomaine restera null ou sera l'état partiel avant l'exception
             }
-            catch (InvalidOperationException ex) // Capturer les exceptions d'opération invalide (ex: ID dupliqué)
+            catch (InvalidOperationException ex)
             {
                 messages.Add(new MessageValidationDto
                 {
@@ -159,7 +146,6 @@ namespace PlanAthena.Core.Application.Services // Ou Mappers
                     Message = $"Opération invalide lors du mapping : {ex.Message}"
                 });
             }
-            // On pourrait ajouter d'autres catch plus spécifiques si nécessaire
 
             return Task.FromResult((chantierDomaine, messages));
         }
