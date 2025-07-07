@@ -16,7 +16,8 @@
     },
     {
       "MetierId": "PEINTRE",
-      "Nom": "Peinture"
+      "Nom": "Peinture",
+      "PrerequisMetierIds": [ "PLAQUISTE" ]
     }
   ],
   "Ouvriers": [
@@ -79,7 +80,7 @@
       "BlocId": "BLOC_A",
       "HeuresHommeEstimees": 7,
       "MetierId": "PEINTRE",
-      "Dependencies": [ "TACHE_PLACO_1" ]
+      "Dependencies": []
     },
     {
       "TacheId": "TACHE_PEINTURE_2",
@@ -103,7 +104,7 @@
       "BlocId": "BLOC_A",
       "HeuresHommeEstimees": 7,
       "MetierId": "PEINTRE",
-      "Dependencies": []
+      "Dependencies": [ "TACHE_PEINTURE_8" ]
     },
     {
       "TacheId": "TACHE_PEINTURE_5",

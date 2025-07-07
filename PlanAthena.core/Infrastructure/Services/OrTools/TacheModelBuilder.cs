@@ -1,8 +1,9 @@
-// Fichier : TacheModelBuilder.cs (Version Finale, Compilable et Correcte)
+// Fichier : TacheModelBuilder.cs (Version Finale Complète)
 
 using Google.OrTools.Sat;
 using PlanAthena.core.Application.InternalDto;
 using PlanAthena.Core.Domain;
+using PlanAthena.Core.Domain.Shared; // Pour DependencyGraph
 using PlanAthena.Core.Domain.ValueObjects;
 using System;
 using System.Collections.Generic;
@@ -20,14 +21,15 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
         {
             var chantier = probleme.Chantier;
             var tachesAssignables = new Dictionary<(TacheId, OuvrierId), BoolVar>();
-            var intervallesParOuvrier = chantier.Ouvriers.ToDictionary(o => o.Key, o => new List<IntervalVar>());
             var tachesIntervals = new Dictionary<TacheId, IntervalVar>();
 
-            CreerVariablesDeDecision(model, probleme, tachesAssignables, intervallesParOuvrier, tachesIntervals);
+            // Note: La création des intervalles par ouvrier est maintenant gérée dans AjouterContraintesRessources
+            // pour plus de clarté, car c'est son unique usage.
+            CreerVariablesDeDecision(model, probleme, tachesAssignables, tachesIntervals);
 
-            AjouterContraintesAssignationUnique(model, probleme.Chantier, tachesAssignables);
-            AjouterContraintesRessources(model, probleme.Chantier, intervallesParOuvrier);
-            AjouterContraintesDependances(model, probleme.Chantier, tachesIntervals);
+            AjouterContraintesAssignationUnique(model, chantier, tachesAssignables);
+            AjouterContraintesRessources(model, chantier, tachesIntervals, tachesAssignables);
+            AjouterContraintesDePrecedence(model, chantier, tachesIntervals);
 
             var makespan = model.NewIntVar(0, probleme.EchelleTemps.NombreTotalSlots, "makespan");
             if (tachesIntervals.Any())
@@ -46,7 +48,6 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
             CpModel model,
             ProblemeOptimisation probleme,
             Dictionary<(TacheId, OuvrierId), BoolVar> tachesAssignables,
-            Dictionary<OuvrierId, List<IntervalVar>> intervallesParOuvrier,
             Dictionary<TacheId, IntervalVar> tachesIntervals)
         {
             var chantier = probleme.Chantier;
@@ -56,28 +57,19 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
             foreach (var tache in chantier.ObtenirToutesLesTaches())
             {
                 var duree = (long)tache.HeuresHommeEstimees.Value;
-                var startVar = model.NewIntVar(0, horizon - duree, $"start_{tache.Id.Value}");
+                var startVar = model.NewIntVar(0, horizon > duree ? horizon - duree : 0, $"start_{tache.Id.Value}");
                 var endVar = model.NewIntVar(0, horizon, $"end_{tache.Id.Value}");
                 var sizeVar = model.NewConstant(duree);
 
-                var intervalleVirtuel = model.NewIntervalVar(startVar, sizeVar, endVar, $"virtuel_{tache.Id.Value}");
+                var intervalleVirtuel = model.NewIntervalVar(startVar, sizeVar, endVar, $"interval_{tache.Id.Value}");
                 tachesIntervals.Add(tache.Id, intervalleVirtuel);
 
-                // === LA SOLUTION FINALE ET COMPILABLE : AddModuloEquality ===
-                // On empêche une tâche de traverser la frontière d'un jour.
                 if (duree > 0 && duree <= heuresParJour)
                 {
-                    // 1. On crée une variable qui représentera la position de départ DANS la journée (de 0 à heuresParJour-1)
                     var startDansJour = model.NewIntVar(0, heuresParJour - 1, $"start_dans_jour_{tache.Id.Value}");
-
-                    // 2. On lie cette variable à la variable de départ globale via le modulo.
-                    //    startDansJour = startVar % heuresParJour
                     model.AddModuloEquality(startDansJour, startVar, heuresParJour);
-
-                    // 3. On contraint la position de départ dans le jour + la durée à ne pas dépasser la fin du jour.
                     model.Add(startDansJour + duree <= heuresParJour);
                 }
-                // ===================================================================
 
                 var ouvriersCompetents = chantier.Ouvriers.Values
                     .Where(o => o.PossedeCompetence(tache.MetierRequisId));
@@ -86,46 +78,132 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
                 {
                     var estAssignable = model.NewBoolVar($"estAssignable_{tache.Id.Value}_a_{ouvrier.Id.Value}");
                     tachesAssignables.Add((tache.Id, ouvrier.Id), estAssignable);
-
-                    var intervalleOptionnel = model.NewOptionalIntervalVar(
-                        startVar,
-                        sizeVar,
-                        endVar,
-                        estAssignable,
-                        $"optionnel_{tache.Id.Value}_a_{ouvrier.Id.Value}"
-                    );
-                    intervallesParOuvrier[ouvrier.Id].Add(intervalleOptionnel);
                 }
             }
         }
 
-        // --- Le reste du fichier est inchangé ---
         private void AjouterContraintesAssignationUnique(CpModel model, Chantier chantier, IReadOnlyDictionary<(TacheId, OuvrierId), BoolVar> tachesAssignables)
         {
             foreach (var tache in chantier.ObtenirToutesLesTaches())
             {
                 var candidatsPourTache = tachesAssignables.Where(kvp => kvp.Key.Item1 == tache.Id).Select(kvp => kvp.Value).ToList();
-                if (candidatsPourTache.Any()) { model.Add(LinearExpr.Sum(candidatsPourTache) == 1); }
-                else { throw new InvalidOperationException($"Aucun ouvrier compétent trouvé pour la tâche {tache.Id.Value}"); }
+                if (candidatsPourTache.Any())
+                {
+                    model.AddExactlyOne(candidatsPourTache);
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Aucun ouvrier compétent trouvé pour la tâche {tache.Id.Value} ({tache.Nom}).");
+                }
             }
         }
-        private void AjouterContraintesRessources(CpModel model, Chantier chantier, IReadOnlyDictionary<OuvrierId, List<IntervalVar>> intervallesParOuvrier)
+
+        private void AjouterContraintesRessources(CpModel model, Chantier chantier, IReadOnlyDictionary<TacheId, IntervalVar> tachesIntervals, IReadOnlyDictionary<(TacheId, OuvrierId), BoolVar> tachesAssignables)
         {
-            foreach (var ouvrierId in chantier.Ouvriers.Keys)
+            foreach (var ouvrier in chantier.Ouvriers.Values)
             {
-                var intervalles = intervallesParOuvrier[ouvrierId];
-                if (intervalles.Count > 1) { model.AddNoOverlap(intervalles); }
+                var intervallesPourOuvrier = new List<IntervalVar>();
+                foreach (var tache in chantier.ObtenirToutesLesTaches())
+                {
+                    if (tachesAssignables.TryGetValue((tache.Id, ouvrier.Id), out var estAssignable))
+                    {
+                        var intervalleBase = tachesIntervals[tache.Id];
+                        var intervalleOptionnel = model.NewOptionalIntervalVar(
+                            intervalleBase.StartExpr(),
+                            intervalleBase.SizeExpr(),
+                            intervalleBase.EndExpr(),
+                            estAssignable,
+                            $"optionnel_{tache.Id.Value}_a_{ouvrier.Id.Value}"
+                        );
+                        intervallesPourOuvrier.Add(intervalleOptionnel);
+                    }
+                }
+
+                if (intervallesPourOuvrier.Count > 1)
+                {
+                    model.AddNoOverlap(intervallesPourOuvrier);
+                }
             }
         }
-        private void AjouterContraintesDependances(CpModel model, Chantier chantier, IReadOnlyDictionary<TacheId, IntervalVar> tachesIntervals)
+
+        private void AjouterContraintesDePrecedence(CpModel model, Chantier chantier, IReadOnlyDictionary<TacheId, IntervalVar> tachesIntervals)
         {
+            // --- ÉTAPE 1 : Gérer les dépendances explicites (Tâche -> Tâche) ---
             foreach (var tache in chantier.ObtenirToutesLesTaches())
             {
                 if (tache.Dependencies == null || !tache.Dependencies.Any()) continue;
+
                 var intervalleTacheActuelle = tachesIntervals[tache.Id];
                 foreach (var dependanceId in tache.Dependencies)
                 {
-                    if (tachesIntervals.TryGetValue(dependanceId, out var intervalleDependance)) { model.Add(intervalleTacheActuelle.StartExpr() >= intervalleDependance.EndExpr()); }
+                    if (tachesIntervals.TryGetValue(dependanceId, out var intervalleDependance))
+                    {
+                        model.Add(intervalleTacheActuelle.StartExpr() >= intervalleDependance.EndExpr());
+                    }
+                }
+            }
+
+            // --- ÉTAPE 2 : Gérer les dépendances implicites (Métier -> Métier) ---
+
+            // 2a. Calculer manuellement la fermeture transitive des dépendances métier
+            var allPrerequisites = new Dictionary<MetierId, HashSet<MetierId>>();
+            foreach (var metier in chantier.Metiers.Values)
+            {
+                allPrerequisites[metier.Id] = new HashSet<MetierId>();
+                var toProcess = new Queue<MetierId>(metier.PrerequisMetierIds);
+                var processed = new HashSet<MetierId>();
+
+                while (toProcess.Any())
+                {
+                    var currentId = toProcess.Dequeue();
+                    if (processed.Contains(currentId)) continue;
+
+                    allPrerequisites[metier.Id].Add(currentId);
+                    processed.Add(currentId);
+
+                    if (chantier.Metiers.TryGetValue(currentId, out var prerequisMetier))
+                    {
+                        foreach (var nextId in prerequisMetier.PrerequisMetierIds)
+                        {
+                            if (!processed.Contains(nextId))
+                            {
+                                toProcess.Enqueue(nextId);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2b. Appliquer les contraintes par bloc
+            foreach (var bloc in chantier.Blocs.Values)
+            {
+                var tachesParMetier = bloc.Taches.Values
+                    .GroupBy(t => t.MetierRequisId)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                foreach (var (metierId, tachesDuMetier) in tachesParMetier)
+                {
+                    var prerequisPourCeMetier = allPrerequisites[metierId];
+                    if (!prerequisPourCeMetier.Any()) continue;
+
+                    var tachesPrerequisesDansLeBloc = new List<Tache>();
+                    foreach (var prerequisId in prerequisPourCeMetier)
+                    {
+                        if (tachesParMetier.TryGetValue(prerequisId, out var taches))
+                        {
+                            tachesPrerequisesDansLeBloc.AddRange(taches);
+                        }
+                    }
+
+                    if (!tachesPrerequisesDansLeBloc.Any()) continue;
+
+                    var finMaxPrerequis = model.NewIntVar(0, int.MaxValue, $"fin_prerequis_{metierId.Value}_bloc_{bloc.Id.Value}");
+                    model.AddMaxEquality(finMaxPrerequis, tachesPrerequisesDansLeBloc.Select(t => tachesIntervals[t.Id].EndExpr()));
+
+                    foreach (var tache in tachesDuMetier)
+                    {
+                        model.Add(tachesIntervals[tache.Id].StartExpr() >= finMaxPrerequis);
+                    }
                 }
             }
         }
