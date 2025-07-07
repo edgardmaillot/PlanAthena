@@ -118,6 +118,8 @@ class Program
         return serviceCollection.BuildServiceProvider();
     }
 
+    // Dans le fichier Program.cs
+
     private static void DisplayProcessResult(ProcessChantierResultDto? resultat)
     {
         if (resultat == null) { Console.WriteLine("Le résultat est null."); return; }
@@ -154,11 +156,30 @@ class Program
             Console.ForegroundColor = color;
             Console.WriteLine($"Statut du Solveur: {optimResult.Status}");
             Console.ResetColor();
-            if (optimResult.CoutTotalEstime.HasValue) Console.WriteLine($"Coût Total Estimé: {optimResult.CoutTotalEstime}");
-            if (optimResult.DureeTotaleJoursOuvres.HasValue) Console.WriteLine($"Durée Totale (en slots d'1h): {optimResult.DureeTotaleJoursOuvres}");
+
+            // --- CORRECTION ---
+            if (optimResult.CoutTotalEstime.HasValue) Console.WriteLine($"Coût Total Estimé: {optimResult.CoutTotalEstime / 100.0m:C}");
+            if (optimResult.CoutTotalRhEstime.HasValue) Console.WriteLine($"  - Coût RH: {optimResult.CoutTotalRhEstime / 100.0m:C}");
+            if (optimResult.CoutTotalIndirectEstime.HasValue) Console.WriteLine($"  - Coût Indirect: {optimResult.CoutTotalIndirectEstime / 100.0m:C}");
+            if (optimResult.DureeTotaleEnSlots.HasValue) Console.WriteLine($"Durée Totale (en slots d'1h): {optimResult.DureeTotaleEnSlots}");
+            // --- FIN CORRECTION ---
+        }
+
+        if (resultat.AnalysePostOptimisationResultat != null)
+        {
+            var analysisResult = resultat.AnalysePostOptimisationResultat;
+            Console.WriteLine("\n--- Analyse du Planning ---");
+            Console.WriteLine($"Taux d'Occupation Moyen Pondéré: {analysisResult.KpisGlobaux.TauxOccupationMoyenPondere}%");
+            foreach (var kpi in analysisResult.KpisParOuvrier)
+            {
+                Console.WriteLine($"  - {kpi.OuvrierNom} ({kpi.OuvrierId}):");
+                Console.WriteLine($"    - Jours de Présence: {kpi.JoursDePresence}");
+                Console.WriteLine($"    - Heures Travaillées: {kpi.HeuresTravaillees:F1}h");
+                Console.WriteLine($"    - Taux d'Occupation: {kpi.TauxOccupation}%");
+                Console.WriteLine($"    - Taux de Fragmentation: {kpi.TauxFragmentation}%");
+            }
         }
     }
-
     private static ChantierSetupInputDto? LoadChantierInputFromFile(string filePath)
     {
         try

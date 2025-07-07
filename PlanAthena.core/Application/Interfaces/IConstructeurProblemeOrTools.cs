@@ -13,5 +13,5 @@ public interface IConstructeurProblemeOrTools
     /// </summary>
     /// <param name="probleme">Le problème d'optimisation à traduire.</param>
     /// <returns>Le modèle CP-SAT encapsulé, prêt à être résolu.</returns>
-    ModeleCpSat ConstruireModele(ProblemeOptimisation probleme);
+    ModeleCpSat ConstruireModele(ProblemeOptimisation probleme, string objectif);
 }

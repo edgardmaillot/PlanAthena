@@ -1,19 +1,24 @@
-namespace PlanAthena.Core.Facade.Dto.Output;
+// Fichier : Facade/Dto/Output/ProcessChantierResultDto.cs
 
-/// <summary>
-/// DTO de sortie générique pour le traitement d'un chantier.
-/// Contient soit un résultat d'analyse, soit un résultat d'optimisation.
-/// </summary>
-public record ProcessChantierResultDto
+using System;
+using System.Collections.Generic;
+using PlanAthena.Core.Facade.Dto.Enums;
+
+namespace PlanAthena.Core.Facade.Dto.Output
 {
-    // On reprend les champs communs de ChantierSetupAnalysisResultDto
-    public string ChantierId { get; init; }
-    public PlanAthena.Core.Facade.Dto.Enums.EtatTraitementInput Etat { get; init; }
-    public System.Collections.Generic.IReadOnlyList<MessageValidationDto> Messages { get; init; } = System.Array.Empty<MessageValidationDto>();
+    public record ProcessChantierResultDto
+    {
+        public string ChantierId { get; init; }
+        public EtatTraitementInput Etat { get; init; }
+        public IReadOnlyList<MessageValidationDto> Messages { get; init; } = Array.Empty<MessageValidationDto>();
 
-    // Contient le résultat si le but était une analyse
-    public AnalyseRessourcesResultatDto? AnalyseResultat { get; init; }
+        // --- MODIFICATIONS ---
+        // Renommé pour clarifier qu'il s'agit de l'analyse statique initiale
+        public AnalyseRessourcesResultatDto? AnalyseStatiqueResultat { get; init; }
 
-    // Contient le résultat si le but était une optimisation
-    public PlanningOptimizationResultDto? OptimisationResultat { get; init; }
+        public PlanningOptimizationResultDto? OptimisationResultat { get; init; }
+
+        // Ajout du nouveau rapport d'analyse post-optimisation
+        public PlanningAnalysisReportDto? AnalysePostOptimisationResultat { get; init; }
+    }
 }

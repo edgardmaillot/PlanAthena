@@ -1,4 +1,4 @@
-// Fichier : Application/UseCases/ProcessChantierUseCase.cs
+// Fichier : Application/UseCases/ProcessChantierUseCase.cs (Version Finale Complète)
 
 using FluentValidation;
 using Google.OrTools.Sat;
@@ -10,7 +10,6 @@ using PlanAthena.Core.Domain.ValueObjects;
 using PlanAthena.Core.Facade.Dto.Enums;
 using PlanAthena.Core.Facade.Dto.Input;
 using PlanAthena.Core.Facade.Dto.Output;
-using PlanAthena.Core.Infrastructure.Services.OrTools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,6 +26,8 @@ namespace PlanAthena.Core.Application.UseCases
         private readonly IKeyResourceSuggestionService _keyResourceService;
         private readonly ICalendrierService _calendrierService;
         private readonly IConstructeurProblemeOrTools _problemeBuilder;
+        private readonly ISolutionInterpreterService _solutionInterpreter;
+        private readonly IPlanningAnalysisService _planningAnalyzer;
 
         public ProcessChantierUseCase(
             IValidator<ChantierSetupInputDto> fluentValidator,
@@ -35,7 +36,9 @@ namespace PlanAthena.Core.Application.UseCases
             IInitialFeasibilityAnalysisService feasibilityService,
             IKeyResourceSuggestionService keyResourceService,
             ICalendrierService calendrierService,
-            IConstructeurProblemeOrTools problemeBuilder)
+            IConstructeurProblemeOrTools problemeBuilder,
+            ISolutionInterpreterService solutionInterpreter,
+            IPlanningAnalysisService planningAnalyzer)
         {
             _fluentValidator = fluentValidator;
             _inputMapper = inputMapper;
@@ -44,6 +47,8 @@ namespace PlanAthena.Core.Application.UseCases
             _keyResourceService = keyResourceService;
             _calendrierService = calendrierService;
             _problemeBuilder = problemeBuilder;
+            _solutionInterpreter = solutionInterpreter;
+            _planningAnalyzer = planningAnalyzer;
         }
 
         public async Task<ProcessChantierResultDto> ExecuteAsync(ChantierSetupInputDto inputDto)
@@ -60,12 +65,13 @@ namespace PlanAthena.Core.Application.UseCases
                 };
             }
 
+            // Aiguillage basé sur la présence de la configuration d'optimisation
             if (inputDto.OptimizationConfig == null)
             {
                 return await AnalyserUniquementAsync(chantier, validationMessages);
             }
 
-            return await ExecuterOptimisationAsync(chantier, inputDto.OptimizationConfig, validationMessages);
+            return await ExecuterOptimisationEtAnalyseAsync(chantier, inputDto.OptimizationConfig, validationMessages);
         }
 
         private async Task<(Chantier? chantier, IReadOnlyList<MessageValidationDto> messages)> ValiderEtCreerChantierAsync(ChantierSetupInputDto inputDto)
@@ -112,113 +118,93 @@ namespace PlanAthena.Core.Application.UseCases
                 ChantierId = chantier.Id.Value,
                 Etat = finalEtat,
                 Messages = allMessages,
-                AnalyseResultat = analyseRessourcesResult
+                AnalyseStatiqueResultat = analyseRessourcesResult
             };
         }
 
-        private async Task<ProcessChantierResultDto> ExecuterOptimisationAsync(Chantier chantier, OptimizationConfigDto config, IReadOnlyList<MessageValidationDto> validationMessages)
+        private async Task<ProcessChantierResultDto> ExecuterOptimisationEtAnalyseAsync(Chantier chantier, OptimizationConfigDto config, IReadOnlyList<MessageValidationDto> validationMessages)
         {
-            // L'encapsulation dans Task.Run déporte tout le travail CPU-intensif sur un thread du pool,
-            // libérant ainsi le thread appelant (ex: UI ou requête web).
-            return await Task.Run(() =>
+            PlanningOptimizationResultDto? planningResult = null;
+            PlanningAnalysisReportDto? analysisReport = null;
+
+            await Task.Run(async () =>
             {
+                // 1. Préparation commune
                 const decimal COUT_INDIRECT_DEFAUT_PCT = 0.10m;
-
                 decimal masseSalarialeJournaliereTotale = chantier.Ouvriers.Values.Sum(o => o.Cout.Value);
-
-                decimal pourcentageApplique = config.CoutIndirectJournalierPourcentage.HasValue
-                    ? config.CoutIndirectJournalierPourcentage.Value / 100.0m
-                    : COUT_INDIRECT_DEFAUT_PCT;
-
+                decimal pourcentageApplique = config.CoutIndirectJournalierPourcentage.HasValue ? config.CoutIndirectJournalierPourcentage.Value / 100.0m : COUT_INDIRECT_DEFAUT_PCT;
                 long coutIndirectJournalierEnCentimes = (long)(masseSalarialeJournaliereTotale * pourcentageApplique * 100);
-
-                var configOptimisation = new ConfigurationOptimisation(
-                    config.DureeJournaliereStandardHeures,
-                    config.PenaliteChangementOuvrierPourcentage,
-                    coutIndirectJournalierEnCentimes
-                );
-
+                var configOptimisation = new ConfigurationOptimisation(config.DureeJournaliereStandardHeures, config.PenaliteChangementOuvrierPourcentage, coutIndirectJournalierEnCentimes);
                 chantier.AppliquerConfigurationOptimisation(configOptimisation);
 
                 var echelleTemps = _calendrierService.CreerEchelleTempsOuvree(chantier.Calendrier, LocalDate.FromDateTime(chantier.PeriodeSouhaitee.DateDebut.Value), LocalDate.FromDateTime(chantier.PeriodeSouhaitee.DateFin.Value));
                 var probleme = new ProblemeOptimisation { Chantier = chantier, EchelleTemps = echelleTemps, Configuration = chantier.ConfigurationOptimisation! };
 
-                var modeleCpSat = _problemeBuilder.ConstruireModele(probleme);
+                // 2. Aiguillage de la stratégie
+                string solverParams;
+                string objectif = "COUT"; // Par défaut
 
-                var solver = new CpSolver();
-                solver.StringParameters =
-                    "max_time_in_seconds:60.0" +
-                    ",num_search_workers:8" +
-                    ",log_search_progress:false" +
-                    ",cp_model_presolve:true" +
-                    ",cp_model_probing_level:2" +
-                    ",relative_gap_limit:0.01";
-
-                var solverStatus = solver.Solve(modeleCpSat.Model);
-
-                var resultatStatus = solverStatus switch
+                switch (config.TypeDeSortie)
                 {
-                    CpSolverStatus.Optimal => OptimizationStatus.Optimal,
-                    CpSolverStatus.Feasible => OptimizationStatus.Feasible,
-                    _ => OptimizationStatus.Infeasible
-                };
+                    case "ANALYSE_RAPIDE":
+                        solverParams = "max_time_in_seconds:5.0,log_search_progress:false,cp_model_presolve:true";
+                        objectif = "COUT";
+                        break;
 
-                var optimResultDto = new PlanningOptimizationResultDto { ChantierId = chantier.Id.Value, Status = resultatStatus };
+                    case "OPTIMISATION_DELAI":
+                        solverParams = "max_time_in_seconds:60.0,num_search_workers:8,log_search_progress:false,relative_gap_limit:0.01";
+                        objectif = "DELAI";
+                        break;
 
-                if (resultatStatus == OptimizationStatus.Optimal || resultatStatus == OptimizationStatus.Feasible)
-                {
-                    // Les logs de débogage peuvent être laissés ici, ils ne s'afficheront que
-                    // lorsque la tâche de fond sera terminée.
-                    Console.WriteLine("\n--- DÉBUT DES INFORMATIONS DE DÉBOGAGE ---");
-
-                    foreach (var tache in chantier.ObtenirToutesLesTaches())
-                    {
-                        Console.WriteLine($"\n[SONDE 1] Assignations pour la tâche '{tache.Id.Value}':");
-                        bool estPlanifiee = false;
-                        foreach (var assignable in modeleCpSat.TachesAssignables.Where(kv => kv.Key.Item1 == tache.Id))
-                        {
-                            var (tacheId, ouvrierId) = assignable.Key;
-                            if (solver.BooleanValue(assignable.Value))
-                            {
-                                estPlanifiee = true;
-                                Console.WriteLine($"  - Ouvrier '{ouvrierId.Value}' est assigné.");
-                                var intervalle = modeleCpSat.TachesIntervals[tacheId];
-                                Console.WriteLine($"    [SONDE 2] Tâche '{tacheId.Value}' assignée à '{ouvrierId.Value}':");
-                                Console.WriteLine($"      - Démarre au slot : {solver.Value(intervalle.StartExpr())}");
-                                Console.WriteLine($"      - Duree (slots) : {solver.Value(intervalle.SizeExpr())}");
-                                Console.WriteLine($"      - Finit au slot   : {solver.Value(intervalle.EndExpr())}");
-                            }
-                        }
-                        if (!estPlanifiee)
-                        {
-                            Console.WriteLine("  - Tâche non planifiée / aucune assignation trouvée.");
-                        }
-                    }
-
-                    var coutBrut = (modeleCpSat.CoutTotal != null) ? solver.Value(modeleCpSat.CoutTotal) : -1;
-                    var makespanBrut = (modeleCpSat.Makespan != null) ? solver.Value(modeleCpSat.Makespan) : -1;
-                    Console.WriteLine($"\n[SONDE 3] Valeurs brutes des objectifs :");
-                    Console.WriteLine($"  - CoutTotal Brut   : {coutBrut}");
-                    Console.WriteLine($"  - Makespan Brut    : {makespanBrut}");
-
-                    Console.WriteLine("\n--- FIN DES INFORMATIONS DE DÉBOGAGE ---\n");
-
-                    optimResultDto = optimResultDto with
-                    {
-                        CoutTotalEstime = (coutBrut != -1) ? coutBrut : null,
-                        DureeTotaleJoursOuvres = makespanBrut
-                    };
+                    case "OPTIMISATION_COUT":
+                    default:
+                        solverParams = "max_time_in_seconds:60.0,num_search_workers:8,log_search_progress:false,relative_gap_limit:0.01";
+                        objectif = "COUT";
+                        break;
                 }
 
-                return new ProcessChantierResultDto
-                {
-                    ChantierId = chantier.Id.Value,
-                    Etat = EtatTraitementInput.Succes,
-                    Messages = validationMessages,
-                    OptimisationResultat = optimResultDto
-                };
-            });
-        }
+                // 3. Construction et Résolution
+                var modeleCpSat = _problemeBuilder.ConstruireModele(probleme, objectif); // On passe l'objectif au builder
+                var solver = new CpSolver { StringParameters = solverParams };
+                var solverStatus = solver.Solve(modeleCpSat.Model);
+                var resultatStatus = solverStatus switch { CpSolverStatus.Optimal => OptimizationStatus.Optimal, CpSolverStatus.Feasible => OptimizationStatus.Feasible, _ => OptimizationStatus.Infeasible };
 
+                // 4. Interprétation et Analyse
+                if (resultatStatus == OptimizationStatus.Optimal || resultatStatus == OptimizationStatus.Feasible)
+                {
+                    var affectations = _solutionInterpreter.InterpreterLaSolution(solver, modeleCpSat, probleme);
+                    long coutTotal = solver.Value(modeleCpSat.CoutTotal);
+                    long coutIndirect = affectations.Any() ? chantier.ConfigurationOptimisation.CoutIndirectJournalierEnCentimes * affectations.Select(a => a.DateDebut.Date).Distinct().Count() : 0;
+                    long coutRh = coutTotal - coutIndirect;
+
+                    planningResult = new PlanningOptimizationResultDto
+                    {
+                        ChantierId = chantier.Id.Value,
+                        Status = resultatStatus,
+                        CoutTotalEstime = coutTotal,
+                        CoutTotalRhEstime = coutRh,
+                        CoutTotalIndirectEstime = coutIndirect,
+                        DureeTotaleEnSlots = solver.Value(modeleCpSat.Makespan),
+                        Affectations = affectations
+                    };
+
+                    // L'analyse KPI est effectuée pour tous les cas où une solution est trouvée.
+                    analysisReport = await _planningAnalyzer.AnalyserLePlanningAsync(affectations, chantier);
+                }
+                else
+                {
+                    planningResult = new PlanningOptimizationResultDto { ChantierId = chantier.Id.Value, Status = resultatStatus };
+                }
+            });
+
+            return new ProcessChantierResultDto
+            {
+                ChantierId = chantier.Id.Value,
+                Etat = EtatTraitementInput.Succes,
+                Messages = validationMessages,
+                OptimisationResultat = planningResult,
+                AnalysePostOptimisationResultat = analysisReport
+            };
+        }
     }
 }

@@ -4,6 +4,7 @@ using PlanAthena.Core.Application.Interfaces;
 using PlanAthena.Core.Application.Services;
 using PlanAthena.Core.Application.UseCases; // Assurez-vous que ce using est présent
 using PlanAthena.Core.Application.Validation;
+using PlanAthena.Core.Infrastructure.Services;
 
 namespace PlanAthena.Core.Application;
 
@@ -23,9 +24,11 @@ public static class DependencyInjection
         // CORRECTION : Enregistrer le nouveau cas d'usage et supprimer les anciens
         services.AddScoped<IProcessChantierUseCase, ProcessChantierUseCase>();
 
-        // SUPPRIMER les lignes suivantes si elles existent :
-        // services.AddScoped<IInitializeAndAnalyzeChantierUseCase, InitializeAndAnalyzeChantierUseCase>();
-        // services.AddScoped<IOptimizePlanningUseCase, OptimizePlanningUseCase>();
+        // Dans votre fichier d'enregistrement des services (ex: Infrastructure/DependencyInjection.cs)
+        services.AddScoped<ISolutionInterpreterService, SolutionInterpreterService>();
+
+        // Dans votre fichier d'enregistrement des services (ex: Application/DependencyInjection.cs)
+        services.AddScoped<IPlanningAnalysisService, PlanningAnalysisService>();
 
         return services;
     }
