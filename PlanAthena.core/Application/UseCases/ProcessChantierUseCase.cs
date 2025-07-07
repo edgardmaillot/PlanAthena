@@ -173,17 +173,17 @@ namespace PlanAthena.Core.Application.UseCases
                 if (resultatStatus == OptimizationStatus.Optimal || resultatStatus == OptimizationStatus.Feasible)
                 {
                     var affectations = _solutionInterpreter.InterpreterLaSolution(solver, modeleCpSat, probleme);
-                    long coutTotal = solver.Value(modeleCpSat.CoutTotal);
-                    long coutIndirect = affectations.Any() ? chantier.ConfigurationOptimisation.CoutIndirectJournalierEnCentimes * affectations.Select(a => a.DateDebut.Date).Distinct().Count() : 0;
-                    long coutRh = coutTotal - coutIndirect;
+                    long coutTotalValue = solver.Value(modeleCpSat.CoutTotal);
+                    long coutRhValue = solver.Value(modeleCpSat.CoutRh);
+                    long coutIndirectValue = solver.Value(modeleCpSat.CoutIndirect);
 
                     planningResult = new PlanningOptimizationResultDto
                     {
                         ChantierId = chantier.Id.Value,
                         Status = resultatStatus,
-                        CoutTotalEstime = coutTotal,
-                        CoutTotalRhEstime = coutRh,
-                        CoutTotalIndirectEstime = coutIndirect,
+                        CoutTotalEstime = coutTotalValue,
+                        CoutTotalRhEstime = coutRhValue,
+                        CoutTotalIndirectEstime = coutIndirectValue,
                         DureeTotaleEnSlots = solver.Value(modeleCpSat.Makespan),
                         Affectations = affectations
                     };

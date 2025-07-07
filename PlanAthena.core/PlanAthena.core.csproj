@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Docs\**" />
+    <EmbeddedResource Remove="Docs\**" />
+    <None Remove="Docs\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Application\Services\j2e1asku.5pi~" />
   </ItemGroup>
 

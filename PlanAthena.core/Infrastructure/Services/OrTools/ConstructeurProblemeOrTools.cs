@@ -8,7 +8,6 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
 {
     public class ConstructeurProblemeOrTools : IConstructeurProblemeOrTools
     {
-        // On modifie la signature pour correspondre à l'interface
         public ModeleCpSat ConstruireModele(ProblemeOptimisation probleme, string objectif)
         {
             var model = new CpModel();
@@ -16,15 +15,15 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
             var coutBuilder = new CoutModelBuilder();
 
             var (tachesIntervals, tachesAssignables, makespan) = tacheBuilder.Construire(model, probleme);
-            var coutTotal = coutBuilder.Construire(model, probleme, tachesIntervals, tachesAssignables, makespan);
 
-            // --- AIGUILLAGE DE L'OBJECTIF ---
+            // --- CORRECTION : Récupération correcte du tuple de coûts ---
+            var (coutTotal, coutRh, coutIndirect) = coutBuilder.Construire(model, probleme, tachesIntervals, tachesAssignables, makespan);
+
             switch (objectif)
             {
                 case "DELAI":
                     model.Minimize(makespan);
                     break;
-
                 case "COUT":
                 default:
                     model.Minimize(coutTotal);
@@ -37,7 +36,9 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
                 TachesIntervals = tachesIntervals,
                 TachesAssignables = tachesAssignables,
                 Makespan = makespan,
-                CoutTotal = coutTotal
+                CoutTotal = coutTotal,
+                CoutRh = coutRh,
+                CoutIndirect = coutIndirect
             };
         }
     }
