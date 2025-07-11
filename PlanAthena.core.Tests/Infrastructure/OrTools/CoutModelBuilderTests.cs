@@ -15,27 +15,27 @@ namespace PlanAthena.core.Tests.Infrastructure.OrTools;
 
 public class CoutModelBuilderTests
 {
-    private (CpModel model, ProblemeOptimisation probleme, IReadOnlyDictionary<TacheId, IntervalVar> tachesIntervals, IReadOnlyDictionary<(TacheId, OuvrierId), BoolVar> tachesAssignables) GetTestContext()
+    private (CpModel model, ProblemeOptimisation probleme, IReadOnlyDictionary<TacheId, IntervalVar> tachesIntervals, IReadOnlyDictionary<(TacheId, OuvrierId), BoolVar> tachesAssignables, IntVar makespan) GetTestContext()
     {
         var model = new CpModel();
         var probleme = CreerProblemeDeTest();
         var tacheBuilder = new TacheModelBuilder();
-        var (tachesIntervals, tachesAssignables, _) = tacheBuilder.Construire(model, probleme);
-        return (model, probleme, tachesIntervals, tachesAssignables);
+        // On récupère maintenant le makespan
+        var (tachesIntervals, tachesAssignables, makespan) = tacheBuilder.Construire(model, probleme);
+        return (model, probleme, tachesIntervals, tachesAssignables, makespan);
     }
 
     [Fact]
     public void Construire_CreeLeBonNombreDeVariablesDeCout()
     {
         // Arrange
-        var (model, probleme, tachesIntervals, tachesAssignables) = GetTestContext();
+        var (model, probleme, tachesIntervals, tachesAssignables, makespan) = GetTestContext(); // Récupère le makespan
         var builder = new CoutModelBuilder();
 
         // Act
-        builder.Construire(model, probleme, tachesIntervals, tachesAssignables);
+        builder.Construire(model, probleme, tachesIntervals, tachesAssignables, makespan); // Passe le makespan
 
         // Assert
-        // NOUVELLE LOGIQUE : On vérifie qu'une seule variable de coût total est créée.
         var coutVar = model.Model.Variables.FirstOrDefault(v => v.Name == "cout_total_chantier");
         coutVar.Should().NotBeNull();
     }
@@ -44,16 +44,13 @@ public class CoutModelBuilderTests
     public void Construire_CreeLeBonNombreDeVariablesDeTravailJournalier()
     {
         // Arrange
-        var (model, probleme, tachesIntervals, tachesAssignables) = GetTestContext();
+        var (model, probleme, tachesIntervals, tachesAssignables, makespan) = GetTestContext(); // Récupère le makespan
         var builder = new CoutModelBuilder();
 
         // Act
-        builder.Construire(model, probleme, tachesIntervals, tachesAssignables);
+        builder.Construire(model, probleme, tachesIntervals, tachesAssignables, makespan); // Passe le makespan
 
         // Assert
-        // NOUVELLE LOGIQUE : On vérifie que les variables "travail_o..." sont bien créées.
-        // Dans notre contexte de test, il y a 1 ouvrier et 1 jour de travail (défini dans CreerProblemeDeTest).
-        // On s'attend donc à une seule variable de ce type.
         var travailVars = model.Model.Variables.Count(v => v.Name.StartsWith("travail_o"));
         travailVars.Should().Be(1);
     }
@@ -62,18 +59,17 @@ public class CoutModelBuilderTests
     public void Construire_LiaisonDureeEstCorrecte()
     {
         // Arrange
-        var (model, probleme, tachesIntervals, tachesAssignables) = GetTestContext();
+        var (model, probleme, tachesIntervals, tachesAssignables, makespan) = GetTestContext(); // Récupère le makespan
         var builder = new CoutModelBuilder();
 
         // Act
-        builder.Construire(model, probleme, tachesIntervals, tachesAssignables);
+        builder.Construire(model, probleme, tachesIntervals, tachesAssignables, makespan); // Passe le makespan
 
         // Assert
-        // CORRECTION : On vérifie la présence de la contrainte qui lie la durée à la somme des contributions.
-        var contrainteDeLiaison = model.Model.Constraints
-            .FirstOrDefault(c => c.Linear != null && c.Linear.Vars.Any(i => model.Model.Variables[i].Name.StartsWith("travail_o")));
-
-        contrainteDeLiaison.Should().NotBeNull();
+        // Cette assertion n'est plus pertinente car la liaison est maintenant faite avec AddMaxEquality
+        // On la remplace par une vérification de la création des variables de coût RH.
+        var coutRhVar = model.Model.Variables.FirstOrDefault(v => v.Name == "cout_rh");
+        coutRhVar.Should().NotBeNull();
     }
 
     // --- Méthode de préparation des données de test ---

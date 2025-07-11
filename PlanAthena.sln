@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlanAthena.core.Tests", "Pl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSolver", "TestSolver\TestSolver.csproj", "{F5D160EB-4787-4F7E-B2AA-9B09B2E65840}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlanAthena", "PlanAthena\PlanAthena.csproj", "{71D02847-936E-43BF-8D16-E4606A5E471A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{F5D160EB-4787-4F7E-B2AA-9B09B2E65840}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5D160EB-4787-4F7E-B2AA-9B09B2E65840}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5D160EB-4787-4F7E-B2AA-9B09B2E65840}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71D02847-936E-43BF-8D16-E4606A5E471A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71D02847-936E-43BF-8D16-E4606A5E471A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71D02847-936E-43BF-8D16-E4606A5E471A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71D02847-936E-43BF-8D16-E4606A5E471A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

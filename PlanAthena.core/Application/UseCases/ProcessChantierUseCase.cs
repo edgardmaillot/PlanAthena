@@ -100,28 +100,87 @@ namespace PlanAthena.Core.Application.UseCases
         private async Task<ProcessChantierResultDto> AnalyserUniquementAsync(Chantier chantier, IReadOnlyList<MessageValidationDto> validationMessages)
         {
             var allMessages = new List<MessageValidationDto>(validationMessages);
+            long? coutEstime = null;
+            long? dureeEstimee = null;
 
+            await Task.Run(() =>
+            {
+                // === DÉBUT DE LA NOUVELLE LOGIQUE DE TIMEOUT ADAPTATIF ===
+
+                // 1. Calculer le timeout basé sur le nombre de tâches
+                int nombreDeTaches = chantier.ObtenirToutesLesTaches().Count();
+                double timeoutCalcule = 5.0 + (nombreDeTaches * 0.2);
+
+                // 2. Appliquer les limites minimales et maximales
+                double timeoutFinalSecondes = Math.Max(10.0, Math.Min(timeoutCalcule, 300.0));
+
+                // On ajoute un message pour le débogage et la traçabilité
+                allMessages.Add(new MessageValidationDto { Type = TypeMessageValidation.Suggestion, CodeMessage = "INFO_TIMEOUT_CALC", Message = $"Timeout adaptatif pour l'estimation calculé à {timeoutFinalSecondes:F1} secondes pour {nombreDeTaches} tâches." });
+
+                // === FIN DE LA NOUVELLE LOGIQUE DE TIMEOUT ADAPTATIF ===
+
+
+                // 1. Préparation d'une configuration minimale pour le solveur.
+                // 7 heures de travail par jour, 30% de pénalité pour changement d'ouvrier, 10000 centimes de coût indirect journalier.
+                var configOptimisation = new ConfigurationOptimisation(7, 30m, 10000);
+                chantier.AppliquerConfigurationOptimisation(configOptimisation);
+
+                var echelleTemps = _calendrierService.CreerEchelleTempsOuvree(chantier.Calendrier, LocalDate.FromDateTime(chantier.PeriodeSouhaitee.DateDebut.Value), LocalDate.FromDateTime(chantier.PeriodeSouhaitee.DateFin.Value));
+                var probleme = new ProblemeOptimisation { Chantier = chantier, EchelleTemps = echelleTemps, Configuration = chantier.ConfigurationOptimisation! };
+
+                // 2. Construction du modèle.
+                var modeleCpSat = _problemeBuilder.ConstruireModele(probleme, "COUT");
+
+                // 3. Configuration du solveur avec le timeout calculé.
+                var solver = new CpSolver
+                {
+                    // On utilise une chaîne de caractères formatée pour inclure notre timeout.
+                    // Le "F1" formate le double avec une seule décimale (ex: "12.5").
+                    // On utilise CultureInfo.InvariantCulture pour s'assurer que le séparateur décimal est un point (.), ce que le solveur attend.
+                    StringParameters = $"max_time_in_seconds:{timeoutFinalSecondes.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)},log_search_progress:false"
+                };
+
+                var solverStatus = solver.Solve(modeleCpSat.Model);
+
+                // 4. Si une solution est trouvée, on extrait les estimations.
+                if (solverStatus == CpSolverStatus.Optimal || solverStatus == CpSolverStatus.Feasible)
+                {
+                    coutEstime = solver.Value(modeleCpSat.CoutTotal);
+                    dureeEstimee = solver.Value(modeleCpSat.Makespan);
+                    allMessages.Add(new MessageValidationDto { Type = TypeMessageValidation.Suggestion, CodeMessage = "INFO_ESTIMATION_OK", Message = $"Estimation rapide réussie (statut solveur: {solverStatus})." });
+                }
+                else
+                {
+                    allMessages.Add(new MessageValidationDto { Type = TypeMessageValidation.Avertissement, CodeMessage = "WARN_ESTIMATION_FAIL", Message = "Impossible de produire une estimation de coût/durée dans le temps imparti. Le chantier est peut-être infaisable ou très contraint." });
+                }
+            });
+
+            // On exécute les analyses statiques originales en complément.
             var feasibilityMessages = await _feasibilityService.AnalyserFaisabiliteAsync(chantier);
             allMessages.AddRange(feasibilityMessages);
 
             var suggestedKeyResourceIds = await _keyResourceService.SuggererOuvriersClesAsync(chantier);
-            var analyseRessourcesResult = new AnalyseRessourcesResultatDto { OuvriersClesSuggereIds = suggestedKeyResourceIds.Select(id => id.Value).ToList() };
-            if (suggestedKeyResourceIds.Any())
-            {
-                allMessages.Add(new MessageValidationDto { Type = TypeMessageValidation.Suggestion, CodeMessage = "SUGGEST_KEY_RESOURCES", Message = $"Suggère les ouvriers suivants comme clés : {string.Join(", ", suggestedKeyResourceIds.Select(id => id.Value))}" });
-            }
 
-            var finalEtat = allMessages.Any(m => m.Type == TypeMessageValidation.Avertissement) ? EtatTraitementInput.SuccesAvecAvertissements : EtatTraitementInput.Succes;
+            // On assemble le DTO de résultat avec les nouvelles estimations.
+            var analyseStatiqueResult = new AnalyseRessourcesResultatDto
+            {
+                OuvriersClesSuggereIds = suggestedKeyResourceIds.Select(id => id.Value).ToList(),
+                CoutTotalEstime = coutEstime,
+                DureeTotaleEstimeeEnSlots = dureeEstimee
+            };
+
+            var finalEtat = allMessages.Any(m => m.Type == TypeMessageValidation.Erreur) ? EtatTraitementInput.EchecValidation :
+                            allMessages.Any(m => m.Type == TypeMessageValidation.Avertissement) ? EtatTraitementInput.SuccesAvecAvertissements :
+                            EtatTraitementInput.Succes;
 
             return new ProcessChantierResultDto
             {
                 ChantierId = chantier.Id.Value,
                 Etat = finalEtat,
                 Messages = allMessages,
-                AnalyseStatiqueResultat = analyseRessourcesResult
+                AnalyseStatiqueResultat = analyseStatiqueResult
             };
         }
-
         private async Task<ProcessChantierResultDto> ExecuterOptimisationEtAnalyseAsync(Chantier chantier, OptimizationConfigDto config, IReadOnlyList<MessageValidationDto> validationMessages)
         {
             PlanningOptimizationResultDto? planningResult = null;
@@ -158,7 +217,7 @@ namespace PlanAthena.Core.Application.UseCases
 
                     case "OPTIMISATION_COUT":
                     default:
-                        solverParams = "max_time_in_seconds:60.0,num_search_workers:8,log_search_progress:false,relative_gap_limit:0.01";
+                        solverParams = "max_time_in_seconds:120.0,num_search_workers:8,log_search_progress:false,relative_gap_limit:0.01";
                         objectif = "COUT";
                         break;
                 }

@@ -27,20 +27,28 @@ namespace PlanAthena.Core.Infrastructure.Services
                 if (solver.BooleanValue(assignVar))
                 {
                     var (tacheId, ouvrierId) = key;
+
+                    // On doit retrouver l'intervalle "optionnel" spécifique à cette assignation.
+                    // Cette information n'est pas directement dans modeleCpSat, il faut donc adapter
+                    // légèrement la façon dont on récupère l'intervalle.
+                    // Si la structure ne le permet pas, on se base sur l'intervalle principal et on assume que
+                    // le "size" est celui défini dans le modèle.
                     var intervalVar = modeleCpSat.TachesIntervals[tacheId];
 
-                    // Récupérer les informations du domaine pour enrichir le DTO
+                    // Récupérer les informations du domaine
                     var tache = chantier.ObtenirToutesLesTaches().First(t => t.Id == tacheId);
                     var ouvrier = chantier.Ouvriers[ouvrierId];
 
-                    // Traduire les slots en DateTime
+                    // 1. Lire le slot de début décidé par le solveur
                     var startSlotIndex = solver.Value(intervalVar.StartExpr());
-                    var endSlotIndex = solver.Value(intervalVar.EndExpr());
 
+                    // 2. Lire la durée en slots (taille) décidée par le solveur
+                    var dureeEnSlots = solver.Value(intervalVar.SizeExpr());
+
+                    // 3. Traduire le slot de début en DateTime
                     var dateDebut = echelleTemps.Slots[(int)startSlotIndex].Debut.ToDateTimeUnspecified();
-                    // La fin est la fin du dernier slot. Le dernier slot est endSlotIndex - 1.
-                    var dateFin = echelleTemps.Slots[(int)endSlotIndex - 1].Fin.ToDateTimeUnspecified();
 
+                    // 4. Ajouter l'affectation à la liste avec le nouveau format
                     affectations.Add(new AffectationDto
                     {
                         TacheId = tacheId.Value,
@@ -49,7 +57,7 @@ namespace PlanAthena.Core.Infrastructure.Services
                         OuvrierNom = $"{ouvrier.Prenom} {ouvrier.Nom}",
                         BlocId = tache.BlocParentId.Value,
                         DateDebut = dateDebut,
-                        DateFin = dateFin
+                        DureeHeures = dureeEnSlots // La durée en slots est directement notre durée en heures
                     });
                 }
             }

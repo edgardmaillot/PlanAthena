@@ -63,24 +63,33 @@ namespace PlanAthena.Core.Application.Services
         }
 
         private (int joursPresence, double heuresTravaillees) CalculerPresenceEtHeures(
-            IReadOnlyList<AffectationDto> affectationsOuvrier,
-            CalendrierOuvreChantier calendrier)
+    IReadOnlyList<AffectationDto> affectationsOuvrier,
+    CalendrierOuvreChantier calendrier)
         {
             if (!affectationsOuvrier.Any()) return (0, 0);
 
+            // Le calcul des heures travaillées est maintenant direct
+            double heuresTravaillees = affectationsOuvrier.Sum(a => (double)a.DureeHeures);
+
+            // Pour les jours de présence, nous devons calculer la date de fin de chaque tâche
             var dateMin = affectationsOuvrier.Min(a => a.DateDebut);
-            var dateMax = affectationsOuvrier.Max(a => a.DateFin);
+            var dateMax = affectationsOuvrier.Max(a => a.DateDebut.AddHours(a.DureeHeures));
 
             int joursDePresence = 0;
-            for (var dt = dateMin.Date; dt <= dateMax.Date; dt = dt.AddDays(1))
+            // On s'assure de compter le nombre de jours ouvrés uniques où il y a eu une activité
+            var joursActifs = new HashSet<DateTime>();
+            foreach (var affectation in affectationsOuvrier)
             {
-                if (calendrier.EstJourOuvre(NodaTime.LocalDate.FromDateTime(dt)))
+                var dateCourante = affectation.DateDebut.Date;
+                var dateFinTache = affectation.DateDebut.AddHours(affectation.DureeHeures).Date;
+                while (dateCourante <= dateFinTache)
                 {
-                    joursDePresence++;
+                    joursActifs.Add(dateCourante);
+                    dateCourante = dateCourante.AddDays(1);
                 }
             }
 
-            double heuresTravaillees = affectationsOuvrier.Sum(a => (a.DateFin - a.DateDebut).TotalHours);
+            joursDePresence = joursActifs.Count(jour => calendrier.EstJourOuvre(NodaTime.LocalDate.FromDateTime(jour)));
 
             return (joursDePresence, heuresTravaillees);
         }

@@ -33,6 +33,6 @@ namespace PlanAthena.Core.Facade.Dto.Output
         public required string OuvrierNom { get; init; }
         public required string BlocId { get; init; }
         public required DateTime DateDebut { get; init; }
-        public required DateTime DateFin { get; init; }
+        public required long DureeHeures { get; init; }
     }
 }

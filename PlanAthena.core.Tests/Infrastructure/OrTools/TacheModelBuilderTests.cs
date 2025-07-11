@@ -71,8 +71,10 @@ public class TacheModelBuilderTests
         var action = () => builder.Construire(model, probleme);
 
         // Assert
+        // --- CORRECTION ---
+        // On met à jour le message pour qu'il corresponde exactement au nouveau format.
         action.Should().Throw<InvalidOperationException>()
-              .WithMessage("Aucun ouvrier compétent trouvé pour la tâche TACHE_ORPHELINE");
+              .WithMessage("Aucun ouvrier compétent trouvé pour la tâche TACHE_ORPHELINE (Câblage) - Métier: ELECTRICIEN");
     }
 
     // --- Méthodes de préparation des données de test ---
