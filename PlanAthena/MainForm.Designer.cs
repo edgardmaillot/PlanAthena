@@ -46,25 +46,19 @@ namespace PlanAthena
             chkListJoursOuvres = new CheckedListBox();
             label5 = new Label();
             groupBox2 = new GroupBox();
+            lblMapping = new Label();
+            lblResume = new Label();
             dtpDateFin = new DateTimePicker();
             chkDateFin = new CheckBox();
             dtpDateDebut = new DateTimePicker();
             chkDateDebut = new CheckBox();
             txtDescription = new TextBox();
             label4 = new Label();
-            groupBox1 = new GroupBox();
-            lblTachesStatus = new Label();
-            btnImportTaches = new Button();
-            txtTachesPath = new TextBox();
-            label3 = new Label();
-            lblMetiersStatus = new Label();
-            btnImportMetiers = new Button();
-            txtMetiersPath = new TextBox();
-            label2 = new Label();
-            lblOuvriersStatus = new Label();
-            btnImportOuvriers = new Button();
-            txtOuvriersPath = new TextBox();
-            label1 = new Label();
+            lblDateCreation = new Label();
+            txtAuteur = new TextBox();
+            labelAuteur = new Label();
+            txtNomProjet = new TextBox();
+            labelNomProjet = new Label();
             rtbLog = new RichTextBox();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
@@ -77,7 +71,6 @@ namespace PlanAthena
             ((System.ComponentModel.ISupportInitialize)numHeuresTravail).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numHeureDebut).BeginInit();
             groupBox2.SuspendLayout();
-            groupBox1.SuspendLayout();
             SuspendLayout();
             // 
             // splitContainer1
@@ -93,7 +86,6 @@ namespace PlanAthena
             // 
             splitContainer1.Panel1.Controls.Add(groupBox3);
             splitContainer1.Panel1.Controls.Add(groupBox2);
-            splitContainer1.Panel1.Controls.Add(groupBox1);
             // 
             // splitContainer1.Panel2
             // 
@@ -120,12 +112,12 @@ namespace PlanAthena
             groupBox3.Controls.Add(chkListJoursOuvres);
             groupBox3.Controls.Add(label5);
             groupBox3.Dock = DockStyle.Top;
-            groupBox3.Location = new Point(0, 218);
+            groupBox3.Location = new Point(0, 158);
             groupBox3.Name = "groupBox3";
             groupBox3.Size = new Size(784, 133);
             groupBox3.TabIndex = 6;
             groupBox3.TabStop = false;
-            groupBox3.Text = "Calendrier et Configuration d'Optimisation";
+            groupBox3.Text = "Configuration et Planification";
             // 
             // btnGenerateAndTest
             // 
@@ -134,7 +126,7 @@ namespace PlanAthena
             btnGenerateAndTest.Name = "btnGenerateAndTest";
             btnGenerateAndTest.Size = new Size(778, 23);
             btnGenerateAndTest.TabIndex = 14;
-            btnGenerateAndTest.Text = "Lancer la planification";
+            btnGenerateAndTest.Text = "🚀 LANCER LA PLANIFICATION";
             btnGenerateAndTest.UseVisualStyleBackColor = true;
             btnGenerateAndTest.Click += btnGenerateAndTest_Click;
             // 
@@ -264,202 +256,142 @@ namespace PlanAthena
             // 
             // groupBox2
             // 
+            groupBox2.Controls.Add(lblMapping);
+            groupBox2.Controls.Add(lblResume);
             groupBox2.Controls.Add(dtpDateFin);
             groupBox2.Controls.Add(chkDateFin);
             groupBox2.Controls.Add(dtpDateDebut);
             groupBox2.Controls.Add(chkDateDebut);
             groupBox2.Controls.Add(txtDescription);
             groupBox2.Controls.Add(label4);
+            groupBox2.Controls.Add(lblDateCreation);
+            groupBox2.Controls.Add(txtAuteur);
+            groupBox2.Controls.Add(labelAuteur);
+            groupBox2.Controls.Add(txtNomProjet);
+            groupBox2.Controls.Add(labelNomProjet);
             groupBox2.Dock = DockStyle.Top;
-            groupBox2.Location = new Point(0, 127);
+            groupBox2.Location = new Point(0, 0);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new Size(784, 91);
+            groupBox2.Size = new Size(784, 158);
             groupBox2.TabIndex = 5;
             groupBox2.TabStop = false;
-            groupBox2.Text = "Informations du Chantier";
+            groupBox2.Text = "Informations du Projet";
+            // 
+            // lblMapping
+            // 
+            lblMapping.AutoSize = true;
+            lblMapping.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblMapping.ForeColor = Color.Blue;
+            lblMapping.Location = new Point(400, 130);
+            lblMapping.Name = "lblMapping";
+            lblMapping.Size = new Size(159, 15);
+            lblMapping.TabIndex = 12;
+            lblMapping.Text = "Mapping: 89% (139/156 tâches)";
+            // 
+            // lblResume
+            // 
+            lblResume.AutoSize = true;
+            lblResume.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblResume.ForeColor = Color.DarkGreen;
+            lblResume.Location = new Point(23, 130);
+            lblResume.Name = "lblResume";
+            lblResume.Size = new Size(251, 15);
+            lblResume.TabIndex = 11;
+            lblResume.Text = "Résumé: 25 ouvriers, 12 métiers, 156 tâches";
             // 
             // dtpDateFin
             // 
-            dtpDateFin.Location = new Point(515, 51);
+            dtpDateFin.Location = new Point(515, 98);
             dtpDateFin.Name = "dtpDateFin";
             dtpDateFin.Size = new Size(200, 23);
-            dtpDateFin.TabIndex = 5;
+            dtpDateFin.TabIndex = 10;
             // 
             // chkDateFin
             // 
             chkDateFin.AutoSize = true;
-            chkDateFin.Location = new Point(442, 52);
+            chkDateFin.Location = new Point(442, 99);
             chkDateFin.Name = "chkDateFin";
             chkDateFin.Size = new Size(67, 19);
-            chkDateFin.TabIndex = 4;
+            chkDateFin.TabIndex = 9;
             chkDateFin.Text = "Date fin";
             chkDateFin.UseVisualStyleBackColor = true;
             // 
             // dtpDateDebut
             // 
-            dtpDateDebut.Location = new Point(121, 52);
+            dtpDateDebut.Location = new Point(121, 99);
             dtpDateDebut.Name = "dtpDateDebut";
             dtpDateDebut.Size = new Size(200, 23);
-            dtpDateDebut.TabIndex = 3;
+            dtpDateDebut.TabIndex = 8;
             // 
             // chkDateDebut
             // 
             chkDateDebut.AutoSize = true;
-            chkDateDebut.Location = new Point(30, 56);
+            chkDateDebut.Location = new Point(30, 103);
             chkDateDebut.Name = "chkDateDebut";
             chkDateDebut.Size = new Size(85, 19);
-            chkDateDebut.TabIndex = 2;
+            chkDateDebut.TabIndex = 7;
             chkDateDebut.Text = "Date Début";
             chkDateDebut.UseVisualStyleBackColor = true;
             // 
             // txtDescription
             // 
-            txtDescription.Location = new Point(108, 22);
+            txtDescription.Location = new Point(108, 69);
             txtDescription.Multiline = true;
             txtDescription.Name = "txtDescription";
             txtDescription.ScrollBars = ScrollBars.Vertical;
             txtDescription.Size = new Size(607, 23);
-            txtDescription.TabIndex = 1;
-            txtDescription.Text = "Test";
+            txtDescription.TabIndex = 6;
+            txtDescription.Text = "";
             // 
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(23, 25);
+            label4.Location = new Point(23, 72);
             label4.Name = "label4";
             label4.Size = new Size(67, 15);
-            label4.TabIndex = 0;
+            label4.TabIndex = 5;
             label4.Text = "Description";
             // 
-            // groupBox1
+            // lblDateCreation
             // 
-            groupBox1.Controls.Add(lblTachesStatus);
-            groupBox1.Controls.Add(btnImportTaches);
-            groupBox1.Controls.Add(txtTachesPath);
-            groupBox1.Controls.Add(label3);
-            groupBox1.Controls.Add(lblMetiersStatus);
-            groupBox1.Controls.Add(btnImportMetiers);
-            groupBox1.Controls.Add(txtMetiersPath);
-            groupBox1.Controls.Add(label2);
-            groupBox1.Controls.Add(lblOuvriersStatus);
-            groupBox1.Controls.Add(btnImportOuvriers);
-            groupBox1.Controls.Add(txtOuvriersPath);
-            groupBox1.Controls.Add(label1);
-            groupBox1.Dock = DockStyle.Top;
-            groupBox1.Location = new Point(0, 0);
-            groupBox1.Name = "groupBox1";
-            groupBox1.Size = new Size(784, 127);
-            groupBox1.TabIndex = 4;
-            groupBox1.TabStop = false;
-            groupBox1.Text = "Imports des Fichiers CSV";
+            lblDateCreation.AutoSize = true;
+            lblDateCreation.Location = new Point(500, 47);
+            lblDateCreation.Name = "lblDateCreation";
+            lblDateCreation.Size = new Size(93, 15);
+            lblDateCreation.TabIndex = 4;
+            lblDateCreation.Text = "Créé le: __/__/__";
             // 
-            // lblTachesStatus
+            // txtAuteur
             // 
-            lblTachesStatus.AutoSize = true;
-            lblTachesStatus.Location = new Point(553, 91);
-            lblTachesStatus.Name = "lblTachesStatus";
-            lblTachesStatus.Size = new Size(78, 15);
-            lblTachesStatus.TabIndex = 11;
-            lblTachesStatus.Text = "Aucun fichier";
+            txtAuteur.Location = new Point(270, 44);
+            txtAuteur.Name = "txtAuteur";
+            txtAuteur.Size = new Size(200, 23);
+            txtAuteur.TabIndex = 3;
             // 
-            // btnImportTaches
+            // labelAuteur
             // 
-            btnImportTaches.Location = new Point(472, 87);
-            btnImportTaches.Name = "btnImportTaches";
-            btnImportTaches.Size = new Size(75, 23);
-            btnImportTaches.TabIndex = 10;
-            btnImportTaches.Text = "Parcourir...";
-            btnImportTaches.UseVisualStyleBackColor = true;
-            btnImportTaches.Click += btnImportTaches_Click;
+            labelAuteur.AutoSize = true;
+            labelAuteur.Location = new Point(220, 47);
+            labelAuteur.Name = "labelAuteur";
+            labelAuteur.Size = new Size(44, 15);
+            labelAuteur.TabIndex = 2;
+            labelAuteur.Text = "Auteur:";
             // 
-            // txtTachesPath
+            // txtNomProjet
             // 
-            txtTachesPath.Location = new Point(63, 87);
-            txtTachesPath.Name = "txtTachesPath";
-            txtTachesPath.ReadOnly = true;
-            txtTachesPath.Size = new Size(403, 23);
-            txtTachesPath.TabIndex = 9;
+            txtNomProjet.Location = new Point(70, 44);
+            txtNomProjet.Name = "txtNomProjet";
+            txtNomProjet.Size = new Size(140, 23);
+            txtNomProjet.TabIndex = 1;
             // 
-            // label3
+            // labelNomProjet
             // 
-            label3.AutoSize = true;
-            label3.Location = new Point(6, 94);
-            label3.Name = "label3";
-            label3.Size = new Size(43, 15);
-            label3.TabIndex = 8;
-            label3.Text = "Tâches";
-            // 
-            // lblMetiersStatus
-            // 
-            lblMetiersStatus.AutoSize = true;
-            lblMetiersStatus.Location = new Point(553, 61);
-            lblMetiersStatus.Name = "lblMetiersStatus";
-            lblMetiersStatus.Size = new Size(78, 15);
-            lblMetiersStatus.TabIndex = 7;
-            lblMetiersStatus.Text = "Aucun fichier";
-            // 
-            // btnImportMetiers
-            // 
-            btnImportMetiers.Location = new Point(472, 58);
-            btnImportMetiers.Name = "btnImportMetiers";
-            btnImportMetiers.Size = new Size(75, 23);
-            btnImportMetiers.TabIndex = 6;
-            btnImportMetiers.Text = "Parcourir...";
-            btnImportMetiers.UseVisualStyleBackColor = true;
-            btnImportMetiers.Click += btnImportMetiers_Click;
-            // 
-            // txtMetiersPath
-            // 
-            txtMetiersPath.Location = new Point(63, 58);
-            txtMetiersPath.Name = "txtMetiersPath";
-            txtMetiersPath.ReadOnly = true;
-            txtMetiersPath.Size = new Size(403, 23);
-            txtMetiersPath.TabIndex = 5;
-            // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Location = new Point(6, 65);
-            label2.Name = "label2";
-            label2.Size = new Size(46, 15);
-            label2.TabIndex = 4;
-            label2.Text = "Métiers";
-            // 
-            // lblOuvriersStatus
-            // 
-            lblOuvriersStatus.AutoSize = true;
-            lblOuvriersStatus.Location = new Point(553, 32);
-            lblOuvriersStatus.Name = "lblOuvriersStatus";
-            lblOuvriersStatus.Size = new Size(78, 15);
-            lblOuvriersStatus.TabIndex = 3;
-            lblOuvriersStatus.Text = "Aucun fichier";
-            // 
-            // btnImportOuvriers
-            // 
-            btnImportOuvriers.Location = new Point(472, 29);
-            btnImportOuvriers.Name = "btnImportOuvriers";
-            btnImportOuvriers.Size = new Size(75, 23);
-            btnImportOuvriers.TabIndex = 2;
-            btnImportOuvriers.Text = "Parcourir...";
-            btnImportOuvriers.UseVisualStyleBackColor = true;
-            btnImportOuvriers.Click += btnImportOuvriers_Click;
-            // 
-            // txtOuvriersPath
-            // 
-            txtOuvriersPath.Location = new Point(63, 29);
-            txtOuvriersPath.Name = "txtOuvriersPath";
-            txtOuvriersPath.ReadOnly = true;
-            txtOuvriersPath.Size = new Size(403, 23);
-            txtOuvriersPath.TabIndex = 1;
-            // 
-            // label1
-            // 
-            label1.AutoSize = true;
-            label1.Location = new Point(6, 32);
-            label1.Name = "label1";
-            label1.Size = new Size(51, 15);
-            label1.TabIndex = 0;
-            label1.Text = "Ouvriers";
+            labelNomProjet.AutoSize = true;
+            labelNomProjet.Location = new Point(23, 47);
+            labelNomProjet.Name = "labelNomProjet";
+            labelNomProjet.Size = new Size(41, 15);
+            labelNomProjet.TabIndex = 0;
+            labelNomProjet.Text = "Projet:";
             // 
             // rtbLog
             // 
@@ -469,7 +401,7 @@ namespace PlanAthena
             rtbLog.ReadOnly = true;
             rtbLog.Size = new Size(784, 355);
             rtbLog.TabIndex = 0;
-            rtbLog.Text = "Bienvenue sur le testeur PlanAthena. Chargez les fichiers et lancez le test.";
+            rtbLog.Text = "Bienvenue sur PlanAthena. Créez un nouveau projet ou chargez un projet existant.";
             // 
             // MainForm
             // 
@@ -492,26 +424,11 @@ namespace PlanAthena
             ((System.ComponentModel.ISupportInitialize)numHeureDebut).EndInit();
             groupBox2.ResumeLayout(false);
             groupBox2.PerformLayout();
-            groupBox1.ResumeLayout(false);
-            groupBox1.PerformLayout();
             ResumeLayout(false);
         }
 
         #endregion
         private SplitContainer splitContainer1;
-        private GroupBox groupBox1;
-        private TextBox txtOuvriersPath;
-        private Label label1;
-        private Label lblMetiersStatus;
-        private Button btnImportMetiers;
-        private TextBox txtMetiersPath;
-        private Label label2;
-        private Label lblOuvriersStatus;
-        private Button btnImportOuvriers;
-        private Label lblTachesStatus;
-        private Button btnImportTaches;
-        private TextBox txtTachesPath;
-        private Label label3;
         private GroupBox groupBox2;
         private TextBox txtDescription;
         private Label label4;
@@ -536,5 +453,14 @@ namespace PlanAthena
         private Label label11;
         private Button btnGenerateAndTest;
         private RichTextBox rtbLog;
+
+        // Nouveaux contrôles pour les informations projet
+        private TextBox txtNomProjet;
+        private Label labelNomProjet;
+        private TextBox txtAuteur;
+        private Label labelAuteur;
+        private Label lblDateCreation;
+        private Label lblResume;
+        private Label lblMapping;
     }
 }

@@ -1,19 +1,13 @@
-using CsvHelper;
-using CsvHelper.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PlanAthena.Core.Application;
 using PlanAthena.Core.Facade;
-using PlanAthena.Core.Facade.Dto.Input;
-using PlanAthena.Core.Facade.Dto.Output;
 using PlanAthena.Core.Infrastructure;
-using PlanAthena.CsvModels;
+using PlanAthena.Services.Business;
+using PlanAthena.Services.DataAccess;
 using PlanAthena.Utilities;
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Windows.Forms;
 
 namespace PlanAthena
@@ -21,21 +15,37 @@ namespace PlanAthena
     public partial class MainForm : Form
     {
         private readonly ServiceProvider _serviceProvider;
+        private readonly PlanificationService _planificationService;
+        private readonly OuvrierService _ouvrierService;
+        private readonly TacheService _tacheService;
         private readonly MetierService _metierService;
+        private readonly ProjetService _projetService;
 
-        private List<OuvrierCsvRecord> _loadedOuvriers = new();
-        private List<TacheCsvRecord> _loadedTaches = new();
+        // État du projet actuel
+        private InformationsProjet _projetActuel;
 
         public MainForm()
         {
             InitializeComponent();
             _serviceProvider = ConfigureServices();
-            _metierService = new MetierService();
-            InitializeFormDefaults();
+
+            // Injection des services
+            _planificationService = _serviceProvider.GetRequiredService<PlanificationService>();
+            _ouvrierService = _serviceProvider.GetRequiredService<OuvrierService>();
+            _tacheService = _serviceProvider.GetRequiredService<TacheService>();
+            _metierService = _serviceProvider.GetRequiredService<MetierService>();
+            _projetService = _serviceProvider.GetRequiredService<ProjetService>();
+
+            InitializeInterface();
+            CreerNouveauProjetParDefaut();
         }
 
-        private void InitializeFormDefaults()
+        private void InitializeInterface()
         {
+            // Configuration du menu
+            InitializeMenu();
+
+            // Configuration des jours ouvrés
             chkListJoursOuvres.Items.Add(DayOfWeek.Monday, true);
             chkListJoursOuvres.Items.Add(DayOfWeek.Tuesday, true);
             chkListJoursOuvres.Items.Add(DayOfWeek.Wednesday, true);
@@ -45,6 +55,7 @@ namespace PlanAthena
             chkListJoursOuvres.Items.Add(DayOfWeek.Sunday, false);
             chkListJoursOuvres.DisplayMember = "ToString";
 
+            // Configuration du type de sortie
             cmbTypeDeSortie.Items.Clear();
             cmbTypeDeSortie.Items.AddRange(new string[] {
                 "Analyse et Estimation",
@@ -53,266 +64,422 @@ namespace PlanAthena
             });
             cmbTypeDeSortie.SelectedIndex = 0;
 
+            // Configuration des dates par défaut
             dtpDateDebut.Value = DateTime.Today;
             dtpDateFin.Value = DateTime.Today.AddMonths(3);
             chkDateDebut.Checked = true;
             chkDateFin.Checked = true;
 
-            Log("Application prête. Chargez vos fichiers CSV.");
+            // Timer pour mise à jour en temps réel
+            var timerMiseAJour = new System.Windows.Forms.Timer { Interval = 2000 }; // 2 secondes
+            timerMiseAJour.Tick += (s, e) => MettreAJourResume();
+            timerMiseAJour.Start();
+
+            Log("Application prête. Créez un nouveau projet ou chargez un projet existant.");
         }
 
-        #region Logique pour les clics sur les boutons de l'UI
-
-        private void btnImportOuvriers_Click(object sender, EventArgs e)
+        private void InitializeMenu()
         {
-            _loadedOuvriers = ImportCsvFile<OuvrierCsvRecord>(txtOuvriersPath, lblOuvriersStatus, "lignes ouvrier");
+            // Création du MenuStrip
+            var menuStrip = new MenuStrip();
+
+            // Menu Projet
+            var menuProjet = new ToolStripMenuItem("📁 Projet");
+            menuProjet.DropDownItems.Add("🆕 Nouveau projet", null, NouveauProjet_Click);
+            menuProjet.DropDownItems.Add("📂 Charger projet", null, ChargerProjet_Click);
+            menuProjet.DropDownItems.Add("💾 Sauvegarder projet", null, SauvegarderProjet_Click);
+            menuProjet.DropDownItems.Add(new ToolStripSeparator());
+            menuProjet.DropDownItems.Add("📤 Export CSV (tout)", null, ExportCsvTout_Click);
+            menuProjet.DropDownItems.Add("📥 Import CSV groupé", null, ImportCsvGroupe_Click);
+            menuProjet.DropDownItems.Add(new ToolStripSeparator());
+            menuProjet.DropDownItems.Add("❌ Quitter", null, Quitter_Click);
+
+            // Menu items directs
+            var menuTaches = new ToolStripMenuItem("⚙️ Tâches", null, OuvrirGestionTaches_Click);
+            var menuMetiers = new ToolStripMenuItem("📋 Métiers", null, OuvrirGestionMetiers_Click);
+            var menuOuvriers = new ToolStripMenuItem("👷 Ouvriers", null, OuvrirGestionOuvriers_Click);
+
+            menuStrip.Items.AddRange(new ToolStripItem[] { menuProjet, menuTaches, menuMetiers, menuOuvriers });
+
+            this.MainMenuStrip = menuStrip;
+            this.Controls.Add(menuStrip);
         }
 
-        private void btnImportMetiers_Click(object sender, EventArgs e)
+        #region Événements Menu
+
+        private void NouveauProjet_Click(object sender, EventArgs e)
         {
-            var metiersCsv = ImportCsvFile<MetierCsvRecord>(txtMetiersPath, lblMetiersStatus, "métiers");
-            _metierService.ChargerMetiers(metiersCsv);
-            lblMetiersStatus.Text = $"{_metierService.GetAllMetiers().Count} métiers chargés.";
+            if (ConfirmerPerteDonnees())
+            {
+                using var dialog = new NouveauProjetDialog();
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    _projetActuel = _projetService.CreerNouveauProjet(dialog.NomProjet, dialog.Description);
+                    _projetActuel.Auteur = dialog.Auteur;
+                    MettreAJourAffichageProjet();
+                    Log($"Nouveau projet créé : {_projetActuel.NomProjet}");
+                }
+            }
         }
 
-        private void btnImportTaches_Click(object sender, EventArgs e)
+        private void ChargerProjet_Click(object sender, EventArgs e)
         {
-            _loadedTaches = ImportCsvFile<TacheCsvRecord>(txtTachesPath, lblTachesStatus, "tâches");
+            if (ConfirmerPerteDonnees())
+            {
+                using var ofd = new OpenFileDialog
+                {
+                    Filter = "Fichiers projet (*.json)|*.json",
+                    Title = "Charger un projet"
+                };
+
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        _projetActuel = _projetService.ChargerProjet(ofd.FileName);
+                        MettreAJourAffichageProjet();
+                        Log($"Projet chargé : {_projetActuel.NomProjet}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log($"ERREUR lors du chargement : {ex.Message}");
+                        MessageBox.Show($"Erreur lors du chargement du projet :\n{ex.Message}",
+                            "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
         }
 
-        private void btnGenerateCsv_Click(object sender, EventArgs e)
+        private void SauvegarderProjet_Click(object sender, EventArgs e)
         {
+            // Synchroniser les informations depuis l'interface
+            if (_projetActuel != null)
+            {
+                _projetActuel.NomProjet = txtNomProjet.Text;
+                _projetActuel.Description = txtDescription.Text;
+                _projetActuel.Auteur = txtAuteur.Text;
+                _projetActuel.DateDerniereModification = DateTime.Now;
+            }
+
             using var sfd = new SaveFileDialog
             {
-                Filter = "Fichier CSV (*.csv)|*.csv",
-                Title = "Enregistrer le fichier de tâches",
-                FileName = "taches_generees.csv"
+                Filter = "Fichiers projet (*.json)|*.json",
+                Title = "Sauvegarder le projet",
+                FileName = $"{_projetActuel?.NomProjet?.Replace(" ", "_") ?? "projet"}.json"
             };
 
             if (sfd.ShowDialog() == DialogResult.OK)
             {
                 try
                 {
-                    Log($"Génération du fichier CSV de test vers : {sfd.FileName}");
-                    CsvGenerator.GenerateTachesCsv(sfd.FileName);
-                    Log("Génération terminée avec succès !");
-                    MessageBox.Show($"Le fichier '{sfd.FileName}' a été créé.", "Génération terminée", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                    txtTachesPath.Text = sfd.FileName;
-                    _loadedTaches = ImportCsvFile<TacheCsvRecord>(txtTachesPath, lblTachesStatus, "tâches");
+                    _projetService.SauvegarderProjet(sfd.FileName, _projetActuel);
+                    Log($"Projet sauvegardé : {sfd.FileName}");
                 }
                 catch (Exception ex)
                 {
-                    Log($"ERREUR lors de la génération du CSV : {ex.Message}");
-                    MessageBox.Show($"Une erreur est survenue :\n{ex.Message}", "Erreur de génération", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Log($"ERREUR lors de la sauvegarde : {ex.Message}");
+                    MessageBox.Show($"Erreur lors de la sauvegarde :\n{ex.Message}",
+                        "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
+
+        private void ExportCsvTout_Click(object sender, EventArgs e)
+        {
+            using var fbd = new FolderBrowserDialog
+            {
+                Description = "Sélectionner le dossier d'export"
+            };
+
+            if (fbd.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    var prefixe = _projetActuel?.NomProjet?.Replace(" ", "_") ?? "export";
+                    _projetService.ExporterToutVersCsv(fbd.SelectedPath, prefixe);
+                    Log($"Export CSV complet effectué dans : {fbd.SelectedPath}");
+                }
+                catch (Exception ex)
+                {
+                    Log($"ERREUR lors de l'export : {ex.Message}");
+                    MessageBox.Show($"Erreur lors de l'export :\n{ex.Message}",
+                        "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void ImportCsvGroupe_Click(object sender, EventArgs e)
+        {
+            using var dialog = new ImportCsvGroupeDialog();
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    var resume = _projetService.ImporterToutDepuisCsv(
+                        dialog.CheminMetiers,
+                        dialog.CheminOuvriers,
+                        dialog.CheminTaches);
+
+                    if (resume.Succes)
+                    {
+                        Log($"Import groupé réussi : {resume.MetiersImportes} métiers, " +
+                            $"{resume.OuvriersImportes} ouvriers, {resume.TachesImportees} tâches");
+                    }
+                    else
+                    {
+                        Log($"ERREUR lors de l'import groupé : {resume.MessageErreur}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log($"ERREUR lors de l'import groupé : {ex.Message}");
+                }
+            }
+        }
+
+        private void OuvrirGestionMetiers_Click(object sender, EventArgs e)
+        {
+            using var form = new MetierForm(_metierService);
+            form.ShowDialog();
+        }
+
+        private void OuvrirGestionOuvriers_Click(object sender, EventArgs e)
+        {
+            using var form = new OuvrierForm(_ouvrierService, _metierService);
+            form.ShowDialog();
+        }
+        private void OuvrirGestionTaches_Click(object sender, EventArgs e)
+        {
+            using var form = new TacheForm(_tacheService, _metierService);
+            form.ShowDialog();
+        }
+
+
+        private void Quitter_Click(object sender, EventArgs e)
+        {
+            if (ConfirmerPerteDonnees())
+            {
+                Application.Exit();
+            }
+        }
+
+        #endregion
+
+        #region Planification (existant adapté)
 
         private async void btnGenerateAndTest_Click(object sender, EventArgs e)
         {
-            Log("Lancement du test...");
+            Log("Lancement de la planification...");
 
-            if (!ValidateInputs())
+            // Validation des données via les services
+            var resumeProjet = _projetService.ObtenirResumeProjet();
+
+            if (resumeProjet.StatistiquesOuvriers.NombreOuvriersTotal == 0)
             {
-                Log("VALIDATION ÉCHOUÉE. Veuillez charger tous les fichiers CSV requis.");
-                MessageBox.Show("Veuillez charger les 3 fichiers CSV (Ouvriers, Métiers, Tâches) avant de lancer le test.", "Fichiers manquants", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                Log("ERREUR : Aucun ouvrier chargé.");
+                MessageBox.Show("Veuillez charger des ouvriers avant de lancer la planification.",
+                    "Données manquantes", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
+            if (resumeProjet.NombreMetiers == 0)
+            {
+                Log("ERREUR : Aucun métier chargé.");
+                MessageBox.Show("Veuillez charger des métiers avant de lancer la planification.",
+                    "Données manquantes", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (resumeProjet.StatistiquesTaches.NombreTachesTotal == 0)
+            {
+                Log("ERREUR : Aucune tâche chargée.");
+                MessageBox.Show("Veuillez charger des tâches avant de lancer la planification.",
+                    "Données manquantes", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Avertissements
+            if (resumeProjet.StatistiquesMappingMetiers.TachesSansMetier > 0)
+            {
+                Log($"AVERTISSEMENT : {resumeProjet.StatistiquesMappingMetiers.TachesSansMetier} tâches sans métier assigné.");
+            }
+
             try
             {
-                Log("Construction du DTO d'entrée...");
-                var inputDto = BuildChantierSetupInputDto();
-                Log("DTO `ChantierSetupInputDto` généré avec succès.");
+                Log("Construction de la configuration...");
+                var configuration = ConstruireConfigurationUI();
 
-                Log("Appel du constructeur PlanAthena Core");
-                var facade = _serviceProvider.GetRequiredService<PlanAthenaCoreFacade>();
-                var resultatDto = await facade.ProcessChantierAsync(inputDto);
-                DisplayResultInLog(resultatDto);
+                Log("Lancement de la planification avec PlanAthena...");
 
-                Log("TEST TERMINÉ.");
+                // Synchroniser les données avec PlanificationService
+                _planificationService.ChargerDonnees(
+                    _ouvrierService.ObtenirTousLesOuvriers(),
+                    _tacheService.ObtenirToutesLesTaches(),
+                    _metierService.GetAllMetiers().ToList()
+                );
+
+                var resultatDto = await _planificationService.LancerPlanificationAsync(configuration);
+                AfficherResultatDansLog(resultatDto);
+
+                Log("PLANIFICATION TERMINÉE.");
             }
             catch (Exception ex)
             {
-                Log($"ERREUR CRITIQUE lors de la création du DTO ou de l'appel DLL : {ex.ToString()}");
-                MessageBox.Show($"Une erreur critique est survenue:\n{ex.ToString()}", "Erreur Critique", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Log($"ERREUR CRITIQUE lors de la planification : {ex}");
+                MessageBox.Show($"Une erreur critique est survenue:\n{ex.Message}",
+                    "Erreur Critique", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
         #endregion
 
-        #region Logique d'Import CSV
-        private List<T> ImportCsvFile<T>(TextBox pathTextBox, Label statusLabel, string itemTypeName)
+        #region Gestion du projet et mise à jour
+
+        private void CreerNouveauProjetParDefaut()
         {
-            using var ofd = new OpenFileDialog
+            _projetActuel = new InformationsProjet
             {
-                Filter = "Fichiers CSV (*.csv)|*.csv|Tous les fichiers (*.*)|*.*",
-                Title = "Sélectionner un fichier CSV"
+                NomProjet = "Nouveau projet",
+                Description = "",
+                DateCreation = DateTime.Now,
+                DateDerniereModification = DateTime.Now,
+                Auteur = Environment.UserName
             };
+            MettreAJourAffichageProjet();
+        }
 
-            if (ofd.ShowDialog() != DialogResult.OK)
+        private void MettreAJourAffichageProjet()
+        {
+            if (_projetActuel != null)
             {
-                return new List<T>();
+                txtNomProjet.Text = _projetActuel.NomProjet;
+                txtAuteur.Text = _projetActuel.Auteur;
+                txtDescription.Text = _projetActuel.Description;
+                lblDateCreation.Text = $"Créé le: {_projetActuel.DateCreation:dd/MM/yyyy}";
+
+                this.Text = $"PlanAthena - {_projetActuel.NomProjet}";
             }
 
-            pathTextBox.Text = ofd.FileName;
+            // Attacher les événements de synchronisation
+            AttacherEvenementsSynchronisation();
 
+            MettreAJourResume();
+        }
+
+        private void AttacherEvenementsSynchronisation()
+        {
+            // Détacher d'abord pour éviter les doublons
+            txtNomProjet.TextChanged -= SynchroniserProjet;
+            txtAuteur.TextChanged -= SynchroniserProjet;
+            txtDescription.TextChanged -= SynchroniserProjet;
+
+            // Rattacher
+            txtNomProjet.TextChanged += SynchroniserProjet;
+            txtAuteur.TextChanged += SynchroniserProjet;
+            txtDescription.TextChanged += SynchroniserProjet;
+        }
+
+        private void SynchroniserProjet(object sender, EventArgs e)
+        {
+            if (_projetActuel != null)
+            {
+                _projetActuel.NomProjet = txtNomProjet.Text;
+                _projetActuel.Auteur = txtAuteur.Text;
+                _projetActuel.Description = txtDescription.Text;
+                _projetActuel.DateDerniereModification = DateTime.Now;
+
+                // Mettre à jour le titre de la fenêtre
+                this.Text = $"PlanAthena - {_projetActuel.NomProjet}";
+            }
+        }
+
+        private void MettreAJourResume()
+        {
             try
             {
-                var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-                {
-                    Delimiter = ";",
-                    HasHeaderRecord = true,
-                    HeaderValidated = null,
-                    MissingFieldFound = null,
-                };
+                var resume = _projetService.ObtenirResumeProjet();
 
-                using var reader = new StreamReader(ofd.FileName);
-                using var csv = new CsvReader(reader, config);
-                var records = csv.GetRecords<T>().ToList();
-                statusLabel.Text = $"{records.Count} {itemTypeName} chargé(e)s.";
-                Log($"Fichier '{Path.GetFileName(ofd.FileName)}' chargé : {records.Count} lignes.");
-                return records;
+                lblResume.Text = $"Résumé: {resume.StatistiquesOuvriers.NombreOuvriersTotal} ouvriers, " +
+                                $"{resume.NombreMetiers} métiers, " +
+                                $"{resume.StatistiquesTaches.NombreTachesTotal} tâches";
+
+                lblMapping.Text = $"Mapping: {resume.StatistiquesMappingMetiers.PourcentageMapping:F0}% " +
+                                 $"({resume.StatistiquesMappingMetiers.TachesAvecMetier}/{resume.StatistiquesMappingMetiers.TotalTaches} tâches)";
+
+                // Log des changements significatifs
+                if (resume.StatistiquesMappingMetiers.TachesSansMetier > 0)
+                {
+                    Log($"⚠️ {resume.StatistiquesMappingMetiers.TachesSansMetier} tâches sans métier assigné");
+                }
             }
             catch (Exception ex)
             {
-                statusLabel.Text = "Erreur d'import";
-                Log($"ERREUR lors de la lecture du fichier CSV '{pathTextBox.Text}': {ex.Message}");
-                MessageBox.Show($"Erreur lors de la lecture du fichier CSV:\n{ex.Message}", "Erreur d'import", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return new List<T>();
+                // Ne pas polluer les logs avec les erreurs de mise à jour
+                System.Diagnostics.Debug.WriteLine($"Erreur mise à jour résumé: {ex.Message}");
             }
         }
+
+        private bool ConfirmerPerteDonnees()
+        {
+            var resume = _projetService.ObtenirResumeProjet();
+            var totalDonnees = resume.NombreMetiers + resume.StatistiquesOuvriers.NombreOuvriersTotal +
+                              resume.StatistiquesTaches.NombreTachesTotal;
+
+            if (totalDonnees > 0)
+            {
+                var result = MessageBox.Show(
+                    "Des données non sauvegardées seront perdues. Continuer ?",
+                    "Confirmation",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                return result == DialogResult.Yes;
+            }
+
+            return true;
+        }
+
         #endregion
 
-        #region Logique de construction du DTO principal
-        private ChantierSetupInputDto BuildChantierSetupInputDto()
+        #region Méthodes utilitaires (adaptées de l'existant)
+
+        private ConfigurationUI ConstruireConfigurationUI()
         {
-            Log("Pré-traitement : Découpage et gestion des dépendances...");
-            var dataProcessor = new ChantierDataProcessor();
-            var processedTaches = dataProcessor.ProcessTaches(_loadedTaches, _metierService);
-            var allMetiersRecords = _metierService.GetAllMetiers();
-            Log($"Pré-traitement terminé. Tâches: {processedTaches.Count}, Métiers: {allMetiersRecords.Count}");
-
-            var taches = processedTaches.Select(t => new TacheDto
+            // Synchroniser les informations du projet depuis l'interface
+            if (_projetActuel != null)
             {
-                TacheId = t.TacheId,
-                Nom = t.TacheNom,
-                BlocId = t.BlocId,
-                HeuresHommeEstimees = t.HeuresHommeEstimees,
-                MetierId = t.MetierId,
-                Dependencies = t.Dependencies?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>()
-            }).ToList();
+                _projetActuel.NomProjet = txtNomProjet.Text;
+                _projetActuel.Description = txtDescription.Text;
+                _projetActuel.Auteur = txtAuteur.Text;
+            }
 
-            var blocs = processedTaches
-                .GroupBy(t => t.BlocId)
-                .Select(g => g.First())
-                .Select(t => new BlocTravailDto
-                {
-                    BlocId = t.BlocId,
-                    Nom = t.BlocNom,
-                    CapaciteMaxOuvriers = t.BlocCapaciteMaxOuvriers
-                }).ToList();
-
-            var lots = processedTaches
-                .GroupBy(t => t.LotId)
-                .Select(g => new LotTravauxDto
-                {
-                    LotId = g.Key,
-                    Nom = g.First().LotNom,
-                    Priorite = g.First().LotPriorite,
-                    BlocIds = g.Select(b => b.BlocId).Distinct().ToList()
-                }).ToList();
-
-            var metiers = allMetiersRecords.Select(m => new MetierDto
-            {
-                MetierId = m.MetierId,
-                Nom = m.Nom,
-                PrerequisMetierIds = m.PrerequisMetierIds?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>()
-            }).ToList();
-
-            var ouvriers = _loadedOuvriers
-                .GroupBy(o => o.OuvrierId)
-                .Select(g => new OuvrierDto
-                {
-                    OuvrierId = g.Key,
-                    Nom = g.First().Nom,
-                    Prenom = g.First().Prenom,
-                    CoutJournalier = g.First().CoutJournalier,
-                    Competences = g.Select(c => new CompetenceDto
-                    {
-                        MetierId = c.MetierId,
-                        Niveau = (PlanAthena.Core.Facade.Dto.Enums.NiveauExpertise)c.NiveauExpertise,
-                        PerformancePct = c.PerformancePct
-                    }).ToList()
-                }).ToList();
-
-            var calendrier = new CalendrierTravailDefinitionDto
+            var configuration = new ConfigurationUI
             {
                 JoursOuvres = chkListJoursOuvres.CheckedItems.Cast<DayOfWeek>().ToList(),
                 HeureDebutJournee = (int)numHeureDebut.Value,
-                HeuresTravailEffectifParJour = (int)numHeuresTravail.Value
-            };
-
-            OptimizationConfigDto? optimConfig = null;
-            string selectionUI = cmbTypeDeSortie.SelectedItem.ToString();
-            if (selectionUI != "Analyse et Estimation")
-            {
-                string typeDeSortiePourDll;
-                switch (selectionUI)
-                {
-                    case "Optimisation Coût":
-                        typeDeSortiePourDll = "OPTIMISATION_COUT";
-                        break;
-                    case "Optimisation Délai":
-                        typeDeSortiePourDll = "OPTIMISATION_DELAI";
-                        break;
-                    default:
-                        typeDeSortiePourDll = "OPTIMISATION_COUT";
-                        break;
-                }
-                optimConfig = new OptimizationConfigDto
-                {
-                    TypeDeSortie = typeDeSortiePourDll,
-                    DureeJournaliereStandardHeures = (int)numDureeStandard.Value,
-                    PenaliteChangementOuvrierPourcentage = numPenaliteChangement.Value,
-                    CoutIndirectJournalierPourcentage = numCoutIndirect.Value
-                };
-            }
-
-            var dtoFinal = new ChantierSetupInputDto
-            {
-                ChantierId = $"CHANTIER_TEST_{DateTime.Now:yyyyMMdd_HHmmss}",
-                Description = txtDescription.Text,
+                HeuresTravailEffectifParJour = (int)numHeuresTravail.Value,
+                TypeDeSortie = ConvertirTypeDeSortie(cmbTypeDeSortie.SelectedItem.ToString()),
+                Description = _projetActuel?.Description ?? txtDescription.Text,
                 DateDebutSouhaitee = chkDateDebut.Checked ? dtpDateDebut.Value.Date : null,
                 DateFinSouhaitee = chkDateFin.Checked ? dtpDateFin.Value.Date : null,
-                CalendrierTravail = calendrier,
-                OptimizationConfig = optimConfig,
-                Taches = taches,
-                Blocs = blocs,
-                Lots = lots,
-                Metiers = metiers,
-                Ouvriers = ouvriers
+                DureeJournaliereStandardHeures = (int)numDureeStandard.Value,
+                PenaliteChangementOuvrierPourcentage = numPenaliteChangement.Value,
+                CoutIndirectJournalierPourcentage = numCoutIndirect.Value
             };
 
-            if (dtoFinal.OptimizationConfig == null)
-            {
-                Log("Aucune config d'optimisation envoyée (cas d'usage #1 : Analyse).");
-            }
-            else
-            {
-                Log($"Config d'optimisation envoyée pour TypeDeSortie: '{dtoFinal.OptimizationConfig.TypeDeSortie}' (cas d'usage #2).");
-            }
-
-            return dtoFinal;
+            return configuration;
         }
 
-        private bool ValidateInputs()
+        private string ConvertirTypeDeSortie(string selectionUI)
         {
-            return _loadedOuvriers.Any() && _metierService.GetAllMetiers().Any() && _loadedTaches.Any();
+            return selectionUI switch
+            {
+                "Optimisation Coût" => "OPTIMISATION_COUT",
+                "Optimisation Délai" => "OPTIMISATION_DELAI",
+                _ => "Analyse et Estimation"
+            };
         }
-        #endregion
 
-        #region Utilitaires
         private void Log(string message)
         {
             if (rtbLog.InvokeRequired)
@@ -328,15 +495,27 @@ namespace PlanAthena
         {
             var serviceCollection = new ServiceCollection();
 
+            // Services PlanAthena Core (existants)
             serviceCollection.AddApplicationServices();
             serviceCollection.AddInfrastructureServices();
             serviceCollection.AddScoped<PlanAthena.Core.Application.Interfaces.IConstructeurProblemeOrTools, PlanAthena.Core.Infrastructure.Services.OrTools.ConstructeurProblemeOrTools>();
             serviceCollection.AddScoped<PlanAthenaCoreFacade>();
 
+            // Services de l'application
+            serviceCollection.AddSingleton<MetierService>();
+            serviceCollection.AddScoped<CsvDataService>();
+            serviceCollection.AddScoped<ExcelReader>();
+            serviceCollection.AddScoped<DataTransformer>();
+            serviceCollection.AddScoped<PlanificationService>();
+            serviceCollection.AddScoped<OuvrierService>();
+            serviceCollection.AddScoped<TacheService>();
+            serviceCollection.AddScoped<ProjetService>();
+
             return serviceCollection.BuildServiceProvider();
         }
 
-        private void DisplayResultInLog(ProcessChantierResultDto? resultat)
+        // Méthode d'affichage des résultats conservée de l'existant
+        private void AfficherResultatDansLog(PlanAthena.Core.Facade.Dto.Output.ProcessChantierResultDto resultat)
         {
             if (resultat == null)
             {
@@ -422,6 +601,7 @@ namespace PlanAthena
                 }
             }
         }
+
         #endregion
     }
 }
