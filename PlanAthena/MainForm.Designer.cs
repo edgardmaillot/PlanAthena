@@ -31,6 +31,7 @@ namespace PlanAthena
             splitContainer1 = new SplitContainer();
             groupBox3 = new GroupBox();
             btnGenerateAndTest = new Button();
+            btnExportGantt = new Button();
             numCoutIndirect = new NumericUpDown();
             label11 = new Label();
             numPenaliteChangement = new NumericUpDown();
@@ -96,6 +97,7 @@ namespace PlanAthena
             // 
             // groupBox3
             // 
+            groupBox3.Controls.Add(btnExportGantt);
             groupBox3.Controls.Add(btnGenerateAndTest);
             groupBox3.Controls.Add(numCoutIndirect);
             groupBox3.Controls.Add(label11);
@@ -121,14 +123,26 @@ namespace PlanAthena
             // 
             // btnGenerateAndTest
             // 
-            btnGenerateAndTest.Dock = DockStyle.Bottom;
+            btnGenerateAndTest.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             btnGenerateAndTest.Location = new Point(3, 107);
             btnGenerateAndTest.Name = "btnGenerateAndTest";
-            btnGenerateAndTest.Size = new Size(778, 23);
+            btnGenerateAndTest.Size = new Size(580, 23);
             btnGenerateAndTest.TabIndex = 14;
             btnGenerateAndTest.Text = "🚀 LANCER LA PLANIFICATION";
             btnGenerateAndTest.UseVisualStyleBackColor = true;
             btnGenerateAndTest.Click += btnGenerateAndTest_Click;
+            // 
+            // btnExportGantt
+            // 
+            btnExportGantt.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnExportGantt.Location = new Point(589, 107);
+            btnExportGantt.Name = "btnExportGantt";
+            btnExportGantt.Size = new Size(186, 23);
+            btnExportGantt.TabIndex = 15;
+            btnExportGantt.Text = "📊 Export GanttProject";
+            btnExportGantt.UseVisualStyleBackColor = true;
+            btnExportGantt.Enabled = false;
+            btnExportGantt.Click += btnExportGantt_Click;
             // 
             // numCoutIndirect
             // 
@@ -452,6 +466,7 @@ namespace PlanAthena
         private NumericUpDown numCoutIndirect;
         private Label label11;
         private Button btnGenerateAndTest;
+        private Button btnExportGantt;
         private RichTextBox rtbLog;
 
         // Nouveaux contrôles pour les informations projet
