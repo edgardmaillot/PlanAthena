@@ -1,3 +1,5 @@
+// Fichier : TacheForm.Designer.cs
+
 namespace PlanAthena
 {
     partial class TacheForm
@@ -13,247 +15,373 @@ namespace PlanAthena
             base.Dispose(disposing);
         }
 
+        #region Windows Form Designer generated code
+
         private void InitializeComponent()
         {
-            panelPrincipal = new Panel();
-            toolStripPrincipal = new ToolStrip();
-            btnNouvelleTache = new ToolStripButton();
-            btnModifierTache = new ToolStripButton();
-            btnSupprimerTache = new ToolStripButton();
-            toolStripSeparator1 = new ToolStripSeparator();
-            btnZoomAjuster = new ToolStripButton();
-            toolStripSeparator2 = new ToolStripSeparator();
-            lblRechercheToolStrip = new ToolStripLabel();
-            txtRecherche = new ToolStripTextBox();
-            toolStripSeparator3 = new ToolStripSeparator();
-            btnMappingAuto = new ToolStripButton();
-            statusStripPrincipal = new StatusStrip();
-            lblStatistiques = new ToolStripStatusLabel();
-            lblTacheSelectionnee = new ToolStripStatusLabel();
-            groupBoxActions = new GroupBox();
-            btnImportExcelFieldwire = new Button();
-            btnExporter = new Button();
-            btnImporter = new Button();
-            btnFermer = new Button();
-            toolStripPrincipal.SuspendLayout();
-            statusStripPrincipal.SuspendLayout();
-            groupBoxActions.SuspendLayout();
-            SuspendLayout();
-            // 
-            // panelPrincipal
-            // 
-            panelPrincipal.BackColor = SystemColors.Window;
-            panelPrincipal.Dock = DockStyle.Fill;
-            panelPrincipal.Location = new Point(0, 25);
-            panelPrincipal.Margin = new Padding(3, 2, 3, 2);
-            panelPrincipal.Name = "panelPrincipal";
-            panelPrincipal.Size = new Size(1192, 479);
-            panelPrincipal.TabIndex = 0;
+            this.toolStripPrincipal = new System.Windows.Forms.ToolStrip();
+            this.btnNouvelleTache = new System.Windows.Forms.ToolStripButton();
+            this.btnModifierTache = new System.Windows.Forms.ToolStripButton();
+            this.btnSupprimerTache = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.btnZoomAjuster = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparatorDiagramme = new System.Windows.Forms.ToolStripSeparator();
+            this.btnPan = new System.Windows.Forms.ToolStripButton();
+            this.btnSauvegarderImage = new System.Windows.Forms.ToolStripButton();
+            this.btnImprimer = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this.lblRechercheToolStrip = new System.Windows.Forms.ToolStripLabel();
+            this.txtRecherche = new System.Windows.Forms.ToolStripTextBox();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.btnMappingAuto = new System.Windows.Forms.ToolStripButton();
+            this.statusStripPrincipal = new System.Windows.Forms.StatusStrip();
+            this.lblStatistiques = new System.Windows.Forms.ToolStripStatusLabel();
+            this.lblTacheSelectionnee = new System.Windows.Forms.ToolStripStatusLabel();
+            this.groupBoxActions = new System.Windows.Forms.GroupBox();
+            this.btnImportExcelFieldwire = new System.Windows.Forms.Button();
+            this.btnExporter = new System.Windows.Forms.Button();
+            this.btnImporter = new System.Windows.Forms.Button();
+            this.btnFermer = new System.Windows.Forms.Button();
+            this.splitContainerPrincipal = new System.Windows.Forms.SplitContainer();
+            this.splitContainerDetails = new System.Windows.Forms.SplitContainer();
+            this.panelPlans = new System.Windows.Forms.Panel();
+            this.panelDetailsTache = new System.Windows.Forms.Panel();
+            this.toolStripPrincipal.SuspendLayout();
+            this.statusStripPrincipal.SuspendLayout();
+            this.groupBoxActions.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerPrincipal)).BeginInit();
+            this.splitContainerPrincipal.Panel2.SuspendLayout();
+            this.splitContainerPrincipal.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerDetails)).BeginInit();
+            this.splitContainerDetails.Panel1.SuspendLayout();
+            this.splitContainerDetails.Panel2.SuspendLayout();
+            this.splitContainerDetails.SuspendLayout();
+            this.SuspendLayout();
             // 
             // toolStripPrincipal
             // 
-            toolStripPrincipal.ImageScalingSize = new Size(24, 24);
-            toolStripPrincipal.Items.AddRange(new ToolStripItem[] { btnNouvelleTache, btnModifierTache, btnSupprimerTache, toolStripSeparator1, btnZoomAjuster, toolStripSeparator2, lblRechercheToolStrip, txtRecherche, toolStripSeparator3, btnMappingAuto });
-            toolStripPrincipal.Location = new Point(0, 0);
-            toolStripPrincipal.Name = "toolStripPrincipal";
-            toolStripPrincipal.Padding = new Padding(0, 0, 2, 0);
-            toolStripPrincipal.Size = new Size(1192, 25);
-            toolStripPrincipal.TabIndex = 1;
-            toolStripPrincipal.Text = "toolStrip1";
+            this.toolStripPrincipal.ImageScalingSize = new System.Drawing.Size(24, 24);
+            this.toolStripPrincipal.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.btnNouvelleTache,
+            this.btnModifierTache,
+            this.btnSupprimerTache,
+            this.toolStripSeparator1,
+            this.btnZoomAjuster,
+            this.toolStripSeparatorDiagramme,
+            this.btnPan,
+            this.btnSauvegarderImage,
+            this.btnImprimer,
+            this.toolStripSeparator2,
+            this.lblRechercheToolStrip,
+            this.txtRecherche,
+            this.toolStripSeparator3,
+            this.btnMappingAuto});
+            this.toolStripPrincipal.Location = new System.Drawing.Point(0, 0);
+            this.toolStripPrincipal.Name = "toolStripPrincipal";
+            this.toolStripPrincipal.Padding = new System.Windows.Forms.Padding(0, 0, 2, 0);
+            this.toolStripPrincipal.Size = new System.Drawing.Size(1192, 25);
+            this.toolStripPrincipal.TabIndex = 1;
+            this.toolStripPrincipal.Text = "toolStrip1";
             // 
             // btnNouvelleTache
             // 
-            btnNouvelleTache.ImageTransparentColor = Color.Magenta;
-            btnNouvelleTache.Name = "btnNouvelleTache";
-            btnNouvelleTache.Size = new Size(73, 22);
-            btnNouvelleTache.Text = "➕ Nouvelle";
-            btnNouvelleTache.ToolTipText = "Créer une nouvelle tâche";
-            btnNouvelleTache.Click += btnNouvelleTache_Click;
+            this.btnNouvelleTache.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnNouvelleTache.Name = "btnNouvelleTache";
+            this.btnNouvelleTache.Size = new System.Drawing.Size(73, 22);
+            this.btnNouvelleTache.Text = "➕ Nouvelle";
+            this.btnNouvelleTache.ToolTipText = "Créer une nouvelle tâche";
+            this.btnNouvelleTache.Click += new System.EventHandler(this.btnNouvelleTache_Click);
             // 
             // btnModifierTache
             // 
-            btnModifierTache.ImageTransparentColor = Color.Magenta;
-            btnModifierTache.Name = "btnModifierTache";
-            btnModifierTache.Size = new Size(71, 22);
-            btnModifierTache.Text = "✏️ Modifier";
-            btnModifierTache.ToolTipText = "Modifier la tâche sélectionnée";
-            btnModifierTache.Click += btnModifierTache_Click;
+            this.btnModifierTache.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnModifierTache.Name = "btnModifierTache";
+            this.btnModifierTache.Size = new System.Drawing.Size(71, 22);
+            this.btnModifierTache.Text = "✏️ Modifier";
+            this.btnModifierTache.ToolTipText = "Modifier la tâche sélectionnée";
+            this.btnModifierTache.Click += new System.EventHandler(this.btnModifierTache_Click);
             // 
             // btnSupprimerTache
             // 
-            btnSupprimerTache.ImageTransparentColor = Color.Magenta;
-            btnSupprimerTache.Name = "btnSupprimerTache";
-            btnSupprimerTache.Size = new Size(81, 22);
-            btnSupprimerTache.Text = "🗑️ Supprimer";
-            btnSupprimerTache.ToolTipText = "Supprimer la tâche sélectionnée";
-            btnSupprimerTache.Click += btnSupprimerTache_Click;
+            this.btnSupprimerTache.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnSupprimerTache.Name = "btnSupprimerTache";
+            this.btnSupprimerTache.Size = new System.Drawing.Size(81, 22);
+            this.btnSupprimerTache.Text = "🗑️ Supprimer";
+            this.btnSupprimerTache.ToolTipText = "Supprimer la tâche sélectionnée";
+            this.btnSupprimerTache.Click += new System.EventHandler(this.btnSupprimerTache_Click);
             // 
             // toolStripSeparator1
             // 
-            toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new Size(6, 25);
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
             // 
             // btnZoomAjuster
             // 
-            btnZoomAjuster.ImageTransparentColor = Color.Magenta;
-            btnZoomAjuster.Name = "btnZoomAjuster";
-            btnZoomAjuster.Size = new Size(86, 22);
-            btnZoomAjuster.Text = "🔍 Ajuster Vue";
-            btnZoomAjuster.ToolTipText = "Ajuster le zoom pour voir tout le diagramme";
-            btnZoomAjuster.Click += btnZoomAjuster_Click;
+            this.btnZoomAjuster.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnZoomAjuster.Name = "btnZoomAjuster";
+            this.btnZoomAjuster.Size = new System.Drawing.Size(86, 22);
+            this.btnZoomAjuster.Text = "🔍 Ajuster Vue";
+            this.btnZoomAjuster.ToolTipText = "Ajuster le zoom pour voir tout le diagramme";
+            this.btnZoomAjuster.Click += new System.EventHandler(this.btnZoomAjuster_Click);
+            // 
+            // toolStripSeparatorDiagramme
+            // 
+            this.toolStripSeparatorDiagramme.Name = "toolStripSeparatorDiagramme";
+            this.toolStripSeparatorDiagramme.Size = new System.Drawing.Size(6, 25);
+            // 
+            // btnPan
+            // 
+            this.btnPan.CheckOnClick = true;
+            this.btnPan.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnPan.Name = "btnPan";
+            this.btnPan.Size = new System.Drawing.Size(49, 22);
+            this.btnPan.Text = "🖐 Pan";
+            this.btnPan.ToolTipText = "Activer le mode déplacement (Pan)";
+            this.btnPan.Click += new System.EventHandler(this.btnPan_Click);
+            // 
+            // btnSauvegarderImage
+            // 
+            this.btnSauvegarderImage.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnSauvegarderImage.Name = "btnSauvegarderImage";
+            this.btnSauvegarderImage.Size = new System.Drawing.Size(125, 22);
+            this.btnSauvegarderImage.Text = "🖼️ Sauvegarder Image";
+            this.btnSauvegarderImage.ToolTipText = "Sauvegarder le diagramme comme image";
+            this.btnSauvegarderImage.Click += new System.EventHandler(this.btnSauvegarderImage_Click);
+            // 
+            // btnImprimer
+            // 
+            this.btnImprimer.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnImprimer.Name = "btnImprimer";
+            this.btnImprimer.Size = new System.Drawing.Size(78, 22);
+            this.btnImprimer.Text = "🖨️ Imprimer";
+            this.btnImprimer.ToolTipText = "Imprimer le diagramme";
+            this.btnImprimer.Click += new System.EventHandler(this.btnImprimer_Click);
             // 
             // toolStripSeparator2
             // 
-            toolStripSeparator2.Name = "toolStripSeparator2";
-            toolStripSeparator2.Size = new Size(6, 25);
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
             // 
             // lblRechercheToolStrip
             // 
-            lblRechercheToolStrip.Name = "lblRechercheToolStrip";
-            lblRechercheToolStrip.Size = new Size(80, 22);
-            lblRechercheToolStrip.Text = "🔍 Recherche:";
+            this.lblRechercheToolStrip.Name = "lblRechercheToolStrip";
+            this.lblRechercheToolStrip.Size = new System.Drawing.Size(80, 22);
+            this.lblRechercheToolStrip.Text = "🔍 Recherche:";
             // 
             // txtRecherche
             // 
-            txtRecherche.Name = "txtRecherche";
-            txtRecherche.Size = new Size(219, 25);
-            txtRecherche.ToolTipText = "Rechercher par ID, nom, bloc, lot ou métier";
-            txtRecherche.TextChanged += txtRecherche_TextChanged;
+            this.txtRecherche.Name = "txtRecherche";
+            this.txtRecherche.Size = new System.Drawing.Size(219, 25);
+            this.txtRecherche.ToolTipText = "Rechercher par ID, nom, bloc, lot ou métier";
+            this.txtRecherche.TextChanged += new System.EventHandler(this.txtRecherche_TextChanged);
             // 
             // toolStripSeparator3
             // 
-            toolStripSeparator3.Name = "toolStripSeparator3";
-            toolStripSeparator3.Size = new Size(6, 25);
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            this.toolStripSeparator3.Size = new System.Drawing.Size(6, 25);
             // 
             // btnMappingAuto
             // 
-            btnMappingAuto.ImageTransparentColor = Color.Magenta;
-            btnMappingAuto.Name = "btnMappingAuto";
-            btnMappingAuto.Size = new Size(103, 22);
-            btnMappingAuto.Text = "🔗 Mapping Auto";
-            btnMappingAuto.ToolTipText = "Assignation automatique des métiers aux tâches";
-            btnMappingAuto.Click += btnMappingAuto_Click;
+            this.btnMappingAuto.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnMappingAuto.Name = "btnMappingAuto";
+            this.btnMappingAuto.Size = new System.Drawing.Size(103, 22);
+            this.btnMappingAuto.Text = "🔗 Mapping Auto";
+            this.btnMappingAuto.ToolTipText = "Assignation automatique des métiers aux tâches";
+            this.btnMappingAuto.Click += new System.EventHandler(this.btnMappingAuto_Click);
             // 
             // statusStripPrincipal
             // 
-            statusStripPrincipal.ImageScalingSize = new Size(20, 20);
-            statusStripPrincipal.Items.AddRange(new ToolStripItem[] { lblStatistiques, lblTacheSelectionnee });
-            statusStripPrincipal.Location = new Point(0, 549);
-            statusStripPrincipal.Name = "statusStripPrincipal";
-            statusStripPrincipal.Size = new Size(1192, 24);
-            statusStripPrincipal.TabIndex = 2;
-            statusStripPrincipal.Text = "statusStrip1";
+            this.statusStripPrincipal.ImageScalingSize = new System.Drawing.Size(20, 20);
+            this.statusStripPrincipal.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.lblStatistiques,
+            this.lblTacheSelectionnee});
+            this.statusStripPrincipal.Location = new System.Drawing.Point(0, 549);
+            this.statusStripPrincipal.Name = "statusStripPrincipal";
+            this.statusStripPrincipal.Size = new System.Drawing.Size(1192, 24);
+            this.statusStripPrincipal.TabIndex = 2;
+            this.statusStripPrincipal.Text = "statusStrip1";
             // 
             // lblStatistiques
             // 
-            lblStatistiques.BorderSides = ToolStripStatusLabelBorderSides.Right;
-            lblStatistiques.BorderStyle = Border3DStyle.Etched;
-            lblStatistiques.Name = "lblStatistiques";
-            lblStatistiques.Size = new Size(163, 19);
-            lblStatistiques.Text = "Statistiques de chargement...";
+            this.lblStatistiques.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
+            this.lblStatistiques.BorderStyle = System.Windows.Forms.Border3DStyle.Etched;
+            this.lblStatistiques.Name = "lblStatistiques";
+            this.lblStatistiques.Size = new System.Drawing.Size(163, 19);
+            this.lblStatistiques.Text = "Statistiques de chargement...";
             // 
             // lblTacheSelectionnee
             // 
-            lblTacheSelectionnee.Margin = new Padding(10, 3, 0, 2);
-            lblTacheSelectionnee.Name = "lblTacheSelectionnee";
-            lblTacheSelectionnee.Size = new Size(1004, 19);
-            lblTacheSelectionnee.Spring = true;
-            lblTacheSelectionnee.Text = "Aucune sélection";
-            lblTacheSelectionnee.TextAlign = ContentAlignment.MiddleLeft;
+            this.lblTacheSelectionnee.Margin = new System.Windows.Forms.Padding(10, 3, 0, 2);
+            this.lblTacheSelectionnee.Name = "lblTacheSelectionnee";
+            this.lblTacheSelectionnee.Size = new System.Drawing.Size(1004, 19);
+            this.lblTacheSelectionnee.Spring = true;
+            this.lblTacheSelectionnee.Text = "Aucune sélection";
+            this.lblTacheSelectionnee.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // groupBoxActions
             // 
-            groupBoxActions.Controls.Add(btnImportExcelFieldwire);
-            groupBoxActions.Controls.Add(btnExporter);
-            groupBoxActions.Controls.Add(btnImporter);
-            groupBoxActions.Controls.Add(btnFermer);
-            groupBoxActions.Dock = DockStyle.Bottom;
-            groupBoxActions.Location = new Point(0, 504);
-            groupBoxActions.Margin = new Padding(3, 2, 3, 2);
-            groupBoxActions.Name = "groupBoxActions";
-            groupBoxActions.Padding = new Padding(3, 2, 3, 6);
-            groupBoxActions.Size = new Size(1192, 45);
-            groupBoxActions.TabIndex = 3;
-            groupBoxActions.TabStop = false;
-            groupBoxActions.Text = "Actions Import/Export";
+            this.groupBoxActions.Controls.Add(this.btnImportExcelFieldwire);
+            this.groupBoxActions.Controls.Add(this.btnExporter);
+            this.groupBoxActions.Controls.Add(this.btnImporter);
+            this.groupBoxActions.Controls.Add(this.btnFermer);
+            this.groupBoxActions.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.groupBoxActions.Location = new System.Drawing.Point(0, 504);
+            this.groupBoxActions.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.groupBoxActions.Name = "groupBoxActions";
+            this.groupBoxActions.Padding = new System.Windows.Forms.Padding(3, 2, 3, 6);
+            this.groupBoxActions.Size = new System.Drawing.Size(1192, 45);
+            this.groupBoxActions.TabIndex = 3;
+            this.groupBoxActions.TabStop = false;
+            this.groupBoxActions.Text = "Actions Import/Export";
             // 
             // btnImportExcelFieldwire
             // 
-            btnImportExcelFieldwire.Location = new Point(10, 16);
-            btnImportExcelFieldwire.Margin = new Padding(3, 2, 3, 2);
-            btnImportExcelFieldwire.Name = "btnImportExcelFieldwire";
-            btnImportExcelFieldwire.Size = new Size(140, 22);
-            btnImportExcelFieldwire.TabIndex = 0;
-            btnImportExcelFieldwire.Text = "📥 Import Excel Fieldwire";
-            btnImportExcelFieldwire.UseVisualStyleBackColor = true;
-            btnImportExcelFieldwire.Click += btnImportExcelFieldwire_Click;
+            this.btnImportExcelFieldwire.Location = new System.Drawing.Point(10, 16);
+            this.btnImportExcelFieldwire.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnImportExcelFieldwire.Name = "btnImportExcelFieldwire";
+            this.btnImportExcelFieldwire.Size = new System.Drawing.Size(140, 22);
+            this.btnImportExcelFieldwire.TabIndex = 0;
+            this.btnImportExcelFieldwire.Text = "📥 Import Excel Fieldwire";
+            this.btnImportExcelFieldwire.UseVisualStyleBackColor = true;
+            this.btnImportExcelFieldwire.Click += new System.EventHandler(this.btnImportExcelFieldwire_Click);
             // 
             // btnExporter
             // 
-            btnExporter.Location = new Point(278, 16);
-            btnExporter.Margin = new Padding(3, 2, 3, 2);
-            btnExporter.Name = "btnExporter";
-            btnExporter.Size = new Size(105, 22);
-            btnExporter.TabIndex = 2;
-            btnExporter.Text = "📤 Export CSV";
-            btnExporter.UseVisualStyleBackColor = true;
-            btnExporter.Click += btnExporter_Click;
+            this.btnExporter.Location = new System.Drawing.Point(278, 16);
+            this.btnExporter.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnExporter.Name = "btnExporter";
+            this.btnExporter.Size = new System.Drawing.Size(105, 22);
+            this.btnExporter.TabIndex = 2;
+            this.btnExporter.Text = "📤 Export CSV";
+            this.btnExporter.UseVisualStyleBackColor = true;
+            this.btnExporter.Click += new System.EventHandler(this.btnExporter_Click);
             // 
             // btnImporter
             // 
-            btnImporter.Location = new Point(162, 16);
-            btnImporter.Margin = new Padding(3, 2, 3, 2);
-            btnImporter.Name = "btnImporter";
-            btnImporter.Size = new Size(105, 22);
-            btnImporter.TabIndex = 1;
-            btnImporter.Text = "📥 Import CSV";
-            btnImporter.UseVisualStyleBackColor = true;
-            btnImporter.Click += btnImporter_Click;
+            this.btnImporter.Location = new System.Drawing.Point(162, 16);
+            this.btnImporter.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnImporter.Name = "btnImporter";
+            this.btnImporter.Size = new System.Drawing.Size(105, 22);
+            this.btnImporter.TabIndex = 1;
+            this.btnImporter.Text = "📥 Import CSV";
+            this.btnImporter.UseVisualStyleBackColor = true;
+            this.btnImporter.Click += new System.EventHandler(this.btnImporter_Click);
             // 
             // btnFermer
             // 
-            btnFermer.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnFermer.Location = new Point(1113, 16);
-            btnFermer.Margin = new Padding(3, 2, 3, 2);
-            btnFermer.Name = "btnFermer";
-            btnFermer.Size = new Size(70, 22);
-            btnFermer.TabIndex = 3;
-            btnFermer.Text = "Fermer";
-            btnFermer.UseVisualStyleBackColor = true;
-            btnFermer.Click += btnFermer_Click;
+            this.btnFermer.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnFermer.Location = new System.Drawing.Point(1113, 16);
+            this.btnFermer.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.btnFermer.Name = "btnFermer";
+            this.btnFermer.Size = new System.Drawing.Size(70, 22);
+            this.btnFermer.TabIndex = 3;
+            this.btnFermer.Text = "Fermer";
+            this.btnFermer.UseVisualStyleBackColor = true;
+            this.btnFermer.Click += new System.EventHandler(this.btnFermer_Click);
+            // 
+            // splitContainerPrincipal
+            // 
+            this.splitContainerPrincipal.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainerPrincipal.FixedPanel = System.Windows.Forms.FixedPanel.Panel2;
+            this.splitContainerPrincipal.Location = new System.Drawing.Point(0, 25);
+            this.splitContainerPrincipal.Name = "splitContainerPrincipal";
+            // 
+            // splitContainerPrincipal.Panel2
+            // 
+            this.splitContainerPrincipal.Panel2.Controls.Add(this.splitContainerDetails);
+            this.splitContainerPrincipal.Size = new System.Drawing.Size(1192, 479);
+            this.splitContainerPrincipal.SplitterDistance = 788;
+            this.splitContainerPrincipal.TabIndex = 4;
+            // 
+            // splitContainerDetails
+            // 
+            this.splitContainerDetails.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainerDetails.Location = new System.Drawing.Point(0, 0);
+            this.splitContainerDetails.Name = "splitContainerDetails";
+            this.splitContainerDetails.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainerDetails.Panel1
+            // 
+            this.splitContainerDetails.Panel1.Controls.Add(this.panelPlans);
+            // 
+            // splitContainerDetails.Panel2
+            // 
+            this.splitContainerDetails.Panel2.Controls.Add(this.panelDetailsTache);
+            this.splitContainerDetails.Size = new System.Drawing.Size(400, 479);
+            this.splitContainerDetails.SplitterDistance = 239;
+            this.splitContainerDetails.TabIndex = 0;
+            // 
+            // panelPlans
+            // 
+            this.panelPlans.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelPlans.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelPlans.Location = new System.Drawing.Point(0, 0);
+            this.panelPlans.Name = "panelPlans";
+            this.panelPlans.Size = new System.Drawing.Size(400, 239);
+            this.panelPlans.TabIndex = 0;
+            // 
+            // panelDetailsTache
+            // 
+            this.panelDetailsTache.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelDetailsTache.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panelDetailsTache.Location = new System.Drawing.Point(0, 0);
+            this.panelDetailsTache.Name = "panelDetailsTache";
+            this.panelDetailsTache.Size = new System.Drawing.Size(400, 236);
+            this.panelDetailsTache.TabIndex = 0;
             // 
             // TacheForm
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
-            AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1192, 573);
-            Controls.Add(panelPrincipal);
-            Controls.Add(toolStripPrincipal);
-            Controls.Add(groupBoxActions);
-            Controls.Add(statusStripPrincipal);
-            Margin = new Padding(3, 2, 3, 2);
-            MinimumSize = new Size(877, 460);
-            Name = "TacheForm";
-            StartPosition = FormStartPosition.CenterParent;
-            Text = "Gestion des Tâches - Diagramme PERT";
-            WindowState = FormWindowState.Maximized;
-            Load += TacheForm_Load;
-            toolStripPrincipal.ResumeLayout(false);
-            toolStripPrincipal.PerformLayout();
-            statusStripPrincipal.ResumeLayout(false);
-            statusStripPrincipal.PerformLayout();
-            groupBoxActions.ResumeLayout(false);
-            ResumeLayout(false);
-            PerformLayout();
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(1192, 573);
+            this.Controls.Add(this.splitContainerPrincipal);
+            this.Controls.Add(this.toolStripPrincipal);
+            this.Controls.Add(this.groupBoxActions);
+            this.Controls.Add(this.statusStripPrincipal);
+            this.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.MinimumSize = new System.Drawing.Size(877, 460);
+            this.Name = "TacheForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            this.Text = "Gestion des Tâches - Diagramme PERT";
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
+            this.Load += new System.EventHandler(this.TacheForm_Load);
+            this.toolStripPrincipal.ResumeLayout(false);
+            this.toolStripPrincipal.PerformLayout();
+            this.statusStripPrincipal.ResumeLayout(false);
+            this.statusStripPrincipal.PerformLayout();
+            this.groupBoxActions.ResumeLayout(false);
+            this.splitContainerPrincipal.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerPrincipal)).EndInit();
+            this.splitContainerPrincipal.ResumeLayout(false);
+            this.splitContainerDetails.Panel1.ResumeLayout(false);
+            this.splitContainerDetails.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerDetails)).EndInit();
+            this.splitContainerDetails.ResumeLayout(false);
+            this.ResumeLayout(false);
+            this.PerformLayout();
         }
 
-        private System.Windows.Forms.Panel panelPrincipal;
+        #endregion
+
+        // ANCIEN panelPrincipal est supprimé
+        // private System.Windows.Forms.Panel panelPrincipal; 
+
+        // NOUVEAUX contrôles
+        private System.Windows.Forms.SplitContainer splitContainerPrincipal;
+        private System.Windows.Forms.SplitContainer splitContainerDetails;
+        private System.Windows.Forms.Panel panelPlans;
+        private System.Windows.Forms.Panel panelDetailsTache;
+
         private System.Windows.Forms.ToolStrip toolStripPrincipal;
         private System.Windows.Forms.ToolStripButton btnNouvelleTache;
         private System.Windows.Forms.ToolStripButton btnModifierTache;
         private System.Windows.Forms.ToolStripButton btnSupprimerTache;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripButton btnZoomAjuster;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparatorDiagramme;
+        private System.Windows.Forms.ToolStripButton btnPan;
+        private System.Windows.Forms.ToolStripButton btnSauvegarderImage;
+        private System.Windows.Forms.ToolStripButton btnImprimer;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripLabel lblRechercheToolStrip;
         private System.Windows.Forms.ToolStripTextBox txtRecherche;

@@ -1,11 +1,13 @@
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
 using Microsoft.Msagl.Drawing;
 using Microsoft.Msagl.GraphViewerGdi;
 using PlanAthena.CsvModels;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.Drawing.Printing;
+using System.Linq;
+using System.Reflection;
+using System.Windows.Forms;
 
 namespace PlanAthena.Controls
 {
@@ -32,48 +34,50 @@ namespace PlanAthena.Controls
         };
         private int _couleurIndex = 0;
 
+        // Variables pour gérer le pan avec la souris
+        private bool _isPanning = false;
+        private Point _panStartPoint;
+        private Panel _scrollPanel; // Référence au panel pour le scroll
+        private PrintDocument _printDocument;
         public TacheCsvRecord TacheSelectionnee { get; private set; }
 
         public PertDiagramControl()
         {
             InitializeComponent();
 
-            // Créer un panel avec scroll qui contient le viewer
-            var scrollPanel = new Panel();
-            scrollPanel.Dock = DockStyle.Fill;
-            scrollPanel.AutoScroll = true;
-            scrollPanel.BackColor = SystemColors.Window;
+            _scrollPanel = new Panel();
+            _scrollPanel.Dock = DockStyle.Fill;
+            _scrollPanel.AutoScroll = true;
+            _scrollPanel.BackColor = SystemColors.Window;
 
             _viewer = new GViewer();
             _viewer.MouseClick += Viewer_MouseClick;
             _viewer.MouseDoubleClick += Viewer_MouseDoubleClick;
+            _viewer.MouseDown += Viewer_MouseDown;
+            _viewer.MouseMove += Viewer_MouseMove;
+            _viewer.MouseUp += Viewer_MouseUp;
 
-            // IMPORTANT : Ne pas docker le viewer, laisser les scrollbars gérer la taille
             _viewer.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             _viewer.Location = new Point(0, 0);
 
-            // Configuration du viewer
             ConfigurerViewer();
 
-            // Ajouter le viewer au panel scrollable
-            scrollPanel.Controls.Add(_viewer);
-
-            // Ajouter le panel au contrôle principal
-            this.Controls.Add(scrollPanel);
+            _scrollPanel.Controls.Add(_viewer);
+            this.Controls.Add(_scrollPanel);
         }
 
         private void ConfigurerViewer()
         {
             try
             {
-                // Configuration simple et propre
-                _viewer.PanButtonPressed = false;  // Pas de pan, on utilise les scrollbars
-                _viewer.NavigationVisible = true;   // Garder les contrôles de zoom
+                _viewer.PanButtonPressed = false;
+                _viewer.NavigationVisible = false;
+                _viewer.ToolBarIsVisible = false;
                 _viewer.ZoomF = 0.8;
                 _viewer.OutsideAreaBrush = Brushes.White;
 
                 var tooltip = new ToolTip();
-                tooltip.SetToolTip(_viewer, "Scrollbars = Navigation | Clic = Sélection | Double-clic = Éditer");
+                tooltip.SetToolTip(_viewer, "Clic gauche = Sélection | Double-clic = Éditer | Clic droit + glisser = Déplacer");
             }
             catch (Exception ex)
             {
@@ -81,24 +85,142 @@ namespace PlanAthena.Controls
             }
         }
 
+        #region Méthodes publiques pour le contrôle depuis TacheForm
+
+        public void TogglePan(bool panActif)
+        {
+            _viewer.PanButtonPressed = panActif;
+            this.Cursor = panActif ? Cursors.Hand : Cursors.Default;
+        }
+
+
+        public void SauvegarderImage()
+        {
+            if (_viewer.Graph == null) return;
+
+            try
+            {
+                // On invoque la méthode privée SaveImageClick que vous avez trouvée.
+                MethodInfo mi = typeof(GViewer).GetMethod("SaveImageClick", BindingFlags.NonPublic | BindingFlags.Instance);
+                if (mi != null)
+                {
+                    mi.Invoke(_viewer, new object[] { this, EventArgs.Empty });
+                }
+                else
+                {
+                    MessageBox.Show("Impossible de trouver la fonctionnalité de sauvegarde.", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Une erreur est survenue lors de la tentative de sauvegarde:\n{ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        public void ImprimerDiagramme()
+        {
+            if (_viewer.Graph == null) return;
+
+            if (_printDocument == null)
+            {
+                _printDocument = new PrintDocument();
+                _printDocument.DefaultPageSettings.Landscape = true; // Mettre en paysage pour mieux voir le graphe
+
+                _printDocument.PrintPage += (sender, e) => {
+                    // 1. Créer une image en mémoire (Bitmap) de la taille de la page
+                    var bmp = new Bitmap(e.PageBounds.Width, e.PageBounds.Height);
+
+                    // 2. Rendre le graphe sur cette image en mémoire
+                    // La méthode Render attend une Image, on lui passe notre Bitmap.
+                    var renderer = new Microsoft.Msagl.GraphViewerGdi.GraphRenderer(_viewer.Graph);
+                    renderer.Render(bmp);
+
+                    // 3. Dessiner le Bitmap final sur la page d'impression
+                    e.Graphics.DrawImage(bmp, e.PageBounds);
+
+                    // 4. Nettoyer l'image en mémoire
+                    bmp.Dispose();
+                };
+            }
+
+            using (var printDialog = new PrintDialog())
+            {
+                printDialog.Document = _printDocument;
+                if (printDialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        _printDocument.Print();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Erreur lors de l'impression:\n{ex.Message}", "Erreur d'impression", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+    #endregion
+
+    #region Gestion du Pan avec le clic droit
+
+    private void Viewer_MouseDown(object sender, MouseEventArgs e)
+        {
+            // CORRECTION: Syntaxe correcte pour l'énumération
+            if (e.Button == System.Windows.Forms.MouseButtons.Right)
+            {
+                _isPanning = true;
+                _panStartPoint = e.Location;
+                _viewer.Cursor = Cursors.SizeAll;
+            }
+        }
+
+        private void Viewer_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (_isPanning)
+            {
+                int dx = e.Location.X - _panStartPoint.X;
+                int dy = e.Location.Y - _panStartPoint.Y;
+
+                Point newScrollPosition = new Point(
+                    _scrollPanel.HorizontalScroll.Value - dx,
+                    _scrollPanel.VerticalScroll.Value - dy);
+
+                newScrollPosition.X = Math.Max(0, Math.Min(newScrollPosition.X, _scrollPanel.HorizontalScroll.Maximum));
+                newScrollPosition.Y = Math.Max(0, Math.Min(newScrollPosition.Y, _scrollPanel.VerticalScroll.Maximum));
+
+                _scrollPanel.AutoScrollPosition = newScrollPosition;
+
+                // Forcer le rafraîchissement pour éviter les glitchs
+                _viewer.Invalidate(); 
+            }
+        }
+
+        private void Viewer_MouseUp(object sender, MouseEventArgs e)
+        {
+            // CORRECTION: Syntaxe correcte pour l'énumération
+            if (e.Button == System.Windows.Forms.MouseButtons.Right)
+            {
+                _isPanning = false;
+                _viewer.Cursor = Cursors.Default;
+            }
+        }
+
+        #endregion
+
         public void ChargerTaches(List<TacheCsvRecord> taches, string filtreRecherche = "")
         {
             _taches = taches ?? new List<TacheCsvRecord>();
             _couleursByMetier.Clear();
             _couleurIndex = 0;
-
             GenererDiagramme(filtreRecherche);
         }
 
         private void GenererDiagramme(string filtreRecherche = "")
         {
             _graph = new Graph("DiagrammePERT");
-
-            // CORRECTION : Configuration forcée pour format paysage AVEC scrollbars
             _graph.Attr.LayerDirection = LayerDirection.LR;
-            _graph.Attr.AspectRatio = 0.2; // Très large pour forcer le format paysage
-
-            // Espacements généreux pour un diagramme large
+            _graph.Attr.AspectRatio = 0.2;
             _graph.Attr.NodeSeparation = 100;
             _graph.Attr.LayerSeparation = 150;
             _graph.Attr.MinNodeHeight = 60;
@@ -107,7 +229,6 @@ namespace PlanAthena.Controls
 
             var tachesAffichees = _taches.AsEnumerable();
 
-            // Appliquer le filtre de recherche
             if (!string.IsNullOrWhiteSpace(filtreRecherche))
             {
                 var recherche = filtreRecherche.ToLower();
@@ -128,7 +249,6 @@ namespace PlanAthena.Controls
             }
 
             var tachesParBloc = tachesAffichees.GroupBy(t => t.BlocId).ToList();
-
             foreach (var blocGroup in tachesParBloc)
             {
                 CreerClusterPourBloc(blocGroup.Key, blocGroup.ToList());
@@ -138,13 +258,8 @@ namespace PlanAthena.Controls
 
             _viewer.Graph = _graph;
 
-            // IMPORTANT : Ajuster la taille du viewer après génération
             this.BeginInvoke(new Action(() => {
-                try
-                {
-                    AjusterTailleViewer();
-                }
-                catch { }
+                try { AjusterTailleViewer(); } catch { }
             }));
         }
 
@@ -154,29 +269,20 @@ namespace PlanAthena.Controls
             {
                 if (_viewer.Graph != null)
                 {
-                    // Calculer la taille nécessaire du viewer basée sur le graphe
                     var bounds = _viewer.Graph.BoundingBox;
-
                     if (bounds.Width > 0 && bounds.Height > 0)
                     {
-                        // Taille du viewer = taille du graphe + marge pour zoom confortable
                         var viewerWidth = (int)(bounds.Width * 1.2) + 100;
                         var viewerHeight = (int)(bounds.Height * 1.2) + 100;
-
-                        // Assurer une taille minimum
                         viewerWidth = Math.Max(viewerWidth, 800);
                         viewerHeight = Math.Max(viewerHeight, 600);
-
                         _viewer.Size = new Size(viewerWidth, viewerHeight);
-
-                        // Le panel parent gérera automatiquement les scrollbars
                         _viewer.Invalidate();
                     }
                 }
             }
             catch (Exception)
             {
-                // Taille par défaut en cas d'erreur
                 _viewer.Size = new Size(1200, 800);
             }
         }
@@ -193,27 +299,22 @@ namespace PlanAthena.Controls
         private void CreerClusterPourBloc(string blocId, List<TacheCsvRecord> tachesDuBloc)
         {
             if (!tachesDuBloc.Any()) return;
-
             var premiereTache = tachesDuBloc.First();
             var cluster = new Subgraph(blocId)
             {
                 LabelText = $"📦 {premiereTache.BlocNom}\n({tachesDuBloc.Count} tâches - {tachesDuBloc.Sum(t => t.HeuresHommeEstimees)}h)"
             };
-
-            // Style de cluster optimisé
             cluster.Attr.FillColor = Microsoft.Msagl.Drawing.Color.LightYellow;
             cluster.Attr.Color = Microsoft.Msagl.Drawing.Color.DarkOrange;
             cluster.Attr.LineWidth = 2;
             cluster.Label.FontColor = Microsoft.Msagl.Drawing.Color.DarkBlue;
             cluster.Label.FontSize = 11;
             cluster.Attr.Padding = 15;
-
             foreach (var tache in tachesDuBloc.OrderBy(t => t.TacheId))
             {
                 var node = CreerNoeudTache(tache);
                 cluster.AddNode(node);
             }
-
             _graph.RootSubgraph.AddSubgraph(cluster);
         }
 
@@ -221,23 +322,16 @@ namespace PlanAthena.Controls
         {
             var nodeId = tache.TacheId;
             var node = _graph.AddNode(nodeId);
-
             var metierAffiche = !string.IsNullOrEmpty(tache.MetierId) ? tache.MetierId : "❌ Non assigné";
             var label = $"🏷️ {tache.TacheId}\n{TronquerTexte(tache.TacheNom, 18)}\n" +
                        $"👨‍💼 {TronquerTexte(metierAffiche, 15)}\n⏱️ {tache.HeuresHommeEstimees}h";
-
             node.LabelText = label;
-
             var couleur = ObtenirCouleurPourMetier(tache.MetierId);
             node.Attr.FillColor = couleur;
             node.Attr.Shape = Shape.Box;
             node.Attr.LineWidth = 2;
-
-            // Taille de nœud cohérente
             node.Attr.LabelMargin = 10;
             node.Label.FontSize = 9;
-
-            // Style selon l'état du métier
             if (string.IsNullOrEmpty(tache.MetierId))
             {
                 node.Attr.Color = Microsoft.Msagl.Drawing.Color.Red;
@@ -247,29 +341,25 @@ namespace PlanAthena.Controls
             {
                 node.Attr.Color = Microsoft.Msagl.Drawing.Color.DarkBlue;
             }
-
             node.UserData = tache;
-
             return node;
         }
 
         private void AjouterDependances(List<TacheCsvRecord> tachesAffichees)
         {
             var idsAffiches = new HashSet<string>(tachesAffichees.Select(t => t.TacheId));
-
             foreach (var tache in tachesAffichees.Where(t => !string.IsNullOrEmpty(t.Dependencies)))
             {
                 var dependances = tache.Dependencies.Split(',')
                     .Select(d => d.Trim())
                     .Where(d => !string.IsNullOrEmpty(d) && idsAffiches.Contains(d));
-
                 foreach (var dependanceId in dependances)
                 {
                     var edge = _graph.AddEdge(dependanceId, tache.TacheId);
                     edge.Attr.Color = Microsoft.Msagl.Drawing.Color.DarkGreen;
                     edge.Attr.LineWidth = 2;
                     edge.Attr.ArrowheadAtTarget = ArrowStyle.Normal;
-                    edge.LabelText = ""; // Pas de label sur les flèches pour simplifier
+                    edge.LabelText = "";
                 }
             }
         }
@@ -277,14 +367,12 @@ namespace PlanAthena.Controls
         private Microsoft.Msagl.Drawing.Color ObtenirCouleurPourMetier(string metierId)
         {
             if (string.IsNullOrEmpty(metierId))
-                return Microsoft.Msagl.Drawing.Color.MistyRose; // Couleur pour "sans métier"
-
+                return Microsoft.Msagl.Drawing.Color.MistyRose;
             if (!_couleursByMetier.ContainsKey(metierId))
             {
                 _couleursByMetier[metierId] = _couleursDisponibles[_couleurIndex % _couleursDisponibles.Length];
                 _couleurIndex++;
             }
-
             return _couleursByMetier[metierId];
         }
 
@@ -292,16 +380,15 @@ namespace PlanAthena.Controls
         {
             if (string.IsNullOrEmpty(texte) || texte.Length <= longueurMax)
                 return texte;
-
             return texte.Substring(0, longueurMax - 2) + "..";
         }
 
         private void Viewer_MouseClick(object sender, MouseEventArgs e)
         {
+            if (_isPanning) return;
             try
             {
                 var objectUnderMouse = _viewer.ObjectUnderMouseCursor;
-
                 if (objectUnderMouse?.DrawingObject is Node node && node.UserData is TacheCsvRecord tache)
                 {
                     TacheSelectionnee = tache;
@@ -309,10 +396,7 @@ namespace PlanAthena.Controls
                     MettreEnEvidenceTache(node);
                 }
             }
-            catch (Exception)
-            {
-                // Gestion d'erreur silencieuse
-            }
+            catch (Exception) { }
         }
 
         private void Viewer_MouseDoubleClick(object sender, MouseEventArgs e)
@@ -320,21 +404,17 @@ namespace PlanAthena.Controls
             try
             {
                 var objectUnderMouse = _viewer.ObjectUnderMouseCursor;
-
                 if (objectUnderMouse?.DrawingObject is Node node && node.UserData is TacheCsvRecord tache)
                 {
                     TacheDoubleClicked?.Invoke(this, new TacheSelectedEventArgs(tache));
                 }
             }
-            catch (Exception)
-            {
-                // Gestion d'erreur silencieuse
-            }
+            catch (Exception) { }
         }
 
         private void MettreEnEvidenceTache(Node nodeSelectionne)
         {
-            // Remettre tous les nœuds en style normal
+            if (_graph == null || !_graph.Nodes.Any()) return;
             foreach (Node node in _graph.Nodes)
             {
                 if (node.UserData is TacheCsvRecord tache)
@@ -344,14 +424,11 @@ namespace PlanAthena.Controls
                         Microsoft.Msagl.Drawing.Color.Red : Microsoft.Msagl.Drawing.Color.DarkBlue;
                 }
             }
-
-            // Mettre en évidence le nœud sélectionné
             if (nodeSelectionne != null)
             {
                 nodeSelectionne.Attr.LineWidth = 5;
                 nodeSelectionne.Attr.Color = Microsoft.Msagl.Drawing.Color.Purple;
             }
-
             _viewer.Invalidate();
         }
 
@@ -361,25 +438,29 @@ namespace PlanAthena.Controls
             {
                 if (_viewer.Graph != null)
                 {
-                    // Zoom pour voir tout le contenu avec une marge confortable
                     var graphBounds = _viewer.Graph.BoundingBox;
-                    var viewerBounds = _viewer.ClientRectangle;
+                    // CORRECTION: Utiliser la taille du panel visible, pas du viewer entier
+                    var viewerBounds = _scrollPanel.ClientRectangle;
 
                     if (graphBounds.Width > 0 && graphBounds.Height > 0 &&
                         viewerBounds.Width > 50 && viewerBounds.Height > 50)
                     {
-                        var scaleX = (viewerBounds.Width - 100) / graphBounds.Width;
-                        var scaleY = (viewerBounds.Height - 100) / graphBounds.Height;
-                        var scale = Math.Min(scaleX, scaleY) * 0.85; // 85% pour avoir une bonne marge
+                        // Ajouter une marge pour ne pas être collé aux bords
+                        double margin = 40;
+                        var scaleX = (viewerBounds.Width - margin) / graphBounds.Width;
+                        var scaleY = (viewerBounds.Height - margin) / graphBounds.Height;
 
-                        // Zoom minimum pour garantir la lisibilité
-                        scale = Math.Max(scale, 0.5);
+                        // On prend le zoom le plus petit pour que tout rentre
+                        var scale = Math.Min(scaleX, scaleY);
 
                         _viewer.ZoomF = scale;
+
+                        // Centrer la vue après le zoom
+                        _scrollPanel.AutoScrollPosition = new Point(0, 0);
                     }
                     else
                     {
-                        _viewer.ZoomF = 0.8; // Zoom par défaut confortable
+                        _viewer.ZoomF = 1.0; // Zoom par défaut
                     }
 
                     _viewer.Invalidate();
@@ -389,7 +470,7 @@ namespace PlanAthena.Controls
             {
                 try
                 {
-                    _viewer.ZoomF = 0.8;
+                    _viewer.ZoomF = 1.0;
                     _viewer.Invalidate();
                 }
                 catch { }
@@ -432,7 +513,6 @@ namespace PlanAthena.Controls
     public class TacheSelectedEventArgs : EventArgs
     {
         public TacheCsvRecord Tache { get; }
-
         public TacheSelectedEventArgs(TacheCsvRecord tache)
         {
             Tache = tache;

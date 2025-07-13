@@ -1,7 +1,7 @@
+// Fichier : MainForm.cs
+
 using Microsoft.Extensions.DependencyInjection;
-using PlanAthena.Core.Application;
 using PlanAthena.Core.Facade;
-using PlanAthena.Core.Infrastructure;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Utilities;
@@ -9,6 +9,8 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using PlanAthena.Core.Application; // Pour AddApplicationServices
+using PlanAthena.Core.Infrastructure; // Pour AddInfrastructureServices
 
 namespace PlanAthena
 {
@@ -21,11 +23,9 @@ namespace PlanAthena
         private readonly MetierService _metierService;
         private readonly ProjetService _projetService;
         private readonly GanttExportService _ganttExportService;
+        private readonly ConfigurationBuilder _configBuilder; // NOUVEAU
 
-        // État du projet actuel
         private InformationsProjet _projetActuel;
-
-        // Stockage du dernier résultat de planification pour l'export
         private PlanAthena.Core.Facade.Dto.Output.ProcessChantierResultDto _dernierResultatPlanification;
 
         public MainForm()
@@ -33,13 +33,13 @@ namespace PlanAthena
             InitializeComponent();
             _serviceProvider = ConfigureServices();
 
-            // Injection des services
             _planificationService = _serviceProvider.GetRequiredService<PlanificationService>();
             _ouvrierService = _serviceProvider.GetRequiredService<OuvrierService>();
             _tacheService = _serviceProvider.GetRequiredService<TacheService>();
             _metierService = _serviceProvider.GetRequiredService<MetierService>();
             _projetService = _serviceProvider.GetRequiredService<ProjetService>();
             _ganttExportService = _serviceProvider.GetRequiredService<GanttExportService>();
+            _configBuilder = _serviceProvider.GetRequiredService<ConfigurationBuilder>(); // NOUVEAU
 
             InitializeInterface();
             CreerNouveauProjetParDefaut();
@@ -47,10 +47,7 @@ namespace PlanAthena
 
         private void InitializeInterface()
         {
-            // Configuration du menu
             InitializeMenu();
-
-            // Configuration des jours ouvrés
             chkListJoursOuvres.Items.Add(DayOfWeek.Monday, true);
             chkListJoursOuvres.Items.Add(DayOfWeek.Tuesday, true);
             chkListJoursOuvres.Items.Add(DayOfWeek.Wednesday, true);
@@ -60,23 +57,16 @@ namespace PlanAthena
             chkListJoursOuvres.Items.Add(DayOfWeek.Sunday, false);
             chkListJoursOuvres.DisplayMember = "ToString";
 
-            // Configuration du type de sortie
             cmbTypeDeSortie.Items.Clear();
-            cmbTypeDeSortie.Items.AddRange(new string[] {
-                "Analyse et Estimation",
-                "Optimisation Coût",
-                "Optimisation Délai"
-            });
+            cmbTypeDeSortie.Items.AddRange(new string[] { "Analyse et Estimation", "Optimisation Coût", "Optimisation Délai" });
             cmbTypeDeSortie.SelectedIndex = 0;
 
-            // Configuration des dates par défaut
             dtpDateDebut.Value = DateTime.Today;
             dtpDateFin.Value = DateTime.Today.AddMonths(3);
             chkDateDebut.Checked = true;
             chkDateFin.Checked = true;
 
-            // Timer pour mise à jour en temps réel
-            var timerMiseAJour = new System.Windows.Forms.Timer { Interval = 2000 }; // 2 secondes
+            var timerMiseAJour = new System.Windows.Forms.Timer { Interval = 2000 };
             timerMiseAJour.Tick += (s, e) => MettreAJourResume();
             timerMiseAJour.Start();
 
@@ -85,10 +75,7 @@ namespace PlanAthena
 
         private void InitializeMenu()
         {
-            // Création du MenuStrip
             var menuStrip = new MenuStrip();
-
-            // Menu Projet
             var menuProjet = new ToolStripMenuItem("📁 Projet");
             menuProjet.DropDownItems.Add("🆕 Nouveau projet", null, NouveauProjet_Click);
             menuProjet.DropDownItems.Add("📂 Charger projet", null, ChargerProjet_Click);
@@ -99,13 +86,11 @@ namespace PlanAthena
             menuProjet.DropDownItems.Add(new ToolStripSeparator());
             menuProjet.DropDownItems.Add("❌ Quitter", null, Quitter_Click);
 
-            // Menu items directs
             var menuTaches = new ToolStripMenuItem("⚙️ Tâches", null, OuvrirGestionTaches_Click);
             var menuMetiers = new ToolStripMenuItem("📋 Métiers", null, OuvrirGestionMetiers_Click);
             var menuOuvriers = new ToolStripMenuItem("👷 Ouvriers", null, OuvrirGestionOuvriers_Click);
 
             menuStrip.Items.AddRange(new ToolStripItem[] { menuProjet, menuTaches, menuMetiers, menuOuvriers });
-
             this.MainMenuStrip = menuStrip;
             this.Controls.Add(menuStrip);
         }
@@ -131,12 +116,7 @@ namespace PlanAthena
         {
             if (ConfirmerPerteDonnees())
             {
-                using var ofd = new OpenFileDialog
-                {
-                    Filter = "Fichiers projet (*.json)|*.json",
-                    Title = "Charger un projet"
-                };
-
+                using var ofd = new OpenFileDialog { Filter = "Fichiers projet (*.json)|*.json", Title = "Charger un projet" };
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
                     try
@@ -148,8 +128,7 @@ namespace PlanAthena
                     catch (Exception ex)
                     {
                         Log($"ERREUR lors du chargement : {ex.Message}");
-                        MessageBox.Show($"Erreur lors du chargement du projet :\n{ex.Message}",
-                            "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"Erreur lors du chargement du projet :\n{ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -158,14 +137,7 @@ namespace PlanAthena
         private void SauvegarderProjet_Click(object sender, EventArgs e)
         {
             SynchroniserProjetDepuisInterface();
-
-            using var sfd = new SaveFileDialog
-            {
-                Filter = "Fichiers projet (*.json)|*.json",
-                Title = "Sauvegarder le projet",
-                FileName = $"{_projetActuel?.NomProjet?.Replace(" ", "_") ?? "projet"}.json"
-            };
-
+            using var sfd = new SaveFileDialog { Filter = "Fichiers projet (*.json)|*.json", Title = "Sauvegarder le projet", FileName = $"{_projetActuel?.NomProjet?.Replace(" ", "_") ?? "projet"}.json" };
             if (sfd.ShowDialog() == DialogResult.OK)
             {
                 try
@@ -176,19 +148,14 @@ namespace PlanAthena
                 catch (Exception ex)
                 {
                     Log($"ERREUR lors de la sauvegarde : {ex.Message}");
-                    MessageBox.Show($"Erreur lors de la sauvegarde :\n{ex.Message}",
-                        "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Erreur lors de la sauvegarde :\n{ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
         private void ExportCsvTout_Click(object sender, EventArgs e)
         {
-            using var fbd = new FolderBrowserDialog
-            {
-                Description = "Sélectionner le dossier d'export"
-            };
-
+            using var fbd = new FolderBrowserDialog { Description = "Sélectionner le dossier d'export" };
             if (fbd.ShowDialog() == DialogResult.OK)
             {
                 try
@@ -200,8 +167,7 @@ namespace PlanAthena
                 catch (Exception ex)
                 {
                     Log($"ERREUR lors de l'export : {ex.Message}");
-                    MessageBox.Show($"Erreur lors de l'export :\n{ex.Message}",
-                        "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Erreur lors de l'export :\n{ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -213,15 +179,10 @@ namespace PlanAthena
             {
                 try
                 {
-                    var resume = _projetService.ImporterToutDepuisCsv(
-                        dialog.CheminMetiers,
-                        dialog.CheminOuvriers,
-                        dialog.CheminTaches);
-
+                    var resume = _projetService.ImporterToutDepuisCsv(dialog.CheminMetiers, dialog.CheminOuvriers, dialog.CheminTaches);
                     if (resume.Succes)
                     {
-                        Log($"Import groupé réussi : {resume.MetiersImportes} métiers, " +
-                            $"{resume.OuvriersImportes} ouvriers, {resume.TachesImportees} tâches");
+                        Log($"Import groupé réussi : {resume.MetiersImportes} métiers, {resume.OuvriersImportes} ouvriers, {resume.TachesImportees} tâches");
                     }
                     else
                     {
@@ -269,50 +230,54 @@ namespace PlanAthena
         {
             Log("Lancement de la planification...");
 
-            // Validation des données
-            var resumeProjet = _projetService.ObtenirResumeProjet();
-            if (!ValiderDonneesAvantPlanification(resumeProjet)) return;
+            // MODIFIÉ: Appel à la méthode de validation dans le service
+            if (!_projetService.ValiderDonneesAvantPlanification(out string messageValidation))
+            {
+                Log($"ERREUR : {messageValidation}");
+                MessageBox.Show(messageValidation, "Données manquantes", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
             try
             {
                 Log("Construction de la configuration...");
-                var configuration = ConstruireConfigurationUI();
-
-                Log("Lancement de la planification avec PlanAthena...");
-
-                // Synchroniser les données avec PlanificationService
-                _planificationService.ChargerDonnees(
-                    _ouvrierService.ObtenirTousLesOuvriers(),
-                    _tacheService.ObtenirToutesLesTaches(),
-                    _metierService.GetAllMetiers().ToList()
+                // MODIFIÉ: Utilisation du nouveau builder
+                var configuration = _configBuilder.ConstruireDepuisUI(
+                    chkListJoursOuvres.CheckedItems.Cast<DayOfWeek>().ToList(),
+                    (int)numHeureDebut.Value,
+                    (int)numHeuresTravail.Value,
+                    cmbTypeDeSortie.SelectedItem.ToString(),
+                    _projetActuel?.Description ?? txtDescription.Text,
+                    chkDateDebut.Checked ? dtpDateDebut.Value.Date : null,
+                    chkDateFin.Checked ? dtpDateFin.Value.Date : null,
+                    (int)numDureeStandard.Value,
+                    numPenaliteChangement.Value,
+                    numCoutIndirect.Value
                 );
 
+                Log("Lancement de la planification avec PlanAthena...");
+                _planificationService.ChargerDonnees(_ouvrierService.ObtenirTousLesOuvriers(), _tacheService.ObtenirToutesLesTaches(), _metierService.GetAllMetiers().ToList());
                 var resultatDto = await _planificationService.LancerPlanificationAsync(configuration);
 
-                // Stocker le résultat pour l'export Gantt
                 _dernierResultatPlanification = resultatDto;
-
                 AfficherResultatDansLog(resultatDto);
                 VerifierDisponibiliteExportGantt();
-
                 Log("PLANIFICATION TERMINÉE.");
             }
             catch (Exception ex)
             {
                 Log($"ERREUR CRITIQUE lors de la planification : {ex}");
-                MessageBox.Show($"Une erreur critique est survenue:\n{ex.Message}",
-                    "Erreur Critique", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Une erreur critique est survenue:\n{ex.Message}", "Erreur Critique", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         #endregion
 
-        #region Export GanttProject (refactorisé)
+        #region Export GanttProject
 
         private void VerifierDisponibiliteExportGantt()
         {
             bool peutExporter = _dernierResultatPlanification?.OptimisationResultat?.Affectations?.Any() == true;
-
             if (btnExportGantt.InvokeRequired)
             {
                 btnExportGantt.Invoke(new Action(() => btnExportGantt.Enabled = peutExporter));
@@ -321,7 +286,6 @@ namespace PlanAthena
             {
                 btnExportGantt.Enabled = peutExporter;
             }
-
             if (peutExporter)
             {
                 Log("📊 Export GanttProject disponible");
@@ -332,46 +296,26 @@ namespace PlanAthena
         {
             if (_dernierResultatPlanification?.OptimisationResultat?.Affectations?.Any() != true)
             {
-                MessageBox.Show("Aucun planning à exporter. Veuillez d'abord lancer une planification.",
-                    "Export impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Aucun planning à exporter. Veuillez d'abord lancer une planification.", "Export impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            using var sfd = new SaveFileDialog
-            {
-                Filter = "Fichiers GanttProject (*.gan)|*.gan",
-                Title = "Exporter vers GanttProject",
-                FileName = $"{_projetActuel?.NomProjet?.Replace(" ", "_") ?? "planning"}.gan"
-            };
-
+            using var sfd = new SaveFileDialog { Filter = "Fichiers GanttProject (*.gan)|*.gan", Title = "Exporter vers GanttProject", FileName = $"{_projetActuel?.NomProjet?.Replace(" ", "_") ?? "planning"}.gan" };
             if (sfd.ShowDialog() == DialogResult.OK)
             {
                 try
                 {
-                    var config = ConstruireConfigurationExportGantt();
+                    var config = _configBuilder.ConstruireConfigExportGantt(_projetActuel?.NomProjet ?? "Planning", (double)numHeuresTravail.Value, chkListJoursOuvres.CheckedItems.Cast<DayOfWeek>());
                     _ganttExportService.ExporterVersGanttProjectXml(_dernierResultatPlanification, sfd.FileName, config);
-
                     Log($"📊 Export GanttProject réussi : {sfd.FileName}");
-                    MessageBox.Show($"Export GanttProject terminé avec succès !\n\nFichier : {sfd.FileName}",
-                        "Export réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show($"Export GanttProject terminé avec succès !\n\nFichier : {sfd.FileName}", "Export réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
                     Log($"ERREUR lors de l'export GanttProject : {ex.Message}");
-                    MessageBox.Show($"Erreur lors de l'export GanttProject :\n{ex.Message}",
-                        "Erreur d'export", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Erreur lors de l'export GanttProject :\n{ex.Message}", "Erreur d'export", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
-        }
-
-        private ConfigurationExportGantt ConstruireConfigurationExportGantt()
-        {
-            return new ConfigurationExportGantt
-            {
-                NomProjet = _projetActuel?.NomProjet ?? "Planning PlanAthena",
-                HeuresParJour = (double)numHeuresTravail.Value,
-                JoursOuvres = chkListJoursOuvres.CheckedItems.Cast<DayOfWeek>()
-            };
         }
 
         #endregion
@@ -380,14 +324,7 @@ namespace PlanAthena
 
         private void CreerNouveauProjetParDefaut()
         {
-            _projetActuel = new InformationsProjet
-            {
-                NomProjet = "Nouveau projet",
-                Description = "",
-                DateCreation = DateTime.Now,
-                DateDerniereModification = DateTime.Now,
-                Auteur = Environment.UserName
-            };
+            _projetActuel = new InformationsProjet { NomProjet = "Nouveau projet", Description = "", DateCreation = DateTime.Now, DateDerniereModification = DateTime.Now, Auteur = Environment.UserName };
             MettreAJourAffichageProjet();
         }
 
@@ -401,19 +338,15 @@ namespace PlanAthena
                 lblDateCreation.Text = $"Créé le: {_projetActuel.DateCreation:dd/MM/yyyy}";
                 this.Text = $"PlanAthena - {_projetActuel.NomProjet}";
             }
-
             AttacherEvenementsSynchronisation();
             MettreAJourResume();
         }
 
         private void AttacherEvenementsSynchronisation()
         {
-            // Détacher d'abord pour éviter les doublons
             txtNomProjet.TextChanged -= SynchroniserProjet;
             txtAuteur.TextChanged -= SynchroniserProjet;
             txtDescription.TextChanged -= SynchroniserProjet;
-
-            // Rattacher
             txtNomProjet.TextChanged += SynchroniserProjet;
             txtAuteur.TextChanged += SynchroniserProjet;
             txtDescription.TextChanged += SynchroniserProjet;
@@ -447,13 +380,8 @@ namespace PlanAthena
             try
             {
                 var resume = _projetService.ObtenirResumeProjet();
-
-                lblResume.Text = $"Résumé: {resume.StatistiquesOuvriers.NombreOuvriersTotal} ouvriers, " +
-                                $"{resume.NombreMetiers} métiers, " +
-                                $"{resume.StatistiquesTaches.NombreTachesTotal} tâches";
-
-                lblMapping.Text = $"Mapping: {resume.StatistiquesMappingMetiers.PourcentageMapping:F0}% " +
-                                 $"({resume.StatistiquesMappingMetiers.TachesAvecMetier}/{resume.StatistiquesMappingMetiers.TotalTaches} tâches)";
+                lblResume.Text = $"Résumé: {resume.StatistiquesOuvriers.NombreOuvriersTotal} ouvriers, {resume.NombreMetiers} métiers, {resume.StatistiquesTaches.NombreTachesTotal} tâches";
+                lblMapping.Text = $"Mapping: {resume.StatistiquesMappingMetiers.PourcentageMapping:F0}% ({resume.StatistiquesMappingMetiers.TachesAvecMetier}/{resume.StatistiquesMappingMetiers.TotalTaches} tâches)";
             }
             catch (Exception ex)
             {
@@ -464,89 +392,18 @@ namespace PlanAthena
         private bool ConfirmerPerteDonnees()
         {
             var resume = _projetService.ObtenirResumeProjet();
-            var totalDonnees = resume.NombreMetiers + resume.StatistiquesOuvriers.NombreOuvriersTotal +
-                              resume.StatistiquesTaches.NombreTachesTotal;
-
+            var totalDonnees = resume.NombreMetiers + resume.StatistiquesOuvriers.NombreOuvriersTotal + resume.StatistiquesTaches.NombreTachesTotal;
             if (totalDonnees > 0)
             {
-                var result = MessageBox.Show(
-                    "Des données non sauvegardées seront perdues. Continuer ?",
-                    "Confirmation",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question);
-
+                var result = MessageBox.Show("Des données non sauvegardées seront perdues. Continuer ?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 return result == DialogResult.Yes;
             }
-
             return true;
         }
 
         #endregion
 
         #region Méthodes utilitaires
-
-        private bool ValiderDonneesAvantPlanification(dynamic resumeProjet)
-        {
-            if (resumeProjet.StatistiquesOuvriers.NombreOuvriersTotal == 0)
-            {
-                Log("ERREUR : Aucun ouvrier chargé.");
-                MessageBox.Show("Veuillez charger des ouvriers avant de lancer la planification.",
-                    "Données manquantes", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return false;
-            }
-
-            if (resumeProjet.NombreMetiers == 0)
-            {
-                Log("ERREUR : Aucun métier chargé.");
-                MessageBox.Show("Veuillez charger des métiers avant de lancer la planification.",
-                    "Données manquantes", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return false;
-            }
-
-            if (resumeProjet.StatistiquesTaches.NombreTachesTotal == 0)
-            {
-                Log("ERREUR : Aucune tâche chargée.");
-                MessageBox.Show("Veuillez charger des tâches avant de lancer la planification.",
-                    "Données manquantes", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return false;
-            }
-
-            if (resumeProjet.StatistiquesMappingMetiers.TachesSansMetier > 0)
-            {
-                Log($"AVERTISSEMENT : {resumeProjet.StatistiquesMappingMetiers.TachesSansMetier} tâches sans métier assigné.");
-            }
-
-            return true;
-        }
-
-        private ConfigurationUI ConstruireConfigurationUI()
-        {
-            SynchroniserProjetDepuisInterface();
-
-            return new ConfigurationUI
-            {
-                JoursOuvres = chkListJoursOuvres.CheckedItems.Cast<DayOfWeek>().ToList(),
-                HeureDebutJournee = (int)numHeureDebut.Value,
-                HeuresTravailEffectifParJour = (int)numHeuresTravail.Value,
-                TypeDeSortie = ConvertirTypeDeSortie(cmbTypeDeSortie.SelectedItem.ToString()),
-                Description = _projetActuel?.Description ?? txtDescription.Text,
-                DateDebutSouhaitee = chkDateDebut.Checked ? dtpDateDebut.Value.Date : null,
-                DateFinSouhaitee = chkDateFin.Checked ? dtpDateFin.Value.Date : null,
-                DureeJournaliereStandardHeures = (int)numDureeStandard.Value,
-                PenaliteChangementOuvrierPourcentage = numPenaliteChangement.Value,
-                CoutIndirectJournalierPourcentage = numCoutIndirect.Value
-            };
-        }
-
-        private string ConvertirTypeDeSortie(string selectionUI)
-        {
-            return selectionUI switch
-            {
-                "Optimisation Coût" => "OPTIMISATION_COUT",
-                "Optimisation Délai" => "OPTIMISATION_DELAI",
-                _ => "Analyse et Estimation"
-            };
-        }
 
         private void Log(string message)
         {
@@ -569,33 +426,29 @@ namespace PlanAthena
             serviceCollection.AddScoped<PlanAthena.Core.Application.Interfaces.IConstructeurProblemeOrTools, PlanAthena.Core.Infrastructure.Services.OrTools.ConstructeurProblemeOrTools>();
             serviceCollection.AddScoped<PlanAthenaCoreFacade>();
 
-            // Services de l'application
+            // --- CORRECTION PRINCIPALE ---
+            // Les services qui contiennent des données d'état doivent être Singleton
             serviceCollection.AddSingleton<MetierService>();
+            serviceCollection.AddSingleton<OuvrierService>();
+            serviceCollection.AddSingleton<TacheService>();
+            serviceCollection.AddSingleton<ProjetService>();
+
+            // Les services "sans état" ou utilitaires peuvent rester Scoped ou Transient
             serviceCollection.AddScoped<CsvDataService>();
             serviceCollection.AddScoped<ExcelReader>();
             serviceCollection.AddScoped<DataTransformer>();
             serviceCollection.AddScoped<PlanificationService>();
-            serviceCollection.AddScoped<OuvrierService>();
-            serviceCollection.AddScoped<TacheService>();
-            serviceCollection.AddScoped<ProjetService>();
-
-            // Nouveau service d'export GanttProject
             serviceCollection.AddScoped<GanttExportService>();
+            serviceCollection.AddScoped<ConfigurationBuilder>(); // NOUVEAU
 
             return serviceCollection.BuildServiceProvider();
         }
 
         private void AfficherResultatDansLog(PlanAthena.Core.Facade.Dto.Output.ProcessChantierResultDto resultat)
         {
-            if (resultat == null)
-            {
-                Log("Le résultat retourné par la façade est null.");
-                return;
-            }
-
+            if (resultat == null) { Log("Le résultat retourné par la façade est null."); return; }
             Log($"\n--- Résultat pour le Chantier ID: {resultat.ChantierId} ---");
             Log($"État du Traitement: {resultat.Etat}");
-
             if (resultat.Messages.Any())
             {
                 Log("\nMessages de validation et suggestions :");
@@ -605,40 +458,22 @@ namespace PlanAthena
                     Log($"  [{msg.Type}] ({msg.CodeMessage}) {msg.Message}{details}");
                 }
             }
-
             if (resultat.AnalyseStatiqueResultat != null)
             {
                 Log("\n--- Analyse Statique et Estimation Préliminaire ---");
                 var analyse = resultat.AnalyseStatiqueResultat;
-
-                if (analyse.CoutTotalEstime.HasValue)
-                {
-                    Log($"Coût Total Estimé : {analyse.CoutTotalEstime / 100.0m:C}");
-                }
-                if (analyse.DureeTotaleEstimeeEnSlots.HasValue)
-                {
-                    Log($"Durée Totale Estimée : {analyse.DureeTotaleEstimeeEnSlots} heures ({analyse.DureeTotaleEstimeeEnSlots / 7.0:F1} jours de 7h)");
-                }
-
-                if (analyse.OuvriersClesSuggereIds.Any())
-                {
-                    Log($"Ouvriers clés suggérés : {string.Join(", ", analyse.OuvriersClesSuggereIds)}");
-                }
+                if (analyse.CoutTotalEstime.HasValue) Log($"Coût Total Estimé : {analyse.CoutTotalEstime / 100.0m:C}");
+                if (analyse.DureeTotaleEstimeeEnSlots.HasValue) Log($"Durée Totale Estimée : {analyse.DureeTotaleEstimeeEnSlots} heures ({analyse.DureeTotaleEstimeeEnSlots / 7.0:F1} jours de 7h)");
+                if (analyse.OuvriersClesSuggereIds.Any()) Log($"Ouvriers clés suggérés : {string.Join(", ", analyse.OuvriersClesSuggereIds)}");
             }
-
             if (resultat.OptimisationResultat?.Affectations?.Any() ?? false)
             {
                 Log("\n--- Planning Détaillé (Affectations) ---");
-
-                var planningParJour = resultat.OptimisationResultat.Affectations
-                                              .OrderBy(a => a.DateDebut)
-                                              .GroupBy(a => a.DateDebut.Date);
-
+                var planningParJour = resultat.OptimisationResultat.Affectations.OrderBy(a => a.DateDebut).GroupBy(a => a.DateDebut.Date);
                 foreach (var jour in planningParJour)
                 {
                     Log($"\n  [ Jour: {jour.Key:dddd dd MMMM yyyy} ]");
                     var tachesParOuvrier = jour.OrderBy(a => a.OuvrierNom).GroupBy(a => a.OuvrierNom);
-
                     foreach (var groupeOuvrier in tachesParOuvrier)
                     {
                         Log($"    > Ouvrier: {groupeOuvrier.Key}");
@@ -650,7 +485,6 @@ namespace PlanAthena
                     }
                 }
             }
-
             if (resultat.OptimisationResultat != null)
             {
                 var optimResult = resultat.OptimisationResultat;
@@ -659,7 +493,6 @@ namespace PlanAthena
                 if (optimResult.CoutTotalEstime.HasValue) Log($"Coût Total Estimé : {optimResult.CoutTotalEstime / 100.0m:C}");
                 if (optimResult.DureeTotaleEnSlots.HasValue) Log($"Durée Totale (en slots de 1h): {optimResult.DureeTotaleEnSlots}");
             }
-
             if (resultat.AnalysePostOptimisationResultat != null)
             {
                 var analysisResult = resultat.AnalysePostOptimisationResultat;

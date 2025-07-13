@@ -1,0 +1,181 @@
+Structure du dossier
+
++PlanAthena
+¦   PlanAthena.sln
+¦   
++---.github
+¦   +---workflows
++---ConsoleAppTester
+¦   ¦   ConsoleAppTester.csproj
+¦   ¦   Program.cs
+¦   ¦   sprint2_cycle.json
+¦   ¦   sprint2_invalid_ref.json
+¦   ¦   sprint2_valid.json
+¦   ¦   sprint3_calendrier_complexe.json
+¦   ¦   sprint3_optimisation_complexe.json
+¦   ¦   
++---PlanAthena
+¦   ¦   CompetenceDialog.cs
+¦   ¦   files.txt
+¦   ¦   MainForm.cs
+¦   ¦   MainForm.Designer.cs
+¦   ¦   MainForm.resx
+¦   ¦   MetierForm.cs
+¦   ¦   MetierForm.Designer.cs
+¦   ¦   MetierForm.resx
+¦   ¦   OuvrierForm.cs
+¦   ¦   OuvrierForm.Designer.cs
+¦   ¦   OuvrierForm.resx
+¦   ¦   PlanAthena.csproj
+¦   ¦   PlanAthena.csproj.user
+¦   ¦   Program.cs
+¦   ¦   ProjectDialogs.cs
+¦   ¦   SelectionMetierDialog.cs
+¦   ¦   TacheForm.cs
+¦   ¦   TacheForm.Designer.cs
+¦   ¦   TacheForm.resx
+¦   ¦   
+¦   +---Controls
+¦   ¦       PertDiagramControl.cs
+¦   ¦       PertDiagramControl.resx
+¦   ¦       
+¦   +---CsvModels
+¦   ¦       OuvrierCsvRecord.cs
+¦   ¦       
+¦   +---Form
+¦   ¦       TacheDetailForm.cs
+¦   ¦       TacheDetailForm.Designer.cs
+¦   ¦       
+¦   +---Properties
+¦   +---Services
+¦   ¦   +---Business
+¦   ¦   ¦       OuvrierService.cs
+¦   ¦   ¦       PlanificationService.cs
+¦   ¦   ¦       ProjetService.cs
+¦   ¦   ¦       TacheService.cs
+¦   ¦   ¦       
+¦   ¦   +---DataAccess
+¦   ¦           CsvDataService.cs
+¦   ¦           DataTransformer.cs
+¦   ¦           ExcelReader.cs
+¦   ¦           GanttExportService.cs
+¦   ¦           
+¦   +---Utilities
+¦           ChantierDataProcessor.cs
+¦           MetierService.cs
+¦           
++---PlanAthena.core
+¦   ¦   ClassDiagram1.cd
+¦   ¦   PlanAthena.core.csproj
+¦   ¦   
+¦   +---Application
+¦   ¦   +---Interfaces
+¦   ¦   ¦       ICalendrierService.cs
+¦   ¦   ¦       IChantierSetupInputMapper.cs
+¦   ¦   ¦       IChantierValidationService.cs
+¦   ¦   ¦       IConstructeurProblemeOrTools.cs
+¦   ¦   ¦       IInitialFeasibilityAnalysisService.cs
+¦   ¦   ¦       IKeyResourceSuggestionService.cs
+¦   ¦   ¦       IPlanningAnalysisService.cs
+¦   ¦   ¦       IProcessChantierUseCase.cs
+¦   ¦   ¦       ISolutionInterpreterService.cs
+¦   ¦   ¦       
+¦   ¦   +---InternalDto
+¦   ¦   ¦       ModeleCpSat.cs
+¦   ¦   ¦       ProblemeOptimisation.cs
+¦   ¦   ¦       
+¦   ¦   +---Services
+¦   ¦   ¦       ChantierSetupInputMapper.cs
+¦   ¦   ¦       ChantierValidationService.cs
+¦   ¦   ¦       InitialFeasibilityAnalysisService.cs
+¦   ¦   ¦       KeyResourceSuggestionService.cs
+¦   ¦   ¦       
+¦   ¦   +---UseCases
+¦   ¦   ¦       ProcessChantierUseCase.cs
+¦   ¦   ¦       
+¦   ¦   +---Validation
+¦   ¦           InputDtoValidators.cs
+¦   ¦           
+¦   +---Domain
+¦   ¦   ¦   BlocTravail.cs
+¦   ¦   ¦   Chantier.cs
+¦   ¦   ¦   Competence.cs
+¦   ¦   ¦   Entity.cs
+¦   ¦   ¦   LotTravaux.cs
+¦   ¦   ¦   Metier.cs
+¦   ¦   ¦   Ouvrier.cs
+¦   ¦   ¦   Tache.cs
+¦   ¦   ¦   
+¦   ¦   +---Shared
+¦   ¦   ¦       DependencyGraph.cs
+¦   ¦   ¦       IHaveDependencies.cs
+¦   ¦   ¦       
+¦   ¦   +---ValueObjects
+¦   ¦           CalendrierOuvreChantier.cs
+¦   ¦           CapaciteOuvriers.cs
+¦   ¦           ConfigurationChantier.cs
+¦   ¦           ConfigurationOptimisation.cs
+¦   ¦           CoutJournalier.cs
+¦   ¦           DureeHeuresHomme.cs
+¦   ¦           EchelleTempsOuvree.cs
+¦   ¦           Identifiants.cs
+¦   ¦           PeriodePlanification.cs
+¦   ¦           ReglesCoutHeuresSupp.cs
+¦   ¦           SlotTemporel.cs
+¦   ¦           
+¦   +---Facade
+¦   ¦   ¦   DependencyInjection.cs
+¦   ¦   ¦   PlanAthenaCoreFacade.cs
+¦   ¦   ¦   
+¦   ¦   +---Dto
+¦   ¦       +---Enums
+¦   ¦       ¦       Enums.cs
+¦   ¦       ¦       
+¦   ¦       +---Input
+¦   ¦       ¦       BlocTravailDto.cs
+¦   ¦       ¦       CalendrierTravailDefinitionDto.cs
+¦   ¦       ¦       ChantierSetupInputDto.cs
+¦   ¦       ¦       CompetenceDto.cs
+¦   ¦       ¦       ConfigurationChefChantierDto.cs
+¦   ¦       ¦       LotTravauxDto.cs
+¦   ¦       ¦       MetierDto.cs
+¦   ¦       ¦       OptimizationConfigDto.cs
+¦   ¦       ¦       OuvrierDto.cs
+¦   ¦       ¦       TacheDto.cs
+¦   ¦       ¦       
+¦   ¦       +---Output
+¦   ¦               AnalyseRessourcesResultatDto.cs
+¦   ¦               ChantierSetupAnalysisResultDto.cs
+¦   ¦               MessageValidationDto.cs
+¦   ¦               PlanningAnalysisReportDto.cs
+¦   ¦               PlanningOptimizationResultDto.cs
+¦   ¦               ProcessChantierResultDto.cs
+¦   ¦               
+¦   +---Infrastructure
+¦   ¦   ¦   DependencyInjection.cs
+¦   ¦   ¦   
+¦   ¦   +---Services
+¦   ¦       ¦   CalendrierService.cs
+¦   ¦       ¦   PlanningAnalysisService.cs
+¦   ¦       ¦   SolutionInterpreterService.cs
+¦   ¦       ¦   
+¦   ¦       +---OrTools
+¦   ¦               ConstructeurProblemeOrTools.cs
+¦   ¦               CoutModelBuilder.cs
+¦   ¦               TacheModelBuilder.cs
+¦   ¦               
++---PlanAthena.core.Tests
+¦   ¦   CalendrierServiceTests.cs
+¦   ¦   PlanAthena.core.Tests.csproj
+¦   ¦   
+¦   +---Infrastructure
+¦   ¦   +---OrTools
+¦   ¦           CoutModelBuilderTests.cs
+¦   ¦           TacheModelBuilderTests.cs
+¦   ¦           
+¦                       
++---TestSolver
+    ¦   Program.cs
+    ¦   TestSolver.csproj
+    ¦   
+                        

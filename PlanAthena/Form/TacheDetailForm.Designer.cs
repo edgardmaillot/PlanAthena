@@ -1,3 +1,5 @@
+// Fichier : TacheDetailForm.Designer.cs
+
 namespace PlanAthena.Forms
 {
     partial class TacheDetailForm
@@ -13,6 +15,8 @@ namespace PlanAthena.Forms
             base.Dispose(disposing);
         }
 
+        #region Windows Form Designer generated code
+
         private void InitializeComponent()
         {
             this.txtTacheId = new System.Windows.Forms.TextBox();
@@ -20,31 +24,23 @@ namespace PlanAthena.Forms
             this.numHeuresHomme = new System.Windows.Forms.NumericUpDown();
             this.cmbMetier = new System.Windows.Forms.ComboBox();
             this.txtDependances = new System.Windows.Forms.TextBox();
-            this.txtLotId = new System.Windows.Forms.TextBox();
-            this.txtLotNom = new System.Windows.Forms.TextBox();
+            this.cmbLotNom = new System.Windows.Forms.ComboBox(); // MODIFIÉ
             this.numLotPriorite = new System.Windows.Forms.NumericUpDown();
-            this.txtBlocId = new System.Windows.Forms.TextBox();
-            this.txtBlocNom = new System.Windows.Forms.TextBox();
+            this.cmbBlocNom = new System.Windows.Forms.ComboBox(); // MODIFIÉ
             this.numBlocCapacite = new System.Windows.Forms.NumericUpDown();
-            this.btnOK = new System.Windows.Forms.Button();
-            this.btnAnnuler = new System.Windows.Forms.Button();
+            this.btnSauvegarder = new System.Windows.Forms.Button();
             this.grpTache = new System.Windows.Forms.GroupBox();
-            this.grpLot = new System.Windows.Forms.GroupBox();
-            this.grpBloc = new System.Windows.Forms.GroupBox();
-            this.grpDep = new System.Windows.Forms.GroupBox();
-
-            // Labels
             this.lblTacheId = new System.Windows.Forms.Label();
             this.lblTacheNom = new System.Windows.Forms.Label();
             this.lblHeures = new System.Windows.Forms.Label();
             this.lblMetier = new System.Windows.Forms.Label();
-            this.lblLotId = new System.Windows.Forms.Label();
+            this.grpLot = new System.Windows.Forms.GroupBox();
             this.lblLotNom = new System.Windows.Forms.Label();
             this.lblLotPrio = new System.Windows.Forms.Label();
-            this.lblBlocId = new System.Windows.Forms.Label();
+            this.grpBloc = new System.Windows.Forms.GroupBox();
             this.lblBlocNom = new System.Windows.Forms.Label();
             this.lblBlocCap = new System.Windows.Forms.Label();
-
+            this.grpDep = new System.Windows.Forms.GroupBox();
             ((System.ComponentModel.ISupportInitialize)(this.numHeuresHomme)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numLotPriorite)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numBlocCapacite)).BeginInit();
@@ -53,10 +49,11 @@ namespace PlanAthena.Forms
             this.grpBloc.SuspendLayout();
             this.grpDep.SuspendLayout();
             this.SuspendLayout();
-
             // 
             // grpTache
             // 
+            this.grpTache.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.grpTache.Controls.Add(this.lblTacheId);
             this.grpTache.Controls.Add(this.txtTacheId);
             this.grpTache.Controls.Add(this.lblTacheNom);
@@ -71,7 +68,6 @@ namespace PlanAthena.Forms
             this.grpTache.TabIndex = 0;
             this.grpTache.TabStop = false;
             this.grpTache.Text = "Informations Tâche";
-
             // 
             // lblTacheId
             // 
@@ -81,15 +77,15 @@ namespace PlanAthena.Forms
             this.lblTacheId.Size = new System.Drawing.Size(60, 15);
             this.lblTacheId.TabIndex = 0;
             this.lblTacheId.Text = "ID Tâche:";
-
             // 
             // txtTacheId
             // 
+            this.txtTacheId.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTacheId.Location = new System.Drawing.Point(86, 22);
             this.txtTacheId.Name = "txtTacheId";
-            this.txtTacheId.Size = new System.Drawing.Size(250, 23);
+            this.txtTacheId.Size = new System.Drawing.Size(268, 23);
             this.txtTacheId.TabIndex = 1;
-
             // 
             // lblTacheNom
             // 
@@ -99,15 +95,15 @@ namespace PlanAthena.Forms
             this.lblTacheNom.Size = new System.Drawing.Size(37, 15);
             this.lblTacheNom.TabIndex = 2;
             this.lblTacheNom.Text = "Nom:";
-
             // 
             // txtTacheNom
             // 
+            this.txtTacheNom.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.txtTacheNom.Location = new System.Drawing.Point(86, 51);
             this.txtTacheNom.Name = "txtTacheNom";
-            this.txtTacheNom.Size = new System.Drawing.Size(250, 23);
+            this.txtTacheNom.Size = new System.Drawing.Size(268, 23);
             this.txtTacheNom.TabIndex = 3;
-
             // 
             // lblHeures
             // 
@@ -117,247 +113,196 @@ namespace PlanAthena.Forms
             this.lblHeures.Size = new System.Drawing.Size(98, 15);
             this.lblHeures.TabIndex = 4;
             this.lblHeures.Text = "Heures-homme:";
-
             // 
             // numHeuresHomme
             // 
-            this.numHeuresHomme.Location = new System.Drawing.Point(86, 80);
-            this.numHeuresHomme.Maximum = new decimal(new int[] { 9999, 0, 0, 0 });
+            this.numHeuresHomme.Location = new System.Drawing.Point(114, 80);
+            this.numHeuresHomme.Maximum = new decimal(new int[] {
+            9999,
+            0,
+            0,
+            0});
             this.numHeuresHomme.Name = "numHeuresHomme";
-            this.numHeuresHomme.Size = new System.Drawing.Size(100, 23);
+            this.numHeuresHomme.Size = new System.Drawing.Size(72, 23);
             this.numHeuresHomme.TabIndex = 5;
-
             // 
             // lblMetier
             // 
             this.lblMetier.AutoSize = true;
-            this.lblMetier.Location = new System.Drawing.Point(200, 83);
+            this.lblMetier.Location = new System.Drawing.Point(10, 109);
             this.lblMetier.Name = "lblMetier";
             this.lblMetier.Size = new System.Drawing.Size(46, 15);
             this.lblMetier.TabIndex = 6;
             this.lblMetier.Text = "Métier:";
-
             // 
             // cmbMetier
             // 
+            this.cmbMetier.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.cmbMetier.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbMetier.FormattingEnabled = true;
-            this.cmbMetier.Location = new System.Drawing.Point(200, 100);
+            this.cmbMetier.Location = new System.Drawing.Point(86, 104);
             this.cmbMetier.Name = "cmbMetier";
-            this.cmbMetier.Size = new System.Drawing.Size(136, 23);
+            this.cmbMetier.Size = new System.Drawing.Size(268, 23);
             this.cmbMetier.TabIndex = 7;
-
             // 
             // grpLot
             // 
-            this.grpLot.Controls.Add(this.lblLotId);
-            this.grpLot.Controls.Add(this.txtLotId);
+            this.grpLot.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.grpLot.Controls.Add(this.lblLotNom);
-            this.grpLot.Controls.Add(this.txtLotNom);
+            this.grpLot.Controls.Add(this.cmbLotNom);
             this.grpLot.Controls.Add(this.lblLotPrio);
             this.grpLot.Controls.Add(this.numLotPriorite);
             this.grpLot.Location = new System.Drawing.Point(12, 150);
             this.grpLot.Name = "grpLot";
-            this.grpLot.Size = new System.Drawing.Size(360, 80);
+            this.grpLot.Size = new System.Drawing.Size(360, 55);
             this.grpLot.TabIndex = 1;
             this.grpLot.TabStop = false;
             this.grpLot.Text = "Informations Lot";
-
-            // 
-            // lblLotId
-            // 
-            this.lblLotId.AutoSize = true;
-            this.lblLotId.Location = new System.Drawing.Point(10, 25);
-            this.lblLotId.Name = "lblLotId";
-            this.lblLotId.Size = new System.Drawing.Size(21, 15);
-            this.lblLotId.TabIndex = 0;
-            this.lblLotId.Text = "ID:";
-
-            // 
-            // txtLotId
-            // 
-            this.txtLotId.Location = new System.Drawing.Point(86, 22);
-            this.txtLotId.Name = "txtLotId";
-            this.txtLotId.Size = new System.Drawing.Size(100, 23);
-            this.txtLotId.TabIndex = 1;
-
             // 
             // lblLotNom
             // 
             this.lblLotNom.AutoSize = true;
-            this.lblLotNom.Location = new System.Drawing.Point(10, 54);
+            this.lblLotNom.Location = new System.Drawing.Point(10, 25);
             this.lblLotNom.Name = "lblLotNom";
             this.lblLotNom.Size = new System.Drawing.Size(37, 15);
             this.lblLotNom.TabIndex = 2;
             this.lblLotNom.Text = "Nom:";
-
             // 
-            // txtLotNom
+            // cmbLotNom
             // 
-            this.txtLotNom.Location = new System.Drawing.Point(86, 51);
-            this.txtLotNom.Name = "txtLotNom";
-            this.txtLotNom.Size = new System.Drawing.Size(168, 23);
-            this.txtLotNom.TabIndex = 3;
-
+            this.cmbLotNom.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbLotNom.FormattingEnabled = true;
+            this.cmbLotNom.Location = new System.Drawing.Point(86, 22);
+            this.cmbLotNom.Name = "cmbLotNom";
+            this.cmbLotNom.Size = new System.Drawing.Size(168, 23);
+            this.cmbLotNom.TabIndex = 3;
+            this.cmbLotNom.SelectedIndexChanged += new System.EventHandler(this.cmbLotNom_SelectedIndexChanged);
             // 
             // lblLotPrio
             // 
             this.lblLotPrio.AutoSize = true;
-            this.lblLotPrio.Location = new System.Drawing.Point(200, 25);
+            this.lblLotPrio.Location = new System.Drawing.Point(260, 25);
             this.lblLotPrio.Name = "lblLotPrio";
             this.lblLotPrio.Size = new System.Drawing.Size(50, 15);
             this.lblLotPrio.TabIndex = 4;
             this.lblLotPrio.Text = "Priorité:";
-
             // 
             // numLotPriorite
             // 
-            this.numLotPriorite.Location = new System.Drawing.Point(260, 22);
-            this.numLotPriorite.Maximum = new decimal(new int[] { 100, 0, 0, 0 });
+            this.numLotPriorite.Location = new System.Drawing.Point(316, 22);
             this.numLotPriorite.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             this.numLotPriorite.Name = "numLotPriorite";
-            this.numLotPriorite.Size = new System.Drawing.Size(60, 23);
+            this.numLotPriorite.ReadOnly = true; // MODIFIÉ
+            this.numLotPriorite.Size = new System.Drawing.Size(38, 23);
             this.numLotPriorite.TabIndex = 5;
             this.numLotPriorite.Value = new decimal(new int[] { 1, 0, 0, 0 });
-
             // 
             // grpBloc
             // 
-            this.grpBloc.Controls.Add(this.lblBlocId);
-            this.grpBloc.Controls.Add(this.txtBlocId);
+            this.grpBloc.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.grpBloc.Controls.Add(this.lblBlocNom);
-            this.grpBloc.Controls.Add(this.txtBlocNom);
+            this.grpBloc.Controls.Add(this.cmbBlocNom);
             this.grpBloc.Controls.Add(this.lblBlocCap);
             this.grpBloc.Controls.Add(this.numBlocCapacite);
-            this.grpBloc.Location = new System.Drawing.Point(12, 240);
+            this.grpBloc.Location = new System.Drawing.Point(12, 211);
             this.grpBloc.Name = "grpBloc";
-            this.grpBloc.Size = new System.Drawing.Size(360, 80);
+            this.grpBloc.Size = new System.Drawing.Size(360, 55);
             this.grpBloc.TabIndex = 2;
             this.grpBloc.TabStop = false;
             this.grpBloc.Text = "Informations Bloc";
-
-            // 
-            // lblBlocId
-            // 
-            this.lblBlocId.AutoSize = true;
-            this.lblBlocId.Location = new System.Drawing.Point(10, 25);
-            this.lblBlocId.Name = "lblBlocId";
-            this.lblBlocId.Size = new System.Drawing.Size(21, 15);
-            this.lblBlocId.TabIndex = 0;
-            this.lblBlocId.Text = "ID:";
-
-            // 
-            // txtBlocId
-            // 
-            this.txtBlocId.Location = new System.Drawing.Point(86, 22);
-            this.txtBlocId.Name = "txtBlocId";
-            this.txtBlocId.Size = new System.Drawing.Size(100, 23);
-            this.txtBlocId.TabIndex = 1;
-
             // 
             // lblBlocNom
             // 
             this.lblBlocNom.AutoSize = true;
-            this.lblBlocNom.Location = new System.Drawing.Point(10, 54);
+            this.lblBlocNom.Location = new System.Drawing.Point(10, 25);
             this.lblBlocNom.Name = "lblBlocNom";
             this.lblBlocNom.Size = new System.Drawing.Size(37, 15);
             this.lblBlocNom.TabIndex = 2;
             this.lblBlocNom.Text = "Nom:";
-
             // 
-            // txtBlocNom
+            // cmbBlocNom
             // 
-            this.txtBlocNom.Location = new System.Drawing.Point(86, 51);
-            this.txtBlocNom.Name = "txtBlocNom";
-            this.txtBlocNom.Size = new System.Drawing.Size(168, 23);
-            this.txtBlocNom.TabIndex = 3;
-
+            this.cmbBlocNom.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbBlocNom.FormattingEnabled = true;
+            this.cmbBlocNom.Location = new System.Drawing.Point(86, 22);
+            this.cmbBlocNom.Name = "cmbBlocNom";
+            this.cmbBlocNom.Size = new System.Drawing.Size(168, 23);
+            this.cmbBlocNom.TabIndex = 3;
+            this.cmbBlocNom.SelectedIndexChanged += new System.EventHandler(this.cmbBlocNom_SelectedIndexChanged);
             // 
             // lblBlocCap
             // 
             this.lblBlocCap.AutoSize = true;
-            this.lblBlocCap.Location = new System.Drawing.Point(200, 25);
+            this.lblBlocCap.Location = new System.Drawing.Point(260, 25);
             this.lblBlocCap.Name = "lblBlocCap";
             this.lblBlocCap.Size = new System.Drawing.Size(55, 15);
             this.lblBlocCap.TabIndex = 4;
             this.lblBlocCap.Text = "Capacité:";
-
             // 
             // numBlocCapacite
             // 
-            this.numBlocCapacite.Location = new System.Drawing.Point(260, 22);
+            this.numBlocCapacite.Location = new System.Drawing.Point(316, 22);
             this.numBlocCapacite.Maximum = new decimal(new int[] { 50, 0, 0, 0 });
             this.numBlocCapacite.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             this.numBlocCapacite.Name = "numBlocCapacite";
-            this.numBlocCapacite.Size = new System.Drawing.Size(60, 23);
+            this.numBlocCapacite.ReadOnly = true; // MODIFIÉ
+            this.numBlocCapacite.Size = new System.Drawing.Size(38, 23);
             this.numBlocCapacite.TabIndex = 5;
             this.numBlocCapacite.Value = new decimal(new int[] { 1, 0, 0, 0 });
-
             // 
             // grpDep
             // 
+            this.grpDep.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.grpDep.Controls.Add(this.txtDependances);
-            this.grpDep.Location = new System.Drawing.Point(12, 330);
+            this.grpDep.Location = new System.Drawing.Point(12, 272);
             this.grpDep.Name = "grpDep";
             this.grpDep.Size = new System.Drawing.Size(360, 80);
             this.grpDep.TabIndex = 3;
             this.grpDep.TabStop = false;
             this.grpDep.Text = "Dépendances (IDs séparés par des virgules)";
-
             // 
             // txtDependances
             // 
-            this.txtDependances.Location = new System.Drawing.Point(10, 20);
+            this.txtDependances.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtDependances.Location = new System.Drawing.Point(10, 22);
             this.txtDependances.Multiline = true;
             this.txtDependances.Name = "txtDependances";
             this.txtDependances.PlaceholderText = "T001,T002,T003...";
             this.txtDependances.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtDependances.Size = new System.Drawing.Size(340, 50);
+            this.txtDependances.Size = new System.Drawing.Size(344, 52);
             this.txtDependances.TabIndex = 0;
-
             // 
-            // btnOK
+            // btnSauvegarder
             // 
-            this.btnOK.Location = new System.Drawing.Point(217, 420);
-            this.btnOK.Name = "btnOK";
-            this.btnOK.Size = new System.Drawing.Size(75, 23);
-            this.btnOK.TabIndex = 4;
-            this.btnOK.Text = "OK";
-            this.btnOK.UseVisualStyleBackColor = true;
-            this.btnOK.Click += new System.EventHandler(this.btnOK_Click);
-
-            // 
-            // btnAnnuler
-            // 
-            this.btnAnnuler.Location = new System.Drawing.Point(298, 420);
-            this.btnAnnuler.Name = "btnAnnuler";
-            this.btnAnnuler.Size = new System.Drawing.Size(75, 23);
-            this.btnAnnuler.TabIndex = 5;
-            this.btnAnnuler.Text = "Annuler";
-            this.btnAnnuler.UseVisualStyleBackColor = true;
-            this.btnAnnuler.Click += new System.EventHandler(this.btnAnnuler_Click);
-
+            this.btnSauvegarder.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSauvegarder.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.btnSauvegarder.Location = new System.Drawing.Point(12, 358);
+            this.btnSauvegarder.Name = "btnSauvegarder";
+            this.btnSauvegarder.Size = new System.Drawing.Size(360, 30);
+            this.btnSauvegarder.TabIndex = 4;
+            this.btnSauvegarder.Text = "💾 Sauvegarder les modifications";
+            this.btnSauvegarder.UseVisualStyleBackColor = true;
+            this.btnSauvegarder.Click += new System.EventHandler(this.btnSauvegarder_Click);
             // 
             // TacheDetailForm
             // 
-            this.AcceptButton = this.btnOK;
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.CancelButton = this.btnAnnuler;
-            this.ClientSize = new System.Drawing.Size(384, 455);
-            this.Controls.Add(this.btnAnnuler);
-            this.Controls.Add(this.btnOK);
+            this.ClientSize = new System.Drawing.Size(384, 401);
+            this.Controls.Add(this.btnSauvegarder);
             this.Controls.Add(this.grpDep);
             this.Controls.Add(this.grpBloc);
             this.Controls.Add(this.grpLot);
             this.Controls.Add(this.grpTache);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
             this.Name = "TacheDetailForm";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Détails de la Tâche";
-
             ((System.ComponentModel.ISupportInitialize)(this.numHeuresHomme)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numLotPriorite)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numBlocCapacite)).EndInit();
@@ -372,36 +317,29 @@ namespace PlanAthena.Forms
             this.ResumeLayout(false);
         }
 
-        #region Contrôles Windows Form Designer
+        #endregion
 
         private System.Windows.Forms.TextBox txtTacheId;
         private System.Windows.Forms.TextBox txtTacheNom;
         private System.Windows.Forms.NumericUpDown numHeuresHomme;
         private System.Windows.Forms.ComboBox cmbMetier;
         private System.Windows.Forms.TextBox txtDependances;
-        private System.Windows.Forms.TextBox txtLotId;
-        private System.Windows.Forms.TextBox txtLotNom;
+        private System.Windows.Forms.ComboBox cmbLotNom;
         private System.Windows.Forms.NumericUpDown numLotPriorite;
-        private System.Windows.Forms.TextBox txtBlocId;
-        private System.Windows.Forms.TextBox txtBlocNom;
+        private System.Windows.Forms.ComboBox cmbBlocNom;
         private System.Windows.Forms.NumericUpDown numBlocCapacite;
-        private System.Windows.Forms.Button btnOK;
-        private System.Windows.Forms.Button btnAnnuler;
+        private System.Windows.Forms.Button btnSauvegarder;
         private System.Windows.Forms.GroupBox grpTache;
-        private System.Windows.Forms.GroupBox grpLot;
-        private System.Windows.Forms.GroupBox grpBloc;
-        private System.Windows.Forms.GroupBox grpDep;
         private System.Windows.Forms.Label lblTacheId;
         private System.Windows.Forms.Label lblTacheNom;
         private System.Windows.Forms.Label lblHeures;
         private System.Windows.Forms.Label lblMetier;
-        private System.Windows.Forms.Label lblLotId;
+        private System.Windows.Forms.GroupBox grpLot;
         private System.Windows.Forms.Label lblLotNom;
         private System.Windows.Forms.Label lblLotPrio;
-        private System.Windows.Forms.Label lblBlocId;
+        private System.Windows.Forms.GroupBox grpBloc;
         private System.Windows.Forms.Label lblBlocNom;
         private System.Windows.Forms.Label lblBlocCap;
-
-        #endregion
+        private System.Windows.Forms.GroupBox grpDep;
     }
 }

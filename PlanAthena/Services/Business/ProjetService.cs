@@ -29,7 +29,31 @@ namespace PlanAthena.Services.Business
             _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
             _csvDataService = csvDataService ?? throw new ArgumentNullException(nameof(csvDataService));
         }
+        public bool ValiderDonneesAvantPlanification(out string message)
+        {
+            var resumeTaches = _tacheService.ObtenirStatistiques();
+            if (resumeTaches.NombreTachesTotal == 0)
+            {
+                message = "Aucune tâche chargée. Veuillez charger des tâches avant de lancer la planification.";
+                return false;
+            }
 
+            var resumeOuvriers = _ouvrierService.ObtenirStatistiques();
+            if (resumeOuvriers.NombreOuvriersTotal == 0)
+            {
+                message = "Aucun ouvrier chargé. Veuillez charger des ouvriers avant de lancer la planification.";
+                return false;
+            }
+
+            if (_metierService.GetAllMetiers().Count == 0)
+            {
+                message = "Aucun métier chargé. Veuillez charger des métiers avant de lancer la planification.";
+                return false;
+            }
+
+            message = "Validation réussie.";
+            return true;
+        }
         #region Sauvegarde/Chargement Projet
 
         /// <summary>
@@ -352,6 +376,7 @@ namespace PlanAthena.Services.Business
         public ProjetException(string message) : base(message) { }
         public ProjetException(string message, Exception innerException) : base(message, innerException) { }
     }
+
 
     #endregion
 }
