@@ -7,28 +7,25 @@ using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.Processing;
 
-
 namespace PlanAthena.Forms
 {
     public partial class TacheForm : System.Windows.Forms.Form
     {
         private readonly TacheService _tacheService;
         private readonly MetierService _metierService;
-        private readonly DependanceService _dependanceService; // NOUVEAU
-        //private readonly CsvDataService _csvDataService;
+        private readonly DependanceService _dependanceService;
 
         private List<TacheRecord> _tachesBrutes = new List<TacheRecord>();
+        private List<TacheRecord> _tachesOptimisees = new List<TacheRecord>();
         private readonly PertDiagramControl _pertControl;
         private TacheDetailForm _tacheDetailForm;
 
-        // MODIFIÉ: Le constructeur accepte maintenant DependanceService
         public TacheForm(TacheService tacheService, MetierService metierService, DependanceService dependanceService)
         {
             InitializeComponent();
             _tacheService = tacheService ?? throw new ArgumentNullException(nameof(tacheService));
             _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
-            _dependanceService = dependanceService ?? throw new ArgumentNullException(nameof(dependanceService)); // NOUVEAU
-            //_csvDataService = new CsvDataService();
+            _dependanceService = dependanceService ?? throw new ArgumentNullException(nameof(dependanceService));
 
             _pertControl = new PertDiagramControl();
             _pertControl.Dock = DockStyle.Fill;
@@ -65,21 +62,57 @@ namespace PlanAthena.Forms
             _tachesBrutes = _tacheService.ObtenirToutesLesTaches();
         }
 
-        // MODIFIÉ: La méthode utilise maintenant le DependanceService
         private void RafraichirAffichage()
         {
-            // Étape 1: Calculer les dépendances complètes (incluant les tâches fictives)
-            var tachesPourAffichage = _dependanceService.CalculerDependancesMetier(_tachesBrutes);
+            try
+            {
+                // Étape 1: Calculer les dépendances complètes et optimisées
+                _tachesOptimisees = _dependanceService.CalculerDependancesMetier(_tachesBrutes);
 
-            // Étape 2: Charger ces tâches enrichies dans le diagramme
-            var filtreRecherche = txtRecherche.Text;
-            _pertControl.ChargerTaches(tachesPourAffichage, filtreRecherche);
+                // Étape 2: Vérifier les cycles (optionnel - pour debuggage)
+                var cycles = _dependanceService.DetecterCyclesDependances(_tachesOptimisees);
+                if (cycles.Any())
+                {
+                    MessageBox.Show($"Attention: Cycles détectés dans les dépendances:\n{string.Join("\n", cycles)}",
+                        "Cycles de dépendances", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
 
-            // Étape 3: Mettre à jour les statistiques en se basant sur les données brutes
-            RafraichirStatistiques();
+                // Étape 3: Charger les tâches optimisées dans le diagramme
+                var filtreRecherche = txtRecherche.Text;
+                _pertControl.ChargerTaches(_tachesOptimisees, filtreRecherche);
+
+                // Étape 4: Mettre à jour les statistiques
+                RafraichirStatistiques();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erreur lors du rafraîchissement de l'affichage:\n{ex.Message}",
+                    "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                // En cas d'erreur, fallback sur les données brutes
+                var filtreRecherche = txtRecherche.Text;
+                _pertControl.ChargerTaches(_tachesBrutes, filtreRecherche);
+                RafraichirStatistiquesSimples();
+            }
         }
 
         private void RafraichirStatistiques()
+        {
+            var totalTaches = _tachesBrutes.Count;
+            var tachesAvecMetier = _tachesBrutes.Count(t => !string.IsNullOrEmpty(t.MetierId));
+            var pourcentageMapping = totalTaches > 0 ? (double)tachesAvecMetier / totalTaches * 100 : 0;
+
+            // Statistiques sur les dépendances
+            var statsDependances = _dependanceService.ObtenirStatistiques(_tachesBrutes, _tachesOptimisees);
+
+            lblStatistiques.Text = $"Tâches: {totalTaches} | " +
+                                  $"Blocs: {_tachesBrutes.Select(t => t.BlocId).Distinct().Count()} | " +
+                                  $"Avec métier: {tachesAvecMetier} ({pourcentageMapping:F0}%) | " +
+                                  $"Dépendances: {statsDependances.NombreDependancesOptimisees} " +
+                                  $"(réduit de {statsDependances.NombreDependancesSupprimees})";
+        }
+
+        private void RafraichirStatistiquesSimples()
         {
             var totalTaches = _tachesBrutes.Count;
             var tachesAvecMetier = _tachesBrutes.Count(t => !string.IsNullOrEmpty(t.MetierId));
@@ -92,28 +125,30 @@ namespace PlanAthena.Forms
 
         private void PertControl_TacheSelected(object sender, TacheSelectedEventArgs e)
         {
-            // Ne pas afficher les détails pour les tâches de synchronisation
-            if (e.Tache.TacheId.StartsWith("Sync_"))
-            {
-                lblTacheSelectionnee.Text = $"Sélectionnée: {e.Tache.TacheNom}";
-                return;
-            }
+            // Afficher les informations de la tâche sélectionnée
             lblTacheSelectionnee.Text = $"Sélectionnée: {e.Tache.TacheId} - {e.Tache.TacheNom}";
+
+            // Optionnel: Afficher les détails des dépendances dans le tooltip ou status
+            if (!string.IsNullOrEmpty(e.Tache.Dependencies))
+            {
+                var dependances = e.Tache.Dependencies.Split(',').Select(d => d.Trim()).ToList();
+                lblTacheSelectionnee.Text += $" | Dépend de: {string.Join(", ", dependances)}";
+            }
         }
 
         private void PertControl_TacheDoubleClicked(object sender, TacheSelectedEventArgs e)
         {
-            // Ne pas permettre l'édition des tâches de synchronisation
-            if (e.Tache.TacheId.StartsWith("Sync_"))
+            // Rechercher la tâche originale (brute) pour l'édition
+            var tacheOriginale = _tachesBrutes.FirstOrDefault(t => t.TacheId == e.Tache.TacheId);
+            if (tacheOriginale != null)
             {
-                MessageBox.Show("Les tâches de synchronisation ne peuvent pas être modifiées.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
+                AfficherDetailsTache(tacheOriginale, false);
             }
-            // On recherche la tâche originale (non découpée) pour l'édition
-            var tacheOriginaleId = e.Tache.TacheId.Split(new[] { "_split_" }, StringSplitOptions.None)[0];
-            var tacheOriginale = _tachesBrutes.FirstOrDefault(t => t.TacheId == tacheOriginaleId);
-
-            AfficherDetailsTache(tacheOriginale ?? e.Tache, false);
+            else
+            {
+                MessageBox.Show("Impossible de trouver la tâche originale pour l'édition.",
+                    "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         private void AfficherDetailsTache(TacheRecord tache, bool modeCreation)
@@ -136,28 +171,38 @@ namespace PlanAthena.Forms
         private void btnModifierTache_Click(object sender, EventArgs e)
         {
             var tacheSelectionnee = _pertControl.TacheSelectionnee;
-            if (tacheSelectionnee != null && !tacheSelectionnee.TacheId.StartsWith("Sync_"))
+            if (tacheSelectionnee != null)
             {
-                var tacheOriginaleId = tacheSelectionnee.TacheId.Split(new[] { "_split_" }, StringSplitOptions.None)[0];
-                var tacheOriginale = _tachesBrutes.FirstOrDefault(t => t.TacheId == tacheOriginaleId);
-                AfficherDetailsTache(tacheOriginale ?? tacheSelectionnee, false);
+                var tacheOriginale = _tachesBrutes.FirstOrDefault(t => t.TacheId == tacheSelectionnee.TacheId);
+                if (tacheOriginale != null)
+                {
+                    AfficherDetailsTache(tacheOriginale, false);
+                }
+                else
+                {
+                    MessageBox.Show("Impossible de trouver la tâche originale pour l'édition.",
+                        "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
             }
             else
             {
-                MessageBox.Show("Veuillez sélectionner une tâche modifiable.", "Aucune sélection", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Veuillez sélectionner une tâche à modifier.",
+                    "Aucune sélection", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
         private void btnSupprimerTache_Click(object sender, EventArgs e)
         {
             var tacheSelectionnee = _pertControl.TacheSelectionnee;
-            if (tacheSelectionnee == null || tacheSelectionnee.TacheId.StartsWith("Sync_"))
+            if (tacheSelectionnee == null)
             {
-                MessageBox.Show("Veuillez sélectionner une tâche à supprimer (les tâches de synchronisation ne peuvent pas être supprimées).", "Aucune sélection", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Veuillez sélectionner une tâche à supprimer.",
+                    "Aucune sélection", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            var result = MessageBox.Show($"Êtes-vous sûr de vouloir supprimer la tâche '{tacheSelectionnee.TacheId}' ?\n\nNom: {tacheSelectionnee.TacheNom}\nCette action est irréversible.", "Confirmation de suppression", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var result = MessageBox.Show($"Êtes-vous sûr de vouloir supprimer la tâche '{tacheSelectionnee.TacheId}' ?\n\nNom: {tacheSelectionnee.TacheNom}\nCette action est irréversible.",
+                "Confirmation de suppression", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (result == DialogResult.Yes)
             {
@@ -184,7 +229,8 @@ namespace PlanAthena.Forms
 
         private void btnMappingAuto_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("La fonction de mapping automatique est en cours de développement.", "Fonctionnalité en développement", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("La fonction de mapping automatique est en cours de développement.",
+                "Fonctionnalité en développement", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void btnPan_Click(object sender, EventArgs e)
@@ -202,6 +248,38 @@ namespace PlanAthena.Forms
             _pertControl.ImprimerDiagramme();
         }
 
+        private void btnAnalyserDependances_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var cycles = _dependanceService.DetecterCyclesDependances(_tachesOptimisees);
+                var statsDependances = _dependanceService.ObtenirStatistiques(_tachesBrutes, _tachesOptimisees);
+
+                var message = $"Analyse des dépendances:\n\n" +
+                             $"• Dépendances originales: {statsDependances.NombreDependancesOriginales}\n" +
+                             $"• Dépendances optimisées: {statsDependances.NombreDependancesOptimisees}\n" +
+                             $"• Dépendances supprimées: {statsDependances.NombreDependancesSupprimees}\n" +
+                             $"• Réduction: {statsDependances.PourcentageReduction:F1}%\n\n";
+
+                if (cycles.Any())
+                {
+                    message += $"⚠️ CYCLES DÉTECTÉS:\n{string.Join("\n", cycles)}";
+                }
+                else
+                {
+                    message += "✅ Aucun cycle détecté";
+                }
+
+                MessageBox.Show(message, "Analyse des dépendances", MessageBoxButtons.OK,
+                    cycles.Any() ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erreur lors de l'analyse des dépendances:\n{ex.Message}",
+                    "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         #endregion
 
         #region Import/Export
@@ -213,7 +291,8 @@ namespace PlanAthena.Forms
             {
                 try
                 {
-                    var result = MessageBox.Show("Voulez-vous remplacer toutes les tâches existantes ?", "Mode d'import", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    var result = MessageBox.Show("Voulez-vous remplacer toutes les tâches existantes ?",
+                        "Mode d'import", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                     var nombreImporte = _tacheService.ImporterDepuisCsv(ofd.FileName, result == DialogResult.Yes);
                     ChargerDonnees();
                     RafraichirAffichage();
@@ -228,7 +307,8 @@ namespace PlanAthena.Forms
 
         private void btnImportExcelFieldwire_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("L'import Excel Fieldwire/Dalux n'est pas encore implémenté.", "Fonctionnalité en développement", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("L'import Excel Fieldwire/Dalux n'est pas encore implémenté.",
+                "Fonctionnalité en développement", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void btnExporter_Click(object sender, EventArgs e)
@@ -238,7 +318,12 @@ namespace PlanAthena.Forms
                 MessageBox.Show("Aucune tâche à exporter.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-            using var sfd = new SaveFileDialog { Filter = "Fichiers CSV (*.csv)|*.csv", Title = "Exporter les tâches", FileName = $"taches_export_{DateTime.Now:yyyyMMdd_HHmmss}.csv" };
+            using var sfd = new SaveFileDialog
+            {
+                Filter = "Fichiers CSV (*.csv)|*.csv",
+                Title = "Exporter les tâches",
+                FileName = $"taches_export_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
+            };
             if (sfd.ShowDialog() == DialogResult.OK)
             {
                 try
