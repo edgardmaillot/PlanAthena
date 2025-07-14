@@ -1,20 +1,16 @@
-using PlanAthena.CsvModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Forms;
+using PlanAthena.Data;
 
-namespace PlanAthena
+namespace PlanAthena.Forms
 {
     /// <summary>
     /// Dialog pour sélectionner un métier dans une liste
     /// </summary>
-    public partial class SelectionMetierDialog : Form
+    public partial class SelectionMetierDialog : System.Windows.Forms.Form
     {
-        public MetierCsvRecord MetierSelectionne { get; private set; }
+        public MetierRecord MetierSelectionne { get; private set; }
         private ListView listViewMetiers;
 
-        public SelectionMetierDialog(List<MetierCsvRecord> metiersDisponibles)
+        public SelectionMetierDialog(List<MetierRecord> metiersDisponibles)
         {
             InitializeComponent();
             InitialiserListe(metiersDisponibles);
@@ -82,7 +78,7 @@ namespace PlanAthena
         {
             if (listViewMetiers.SelectedItems.Count > 0)
             {
-                MetierSelectionne = listViewMetiers.SelectedItems[0].Tag as MetierCsvRecord;
+                MetierSelectionne = listViewMetiers.SelectedItems[0].Tag as MetierRecord;
                 this.DialogResult = DialogResult.OK;
                 this.Close();
             }
@@ -92,11 +88,11 @@ namespace PlanAthena
         {
             if (listViewMetiers.SelectedItems.Count > 0)
             {
-                MetierSelectionne = listViewMetiers.SelectedItems[0].Tag as MetierCsvRecord;
+                MetierSelectionne = listViewMetiers.SelectedItems[0].Tag as MetierRecord;
             }
         }
 
-        private void InitialiserListe(List<MetierCsvRecord> metiers)
+        private void InitialiserListe(List<MetierRecord> metiers)
         {
             foreach (var metier in metiers.OrderBy(m => m.MetierId))
             {

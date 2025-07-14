@@ -1,8 +1,5 @@
 // Fichier : Facade/Dto/Output/PlanningAnalysisReportDto.cs
 
-using System;
-using System.Collections.Generic;
-
 namespace PlanAthena.Core.Facade.Dto.Output
 {
     public record PlanningAnalysisReportDto

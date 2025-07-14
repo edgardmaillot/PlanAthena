@@ -1,20 +1,16 @@
+using Microsoft.Msagl.Core.Geometry.Curves;
 using Microsoft.Msagl.Drawing;
 using Microsoft.Msagl.GraphViewerGdi;
-using PlanAthena.CsvModels;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
+using PlanAthena.Data;
 using System.Drawing.Printing;
-using System.Linq;
 using System.Reflection;
-using System.Windows.Forms;
 
 namespace PlanAthena.Controls
 {
     public partial class PertDiagramControl : UserControl
     {
         private readonly GViewer _viewer;
-        private List<TacheCsvRecord> _taches = new List<TacheCsvRecord>();
+        private List<TacheRecord> _taches = new List<TacheRecord>();
         private Graph _graph;
 
         public event EventHandler<TacheSelectedEventArgs> TacheSelected;
@@ -30,6 +26,7 @@ namespace PlanAthena.Controls
             Microsoft.Msagl.Drawing.Color.LightGray,
             Microsoft.Msagl.Drawing.Color.LightCyan,
             Microsoft.Msagl.Drawing.Color.LightSalmon,
+            Microsoft.Msagl.Drawing.Color.LightCoral,
             Microsoft.Msagl.Drawing.Color.LightSteelBlue
         };
         private int _couleurIndex = 0;
@@ -39,7 +36,7 @@ namespace PlanAthena.Controls
         private Point _panStartPoint;
         private Panel _scrollPanel; // Référence au panel pour le scroll
         private PrintDocument _printDocument;
-        public TacheCsvRecord TacheSelectionnee { get; private set; }
+        public TacheRecord TacheSelectionnee { get; private set; }
 
         public PertDiagramControl()
         {
@@ -126,7 +123,8 @@ namespace PlanAthena.Controls
                 _printDocument = new PrintDocument();
                 _printDocument.DefaultPageSettings.Landscape = true; // Mettre en paysage pour mieux voir le graphe
 
-                _printDocument.PrintPage += (sender, e) => {
+                _printDocument.PrintPage += (sender, e) =>
+                {
                     // 1. Créer une image en mémoire (Bitmap) de la taille de la page
                     var bmp = new Bitmap(e.PageBounds.Width, e.PageBounds.Height);
 
@@ -160,11 +158,11 @@ namespace PlanAthena.Controls
             }
         }
 
-    #endregion
+        #endregion
 
-    #region Gestion du Pan avec le clic droit
+        #region Gestion du Pan avec le clic droit
 
-    private void Viewer_MouseDown(object sender, MouseEventArgs e)
+        private void Viewer_MouseDown(object sender, MouseEventArgs e)
         {
             // CORRECTION: Syntaxe correcte pour l'énumération
             if (e.Button == System.Windows.Forms.MouseButtons.Right)
@@ -192,7 +190,7 @@ namespace PlanAthena.Controls
                 _scrollPanel.AutoScrollPosition = newScrollPosition;
 
                 // Forcer le rafraîchissement pour éviter les glitchs
-                _viewer.Invalidate(); 
+                _viewer.Invalidate();
             }
         }
 
@@ -208,9 +206,9 @@ namespace PlanAthena.Controls
 
         #endregion
 
-        public void ChargerTaches(List<TacheCsvRecord> taches, string filtreRecherche = "")
+        public void ChargerTaches(List<TacheRecord> taches, string filtreRecherche = "")
         {
-            _taches = taches ?? new List<TacheCsvRecord>();
+            _taches = taches ?? new List<TacheRecord>();
             _couleursByMetier.Clear();
             _couleurIndex = 0;
             GenererDiagramme(filtreRecherche);
@@ -226,6 +224,12 @@ namespace PlanAthena.Controls
             _graph.Attr.MinNodeHeight = 60;
             _graph.Attr.MinNodeWidth = 140;
             _graph.Attr.Margin = 30;
+            // 2. Accéder aux paramètres de l'algorithme de layout
+            var settings = _graph.LayoutAlgorithmSettings;
+
+            // 3. Activer la réduction transitive pour nettoyer les dépendances visuelles
+            // Cette propriété devrait exister dans la plupart des versions.
+            //settings.Reporting = true;
 
             var tachesAffichees = _taches.AsEnumerable();
 
@@ -258,7 +262,8 @@ namespace PlanAthena.Controls
 
             _viewer.Graph = _graph;
 
-            this.BeginInvoke(new Action(() => {
+            this.BeginInvoke(new Action(() =>
+            {
                 try { AjusterTailleViewer(); } catch { }
             }));
         }
@@ -296,7 +301,7 @@ namespace PlanAthena.Controls
             node.Label.FontSize = 14;
         }
 
-        private void CreerClusterPourBloc(string blocId, List<TacheCsvRecord> tachesDuBloc)
+        private void CreerClusterPourBloc(string blocId, List<TacheRecord> tachesDuBloc)
         {
             if (!tachesDuBloc.Any()) return;
             var premiereTache = tachesDuBloc.First();
@@ -318,7 +323,7 @@ namespace PlanAthena.Controls
             _graph.RootSubgraph.AddSubgraph(cluster);
         }
 
-        private Node CreerNoeudTache(TacheCsvRecord tache)
+        private Node CreerNoeudTache(TacheRecord tache)
         {
             var nodeId = tache.TacheId;
             var node = _graph.AddNode(nodeId);
@@ -345,7 +350,7 @@ namespace PlanAthena.Controls
             return node;
         }
 
-        private void AjouterDependances(List<TacheCsvRecord> tachesAffichees)
+        private void AjouterDependances(List<TacheRecord> tachesAffichees)
         {
             var idsAffiches = new HashSet<string>(tachesAffichees.Select(t => t.TacheId));
             foreach (var tache in tachesAffichees.Where(t => !string.IsNullOrEmpty(t.Dependencies)))
@@ -389,7 +394,7 @@ namespace PlanAthena.Controls
             try
             {
                 var objectUnderMouse = _viewer.ObjectUnderMouseCursor;
-                if (objectUnderMouse?.DrawingObject is Node node && node.UserData is TacheCsvRecord tache)
+                if (objectUnderMouse?.DrawingObject is Node node && node.UserData is TacheRecord tache)
                 {
                     TacheSelectionnee = tache;
                     TacheSelected?.Invoke(this, new TacheSelectedEventArgs(tache));
@@ -404,7 +409,7 @@ namespace PlanAthena.Controls
             try
             {
                 var objectUnderMouse = _viewer.ObjectUnderMouseCursor;
-                if (objectUnderMouse?.DrawingObject is Node node && node.UserData is TacheCsvRecord tache)
+                if (objectUnderMouse?.DrawingObject is Node node && node.UserData is TacheRecord tache)
                 {
                     TacheDoubleClicked?.Invoke(this, new TacheSelectedEventArgs(tache));
                 }
@@ -417,7 +422,7 @@ namespace PlanAthena.Controls
             if (_graph == null || !_graph.Nodes.Any()) return;
             foreach (Node node in _graph.Nodes)
             {
-                if (node.UserData is TacheCsvRecord tache)
+                if (node.UserData is TacheRecord tache)
                 {
                     node.Attr.LineWidth = string.IsNullOrEmpty(tache.MetierId) ? 3 : 2;
                     node.Attr.Color = string.IsNullOrEmpty(tache.MetierId) ?
@@ -483,7 +488,7 @@ namespace PlanAthena.Controls
             if (node != null)
             {
                 MettreEnEvidenceTache(node);
-                TacheSelectionnee = node.UserData as TacheCsvRecord;
+                TacheSelectionnee = node.UserData as TacheRecord;
                 return true;
             }
             return false;
@@ -512,8 +517,8 @@ namespace PlanAthena.Controls
 
     public class TacheSelectedEventArgs : EventArgs
     {
-        public TacheCsvRecord Tache { get; }
-        public TacheSelectedEventArgs(TacheCsvRecord tache)
+        public TacheRecord Tache { get; }
+        public TacheSelectedEventArgs(TacheRecord tache)
         {
             Tache = tache;
         }

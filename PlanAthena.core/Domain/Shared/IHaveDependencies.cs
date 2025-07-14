@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace PlanAthena.Core.Domain.Shared
 {
     /// <summary>

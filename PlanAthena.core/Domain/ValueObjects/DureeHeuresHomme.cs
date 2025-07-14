@@ -1,6 +1,4 @@
 // PlanAthena.Core.Domain.ValueObjects.DureeHeuresHomme.cs
-using System;
-
 namespace PlanAthena.Core.Domain.ValueObjects
 {
     public readonly record struct DureeHeuresHomme

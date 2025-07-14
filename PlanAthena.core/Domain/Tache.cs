@@ -1,8 +1,6 @@
 // PlanAthena.Core.Domain.Tache.cs
-using System;
-using System.Collections.Generic;
-using PlanAthena.Core.Domain.ValueObjects;
 using PlanAthena.Core.Domain.Shared; // Assurez-vous que ce using est là
+using PlanAthena.Core.Domain.ValueObjects;
 
 namespace PlanAthena.Core.Domain
 {

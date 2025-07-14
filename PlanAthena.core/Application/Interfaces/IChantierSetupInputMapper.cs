@@ -1,6 +1,4 @@
 // PlanAthena.Core.Application.Interfaces.IChantierSetupInputMapper.cs
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using PlanAthena.Core.Domain; // Pour l'entité Chantier
 using PlanAthena.Core.Facade.Dto.Input;
 using PlanAthena.Core.Facade.Dto.Output; // Pour MessageValidationDto

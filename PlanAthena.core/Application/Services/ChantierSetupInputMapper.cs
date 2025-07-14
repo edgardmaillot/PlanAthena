@@ -1,14 +1,10 @@
 // PlanAthena.Core.Application.Services.ChantierSetupInputMapper.cs
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using PlanAthena.Core.Application.Interfaces;
 using PlanAthena.Core.Domain;
 using PlanAthena.Core.Domain.ValueObjects;
+using PlanAthena.Core.Facade.Dto.Enums;
 using PlanAthena.Core.Facade.Dto.Input;
 using PlanAthena.Core.Facade.Dto.Output;
-using PlanAthena.Core.Facade.Dto.Enums;
-using PlanAthena.Core.Application.Interfaces;
 
 namespace PlanAthena.Core.Application.Services
 {

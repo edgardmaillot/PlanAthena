@@ -1,5 +1,3 @@
-using System;
-
 namespace PlanAthena.Core.Domain.ValueObjects;
 
 /// <summary>

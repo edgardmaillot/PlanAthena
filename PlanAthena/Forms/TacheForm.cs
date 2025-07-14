@@ -1,63 +1,52 @@
-// Fichier : TacheForm.cs
+// Fichier : Forms/TacheForm.cs
 
 using PlanAthena.Controls;
-using PlanAthena.CsvModels;
+using PlanAthena.Data;
 using PlanAthena.Forms;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
-using PlanAthena.Utilities;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Windows.Forms;
+using PlanAthena.Services.Processing;
 
-namespace PlanAthena
+
+namespace PlanAthena.Forms
 {
     public partial class TacheForm : System.Windows.Forms.Form
     {
         private readonly TacheService _tacheService;
         private readonly MetierService _metierService;
-        private readonly CsvDataService _csvDataService;
-        private readonly ExcelReader _excelReader;
+        private readonly DependanceService _dependanceService; // NOUVEAU
+        //private readonly CsvDataService _csvDataService;
 
-        private List<TacheCsvRecord> _taches = new List<TacheCsvRecord>();
+        private List<TacheRecord> _tachesBrutes = new List<TacheRecord>();
         private readonly PertDiagramControl _pertControl;
-        private TacheDetailForm _tacheDetailForm; // NOUVEAU: Instance du formulaire de détails
+        private TacheDetailForm _tacheDetailForm;
 
-        public TacheForm(TacheService tacheService, MetierService metierService)
+        // MODIFIÉ: Le constructeur accepte maintenant DependanceService
+        public TacheForm(TacheService tacheService, MetierService metierService, DependanceService dependanceService)
         {
             InitializeComponent();
             _tacheService = tacheService ?? throw new ArgumentNullException(nameof(tacheService));
             _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
-            _csvDataService = new CsvDataService();
-            _excelReader = new ExcelReader();
+            _dependanceService = dependanceService ?? throw new ArgumentNullException(nameof(dependanceService)); // NOUVEAU
+            //_csvDataService = new CsvDataService();
 
             _pertControl = new PertDiagramControl();
             _pertControl.Dock = DockStyle.Fill;
             _pertControl.TacheSelected += PertControl_TacheSelected;
             _pertControl.TacheDoubleClicked += PertControl_TacheDoubleClicked;
 
-            // MODIFIÉ: Placer le contrôle PERT dans le panneau de gauche du SplitContainer
             splitContainerPrincipal.Panel1.Controls.Add(_pertControl);
-
-            // NOUVEAU: Intégrer le formulaire de détails dans le panneau de droite
             IntegrerFormulaireDetails();
         }
 
-        // NOUVEAU: Méthode pour intégrer le formulaire de détails
         private void IntegrerFormulaireDetails()
         {
             _tacheDetailForm = new TacheDetailForm(_tacheService, _metierService);
             _tacheDetailForm.TopLevel = false;
             _tacheDetailForm.FormBorderStyle = FormBorderStyle.None;
             _tacheDetailForm.Dock = DockStyle.Fill;
-
-            // Ajout au panneau inférieur droit
             panelDetailsTache.Controls.Add(_tacheDetailForm);
             _tacheDetailForm.Show();
-
-            // S'abonner à l'événement de sauvegarde pour rafraîchir le diagramme
             _tacheDetailForm.TacheSauvegardee += (s, e) =>
             {
                 ChargerDonnees();
@@ -73,40 +62,61 @@ namespace PlanAthena
 
         private void ChargerDonnees()
         {
-            _taches = _tacheService.ObtenirToutesLesTaches();
+            _tachesBrutes = _tacheService.ObtenirToutesLesTaches();
         }
 
+        // MODIFIÉ: La méthode utilise maintenant le DependanceService
         private void RafraichirAffichage()
         {
+            // Étape 1: Calculer les dépendances complètes (incluant les tâches fictives)
+            var tachesPourAffichage = _dependanceService.CalculerDependancesMetier(_tachesBrutes);
+
+            // Étape 2: Charger ces tâches enrichies dans le diagramme
             var filtreRecherche = txtRecherche.Text;
-            _pertControl.ChargerTaches(_taches, filtreRecherche);
+            _pertControl.ChargerTaches(tachesPourAffichage, filtreRecherche);
+
+            // Étape 3: Mettre à jour les statistiques en se basant sur les données brutes
             RafraichirStatistiques();
         }
 
         private void RafraichirStatistiques()
         {
-            var totalTaches = _taches.Count;
-            var tachesAvecMetier = _taches.Count(t => !string.IsNullOrEmpty(t.MetierId));
+            var totalTaches = _tachesBrutes.Count;
+            var tachesAvecMetier = _tachesBrutes.Count(t => !string.IsNullOrEmpty(t.MetierId));
             var pourcentageMapping = totalTaches > 0 ? (double)tachesAvecMetier / totalTaches * 100 : 0;
 
             lblStatistiques.Text = $"Tâches: {totalTaches} | " +
-                                  $"Blocs: {_taches.Select(t => t.BlocId).Distinct().Count()} | " +
+                                  $"Blocs: {_tachesBrutes.Select(t => t.BlocId).Distinct().Count()} | " +
                                   $"Avec métier: {tachesAvecMetier} ({pourcentageMapping:F0}%)";
         }
 
         private void PertControl_TacheSelected(object sender, TacheSelectedEventArgs e)
         {
+            // Ne pas afficher les détails pour les tâches de synchronisation
+            if (e.Tache.TacheId.StartsWith("Sync_"))
+            {
+                lblTacheSelectionnee.Text = $"Sélectionnée: {e.Tache.TacheNom}";
+                return;
+            }
             lblTacheSelectionnee.Text = $"Sélectionnée: {e.Tache.TacheId} - {e.Tache.TacheNom}";
         }
 
-        // MODIFIÉ: Le double-clic met à jour le panneau de détails
         private void PertControl_TacheDoubleClicked(object sender, TacheSelectedEventArgs e)
         {
-            AfficherDetailsTache(e.Tache, false);
+            // Ne pas permettre l'édition des tâches de synchronisation
+            if (e.Tache.TacheId.StartsWith("Sync_"))
+            {
+                MessageBox.Show("Les tâches de synchronisation ne peuvent pas être modifiées.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            // On recherche la tâche originale (non découpée) pour l'édition
+            var tacheOriginaleId = e.Tache.TacheId.Split(new[] { "_split_" }, StringSplitOptions.None)[0];
+            var tacheOriginale = _tachesBrutes.FirstOrDefault(t => t.TacheId == tacheOriginaleId);
+
+            AfficherDetailsTache(tacheOriginale ?? e.Tache, false);
         }
 
-        // MODIFIÉ: La méthode met à jour le formulaire intégré au lieu d'en ouvrir un nouveau
-        private void AfficherDetailsTache(TacheCsvRecord tache, bool modeCreation)
+        private void AfficherDetailsTache(TacheRecord tache, bool modeCreation)
         {
             _tacheDetailForm.ChargerTache(tache, modeCreation);
         }
@@ -120,30 +130,30 @@ namespace PlanAthena
 
         private void btnNouvelleTache_Click(object sender, EventArgs e)
         {
-            // Affiche un formulaire de détails vide pour la création
             AfficherDetailsTache(null, true);
         }
 
         private void btnModifierTache_Click(object sender, EventArgs e)
         {
             var tacheSelectionnee = _pertControl.TacheSelectionnee;
-            if (tacheSelectionnee != null)
+            if (tacheSelectionnee != null && !tacheSelectionnee.TacheId.StartsWith("Sync_"))
             {
-                // Affiche les détails de la tâche sélectionnée pour modification
-                AfficherDetailsTache(tacheSelectionnee, false);
+                var tacheOriginaleId = tacheSelectionnee.TacheId.Split(new[] { "_split_" }, StringSplitOptions.None)[0];
+                var tacheOriginale = _tachesBrutes.FirstOrDefault(t => t.TacheId == tacheOriginaleId);
+                AfficherDetailsTache(tacheOriginale ?? tacheSelectionnee, false);
             }
             else
             {
-                MessageBox.Show("Veuillez sélectionner une tâche à modifier.", "Aucune sélection", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Veuillez sélectionner une tâche modifiable.", "Aucune sélection", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
         private void btnSupprimerTache_Click(object sender, EventArgs e)
         {
             var tacheSelectionnee = _pertControl.TacheSelectionnee;
-            if (tacheSelectionnee == null)
+            if (tacheSelectionnee == null || tacheSelectionnee.TacheId.StartsWith("Sync_"))
             {
-                MessageBox.Show("Veuillez sélectionner une tâche à supprimer.", "Aucune sélection", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Veuillez sélectionner une tâche à supprimer (les tâches de synchronisation ne peuvent pas être supprimées).", "Aucune sélection", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -157,8 +167,7 @@ namespace PlanAthena
                     ChargerDonnees();
                     RafraichirAffichage();
                     lblTacheSelectionnee.Text = "Aucune sélection";
-                    _tacheDetailForm.ChargerTache(null, true); // Vide le formulaire de détails
-
+                    _tacheDetailForm.ChargerTache(null, true);
                     MessageBox.Show("Tâche supprimée avec succès.", "Suppression", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
@@ -199,23 +208,20 @@ namespace PlanAthena
 
         private void btnImporter_Click(object sender, EventArgs e)
         {
-            using var ofd = new OpenFileDialog { Filter = "Fichiers CSV (*.csv)|*.csv|Tous les fichiers (*.*)|*.*", Title = "Importer les tâches depuis un fichier CSV" };
+            using var ofd = new OpenFileDialog { Filter = "Fichiers CSV (*.csv)|*.csv", Title = "Importer les tâches" };
             if (ofd.ShowDialog() == DialogResult.OK)
             {
                 try
                 {
-                    var result = MessageBox.Show("Voulez-vous remplacer toutes les tâches existantes ?\n\n• Oui : Remplace toutes les tâches actuelles\n• Non : Ajoute aux tâches existantes\n• Annuler : Annule l'import", "Mode d'import", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
-                    if (result == DialogResult.Cancel) return;
-
+                    var result = MessageBox.Show("Voulez-vous remplacer toutes les tâches existantes ?", "Mode d'import", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                     var nombreImporte = _tacheService.ImporterDepuisCsv(ofd.FileName, result == DialogResult.Yes);
                     ChargerDonnees();
                     RafraichirAffichage();
-
-                    MessageBox.Show($"Import terminé avec succès !\n\n• {nombreImporte} tâches importées\n• {_taches.Count} tâches total\n• {_taches.Count(t => !string.IsNullOrEmpty(t.MetierId))} tâches avec métier", "Import réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show($"{nombreImporte} tâches importées.", "Import réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Erreur lors de l'import :\n{ex.Message}", "Erreur d'import", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Erreur lors de l'import : {ex.Message}", "Erreur d'import", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -227,25 +233,22 @@ namespace PlanAthena
 
         private void btnExporter_Click(object sender, EventArgs e)
         {
-            if (!_taches.Any())
+            if (!_tachesBrutes.Any())
             {
                 MessageBox.Show("Aucune tâche à exporter.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-
-            using var sfd = new SaveFileDialog { Filter = "Fichiers CSV (*.csv)|*.csv", Title = "Exporter les tâches vers un fichier CSV", FileName = $"taches_export_{DateTime.Now:yyyyMMdd_HHmmss}.csv" };
+            using var sfd = new SaveFileDialog { Filter = "Fichiers CSV (*.csv)|*.csv", Title = "Exporter les tâches", FileName = $"taches_export_{DateTime.Now:yyyyMMdd_HHmmss}.csv" };
             if (sfd.ShowDialog() == DialogResult.OK)
             {
                 try
                 {
                     _tacheService.ExporterVersCsv(sfd.FileName);
-                    var statistiques = _tacheService.ObtenirStatistiques();
-                    var mappingStats = _tacheService.ObtenirStatistiquesMappingMetiers();
-                    MessageBox.Show($"Export terminé avec succès !\n\n• {statistiques.NombreTachesTotal} tâches exportées\n• {statistiques.NombreBlocsUniques} blocs\n• {statistiques.NombreLotsUniques} lots\n• Mapping: {mappingStats.PourcentageMapping:F0}%\n• Fichier : {Path.GetFileName(sfd.FileName)}", "Export réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Export réussi !", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Erreur lors de l'export :\n{ex.Message}", "Erreur d'export", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Erreur lors de l'export : {ex.Message}", "Erreur d'export", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -254,7 +257,6 @@ namespace PlanAthena
 
         private void btnFermer_Click(object sender, EventArgs e)
         {
-            this.DialogResult = DialogResult.OK;
             this.Close();
         }
     }

@@ -1,7 +1,4 @@
 // Fichier : Program.cs (Version corrigée)
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Google.OrTools.Sat;
 
 // --- DÉBUT : Données du Scénario (copiées ici pour l'isolation) ---

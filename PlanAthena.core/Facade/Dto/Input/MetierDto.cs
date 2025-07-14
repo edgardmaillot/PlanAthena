@@ -1,7 +1,4 @@
 // PlanAthena.Core.Facade.Dto.Input.MetierDto.cs
-using System; // Pour Array.Empty
-using System.Collections.Generic;
-
 namespace PlanAthena.Core.Facade.Dto.Input
 {
     public record MetierDto

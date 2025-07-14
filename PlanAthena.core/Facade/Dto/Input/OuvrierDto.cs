@@ -1,6 +1,4 @@
 // PlanAthena.Core.Facade.Dto.Input.OuvrierDto.cs
-using System.Collections.Generic;
-
 namespace PlanAthena.Core.Facade.Dto.Input
 {
     public record OuvrierDto

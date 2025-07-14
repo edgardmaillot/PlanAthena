@@ -1,7 +1,5 @@
 // Fichier : Facade/Dto/Output/ProcessChantierResultDto.cs
 
-using System;
-using System.Collections.Generic;
 using PlanAthena.Core.Facade.Dto.Enums;
 
 namespace PlanAthena.Core.Facade.Dto.Output

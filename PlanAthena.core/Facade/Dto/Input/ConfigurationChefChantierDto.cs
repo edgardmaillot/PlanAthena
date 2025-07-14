@@ -1,7 +1,4 @@
 // PlanAthena.Core.Facade.Dto.Input.ConfigurationChefChantierDto.cs
-using System; // Pour Array.Empty
-using System.Collections.Generic;
-
 namespace PlanAthena.Core.Facade.Dto.Input
 {
     // Ce DTO lui-même est optionnel dans ChantierSetupInputDto

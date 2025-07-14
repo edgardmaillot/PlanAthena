@@ -1,7 +1,4 @@
 // PlanAthena.Core.Facade.Dto.Output.AnalyseRessourcesResultatDto.cs
-using System; // Pour Array.Empty
-using System.Collections.Generic;
-
 namespace PlanAthena.Core.Facade.Dto.Output
 {
     // DTO simplifié pour les résultats de l'analyse P5/P6 pour le MVP

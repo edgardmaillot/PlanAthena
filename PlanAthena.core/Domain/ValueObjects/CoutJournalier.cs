@@ -1,6 +1,4 @@
 // PlanAthena.Core.Domain.ValueObjects.CoutJournalier.cs
-using System;
-
 namespace PlanAthena.Core.Domain.ValueObjects
 {
     public readonly record struct CoutJournalier

@@ -1,7 +1,5 @@
 // PlanAthena.Core.Application.Interfaces.IInitialFeasibilityAnalysisService.cs 
 // (ou PlanAthena.Core.Domain.Services.IInitialFeasibilityAnalysisService.cs)
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using PlanAthena.Core.Domain; // Pour l'entité Chantier
 using PlanAthena.Core.Facade.Dto.Output; // Pour MessageValidationDto
 

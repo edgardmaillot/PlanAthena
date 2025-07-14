@@ -1,9 +1,6 @@
 // Fichier : Utilities/ConfigurationBuilder.cs
 
-using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
-using System;
-using System.Collections.Generic;
 
 namespace PlanAthena.Utilities
 {

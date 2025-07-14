@@ -1,6 +1,4 @@
 // PlanAthena.Core.Facade.Dto.Input.ChantierSetupInputDto.cs
-using System;
-using System.Collections.Generic;
 using PlanAthena.Core.Facade.Dto.Enums; // Pour FlexibiliteDate
 
 namespace PlanAthena.Core.Facade.Dto.Input

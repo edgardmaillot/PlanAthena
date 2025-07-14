@@ -1,20 +1,15 @@
-// Fichier : MainForm.cs
-
 using Microsoft.Extensions.DependencyInjection;
+using PlanAthena.Core.Application;
 using PlanAthena.Core.Facade;
+using PlanAthena.Core.Infrastructure;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
+using PlanAthena.Services.Processing;
 using PlanAthena.Utilities;
-using System;
-using System.IO;
-using System.Linq;
-using System.Windows.Forms;
-using PlanAthena.Core.Application; // Pour AddApplicationServices
-using PlanAthena.Core.Infrastructure; // Pour AddInfrastructureServices
 
-namespace PlanAthena
+namespace PlanAthena.Forms
 {
-    public partial class MainForm : Form
+    public partial class MainForm : System.Windows.Forms.Form
     {
         private readonly ServiceProvider _serviceProvider;
         private readonly PlanificationService _planificationService;
@@ -23,7 +18,7 @@ namespace PlanAthena
         private readonly MetierService _metierService;
         private readonly ProjetService _projetService;
         private readonly GanttExportService _ganttExportService;
-        private readonly ConfigurationBuilder _configBuilder; // NOUVEAU
+        private readonly ConfigurationBuilder _configBuilder;
 
         private InformationsProjet _projetActuel;
         private PlanAthena.Core.Facade.Dto.Output.ProcessChantierResultDto _dernierResultatPlanification;
@@ -39,7 +34,7 @@ namespace PlanAthena
             _metierService = _serviceProvider.GetRequiredService<MetierService>();
             _projetService = _serviceProvider.GetRequiredService<ProjetService>();
             _ganttExportService = _serviceProvider.GetRequiredService<GanttExportService>();
-            _configBuilder = _serviceProvider.GetRequiredService<ConfigurationBuilder>(); // NOUVEAU
+            _configBuilder = _serviceProvider.GetRequiredService<ConfigurationBuilder>();
 
             InitializeInterface();
             CreerNouveauProjetParDefaut();
@@ -210,7 +205,10 @@ namespace PlanAthena
 
         private void OuvrirGestionTaches_Click(object sender, EventArgs e)
         {
-            using var form = new TacheForm(_tacheService, _metierService);
+            var dependanceService = _serviceProvider.GetRequiredService<Services.Processing.DependanceService>();
+
+
+            using var form = new TacheForm(_tacheService, _metierService, dependanceService);
             form.ShowDialog();
         }
 
@@ -437,9 +435,11 @@ namespace PlanAthena
             serviceCollection.AddScoped<CsvDataService>();
             serviceCollection.AddScoped<ExcelReader>();
             serviceCollection.AddScoped<DataTransformer>();
+            serviceCollection.AddScoped<ChantierDataProcessor>();
             serviceCollection.AddScoped<PlanificationService>();
             serviceCollection.AddScoped<GanttExportService>();
-            serviceCollection.AddScoped<ConfigurationBuilder>(); // NOUVEAU
+            serviceCollection.AddScoped<ConfigurationBuilder>();
+            serviceCollection.AddScoped<DependanceService>();
 
             return serviceCollection.BuildServiceProvider();
         }

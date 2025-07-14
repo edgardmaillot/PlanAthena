@@ -1,7 +1,4 @@
 // PlanAthena.Core.Domain.ValueObjects.CalendrierOuvreChantier.cs
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using NodaTime;
 
 namespace PlanAthena.Core.Domain.ValueObjects

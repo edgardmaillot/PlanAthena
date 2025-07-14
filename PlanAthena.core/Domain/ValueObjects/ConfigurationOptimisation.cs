@@ -1,7 +1,5 @@
 // Dans le fichier Domain/ValueObjects/ConfigurationOptimisation.cs
 
-using System;
-
 namespace PlanAthena.Core.Domain.ValueObjects
 {
     public record ConfigurationOptimisation
@@ -14,7 +12,7 @@ namespace PlanAthena.Core.Domain.ValueObjects
         public ConfigurationOptimisation(
             int dureeJournaliereStandardHeures,
             decimal penaliteChangementOuvrierPourcentage,
-            long coutIndirectJournalierEnCentimes) 
+            long coutIndirectJournalierEnCentimes)
         {
             if (dureeJournaliereStandardHeures <= 0)
                 throw new ArgumentOutOfRangeException(nameof(dureeJournaliereStandardHeures), "La durée journalière standard doit être strictement positive.");
@@ -27,7 +25,7 @@ namespace PlanAthena.Core.Domain.ValueObjects
 
             DureeJournaliereStandardHeures = dureeJournaliereStandardHeures;
             PenaliteChangementOuvrierPourcentage = penaliteChangementOuvrierPourcentage;
-            CoutIndirectJournalierEnCentimes = coutIndirectJournalierEnCentimes; 
+            CoutIndirectJournalierEnCentimes = coutIndirectJournalierEnCentimes;
         }
     }
 }

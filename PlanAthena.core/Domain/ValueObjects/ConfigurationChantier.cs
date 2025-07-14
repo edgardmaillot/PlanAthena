@@ -1,8 +1,4 @@
 // PlanAthena.Core.Domain.ValueObjects.ConfigurationChantier.cs
-using System;
-using System.Collections.Generic;
-using System.Linq; // Pour Select et ToList/ToHashSet
-
 namespace PlanAthena.Core.Domain.ValueObjects
 {
     // Ce VO représente la configuration fournie par le CdC, mappée depuis ConfigurationChefChantierDto.

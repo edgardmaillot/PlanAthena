@@ -2,7 +2,6 @@
 
 using Google.OrTools.Sat;
 using PlanAthena.Core.Domain.ValueObjects;
-using System.Collections.Generic;
 
 namespace PlanAthena.core.Application.InternalDto
 {

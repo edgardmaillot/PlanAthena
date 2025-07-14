@@ -1,7 +1,4 @@
 // PlanAthena.Core.Domain.Ouvrier.cs
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using PlanAthena.Core.Domain.ValueObjects;
 // NiveauExpertise vient de Competence, qui le prendra de Facade.Dto.Enums pour l'instant
 

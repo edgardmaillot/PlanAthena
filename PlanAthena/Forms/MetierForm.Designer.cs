@@ -1,4 +1,4 @@
-namespace PlanAthena
+namespace PlanAthena.Forms
 {
     partial class MetierForm
     {
@@ -280,7 +280,6 @@ namespace PlanAthena
             txtNom.Name = "txtNom";
             txtNom.Size = new Size(347, 23);
             txtNom.TabIndex = 3;
-            txtNom.TextChanged += txtNom_TextChanged;
             // 
             // lblNom
             // 
@@ -297,7 +296,6 @@ namespace PlanAthena
             txtMetierId.Name = "txtMetierId";
             txtMetierId.Size = new Size(150, 23);
             txtMetierId.TabIndex = 1;
-            txtMetierId.TextChanged += txtMetierId_TextChanged;
             // 
             // lblMetierId
             // 

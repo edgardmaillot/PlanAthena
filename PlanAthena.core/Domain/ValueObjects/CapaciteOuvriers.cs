@@ -1,6 +1,4 @@
 // PlanAthena.Core.Domain.ValueObjects.CapaciteOuvriers.cs
-using System;
-
 namespace PlanAthena.Core.Domain.ValueObjects
 {
     public readonly record struct CapaciteOuvriers

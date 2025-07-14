@@ -1,6 +1,4 @@
 // PlanAthena.Core.Domain.ValueObjects.Identifiants.cs (ou fichiers séparés)
-using System; // Nécessaire pour ArgumentException dans les constructeurs si validation
-
 namespace PlanAthena.Core.Domain.ValueObjects
 {
     // Note Edgard: J'ajoute une validation simple (non vide) dans les constructeurs

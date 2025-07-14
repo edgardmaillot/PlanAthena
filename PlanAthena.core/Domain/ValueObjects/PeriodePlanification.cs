@@ -1,5 +1,4 @@
 // PlanAthena.Core.Domain.ValueObjects.PeriodePlanification.cs
-using System;
 using PlanAthena.Core.Facade.Dto.Enums; // Pour FlexibiliteDate
 
 namespace PlanAthena.Core.Domain.ValueObjects

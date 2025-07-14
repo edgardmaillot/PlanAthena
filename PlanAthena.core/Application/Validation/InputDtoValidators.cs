@@ -1,10 +1,6 @@
 // PlanAthena.Core.Application.Validation.InputDtoValidators.cs
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using FluentValidation; // Assurez-vous que le NuGet FluentValidation est installé
 using PlanAthena.Core.Facade.Dto.Input;
-using PlanAthena.Core.Facade.Dto.Enums; // Pour les enums
 
 namespace PlanAthena.Core.Application.Validation
 {
@@ -46,7 +42,8 @@ namespace PlanAthena.Core.Application.Validation
             RuleForEach(x => x.Metiers).NotNull().SetValidator(new MetierDtoValidator());
             RuleFor(x => x.Metiers).Must(HaveUniqueMetierIds).WithMessage("Les MetierId doivent être uniques.");
 
-            When(x => x.ConfigurationCdC != null, () => {
+            When(x => x.ConfigurationCdC != null, () =>
+            {
                 RuleFor(x => x.ConfigurationCdC!).SetValidator(new ConfigurationChefChantierDtoValidator());
             });
         }
@@ -130,7 +127,8 @@ namespace PlanAthena.Core.Application.Validation
             RuleFor(x => x.BlocIds).Must(HaveUniqueValues).WithMessage("Les BlocId au sein d'un lot doivent être uniques.");
             RuleFor(x => x.Priorite).GreaterThan(0);
 
-            When(x => x.DateDebutAuPlusTotSouhaitee.HasValue && x.DateFinAuPlusTardSouhaitee.HasValue, () => {
+            When(x => x.DateDebutAuPlusTotSouhaitee.HasValue && x.DateFinAuPlusTardSouhaitee.HasValue, () =>
+            {
                 RuleFor(x => x)
                     .Must(lot => lot.DateDebutAuPlusTotSouhaitee!.Value <= lot.DateFinAuPlusTardSouhaitee!.Value)
                     .WithMessage("La date de début souhaitée du lot doit être antérieure ou égale à sa date de fin souhaitée.");
@@ -146,7 +144,8 @@ namespace PlanAthena.Core.Application.Validation
         {
             RuleFor(x => x.MetierId).NotEmpty();
             RuleFor(x => x.Niveau).IsInEnum();
-            When(x => x.PerformancePct.HasValue, () => {
+            When(x => x.PerformancePct.HasValue, () =>
+            {
                 RuleFor(x => x.PerformancePct!.Value).GreaterThan(0); // Ex: 10, 50, 100, 120, 200
             });
         }

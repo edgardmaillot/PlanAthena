@@ -1,10 +1,7 @@
 using PlanAthena.Core.Facade.Dto.Input;
-using PlanAthena.Core.Facade.Dto.Output;
-using PlanAthena.CsvModels;
+using PlanAthena.Data;
+using PlanAthena.Services.Business;
 using PlanAthena.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PlanAthena.Services.DataAccess
 {
@@ -13,33 +10,21 @@ namespace PlanAthena.Services.DataAccess
     /// </summary>
     public class DataTransformer
     {
-        private readonly MetierService _metierService;
+        
 
-        public DataTransformer(MetierService metierService)
+        public DataTransformer()
         {
-            _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
         }
 
-        /// <summary>
-        /// Transforme les données CSV en ChantierSetupInputDto pour PlanAthena
-        /// </summary>
-        /// <param name="ouvriers">Liste des ouvriers CSV</param>
-        /// <param name="taches">Liste des tâches CSV</param>
-        /// <param name="configurationUI">Configuration depuis l'interface utilisateur</param>
-        /// <returns>DTO configuré pour PlanAthena</returns>
         public ChantierSetupInputDto TransformToChantierSetupDto(
-            List<OuvrierCsvRecord> ouvriers,
-            List<TacheCsvRecord> taches,
+            List<OuvrierRecord> ouvriers,
+            List<TacheRecord> processedTaches,
+            List<MetierRecord> allMetiers,
             ConfigurationUI configurationUI)
         {
             if (ouvriers == null) throw new ArgumentNullException(nameof(ouvriers));
-            if (taches == null) throw new ArgumentNullException(nameof(taches));
+            if (processedTaches == null) throw new ArgumentNullException(nameof(processedTaches));
             if (configurationUI == null) throw new ArgumentNullException(nameof(configurationUI));
-
-            // Pré-traitement des tâches (logique existante)
-            var dataProcessor = new ChantierDataProcessor();
-            var processedTaches = dataProcessor.ProcessTaches(taches, _metierService);
-            var allMetiersRecords = _metierService.GetAllMetiers();
 
             // Transformation des tâches
             var tachesDto = processedTaches.Select(t => new TacheDto
@@ -75,7 +60,7 @@ namespace PlanAthena.Services.DataAccess
                 }).ToList();
 
             // Transformation des métiers
-            var metiersDto = allMetiersRecords.Select(m => new MetierDto
+            var metiersDto = allMetiers.Select(m => new MetierDto
             {
                 MetierId = m.MetierId,
                 Nom = m.Nom,

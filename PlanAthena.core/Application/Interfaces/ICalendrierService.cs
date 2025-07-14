@@ -1,7 +1,6 @@
 using NodaTime;
 using PlanAthena.Core.Domain.ValueObjects;
 using PlanAthena.Core.Facade.Dto.Input;
-using System;
 
 namespace PlanAthena.Core.Application.Interfaces;
 

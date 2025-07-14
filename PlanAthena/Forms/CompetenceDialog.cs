@@ -1,18 +1,14 @@
-using PlanAthena.CsvModels;
 using PlanAthena.Core.Facade.Dto.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Forms;
+using PlanAthena.Data;
 
-namespace PlanAthena
+namespace PlanAthena.Forms
 {
     /// <summary>
     /// Dialog pour ajouter/modifier une compétence d'ouvrier
     /// </summary>
-    public partial class CompetenceDialog : Form
+    public partial class CompetenceDialog : System.Windows.Forms.Form
     {
-        public MetierCsvRecord MetierSelectionne { get; private set; }
+        public MetierRecord MetierSelectionne { get; private set; }
         public NiveauExpertise NiveauExpertise { get; private set; }
         public int? PerformancePct { get; private set; }
 
@@ -21,7 +17,7 @@ namespace PlanAthena
         private NumericUpDown numPerformance;
         private readonly bool _modificationMode;
 
-        public CompetenceDialog(List<MetierCsvRecord> metiersDisponibles, OuvrierCsvRecord competenceExistante = null)
+        public CompetenceDialog(List<MetierRecord> metiersDisponibles, OuvrierRecord competenceExistante = null)
         {
             _modificationMode = competenceExistante != null;
             InitializeComponent();
@@ -33,14 +29,14 @@ namespace PlanAthena
             var lblMetier = new Label
             {
                 Text = "Métier:",
-                Location = new System.Drawing.Point(12, 15),
-                Size = new System.Drawing.Size(60, 23)
+                Location = new Point(12, 15),
+                Size = new Size(60, 23)
             };
 
             cmbMetier = new ComboBox
             {
-                Location = new System.Drawing.Point(80, 12),
-                Size = new System.Drawing.Size(250, 23),
+                Location = new Point(80, 12),
+                Size = new Size(250, 23),
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 DisplayMember = "Nom",
                 ValueMember = "MetierId"
@@ -49,14 +45,14 @@ namespace PlanAthena
             var lblNiveau = new Label
             {
                 Text = "Niveau:",
-                Location = new System.Drawing.Point(12, 50),
-                Size = new System.Drawing.Size(60, 23)
+                Location = new Point(12, 50),
+                Size = new Size(60, 23)
             };
 
             cmbNiveau = new ComboBox
             {
-                Location = new System.Drawing.Point(80, 47),
-                Size = new System.Drawing.Size(150, 23),
+                Location = new Point(80, 47),
+                Size = new Size(150, 23),
                 DropDownStyle = ComboBoxStyle.DropDownList
             };
 
@@ -71,14 +67,14 @@ namespace PlanAthena
             var lblPerformance = new Label
             {
                 Text = "Performance (%):",
-                Location = new System.Drawing.Point(12, 85),
-                Size = new System.Drawing.Size(100, 23)
+                Location = new Point(12, 85),
+                Size = new Size(100, 23)
             };
 
             numPerformance = new NumericUpDown
             {
-                Location = new System.Drawing.Point(120, 82),
-                Size = new System.Drawing.Size(80, 23),
+                Location = new Point(120, 82),
+                Size = new Size(80, 23),
                 Minimum = 1,
                 Maximum = 200,
                 Value = 100
@@ -88,16 +84,16 @@ namespace PlanAthena
             {
                 Text = "OK",
                 DialogResult = DialogResult.OK,
-                Location = new System.Drawing.Point(175, 125),
-                Size = new System.Drawing.Size(75, 23)
+                Location = new Point(175, 125),
+                Size = new Size(75, 23)
             };
 
             var btnAnnuler = new Button
             {
                 Text = "Annuler",
                 DialogResult = DialogResult.Cancel,
-                Location = new System.Drawing.Point(256, 125),
-                Size = new System.Drawing.Size(75, 23)
+                Location = new Point(256, 125),
+                Size = new Size(75, 23)
             };
 
             btnOK.Click += BtnOK_Click;
@@ -108,14 +104,14 @@ namespace PlanAthena
             });
 
             this.Text = _modificationMode ? "Modifier une compétence" : "Ajouter une compétence";
-            this.Size = new System.Drawing.Size(360, 200);
+            this.Size = new Size(360, 200);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.StartPosition = FormStartPosition.CenterParent;
         }
 
-        private void InitialiserDonnees(List<MetierCsvRecord> metiersDisponibles, OuvrierCsvRecord competenceExistante)
+        private void InitialiserDonnees(List<MetierRecord> metiersDisponibles, OuvrierRecord competenceExistante)
         {
             // Remplir la liste des métiers
             cmbMetier.DataSource = metiersDisponibles.OrderBy(m => m.Nom).ToList();
@@ -170,7 +166,7 @@ namespace PlanAthena
                 return;
             }
 
-            MetierSelectionne = cmbMetier.SelectedItem as MetierCsvRecord;
+            MetierSelectionne = cmbMetier.SelectedItem as MetierRecord;
             NiveauExpertise = ((dynamic)cmbNiveau.SelectedItem).Value;
             PerformancePct = (int)numPerformance.Value;
         }

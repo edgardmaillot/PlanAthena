@@ -1,27 +1,19 @@
-using PlanAthena.CsvModels;
-using PlanAthena.Core.Facade.Dto.Enums;
+using PlanAthena.Data;
 using PlanAthena.Services.Business;
-using PlanAthena.Services.DataAccess;
-using PlanAthena.Utilities;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Windows.Forms;
 
-namespace PlanAthena
+namespace PlanAthena.Forms
 {
-    public partial class OuvrierForm : Form
+    public partial class OuvrierForm : System.Windows.Forms.Form
     {
         private readonly OuvrierService _ouvrierService;
         private readonly MetierService _metierService;
-        private readonly CsvDataService _csvDataService;
-        private readonly ExcelReader _excelReader;
+        //private readonly CsvDataService _csvDataService;
+        //private readonly ExcelReader _excelReader;
 
-        private List<OuvrierCsvRecord> _ouvriers = new List<OuvrierCsvRecord>();
-        private List<MetierCsvRecord> _metiers = new List<MetierCsvRecord>();
+        private List<OuvrierRecord> _ouvriers = new List<OuvrierRecord>();
+        private List<MetierRecord> _metiers = new List<MetierRecord>();
         private OuvrierInfo _ouvrierSelectionne = null;
-        private OuvrierCsvRecord _competenceSelectionnee = null;
+        private OuvrierRecord _competenceSelectionnee = null;
         private bool _enModification = false;
 
         public OuvrierForm(OuvrierService ouvrierService, MetierService metierService)
@@ -29,8 +21,8 @@ namespace PlanAthena
             InitializeComponent();
             _ouvrierService = ouvrierService ?? throw new ArgumentNullException(nameof(ouvrierService));
             _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
-            _csvDataService = new CsvDataService();
-            _excelReader = new ExcelReader();
+            //_csvDataService = new CsvDataService();
+            //_excelReader = new ExcelReader();
         }
 
         private void OuvrierForm_Load(object sender, EventArgs e)
@@ -203,7 +195,7 @@ namespace PlanAthena
         {
             if (listViewCompetences.SelectedItems.Count > 0)
             {
-                _competenceSelectionnee = listViewCompetences.SelectedItems[0].Tag as OuvrierCsvRecord;
+                _competenceSelectionnee = listViewCompetences.SelectedItems[0].Tag as OuvrierRecord;
                 btnModifierCompetence.Enabled = true;
                 btnSupprimerCompetence.Enabled = true;
             }
@@ -368,7 +360,7 @@ namespace PlanAthena
             using var dialog = new CompetenceDialog(metiersDisponibles, null);
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                var nouvelleCompetence = new OuvrierCsvRecord
+                var nouvelleCompetence = new OuvrierRecord
                 {
                     OuvrierId = _ouvrierSelectionne.OuvrierId,
                     Nom = _ouvrierSelectionne.Nom,
@@ -407,7 +399,7 @@ namespace PlanAthena
                 return;
             }
 
-            using var dialog = new CompetenceDialog(new List<MetierCsvRecord> { metier }, _competenceSelectionnee);
+            using var dialog = new CompetenceDialog(new List<MetierRecord> { metier }, _competenceSelectionnee);
             if (dialog.ShowDialog() == DialogResult.OK)
             {
                 try

@@ -1,7 +1,4 @@
 // PlanAthena.Core.Domain.BlocTravail.cs
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using PlanAthena.Core.Domain.ValueObjects;
 
 namespace PlanAthena.Core.Domain

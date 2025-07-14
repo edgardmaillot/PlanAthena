@@ -1,6 +1,6 @@
 // Fichier : TacheForm.Designer.cs
 
-namespace PlanAthena
+namespace PlanAthena.Forms
 {
     partial class TacheForm
     {

@@ -1,6 +1,4 @@
 // PlanAthena.Core.Facade.Dto.Output.ChantierSetupAnalysisResultDto.cs
-using System;
-using System.Collections.Generic;
 using PlanAthena.Core.Facade.Dto.Enums; // Pour EtatTraitementInput
 
 namespace PlanAthena.Core.Facade.Dto.Output

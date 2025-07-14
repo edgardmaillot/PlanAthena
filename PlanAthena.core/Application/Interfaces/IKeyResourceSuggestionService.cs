@@ -1,7 +1,5 @@
 // PlanAthena.Core.Application.Interfaces.IKeyResourceSuggestionService.cs
 // (ou PlanAthena.Core.Domain.Services.IKeyResourceSuggestionService.cs)
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using PlanAthena.Core.Domain; // Pour l'entité Chantier
 using PlanAthena.Core.Domain.ValueObjects; // Pour OuvrierId
 

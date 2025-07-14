@@ -1,7 +1,4 @@
 // PlanAthena.Core.Facade.Dto.Input.TacheDto.cs
-using System.Collections.Generic;
-using System; // Pour Array.Empty
-
 namespace PlanAthena.Core.Facade.Dto.Input
 {
     public record TacheDto

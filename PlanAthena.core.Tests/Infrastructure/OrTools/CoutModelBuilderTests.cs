@@ -1,15 +1,11 @@
-using Xunit;
 using FluentAssertions;
 using Google.OrTools.Sat;
 using NodaTime;
 using PlanAthena.core.Application.InternalDto;
 using PlanAthena.Core.Domain;
 using PlanAthena.Core.Domain.ValueObjects;
-using PlanAthena.Core.Infrastructure.Services.OrTools;
-using System.Collections.Generic;
-using System.Linq;
-using System;
 using PlanAthena.Core.Facade.Dto.Enums;
+using PlanAthena.Core.Infrastructure.Services.OrTools;
 
 namespace PlanAthena.core.Tests.Infrastructure.OrTools;
 

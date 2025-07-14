@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks; // Ajout pour Async
 using PlanAthena.Core.Application.Interfaces;
 using PlanAthena.Core.Domain;
 using PlanAthena.Core.Domain.Shared;

@@ -1,7 +1,4 @@
 // PlanAthena.Core.Facade.Dto.Input.LotTravauxDto.cs
-using System;
-using System.Collections.Generic;
-
 namespace PlanAthena.Core.Facade.Dto.Input
 {
     public record LotTravauxDto

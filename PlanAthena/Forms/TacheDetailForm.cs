@@ -1,12 +1,5 @@
-// Fichier : TacheDetailForm.cs
-
-using PlanAthena.CsvModels;
+using PlanAthena.Data;
 using PlanAthena.Services.Business;
-using PlanAthena.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Forms;
 
 namespace PlanAthena.Forms
 {
@@ -14,7 +7,7 @@ namespace PlanAthena.Forms
     {
         private readonly TacheService _tacheService;
         private readonly MetierService _metierService;
-        private TacheCsvRecord _tache;
+        private TacheRecord _tache;
         private bool _modeCreation;
 
         private List<LotInfo> _lotsDisponibles;
@@ -57,7 +50,7 @@ namespace PlanAthena.Forms
             cmbBlocNom.ValueMember = "BlocId";
         }
 
-        public void ChargerTache(TacheCsvRecord tache, bool modeCreation)
+        public void ChargerTache(TacheRecord tache, bool modeCreation)
         {
             _tache = tache;
             _modeCreation = modeCreation;
@@ -66,7 +59,7 @@ namespace PlanAthena.Forms
 
             if (_tache == null)
             {
-                _tache = new TacheCsvRecord { HeuresHommeEstimees = 8 };
+                _tache = new TacheRecord { HeuresHommeEstimees = 8 };
                 // Pour une nouvelle tâche, on sélectionne le premier lot/bloc par défaut
                 if (_lotsDisponibles.Any()) _tache.LotId = _lotsDisponibles.First().LotId;
                 if (_blocsDisponibles.Any()) _tache.BlocId = _blocsDisponibles.First().BlocId;
@@ -89,7 +82,7 @@ namespace PlanAthena.Forms
             }
             else
             {
-                var metierItem = cmbMetier.Items.Cast<object>().FirstOrDefault(item => item is MetierCsvRecord m && m.MetierId == _tache.MetierId);
+                var metierItem = cmbMetier.Items.Cast<object>().FirstOrDefault(item => item is MetierRecord m && m.MetierId == _tache.MetierId);
                 cmbMetier.SelectedItem = metierItem ?? cmbMetier.Items[0];
             }
 
@@ -173,7 +166,7 @@ namespace PlanAthena.Forms
                 _tache.BlocCapaciteMaxOuvriers = selectedBloc.CapaciteMaxOuvriers;
             }
 
-            if (cmbMetier.SelectedItem is MetierCsvRecord metier)
+            if (cmbMetier.SelectedItem is MetierRecord metier)
             {
                 _tache.MetierId = metier.MetierId;
             }

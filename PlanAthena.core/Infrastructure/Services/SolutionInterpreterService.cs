@@ -4,8 +4,6 @@ using Google.OrTools.Sat;
 using PlanAthena.core.Application.InternalDto;
 using PlanAthena.Core.Application.Interfaces;
 using PlanAthena.Core.Facade.Dto.Output;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PlanAthena.Core.Infrastructure.Services
 {

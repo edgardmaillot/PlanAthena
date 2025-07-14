@@ -3,11 +3,7 @@
 using Google.OrTools.Sat;
 using NodaTime;
 using PlanAthena.core.Application.InternalDto;
-using PlanAthena.Core.Domain;
 using PlanAthena.Core.Domain.ValueObjects;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PlanAthena.Core.Infrastructure.Services.OrTools
 {
@@ -102,7 +98,8 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
             // Optimisation 3: Pré-calcul des plages journalières
             var plagesJournalieres = _joursDuPlanningCache.ToDictionary(
                 jour => jour,
-                jour => {
+                jour =>
+                {
                     var slots = _slotsByDayCache[jour];
                     return (Start: slots.Min(s => s.Index), End: slots.Max(s => s.Index) + 1);
                 }
@@ -182,7 +179,8 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
             var joursActifs = new List<BoolVar>();
             var plagesJournalieres = _joursDuPlanningCache.ToDictionary(
                 jour => jour,
-                jour => {
+                jour =>
+                {
                     var slots = _slotsByDayCache[jour];
                     return slots.Any() ? slots.Min(s => s.Index) : -1;
                 }

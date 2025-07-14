@@ -1,6 +1,4 @@
 // PlanAthena.Core.Domain.Entity.cs
-using System;
-
 namespace PlanAthena.Core.Domain
 {
     /// <summary>

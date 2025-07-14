@@ -1,6 +1,5 @@
 using PlanAthena.Core.Facade.Dto.Input;
 using PlanAthena.Core.Facade.Dto.Output;
-using System.Threading.Tasks;
 
 namespace PlanAthena.Core.Application.Interfaces;
 

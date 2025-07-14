@@ -1,7 +1,4 @@
 // PlanAthena.Core.Domain.LotTravaux.cs
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using PlanAthena.Core.Domain.ValueObjects;
 // using NodaTime; // Si on utilisait LocalDate pour les dates souhaitées
 

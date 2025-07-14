@@ -1,8 +1,5 @@
-using PlanAthena.CsvModels;
+using PlanAthena.Data;
 using PlanAthena.Services.DataAccess;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PlanAthena.Services.Business
 {
@@ -11,7 +8,7 @@ namespace PlanAthena.Services.Business
     /// </summary>
     public class TacheService
     {
-        private readonly List<TacheCsvRecord> _taches = new List<TacheCsvRecord>();
+        private readonly List<TacheRecord> _taches = new List<TacheRecord>();
         private readonly Dictionary<string, string> _mappingTacheMetier = new Dictionary<string, string>();
         private readonly CsvDataService _csvDataService;
         private readonly ExcelReader _excelReader;
@@ -27,7 +24,7 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Ajoute une nouvelle tâche
         /// </summary>
-        public void AjouterTache(TacheCsvRecord tache)
+        public void AjouterTache(TacheRecord tache)
         {
             if (tache == null)
                 throw new ArgumentNullException(nameof(tache));
@@ -44,7 +41,7 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Met à jour une tâche existante
         /// </summary>
-        public void ModifierTache(TacheCsvRecord tacheModifiee)
+        public void ModifierTache(TacheRecord tacheModifiee)
         {
             if (tacheModifiee == null)
                 throw new ArgumentNullException(nameof(tacheModifiee));
@@ -102,7 +99,7 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Obtient toutes les tâches
         /// </summary>
-        public List<TacheCsvRecord> ObtenirToutesLesTaches()
+        public List<TacheRecord> ObtenirToutesLesTaches()
         {
             return _taches.ToList();
         }
@@ -110,7 +107,7 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Obtient une tâche par son ID
         /// </summary>
-        public TacheCsvRecord ObtenirTacheParId(string tacheId)
+        public TacheRecord ObtenirTacheParId(string tacheId)
         {
             return _taches.FirstOrDefault(t => t.TacheId == tacheId);
         }
@@ -118,7 +115,7 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Obtient les tâches d'un bloc spécifique
         /// </summary>
-        public List<TacheCsvRecord> ObtenirTachesParBloc(string blocId)
+        public List<TacheRecord> ObtenirTachesParBloc(string blocId)
         {
             return _taches.Where(t => t.BlocId == blocId).ToList();
         }
@@ -126,7 +123,7 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Obtient les tâches d'un lot spécifique
         /// </summary>
-        public List<TacheCsvRecord> ObtenirTachesParLot(string lotId)
+        public List<TacheRecord> ObtenirTachesParLot(string lotId)
         {
             return _taches.Where(t => t.LotId == lotId).ToList();
         }
@@ -134,9 +131,9 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Obtient les tâches ayant des dépendances non résolues
         /// </summary>
-        public List<TacheCsvRecord> ObtenirTachesAvecDependancesManquantes()
+        public List<TacheRecord> ObtenirTachesAvecDependancesManquantes()
         {
-            var result = new List<TacheCsvRecord>();
+            var result = new List<TacheRecord>();
 
             foreach (var tache in _taches.Where(t => !string.IsNullOrEmpty(t.Dependencies)))
             {
@@ -268,7 +265,7 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Obtient toutes les tâches sans métier assigné
         /// </summary>
-        public List<TacheCsvRecord> ObtenirTachesSansMetier()
+        public List<TacheRecord> ObtenirTachesSansMetier()
         {
             return _taches.Where(t => string.IsNullOrWhiteSpace(t.MetierId)).ToList();
         }
@@ -299,7 +296,7 @@ namespace PlanAthena.Services.Business
         /// </summary>
         public int ImporterDepuisCsv(string filePath, bool remplacerExistantes = true)
         {
-            var tachesImportees = _csvDataService.ImportCsv<TacheCsvRecord>(filePath);
+            var tachesImportees = _csvDataService.ImportCsv<TacheRecord>(filePath);
 
             if (remplacerExistantes)
             {
@@ -341,7 +338,7 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Charge les tâches depuis une liste (utilisé par PlanificationService)
         /// </summary>
-        public void ChargerTaches(List<TacheCsvRecord> taches)
+        public void ChargerTaches(List<TacheRecord> taches)
         {
             _taches.Clear();
             _mappingTacheMetier.Clear();

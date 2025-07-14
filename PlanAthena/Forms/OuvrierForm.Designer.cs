@@ -1,4 +1,4 @@
-namespace PlanAthena
+namespace PlanAthena.Forms
 {
     partial class OuvrierForm
     {

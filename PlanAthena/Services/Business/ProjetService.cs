@@ -1,9 +1,5 @@
-using PlanAthena.CsvModels;
+using PlanAthena.Data;
 using PlanAthena.Services.DataAccess;
-using PlanAthena.Utilities;
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Text.Json;
 
 namespace PlanAthena.Services.Business
@@ -115,7 +111,7 @@ namespace PlanAthena.Services.Business
                     throw new ProjetException("Le fichier de projet est invalide ou corrompu.");
 
                 // Charger les données dans les services
-                _metierService.ChargerMetiers(projetData.Metiers);
+                _metierService.RemplacerTousLesMetiers(projetData.Metiers);
                 _ouvrierService.ChargerOuvriers(projetData.Ouvriers);
                 _tacheService.ChargerTaches(projetData.Taches);
 
@@ -232,8 +228,8 @@ namespace PlanAthena.Services.Business
                 // Import des métiers
                 if (!string.IsNullOrEmpty(cheminMetiers) && File.Exists(cheminMetiers))
                 {
-                    var metiers = _csvDataService.ImportCsv<MetierCsvRecord>(cheminMetiers);
-                    _metierService.ChargerMetiers(metiers);
+                    var metiers = _csvDataService.ImportCsv<MetierRecord>(cheminMetiers);
+                    _metierService.RemplacerTousLesMetiers(metiers);
                     resume.MetiersImportes = metiers.Count;
                 }
 
@@ -273,7 +269,7 @@ namespace PlanAthena.Services.Business
         public InformationsProjet CreerNouveauProjet(string nomProjet, string description = "")
         {
             // Vider toutes les données existantes
-            _metierService.ChargerMetiers(new List<MetierCsvRecord>());
+            _metierService.RemplacerTousLesMetiers(new List<MetierRecord>());
             _ouvrierService.Vider();
             _tacheService.Vider();
 
@@ -313,9 +309,9 @@ namespace PlanAthena.Services.Business
     public class ProjetData
     {
         public InformationsProjet InformationsProjet { get; set; } = new InformationsProjet();
-        public List<MetierCsvRecord> Metiers { get; set; } = new List<MetierCsvRecord>();
-        public List<OuvrierCsvRecord> Ouvriers { get; set; } = new List<OuvrierCsvRecord>();
-        public List<TacheCsvRecord> Taches { get; set; } = new List<TacheCsvRecord>();
+        public List<MetierRecord> Metiers { get; set; } = new List<MetierRecord>();
+        public List<OuvrierRecord> Ouvriers { get; set; } = new List<OuvrierRecord>();
+        public List<TacheRecord> Taches { get; set; } = new List<TacheRecord>();
         public DateTime DateSauvegarde { get; set; }
         public string VersionApplication { get; set; } = "";
     }

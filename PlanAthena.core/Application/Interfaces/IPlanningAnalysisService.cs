@@ -2,8 +2,6 @@
 
 using PlanAthena.Core.Domain;
 using PlanAthena.Core.Facade.Dto.Output;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace PlanAthena.Core.Application.Interfaces
 {

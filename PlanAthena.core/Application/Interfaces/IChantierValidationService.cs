@@ -1,6 +1,4 @@
 // PlanAthena.Core.Application.Interfaces.IChantierValidationService.cs
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using PlanAthena.Core.Domain; // Pour l'entité Chantier (si validation post-mapping)
 using PlanAthena.Core.Facade.Dto.Input;    // Si validation sur DTOs
 using PlanAthena.Core.Facade.Dto.Output; // Pour MessageValidationDto

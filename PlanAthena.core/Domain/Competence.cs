@@ -1,5 +1,4 @@
 // PlanAthena.Core.Domain.Competence.cs
-using System;
 using PlanAthena.Core.Domain.ValueObjects;
 using PlanAthena.Core.Facade.Dto.Enums;
 
