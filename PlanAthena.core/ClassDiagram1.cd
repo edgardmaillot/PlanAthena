@@ -172,7 +172,7 @@
   <Class Name="PlanAthena.Core.Infrastructure.Services.OrTools.CoutModelBuilder">
     <Position X="45" Y="7" Width="2.75" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAQAAQAAAACAAAAAgAAAAAAAAAAAAAAE=</HashCode>
+      <HashCode>AAAAAAAAAAAAAQAAQBAAABAAAAAEAAAAAAACACACAAA=</HashCode>
       <FileName>Infrastructure\Services\OrTools\CoutModelBuilder.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -186,7 +186,7 @@
   <Class Name="PlanAthena.Core.Infrastructure.Services.OrTools.TacheModelBuilder">
     <Position X="45" Y="4.75" Width="2.75" />
     <TypeIdentifier>
-      <HashCode>AAAAIAAIAAAAAQAAAIAAAAAAAAAAAAAIAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAIAAAAAAAIQEAAICAQAAAAAAAAAAIAAAAAQAAAAA=</HashCode>
       <FileName>Infrastructure\Services\OrTools\TacheModelBuilder.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -201,7 +201,7 @@
   <Class Name="PlanAthena.Core.Application.UseCases.ProcessChantierUseCase">
     <Position X="39.75" Y="3.5" Width="3.25" />
     <TypeIdentifier>
-      <HashCode>iAAAAAgAAAAACCAAAAAgAAAFAAAgAAAAAAAEAAAAAEA=</HashCode>
+      <HashCode>CAAAAAgAAAAACCAAgABgAAAFAAAiAAAAAAAEAAAAAEA=</HashCode>
       <FileName>Application\UseCases\ProcessChantierUseCase.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
@@ -219,6 +219,36 @@
       <HashCode>AAAAABAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAEQAAAA=</HashCode>
       <FileName>Domain\Shared\DependencyGraph.cs</FileName>
     </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Application.DependencyInjection" Collapsed="true">
+    <Position X="27.75" Y="12.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Facade\DependencyInjection.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Application.Services.PlanningAnalysisService" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="27.75" Y="13.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAABAAgAAgAAAAAAAAAAAAAAAAAAAgAAAAEAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Services\PlanningAnalysisService.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="PlanAthena.Core.Infrastructure.DependencyInjection" Collapsed="true">
+    <Position X="29.5" Y="12.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\DependencyInjection.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.Core.Infrastructure.Services.SolutionInterpreterService" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="29.5" Y="13.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Infrastructure\Services\SolutionInterpreterService.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
   </Class>
   <Interface Name="PlanAthena.Core.Application.Interfaces.ICalendrierService">
     <Position X="13.25" Y="8.75" Width="2.25" />
@@ -274,6 +304,20 @@
     <TypeIdentifier>
       <HashCode>AAACAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Domain\Shared\IHaveDependencies.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="PlanAthena.Core.Application.Interfaces.IPlanningAnalysisService" Collapsed="true">
+    <Position X="27.75" Y="14.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Application\Interfaces\IPlanningAnalysisService.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="PlanAthena.Core.Application.Interfaces.ISolutionInterpreterService" Collapsed="true">
+    <Position X="29.5" Y="14.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Application\Interfaces\ISolutionInterpreterService.cs</FileName>
     </TypeIdentifier>
   </Interface>
   <Enum Name="PlanAthena.Core.Facade.Dto.Enums.FlexibiliteDate">

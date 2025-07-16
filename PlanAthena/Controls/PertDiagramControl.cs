@@ -2,6 +2,7 @@ using Microsoft.Msagl.Drawing;
 using Microsoft.Msagl.GraphViewerGdi;
 using Microsoft.Msagl.Layout.Layered;
 using PlanAthena.Data;
+using PlanAthena.Services.Business;
 using System.Drawing.Printing;
 using System.Reflection;
 using DrawingNode = Microsoft.Msagl.Drawing.Node;
@@ -13,6 +14,8 @@ namespace PlanAthena.Controls
     {
         private readonly GViewer _viewer;
         private List<TacheRecord> _taches = new List<TacheRecord>();
+        private List<MetierRecord> _metiers = new List<MetierRecord>();
+        private MetierService _metierService; // Ajouté pour identifier les jalons
         private Graph _graph;
 
         public event EventHandler<TacheSelectedEventArgs> TacheSelected;
@@ -36,47 +39,48 @@ namespace PlanAthena.Controls
         // Variables pour gérer le pan avec la souris
         private bool _isPanning = false;
         private Point _panStartPoint;
-        private Panel _scrollPanel; // Référence au panel pour le scroll
         private PrintDocument _printDocument;
         public TacheRecord TacheSelectionnee { get; private set; }
+
+        // Variables pour mémoriser l'état de la vue (simplifié)
+        private double _dernierZoom = 0.8;
 
         public PertDiagramControl()
         {
             InitializeComponent();
 
-            _scrollPanel = new Panel();
-            _scrollPanel.Dock = DockStyle.Fill;
-            _scrollPanel.AutoScroll = true;
-            _scrollPanel.BackColor = SystemColors.Window;
-
+            // SUPPRESSION des barres de défilement - utiliser uniquement le pan MSAGL
             _viewer = new GViewer();
+            _viewer.Dock = DockStyle.Fill;  // Le viewer occupe tout l'espace
             _viewer.MouseClick += Viewer_MouseClick;
             _viewer.MouseDoubleClick += Viewer_MouseDoubleClick;
             _viewer.MouseDown += Viewer_MouseDown;
             _viewer.MouseMove += Viewer_MouseMove;
             _viewer.MouseUp += Viewer_MouseUp;
 
-            _viewer.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-            _viewer.Location = new Point(0, 0);
+            // SUPPRESSION des événements Enter/Leave qui causent des repositionnements
+            // _viewer.Enter += Viewer_Enter;
+            // _viewer.Leave += Viewer_Leave;
+            // this.Enter += Control_Enter;
+            // this.Leave += Control_Leave;
 
             ConfigurerViewer();
 
-            _scrollPanel.Controls.Add(_viewer);
-            this.Controls.Add(_scrollPanel);
+            this.Controls.Add(_viewer);  // Ajouter directement le viewer
         }
 
         private void ConfigurerViewer()
         {
             try
             {
-                _viewer.PanButtonPressed = false;
+                _viewer.PanButtonPressed = false;  // Désactivé par défaut
                 _viewer.NavigationVisible = false;
                 _viewer.ToolBarIsVisible = false;
                 _viewer.ZoomF = 0.8;
                 _viewer.OutsideAreaBrush = Brushes.White;
 
                 var tooltip = new ToolTip();
-                tooltip.SetToolTip(_viewer, "Clic gauche = Sélection | Double-clic = Éditer | Clic droit + glisser = Déplacer");
+                tooltip.SetToolTip(_viewer, "Clic sur objet = Sélection/Déplacement objet | Clic sur fond = Déplacement vue | Double-clic = Éditer");
             }
             catch (Exception ex)
             {
@@ -90,6 +94,17 @@ namespace PlanAthena.Controls
         {
             _viewer.PanButtonPressed = panActif;
             this.Cursor = panActif ? Cursors.Hand : Cursors.Default;
+
+            // Mettre à jour le tooltip selon l'état
+            var tooltip = new ToolTip();
+            if (panActif)
+            {
+                tooltip.SetToolTip(_viewer, "Mode Pan activé : Glisser pour déplacer | Double-clic = Éditer");
+            }
+            else
+            {
+                tooltip.SetToolTip(_viewer, "Clic gauche = Sélection | Double-clic = Éditer | Bouton PAN pour déplacer");
+            }
         }
 
         public void SauvegarderImage()
@@ -161,53 +176,90 @@ namespace PlanAthena.Controls
 
         #endregion
 
-        #region Gestion du Pan avec le clic droit
+        #region Gestion intelligente clic gauche : Objet vs Fond
 
         private void Viewer_MouseDown(object sender, MouseEventArgs e)
         {
-            if (e.Button == System.Windows.Forms.MouseButtons.Right)
+            if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
-                _isPanning = true;
-                _panStartPoint = e.Location;
-                _viewer.Cursor = Cursors.SizeAll;
+                var objectUnderMouse = _viewer.ObjectUnderMouseCursor;
+
+                if (objectUnderMouse?.DrawingObject is DrawingNode)
+                {
+                    // Clic sur un objet : Mode sélection/déplacement d'objet (comportement par défaut de MSAGL)
+                    _viewer.PanButtonPressed = false;
+                    System.Diagnostics.Debug.WriteLine("Left click on object - Object manipulation mode");
+                }
+                else
+                {
+                    // Clic sur le fond : Mode déplacement de la vue
+                    _viewer.PanButtonPressed = true;
+                    _isPanning = true;
+                    _panStartPoint = e.Location;
+                    System.Diagnostics.Debug.WriteLine("Left click on background - Pan mode activated");
+                }
             }
         }
 
         private void Viewer_MouseMove(object sender, MouseEventArgs e)
         {
-            if (_isPanning)
+            if (_isPanning && e.Button == System.Windows.Forms.MouseButtons.Left)
             {
-                int dx = e.Location.X - _panStartPoint.X;
-                int dy = e.Location.Y - _panStartPoint.Y;
-
-                Point newScrollPosition = new Point(
-                    _scrollPanel.HorizontalScroll.Value - dx,
-                    _scrollPanel.VerticalScroll.Value - dy);
-
-                newScrollPosition.X = Math.Max(0, Math.Min(newScrollPosition.X, _scrollPanel.HorizontalScroll.Maximum));
-                newScrollPosition.Y = Math.Max(0, Math.Min(newScrollPosition.Y, _scrollPanel.VerticalScroll.Maximum));
-
-                _scrollPanel.AutoScrollPosition = newScrollPosition;
-
-                // Forcer le rafraîchissement pour éviter les glitchs
-                _viewer.Invalidate();
+                System.Diagnostics.Debug.WriteLine("Background drag in progress");
+                // MSAGL gère automatiquement le pan
             }
         }
 
         private void Viewer_MouseUp(object sender, MouseEventArgs e)
         {
-            if (e.Button == System.Windows.Forms.MouseButtons.Right)
+            if (e.Button == System.Windows.Forms.MouseButtons.Left && _isPanning)
             {
                 _isPanning = false;
-                _viewer.Cursor = Cursors.Default;
+                _viewer.PanButtonPressed = false;
+                System.Diagnostics.Debug.WriteLine("Background drag ended - Pan deactivated");
             }
         }
+
+        #endregion
+
+        #region Gestion du focus et de l'état de la vue - SUPPRIMÉ
+
+        // Ces méthodes ont été supprimées car elles causaient des repositionnements intempestifs
+        // lors de l'affichage de MessageBox ou changements de focus
 
         #endregion
 
         public void ChargerTaches(List<TacheRecord> taches, string filtreRecherche = "")
         {
             _taches = taches ?? new List<TacheRecord>();
+            _couleursByMetier.Clear();
+            _couleurIndex = 0;
+            GenererDiagramme(filtreRecherche);
+        }
+
+        /// <summary>
+        /// Charge les métiers pour pouvoir utiliser leurs couleurs personnalisées
+        /// </summary>
+        /// <param name="metiers">Liste des métiers avec leurs couleurs</param>
+        public void ChargerMetiers(List<MetierRecord> metiers)
+        {
+            _metiers = metiers ?? new List<MetierRecord>();
+            _couleursByMetier.Clear();
+            _couleurIndex = 0;
+        }
+
+        /// <summary>
+        /// Charge à la fois les tâches et les métiers avec un MetierService pour identifier les jalons
+        /// </summary>
+        /// <param name="taches">Liste des tâches</param>
+        /// <param name="metiers">Liste des métiers avec leurs couleurs</param>
+        /// <param name="filtreRecherche">Filtre de recherche optionnel</param>
+        /// <param name="metierService">Service pour identifier les jalons (optionnel)</param>
+        public void ChargerDonnees(List<TacheRecord> taches, List<MetierRecord> metiers, string filtreRecherche = "", MetierService metierService = null)
+        {
+            _taches = taches ?? new List<TacheRecord>();
+            _metiers = metiers ?? new List<MetierRecord>();
+            _metierService = metierService; // Stocker la référence pour identifier les jalons
             _couleursByMetier.Clear();
             _couleurIndex = 0;
             GenererDiagramme(filtreRecherche);
@@ -265,20 +317,20 @@ namespace PlanAthena.Controls
             // Configuration générale du graphe
             graph.Attr.LayerDirection = LayerDirection.LR;
             graph.Attr.AspectRatio = 0.3;
-            graph.Attr.NodeSeparation = 20;
+            graph.Attr.NodeSeparation = 30;
             graph.Attr.LayerSeparation = 90;
-            graph.Attr.MinNodeHeight = 70;
-            graph.Attr.MinNodeWidth = 160;
+            graph.Attr.MinNodeHeight = 50;
+            graph.Attr.MinNodeWidth = 50;
             graph.Attr.Margin = 20;
 
             // Configuration compatible avec MSAGL 1.1.6
             var settings = new SugiyamaLayoutSettings();
 
             // Paramètres disponibles dans la version 1.1.6
-            settings.NodeSeparation = 20;
+            settings.NodeSeparation = 30;
             settings.LayerSeparation = 90;
-            settings.MinNodeHeight = 70;
-            settings.MinNodeWidth = 160;
+            settings.MinNodeHeight = 50;
+            settings.MinNodeWidth = 50;
 
             // Optimiser l'arrangement des couches pour réduire les croisements
             settings.RepetitionCoefficientForOrdering = 3;
@@ -357,6 +409,9 @@ namespace PlanAthena.Controls
             var nodeId = tache.TacheId;
             var node = _graph.AddNode(nodeId);
 
+            // Vérifier si c'est un jalon
+            bool estJalon = _metierService?.EstJalon(tache) ?? (tache.MetierId == "JALON");
+
             var metierAffiche = !string.IsNullOrEmpty(tache.MetierId) ? tache.MetierId : "❌ Non assigné";
 
             // Affichage enrichi avec informations sur les dépendances
@@ -364,29 +419,71 @@ namespace PlanAthena.Controls
                 ? tache.Dependencies.Split(',').Length
                 : 0;
 
-            var label = $"🏷️ {tache.TacheId}\n{TronquerTexte(tache.TacheNom, 20)}\n" +
+            string label;
+            if (estJalon)
+            {
+                // LABEL ULTRA-COMPACT : juste une icône
+                if (tache.HeuresHommeEstimees > 0)
+                {
+                    label = $"⏳";  // Jalon avec attente (sablier)
+                }
+                else
+                {
+                    label = $"🏁";  // Jalon sans attente (drapeau)
+                }
+            }
+            else
+            {
+                // Label normal pour les tâches (inchangé)
+                label = $"🏷️ {tache.TacheId}\n{TronquerTexte(tache.TacheNom, 20)}\n" +
                        $"👨‍💼 {TronquerTexte(metierAffiche, 18)}\n" +
                        $"⏱️ {tache.HeuresHommeEstimees}h";
 
-            if (dependances > 0)
-            {
-                label += $"\n🔗 {dependances} dép.";
+                if (dependances > 0)
+                {
+                    label += $"\n🔗 {dependances} dép.";
+                }
             }
 
             node.LabelText = label;
 
             var couleur = ObtenirCouleurPourMetier(tache.MetierId);
             node.Attr.FillColor = couleur;
-            node.Attr.Shape = Shape.Box;
-            node.Attr.LineWidth = 2;
-            node.Attr.LabelMargin = 12;
-            node.Label.FontSize = 9;
+
+            // MODIFICATION PRINCIPALE : Forme différente pour les jalons
+            if (estJalon)
+            {
+                node.Attr.Shape = Shape.Diamond;
+                node.Attr.LineWidth = 3;
+                node.Attr.Padding = 3;          // Très compact
+                node.Label.FontSize = 14;
+                node.Attr.LabelMargin = 2;
+            }
+            else
+            {
+                node.Attr.Shape = Shape.Box;
+                node.Attr.LineWidth = 2;
+                node.Attr.Padding = 18;         // Plus spacieux
+                node.Label.FontSize = 9;
+                node.Attr.LabelMargin = 12;     // Plus de marge
+
+                // Optionnel : forcer une largeur minimale par le texte
+                if (label.Length < 30)
+                {
+                    label += new string(' ', 30 - label.Length); // Espaces de remplissage
+                }
+            }
 
             // Style selon l'état de la tâche
-            if (string.IsNullOrEmpty(tache.MetierId))
+            if (!estJalon && string.IsNullOrEmpty(tache.MetierId))
             {
                 node.Attr.Color = Microsoft.Msagl.Drawing.Color.Red;
                 node.Attr.LineWidth = 3;
+            }
+            else if (estJalon)
+            {
+                // Couleur spéciale pour les jalons
+                node.Attr.Color = Microsoft.Msagl.Drawing.Color.Orange;
             }
             else
             {
@@ -428,6 +525,39 @@ namespace PlanAthena.Controls
             if (string.IsNullOrEmpty(metierId))
                 return Microsoft.Msagl.Drawing.Color.MistyRose;
 
+            // Couleur spéciale pour les jalons
+            if (_metierService?.EstJalon(metierId) ?? (metierId == "JALON"))
+            {
+                return Microsoft.Msagl.Drawing.Color.Gold; // Couleur dorée pour les jalons
+            }
+
+            // Priorité 1: Utiliser la couleur personnalisée du métier si elle existe
+            if (!string.IsNullOrEmpty(metierId) && _metiers != null)
+            {
+                var metier = _metiers.FirstOrDefault(m => m.MetierId == metierId);
+                if (metier != null && !string.IsNullOrEmpty(metier.CouleurHex))
+                {
+                    try
+                    {
+                        // Convertir la couleur hexadécimale en couleur System.Drawing
+                        var systemColor = ColorTranslator.FromHtml(metier.CouleurHex);
+
+                        // Convertir en couleur MSAGL
+                        var msaglColor = new Microsoft.Msagl.Drawing.Color(
+                            systemColor.R,
+                            systemColor.G,
+                            systemColor.B);
+
+                        return msaglColor;
+                    }
+                    catch (Exception)
+                    {
+                        // En cas d'erreur de conversion, continuer avec le système de fallback
+                    }
+                }
+            }
+
+            // Priorité 2 (fallback): Utiliser le système de couleurs auto-générées existant
             if (!_couleursByMetier.ContainsKey(metierId))
             {
                 _couleursByMetier[metierId] = _couleursDisponibles[_couleurIndex % _couleursDisponibles.Length];
@@ -445,7 +575,10 @@ namespace PlanAthena.Controls
 
         private void Viewer_MouseClick(object sender, MouseEventArgs e)
         {
-            if (_isPanning) return;
+            // Seulement pour la sélection, pas pour le pan
+            if (e.Button != System.Windows.Forms.MouseButtons.Left || _isPanning)
+                return;
+
             try
             {
                 var objectUnderMouse = _viewer.ObjectUnderMouseCursor;
@@ -454,6 +587,11 @@ namespace PlanAthena.Controls
                     TacheSelectionnee = tache;
                     TacheSelected?.Invoke(this, new TacheSelectedEventArgs(tache));
                     MettreEnEvidenceTache(node);
+                    System.Diagnostics.Debug.WriteLine($"Object selected: {tache.TacheId}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("Click on background - no selection");
                 }
             }
             catch (Exception) { }
@@ -481,9 +619,19 @@ namespace PlanAthena.Controls
             {
                 if (node.UserData is TacheRecord tache)
                 {
-                    node.Attr.LineWidth = string.IsNullOrEmpty(tache.MetierId) ? 3 : 2;
-                    node.Attr.Color = string.IsNullOrEmpty(tache.MetierId) ?
-                        Microsoft.Msagl.Drawing.Color.Red : Microsoft.Msagl.Drawing.Color.DarkBlue;
+                    bool estJalon = _metierService?.EstJalon(tache) ?? (tache.MetierId == "JALON");
+
+                    if (estJalon)
+                    {
+                        node.Attr.LineWidth = 3;
+                        node.Attr.Color = Microsoft.Msagl.Drawing.Color.Orange;
+                    }
+                    else
+                    {
+                        node.Attr.LineWidth = string.IsNullOrEmpty(tache.MetierId) ? 3 : 2;
+                        node.Attr.Color = string.IsNullOrEmpty(tache.MetierId) ?
+                            Microsoft.Msagl.Drawing.Color.Red : Microsoft.Msagl.Drawing.Color.DarkBlue;
+                    }
                 }
             }
 
@@ -516,48 +664,38 @@ namespace PlanAthena.Controls
         {
             try
             {
-                if (_viewer.Graph == null || _viewer.Graph.Width == 0) return;
+                if (_viewer.Graph == null) return;
 
-                var graphBounds = _viewer.Graph.BoundingBox;
-                var panelBounds = _scrollPanel.ClientRectangle;
+                // Calcul manuel du zoom optimal (confirmé fonctionnel par les logs)
+                var bounds = _viewer.Graph.BoundingBox;
+                var clientSize = _viewer.ClientSize;
 
-                if (graphBounds.Width > 0 && graphBounds.Height > 0 && panelBounds.Width > 50)
+                if (bounds.Width > 0 && bounds.Height > 0 && clientSize.Width > 0 && clientSize.Height > 0)
                 {
-                    double margin = 60;
-                    var scaleX = (panelBounds.Width - margin) / graphBounds.Width;
-                    var scaleY = (panelBounds.Height - margin) / graphBounds.Height;
-
+                    double margin = 80; // Marge autour du graphique
+                    var scaleX = (clientSize.Width - margin) / bounds.Width;
+                    var scaleY = (clientSize.Height - margin) / bounds.Height;
                     var scale = Math.Min(scaleX, scaleY);
-                    scale = Math.Min(scale, 2.0); // Limiter le zoom maximum
-                    scale = Math.Max(scale, 0.1); // Limiter le zoom minimum
+
+                    // Limiter le zoom entre 0.3 et 2.0 pour éviter les extrêmes
+                    scale = Math.Max(0.3, Math.Min(scale, 2.0));
 
                     _viewer.ZoomF = scale;
-
-                    // NOUVEAU: Centrer la vue sur le graphe
-                    // Calculer le centre du graphe dans les coordonnées du viewer (après zoom)
-                    int centerX = (int)(graphBounds.Center.X * scale);
-                    int centerY = (int)(graphBounds.Center.Y * scale);
-
-                    // Calculer la position de scroll pour que ce centre soit au milieu du panel
-                    int scrollX = centerX - (panelBounds.Width / 2);
-                    int scrollY = centerY - (panelBounds.Height / 2);
-
-                    // Appliquer la position de scroll en s'assurant qu'elle est dans les limites
-                    scrollX = Math.Max(0, Math.Min(scrollX, _scrollPanel.HorizontalScroll.Maximum));
-                    scrollY = Math.Max(0, Math.Min(scrollY, _scrollPanel.VerticalScroll.Maximum));
-
-                    _scrollPanel.AutoScrollPosition = new Point(scrollX, scrollY);
                 }
                 else
                 {
-                    _viewer.ZoomF = 1.0;
+                    _viewer.ZoomF = 0.8; // Zoom par défaut si calcul impossible
                 }
 
+                _dernierZoom = _viewer.ZoomF;
                 _viewer.Invalidate();
             }
             catch (Exception)
             {
-                // Ignorer les erreurs potentielles
+                // Fallback simple en cas d'erreur
+                _viewer.ZoomF = 0.8;
+                _dernierZoom = 0.8;
+                _viewer.Invalidate();
             }
         }
 

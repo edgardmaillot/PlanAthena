@@ -48,6 +48,9 @@ namespace PlanAthena.Forms
             colPrerequisId = new ColumnHeader();
             colPrerequisNom = new ColumnHeader();
             lblPrerequis = new Label();
+            btnChoisirCouleur = new Button();
+            panelCouleurApercu = new Panel();
+            lblCouleur = new Label();
             txtNom = new TextBox();
             lblNom = new Label();
             txtMetierId = new TextBox();
@@ -197,6 +200,9 @@ namespace PlanAthena.Forms
             groupBoxDetails.Controls.Add(btnAjouterPrerequis);
             groupBoxDetails.Controls.Add(listViewPrerequis);
             groupBoxDetails.Controls.Add(lblPrerequis);
+            groupBoxDetails.Controls.Add(btnChoisirCouleur);
+            groupBoxDetails.Controls.Add(panelCouleurApercu);
+            groupBoxDetails.Controls.Add(lblCouleur);
             groupBoxDetails.Controls.Add(txtNom);
             groupBoxDetails.Controls.Add(lblNom);
             groupBoxDetails.Controls.Add(txtMetierId);
@@ -213,19 +219,19 @@ namespace PlanAthena.Forms
             // 
             lblUtilisation.AutoSize = true;
             lblUtilisation.ForeColor = Color.Blue;
-            lblUtilisation.Location = new Point(16, 415);
+            lblUtilisation.Location = new Point(16, 435);
             lblUtilisation.Name = "lblUtilisation";
             lblUtilisation.Size = new Size(188, 15);
-            lblUtilisation.TabIndex = 8;
+            lblUtilisation.TabIndex = 11;
             lblUtilisation.Text = "⚠️ Utilisé par: 5 tâches, 12 ouvriers";
             // 
             // btnSupprimerPrerequis
             // 
             btnSupprimerPrerequis.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnSupprimerPrerequis.Location = new Point(342, 350);
+            btnSupprimerPrerequis.Location = new Point(342, 370);
             btnSupprimerPrerequis.Name = "btnSupprimerPrerequis";
             btnSupprimerPrerequis.Size = new Size(75, 23);
-            btnSupprimerPrerequis.TabIndex = 7;
+            btnSupprimerPrerequis.TabIndex = 10;
             btnSupprimerPrerequis.Text = "🗑️ Enlever";
             btnSupprimerPrerequis.UseVisualStyleBackColor = true;
             btnSupprimerPrerequis.Click += btnSupprimerPrerequis_Click;
@@ -233,10 +239,10 @@ namespace PlanAthena.Forms
             // btnAjouterPrerequis
             // 
             btnAjouterPrerequis.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnAjouterPrerequis.Location = new Point(342, 321);
+            btnAjouterPrerequis.Location = new Point(342, 341);
             btnAjouterPrerequis.Name = "btnAjouterPrerequis";
             btnAjouterPrerequis.Size = new Size(75, 23);
-            btnAjouterPrerequis.TabIndex = 6;
+            btnAjouterPrerequis.TabIndex = 9;
             btnAjouterPrerequis.Text = "➕ Ajouter";
             btnAjouterPrerequis.UseVisualStyleBackColor = true;
             btnAjouterPrerequis.Click += btnAjouterPrerequis_Click;
@@ -247,10 +253,10 @@ namespace PlanAthena.Forms
             listViewPrerequis.Columns.AddRange(new ColumnHeader[] { colPrerequisId, colPrerequisNom });
             listViewPrerequis.FullRowSelect = true;
             listViewPrerequis.GridLines = true;
-            listViewPrerequis.Location = new Point(16, 104);
+            listViewPrerequis.Location = new Point(16, 124);
             listViewPrerequis.Name = "listViewPrerequis";
             listViewPrerequis.Size = new Size(320, 200);
-            listViewPrerequis.TabIndex = 5;
+            listViewPrerequis.TabIndex = 8;
             listViewPrerequis.UseCompatibleStateImageBehavior = false;
             listViewPrerequis.View = View.Details;
             // 
@@ -267,11 +273,40 @@ namespace PlanAthena.Forms
             // lblPrerequis
             // 
             lblPrerequis.AutoSize = true;
-            lblPrerequis.Location = new Point(16, 86);
+            lblPrerequis.Location = new Point(16, 106);
             lblPrerequis.Name = "lblPrerequis";
             lblPrerequis.Size = new Size(60, 15);
-            lblPrerequis.TabIndex = 4;
+            lblPrerequis.TabIndex = 7;
             lblPrerequis.Text = "Prérequis:";
+            // 
+            // btnChoisirCouleur
+            // 
+            btnChoisirCouleur.Location = new Point(192, 80);
+            btnChoisirCouleur.Name = "btnChoisirCouleur";
+            btnChoisirCouleur.Size = new Size(100, 23);
+            btnChoisirCouleur.TabIndex = 6;
+            btnChoisirCouleur.Text = "🎨 Choisir";
+            btnChoisirCouleur.UseVisualStyleBackColor = true;
+            btnChoisirCouleur.Click += btnChoisirCouleur_Click;
+            // 
+            // panelCouleurApercu
+            // 
+            panelCouleurApercu.BorderStyle = BorderStyle.FixedSingle;
+            panelCouleurApercu.Location = new Point(70, 80);
+            panelCouleurApercu.Name = "panelCouleurApercu";
+            panelCouleurApercu.Size = new Size(116, 23);
+            panelCouleurApercu.TabIndex = 5;
+            panelCouleurApercu.BackColor = Color.LightGray;
+            panelCouleurApercu.Click += btnChoisirCouleur_Click;
+            // 
+            // lblCouleur
+            // 
+            lblCouleur.AutoSize = true;
+            lblCouleur.Location = new Point(16, 83);
+            lblCouleur.Name = "lblCouleur";
+            lblCouleur.Size = new Size(51, 15);
+            lblCouleur.TabIndex = 4;
+            lblCouleur.Text = "Couleur:";
             // 
             // txtNom
             // 
@@ -403,5 +438,8 @@ namespace PlanAthena.Forms
         private Button btnImporter;
         private Button btnExporter;
         private Button btnFermer;
+        private Label lblCouleur;
+        private Panel panelCouleurApercu;
+        private Button btnChoisirCouleur;
     }
 }

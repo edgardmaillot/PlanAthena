@@ -19,6 +19,7 @@ namespace PlanAthena.Forms
         private readonly ProjetService _projetService;
         private readonly GanttExportService _ganttExportService;
         private readonly ConfigurationBuilder _configBuilder;
+        private readonly DecoupageTachesService _decoupageTachesService;
 
         private InformationsProjet _projetActuel;
         private PlanAthena.Core.Facade.Dto.Output.ProcessChantierResultDto _dernierResultatPlanification;
@@ -35,6 +36,7 @@ namespace PlanAthena.Forms
             _projetService = _serviceProvider.GetRequiredService<ProjetService>();
             _ganttExportService = _serviceProvider.GetRequiredService<GanttExportService>();
             _configBuilder = _serviceProvider.GetRequiredService<ConfigurationBuilder>();
+            _decoupageTachesService = _serviceProvider.GetRequiredService<DecoupageTachesService>();
 
             InitializeInterface();
             CreerNouveauProjetParDefaut();
@@ -205,10 +207,7 @@ namespace PlanAthena.Forms
 
         private void OuvrirGestionTaches_Click(object sender, EventArgs e)
         {
-            var dependanceService = _serviceProvider.GetRequiredService<Services.Processing.DependanceService>();
-
-
-            using var form = new TacheForm(_tacheService, _metierService, dependanceService);
+            using var form = new TacheForm(_tacheService, _metierService, _decoupageTachesService);
             form.ShowDialog();
         }
 
@@ -228,7 +227,7 @@ namespace PlanAthena.Forms
         {
             Log("Lancement de la planification...");
 
-            // MODIFIÉ: Appel à la méthode de validation dans le service
+            // Validation des données avant planification
             if (!_projetService.ValiderDonneesAvantPlanification(out string messageValidation))
             {
                 Log($"ERREUR : {messageValidation}");
@@ -239,7 +238,6 @@ namespace PlanAthena.Forms
             try
             {
                 Log("Construction de la configuration...");
-                // MODIFIÉ: Utilisation du nouveau builder
                 var configuration = _configBuilder.ConstruireDepuisUI(
                     chkListJoursOuvres.CheckedItems.Cast<DayOfWeek>().ToList(),
                     (int)numHeureDebut.Value,
@@ -253,8 +251,17 @@ namespace PlanAthena.Forms
                     numCoutIndirect.Value
                 );
 
+                // Afficher les statistiques de traitement avant planification
+                var statsTraitement = _planificationService.ObtenirStatistiquesTraitement();
+                Log($"Préparation des données : {statsTraitement.Resume}");
+
                 Log("Lancement de la planification avec PlanAthena...");
-                _planificationService.ChargerDonnees(_ouvrierService.ObtenirTousLesOuvriers(), _tacheService.ObtenirToutesLesTaches(), _metierService.GetAllMetiers().ToList());
+                _planificationService.ChargerDonnees(
+                    _ouvrierService.ObtenirTousLesOuvriers(),
+                    _tacheService.ObtenirToutesLesTaches(),
+                    _metierService.GetAllMetiers().ToList()
+                );
+
                 var resultatDto = await _planificationService.LancerPlanificationAsync(configuration);
 
                 _dernierResultatPlanification = resultatDto;
@@ -378,8 +385,29 @@ namespace PlanAthena.Forms
             try
             {
                 var resume = _projetService.ObtenirResumeProjet();
-                lblResume.Text = $"Résumé: {resume.StatistiquesOuvriers.NombreOuvriersTotal} ouvriers, {resume.NombreMetiers} métiers, {resume.StatistiquesTaches.NombreTachesTotal} tâches";
+                var jalonsUtilisateur = _tacheService.ObtenirToutesLesTaches().Count(t => _metierService.EstJalon(t));
+
+                lblResume.Text = $"Résumé: {resume.StatistiquesOuvriers.NombreOuvriersTotal} ouvriers, {resume.NombreMetiers} métiers, {resume.StatistiquesTaches.NombreTachesTotal} tâches (+{jalonsUtilisateur} jalons)";
                 lblMapping.Text = $"Mapping: {resume.StatistiquesMappingMetiers.PourcentageMapping:F0}% ({resume.StatistiquesMappingMetiers.TachesAvecMetier}/{resume.StatistiquesMappingMetiers.TotalTaches} tâches)";
+
+                // MODIFIÉ: Afficher les statistiques simplifiées de traitement si des données existent
+                if (resume.StatistiquesTaches.NombreTachesTotal > 0)
+                {
+                    try
+                    {
+                        var statsTraitement = _planificationService.ObtenirStatistiquesTraitement();
+                        if (statsTraitement.TachesSolveur > statsTraitement.TachesChef)
+                        {
+                            var decoupees = statsTraitement.TachesDecoupees;
+                            var jalons = statsTraitement.JalonsTechniques;
+                            lblMapping.Text += $" | Préparation: {decoupees} découpées, +{jalons} jalons tech.";
+                        }
+                    }
+                    catch
+                    {
+                        // Ignorer les erreurs de calcul des statistiques de traitement
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -424,8 +452,7 @@ namespace PlanAthena.Forms
             serviceCollection.AddScoped<PlanAthena.Core.Application.Interfaces.IConstructeurProblemeOrTools, PlanAthena.Core.Infrastructure.Services.OrTools.ConstructeurProblemeOrTools>();
             serviceCollection.AddScoped<PlanAthenaCoreFacade>();
 
-            // --- CORRECTION PRINCIPALE ---
-            // Les services qui contiennent des données d'état doivent être Singleton
+            // Services qui contiennent des données d'état doivent être Singleton
             serviceCollection.AddSingleton<MetierService>();
             serviceCollection.AddSingleton<OuvrierService>();
             serviceCollection.AddSingleton<TacheService>();
@@ -435,11 +462,12 @@ namespace PlanAthena.Forms
             serviceCollection.AddScoped<CsvDataService>();
             serviceCollection.AddScoped<ExcelReader>();
             serviceCollection.AddScoped<DataTransformer>();
-            serviceCollection.AddScoped<ChantierDataProcessor>();
             serviceCollection.AddScoped<PlanificationService>();
             serviceCollection.AddScoped<GanttExportService>();
             serviceCollection.AddScoped<ConfigurationBuilder>();
-            serviceCollection.AddScoped<DependanceService>();
+
+            // NOUVEAUX SERVICES
+            serviceCollection.AddScoped<DecoupageTachesService>();
 
             return serviceCollection.BuildServiceProvider();
         }

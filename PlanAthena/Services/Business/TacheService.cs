@@ -4,36 +4,48 @@ using PlanAthena.Services.DataAccess;
 namespace PlanAthena.Services.Business
 {
     /// <summary>
-    /// Service de gestion des tâches, blocs et lots
+    /// SERVICE SOURCE DE VÉRITÉ - Gestion simplifiée des tâches
+    /// PRINCIPE: Ce que décide le chef ici est respecté partout
     /// </summary>
     public class TacheService
     {
         private readonly List<TacheRecord> _taches = new List<TacheRecord>();
-        private readonly Dictionary<string, string> _mappingTacheMetier = new Dictionary<string, string>();
         private readonly CsvDataService _csvDataService;
         private readonly ExcelReader _excelReader;
+        private readonly MetierService _metierService;
 
-        public TacheService(CsvDataService csvDataService, ExcelReader excelReader)
+        // Compteurs pour génération d'ID automatique
+        private int _compteurTaches = 1;
+        private int _compteurJalons = 1;
+
+        public TacheService(CsvDataService csvDataService, ExcelReader excelReader, MetierService metierService)
         {
             _csvDataService = csvDataService ?? throw new ArgumentNullException(nameof(csvDataService));
             _excelReader = excelReader ?? throw new ArgumentNullException(nameof(excelReader));
+            _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
         }
 
-        #region CRUD Tâches
+        #region CRUD Tâches - SIMPLIFIÉ
 
         /// <summary>
-        /// Ajoute une nouvelle tâche
+        /// Ajoute une nouvelle tâche avec génération automatique d'ID si nécessaire
         /// </summary>
         public void AjouterTache(TacheRecord tache)
         {
             if (tache == null)
                 throw new ArgumentNullException(nameof(tache));
 
+            // Génération automatique d'ID si vide
             if (string.IsNullOrWhiteSpace(tache.TacheId))
-                throw new ArgumentException("L'ID de la tâche ne peut pas être vide.");
+            {
+                tache.TacheId = GenererIdUnique(tache);
+            }
 
+            // Vérifier unicité
             if (_taches.Any(t => t.TacheId == tache.TacheId))
+            {
                 throw new InvalidOperationException($"La tâche {tache.TacheId} existe déjà.");
+            }
 
             _taches.Add(tache);
         }
@@ -50,11 +62,12 @@ namespace PlanAthena.Services.Business
             if (tacheExistante == null)
                 throw new InvalidOperationException($"Tâche {tacheModifiee.TacheId} non trouvée.");
 
-            // Mise à jour des propriétés
+            // Mise à jour de TOUTES les propriétés
             tacheExistante.TacheNom = tacheModifiee.TacheNom;
             tacheExistante.HeuresHommeEstimees = tacheModifiee.HeuresHommeEstimees;
             tacheExistante.MetierId = tacheModifiee.MetierId;
             tacheExistante.Dependencies = tacheModifiee.Dependencies;
+            tacheExistante.ExclusionsDependances = tacheModifiee.ExclusionsDependances;
             tacheExistante.LotId = tacheModifiee.LotId;
             tacheExistante.LotNom = tacheModifiee.LotNom;
             tacheExistante.LotPriorite = tacheModifiee.LotPriorite;
@@ -87,9 +100,73 @@ namespace PlanAthena.Services.Business
             }
 
             _taches.Remove(tache);
+        }
 
-            // Supprimer le mapping associé s'il existe
-            _mappingTacheMetier.Remove(tacheId);
+        #endregion
+
+        #region Génération d'ID automatique
+
+        /// <summary>
+        /// Génère un ID unique pour une nouvelle tâche ou jalon
+        /// </summary>
+        private string GenererIdUnique(TacheRecord tache)
+        {
+            string prefixe;
+            int compteur;
+
+            if (_metierService.EstJalon(tache))
+            {
+                prefixe = "J";
+                compteur = _compteurJalons++;
+            }
+            else
+            {
+                prefixe = "T";
+                compteur = _compteurTaches++;
+            }
+
+            string idCandidat;
+            do
+            {
+                idCandidat = $"{prefixe}{compteur:D3}";
+                if (!_taches.Any(t => t.TacheId == idCandidat))
+                    break;
+                compteur++;
+            } while (true);
+
+            // Mettre à jour le compteur pour la prochaine génération
+            if (_metierService.EstJalon(tache))
+                _compteurJalons = compteur + 1;
+            else
+                _compteurTaches = compteur + 1;
+
+            return idCandidat;
+        }
+
+        /// <summary>
+        /// Met à jour les compteurs basés sur les IDs existants
+        /// </summary>
+        private void MettreAJourCompteurs()
+        {
+            var maxTache = 0;
+            var maxJalon = 0;
+
+            foreach (var tache in _taches)
+            {
+                if (tache.TacheId?.StartsWith("T") == true &&
+                    int.TryParse(tache.TacheId.Substring(1), out var numTache))
+                {
+                    maxTache = Math.Max(maxTache, numTache);
+                }
+                else if (tache.TacheId?.StartsWith("J") == true &&
+                         int.TryParse(tache.TacheId.Substring(1), out var numJalon))
+                {
+                    maxJalon = Math.Max(maxJalon, numJalon);
+                }
+            }
+
+            _compteurTaches = maxTache + 1;
+            _compteurJalons = maxJalon + 1;
         }
 
         #endregion
@@ -97,7 +174,7 @@ namespace PlanAthena.Services.Business
         #region Consultation Tâches
 
         /// <summary>
-        /// Obtient toutes les tâches
+        /// SOURCE DE VÉRITÉ: Obtient toutes les tâches définies par le chef
         /// </summary>
         public List<TacheRecord> ObtenirToutesLesTaches()
         {
@@ -148,6 +225,161 @@ namespace PlanAthena.Services.Business
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Obtient tous les jalons (utilisateur)
+        /// </summary>
+        public List<TacheRecord> ObtenirJalons()
+        {
+            return _taches.Where(t => _metierService.EstJalon(t)).ToList();
+        }
+
+        /// <summary>
+        /// COMPATIBILITÉ: Obtient jalons de surcharge (maintenant tous les jalons)
+        /// </summary>
+        public List<TacheRecord> ObtenirJalonsSurcharge()
+        {
+            return ObtenirJalons();
+        }
+        /// <summary>
+        /// NOUVELLE MÉTHODE: Gère l'édition des jalons J_Sync_ (créés dynamiquement)
+        /// </summary>
+        /// <summary>
+        /// MÉTHODE CORRIGÉE: Gère l'édition des jalons J_Sync_ sans créer de boucles
+        /// </summary>
+        public void ModifierOuCreerJalonSync(TacheRecord jalonModifie)
+        {
+            if (jalonModifie == null)
+                throw new ArgumentNullException(nameof(jalonModifie));
+
+            // Vérifier si c'est un jalon J_Sync_
+            if (!jalonModifie.TacheId.StartsWith("J_Sync_"))
+            {
+                // Utiliser la méthode normale pour les autres tâches
+                ModifierTache(jalonModifie);
+                return;
+            }
+
+            // Nettoyer l'ID des caractères problématiques
+            var idNettoye = NettoyerIdJalon(jalonModifie.TacheId);
+
+            // Vérifier si une surcharge utilisateur existe déjà
+            var jalonExistant = _taches.FirstOrDefault(t => t.TacheId == idNettoye);
+
+            if (jalonExistant != null)
+            {
+                // MODIFICATION: Mettre à jour le jalon existant
+                jalonExistant.TacheNom = jalonModifie.TacheNom;
+                jalonExistant.HeuresHommeEstimees = jalonModifie.HeuresHommeEstimees;
+                jalonExistant.Dependencies = jalonModifie.Dependencies;
+                jalonExistant.ExclusionsDependances = jalonModifie.ExclusionsDependances;
+                // Les autres propriétés (bloc, lot, métier) restent inchangées
+            }
+            else
+            {
+                // CRÉATION: Nouvelle surcharge utilisateur du jalon J_Sync_
+                var nouveauJalon = new TacheRecord
+                {
+                    TacheId = idNettoye,
+                    TacheNom = jalonModifie.TacheNom,
+                    HeuresHommeEstimees = jalonModifie.HeuresHommeEstimees,
+                    MetierId = _metierService.GetJalonMetierId(),
+                    Dependencies = jalonModifie.Dependencies,
+                    ExclusionsDependances = jalonModifie.ExclusionsDependances,
+                    LotId = jalonModifie.LotId,
+                    LotNom = jalonModifie.LotNom,
+                    LotPriorite = jalonModifie.LotPriorite,
+                    BlocId = jalonModifie.BlocId,
+                    BlocNom = jalonModifie.BlocNom,
+                    BlocCapaciteMaxOuvriers = jalonModifie.BlocCapaciteMaxOuvriers
+                };
+
+                _taches.Add(nouveauJalon);
+            }
+        }
+
+        /// <summary>
+        /// Nettoie l'ID d'un jalon pour éviter les problèmes avec les espaces et caractères spéciaux
+        /// </summary>
+        private string NettoyerIdJalon(string idOriginal)
+        {
+            // Remplacer les espaces et caractères problématiques par des underscores
+            return idOriginal
+                .Replace(" ", "_")
+                .Replace("-", "_")
+                .Replace(".", "_")
+                .Replace("/", "_")
+                .Replace("\\", "_");
+        }
+
+        /// <summary>
+        /// MÉTHODE PUBLIQUE: Pour que TacheForm puisse distinguer les jalons J_Sync_
+        /// </summary>
+        public bool EstJalonSync(string tacheId)
+        {
+            return tacheId.StartsWith("J_Sync_");
+        }
+
+        /// <summary>
+        /// MÉTHODE PUBLIQUE: Vérifie si un jalon J_Sync_ a été surchargé par l'utilisateur
+        /// </summary>
+        public bool EstJalonSyncSurcharge(string tacheId)
+        {
+            return EstJalonSync(tacheId) && _taches.Any(t => t.TacheId == tacheId);
+        }
+
+        /// <summary>
+        /// Copie une tâche (méthode utilitaire)
+        /// </summary>
+        private TacheRecord CopierTache(TacheRecord source)
+        {
+            return new TacheRecord
+            {
+                TacheId = source.TacheId,
+                TacheNom = source.TacheNom,
+                HeuresHommeEstimees = source.HeuresHommeEstimees,
+                MetierId = source.MetierId,
+                Dependencies = source.Dependencies,
+                ExclusionsDependances = source.ExclusionsDependances,
+                LotId = source.LotId,
+                LotNom = source.LotNom,
+                LotPriorite = source.LotPriorite,
+                BlocId = source.BlocId,
+                BlocNom = source.BlocNom,
+                BlocCapaciteMaxOuvriers = source.BlocCapaciteMaxOuvriers
+            };
+        }
+        #endregion
+
+        #region Aide aux Décisions Chef
+
+        /// <summary>
+        /// Suggère des dépendances métier pour une tâche (le chef peut les ignorer)
+        /// </summary>
+        public List<string> SuggererDependancesMetier(TacheRecord tache)
+        {
+            return _metierService.SuggererDependancesMetier(tache, _taches);
+        }
+
+        /// <summary>
+        /// Applique automatiquement les suggestions métier (optionnel pour le chef)
+        /// </summary>
+        public void AppliquerSuggestionsMetier(string tacheId)
+        {
+            var tache = ObtenirTacheParId(tacheId);
+            if (tache == null) return;
+
+            var suggestions = SuggererDependancesMetier(tache);
+            if (!suggestions.Any()) return;
+
+            // Fusionner avec les dépendances existantes
+            var dependancesExistantes = string.IsNullOrEmpty(tache.Dependencies)
+                ? new List<string>()
+                : tache.Dependencies.Split(',').Select(d => d.Trim()).ToList();
+
+            var toutesLesDependances = dependancesExistantes.Union(suggestions).Distinct();
+            tache.Dependencies = string.Join(",", toutesLesDependances);
         }
 
         #endregion
@@ -232,7 +464,7 @@ namespace PlanAthena.Services.Business
 
         #endregion
 
-        #region Mapping Tâches-Métiers
+        #region Mapping Tâches-Métiers COMPATIBILITÉ
 
         /// <summary>
         /// Associe une tâche à un métier
@@ -250,7 +482,6 @@ namespace PlanAthena.Services.Business
                 throw new InvalidOperationException($"Tâche {tacheId} non trouvée.");
 
             tache.MetierId = metierId;
-            _mappingTacheMetier[tacheId] = metierId;
         }
 
         /// <summary>
@@ -301,16 +532,12 @@ namespace PlanAthena.Services.Business
             if (remplacerExistantes)
             {
                 _taches.Clear();
-                _mappingTacheMetier.Clear();
             }
 
             _taches.AddRange(tachesImportees);
 
-            // Reconstruire le mapping
-            foreach (var tache in tachesImportees.Where(t => !string.IsNullOrWhiteSpace(t.MetierId)))
-            {
-                _mappingTacheMetier[tache.TacheId] = tache.MetierId;
-            }
+            // Mettre à jour les compteurs basés sur les IDs existants
+            MettreAJourCompteurs();
 
             return tachesImportees.Count;
         }
@@ -322,8 +549,6 @@ namespace PlanAthena.Services.Business
         {
             // TODO: Implémentation spécifique au format Fieldwire/Dalux
             var donneesExcel = _excelReader.ImportFieldwireTaches(filePath);
-
-            // Placeholder - à implémenter selon le format Fieldwire/Dalux réel
             return 0;
         }
 
@@ -341,17 +566,11 @@ namespace PlanAthena.Services.Business
         public void ChargerTaches(List<TacheRecord> taches)
         {
             _taches.Clear();
-            _mappingTacheMetier.Clear();
 
             if (taches != null)
             {
                 _taches.AddRange(taches);
-
-                // Reconstruire le mapping
-                foreach (var tache in taches.Where(t => !string.IsNullOrWhiteSpace(t.MetierId)))
-                {
-                    _mappingTacheMetier[tache.TacheId] = tache.MetierId;
-                }
+                MettreAJourCompteurs();
             }
         }
 
@@ -360,7 +579,7 @@ namespace PlanAthena.Services.Business
         #region Statistiques
 
         /// <summary>
-        /// Obtient des statistiques sur les tâches
+        /// Obtient des statistiques sur les tâches du chef
         /// </summary>
         public StatistiquesTaches ObtenirStatistiques()
         {
@@ -373,18 +592,24 @@ namespace PlanAthena.Services.Business
                     HeuresHommeMoyenneParTache = 0,
                     NombreBlocsUniques = 0,
                     NombreLotsUniques = 0,
-                    TachesAvecDependances = 0
+                    TachesAvecDependances = 0,
+                    JalonsSurcharge = 0
                 };
             }
+
+            var jalons = _taches.Count(t => _metierService.EstJalon(t));
 
             return new StatistiquesTaches
             {
                 NombreTachesTotal = _taches.Count,
                 HeuresHommeTotal = _taches.Sum(t => t.HeuresHommeEstimees),
-                HeuresHommeMoyenneParTache = _taches.Average(t => t.HeuresHommeEstimees),
+                HeuresHommeMoyenneParTache = _taches.Where(t => !_metierService.EstJalon(t)).Any()
+                    ? _taches.Where(t => !_metierService.EstJalon(t)).Average(t => t.HeuresHommeEstimees)
+                    : 0,
                 NombreBlocsUniques = _taches.Select(t => t.BlocId).Distinct().Count(),
                 NombreLotsUniques = _taches.Select(t => t.LotId).Distinct().Count(),
-                TachesAvecDependances = _taches.Count(t => !string.IsNullOrWhiteSpace(t.Dependencies))
+                TachesAvecDependances = _taches.Count(t => !string.IsNullOrWhiteSpace(t.Dependencies)),
+                JalonsSurcharge = jalons // Tous les jalons sont maintenant "jalons utilisateur"
             };
         }
 
@@ -396,7 +621,8 @@ namespace PlanAthena.Services.Business
         public void Vider()
         {
             _taches.Clear();
-            _mappingTacheMetier.Clear();
+            _compteurTaches = 1;
+            _compteurJalons = 1;
         }
     }
 
@@ -438,6 +664,7 @@ namespace PlanAthena.Services.Business
         public int NombreBlocsUniques { get; set; }
         public int NombreLotsUniques { get; set; }
         public int TachesAvecDependances { get; set; }
+        public int JalonsSurcharge { get; set; }
     }
 
     /// <summary>

@@ -82,6 +82,21 @@ namespace PlanAthena.Forms
                 {
                     Tag = metier
                 };
+
+                // Ajouter un indicateur visuel de couleur dans la liste
+                if (!string.IsNullOrEmpty(metier.CouleurHex))
+                {
+                    try
+                    {
+                        var couleur = ColorTranslator.FromHtml(metier.CouleurHex);
+                        item.BackColor = Color.FromArgb(50, couleur); // Couleur très légère en arrière-plan
+                    }
+                    catch
+                    {
+                        // Ignorer les erreurs de couleur malformée
+                    }
+                }
+
                 listViewMetiers.Items.Add(item);
             }
         }
@@ -108,8 +123,32 @@ namespace PlanAthena.Forms
             txtMetierId.ReadOnly = true;
             txtNom.ReadOnly = true;
 
+            // Afficher la couleur du métier
+            AfficherCouleurMetier(metier.CouleurHex);
+
             RafraichirListePrerequis();
             RafraichirUtilisation();
+        }
+
+        private void AfficherCouleurMetier(string couleurHex)
+        {
+            if (!string.IsNullOrEmpty(couleurHex))
+            {
+                try
+                {
+                    var couleur = ColorTranslator.FromHtml(couleurHex);
+                    panelCouleurApercu.BackColor = couleur;
+                }
+                catch
+                {
+                    // En cas d'erreur, utiliser la couleur par défaut
+                    panelCouleurApercu.BackColor = Color.LightGray;
+                }
+            }
+            else
+            {
+                panelCouleurApercu.BackColor = Color.LightGray;
+            }
         }
 
         private void NettoyerDetails()
@@ -120,6 +159,7 @@ namespace PlanAthena.Forms
             txtNom.Clear();
             listViewPrerequis.Items.Clear();
             lblUtilisation.Text = "";
+            panelCouleurApercu.BackColor = Color.LightGray;
         }
 
         private void RafraichirListePrerequis()
@@ -172,12 +212,67 @@ namespace PlanAthena.Forms
 
         #endregion
 
+        #region Gestion des couleurs
+
+        private void btnChoisirCouleur_Click(object sender, EventArgs e)
+        {
+            if (_metierSelectionne == null) return;
+
+            using var colorDialog = new ColorDialog();
+
+            // Définir la couleur actuelle si elle existe
+            if (!string.IsNullOrEmpty(_metierSelectionne.CouleurHex))
+            {
+                try
+                {
+                    colorDialog.Color = ColorTranslator.FromHtml(_metierSelectionne.CouleurHex);
+                }
+                catch
+                {
+                    colorDialog.Color = Color.LightBlue;
+                }
+            }
+            else
+            {
+                colorDialog.Color = Color.LightBlue;
+            }
+
+            colorDialog.AllowFullOpen = true;
+            colorDialog.FullOpen = true;
+
+            if (colorDialog.ShowDialog() == DialogResult.OK)
+            {
+                // Convertir la couleur en format hexadécimal
+                var couleurHex = ColorTranslator.ToHtml(colorDialog.Color);
+                _metierSelectionne.CouleurHex = couleurHex;
+
+                // Mettre à jour l'aperçu
+                panelCouleurApercu.BackColor = colorDialog.Color;
+
+                // Si on n'est pas en mode édition, sauvegarder immédiatement
+                if (txtMetierId.ReadOnly && txtNom.ReadOnly)
+                {
+                    try
+                    {
+                        _metierService.ModifierMetier(_metierSelectionne.MetierId, _metierSelectionne.Nom, _metierSelectionne.PrerequisMetierIds, couleurHex);
+                        RafraichirListeMetiers(); // Pour mettre à jour l'indicateur visuel dans la liste
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Erreur lors de la sauvegarde de la couleur: {ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        #endregion
+
         #region Actions CRUD
 
         private void btnNouveau_Click(object sender, EventArgs e)
         {
             // On passe en "mode édition" pour un nouvel objet
-            _metierSelectionne = new MetierRecord { MetierId = "NOUVEAU_METIER", Nom = "Nouveau métier" };
+            _metierSelectionne = new MetierRecord { MetierId = "NOUVEAU_METIER", Nom = "Nouveau métier", CouleurHex = "" };
 
             AfficherDetailsMetier(_metierSelectionne);
 
@@ -205,13 +300,21 @@ namespace PlanAthena.Forms
             {
                 try
                 {
-                    if (IsEditing) // C'est un nouveau métier
+                    var couleurHex = _metierSelectionne.CouleurHex ?? "";
+
+                    if (txtMetierId.Text == "NOUVEAU_METIER" || !_metierService.GetAllMetiers().Any(m => m.MetierId == _metierSelectionne.MetierId)) // C'est un nouveau métier
                     {
-                        _metierService.AjouterMetier(new MetierRecord { MetierId = txtMetierId.Text, Nom = txtNom.Text, PrerequisMetierIds = "" });
+                        _metierService.AjouterMetier(new MetierRecord
+                        {
+                            MetierId = txtMetierId.Text,
+                            Nom = txtNom.Text,
+                            PrerequisMetierIds = "",
+                            CouleurHex = couleurHex
+                        });
                     }
                     else // C'est une modification
                     {
-                        _metierService.ModifierMetier(_metierSelectionne.MetierId, txtNom.Text, _metierSelectionne.PrerequisMetierIds);
+                        _metierService.ModifierMetier(_metierSelectionne.MetierId, txtNom.Text, _metierSelectionne.PrerequisMetierIds, couleurHex);
                     }
 
                     txtMetierId.ReadOnly = true;
@@ -275,7 +378,7 @@ namespace PlanAthena.Forms
             {
                 var nouveauxPrerequis = prerequisActuels.ToList();
                 nouveauxPrerequis.Add(dialog.MetierSelectionne.MetierId);
-                _metierService.ModifierMetier(_metierSelectionne.MetierId, _metierSelectionne.Nom, string.Join(",", nouveauxPrerequis));
+                _metierService.ModifierMetier(_metierSelectionne.MetierId, _metierSelectionne.Nom, string.Join(",", nouveauxPrerequis), _metierSelectionne.CouleurHex);
                 RafraichirListePrerequis();
                 RafraichirListeMetiers();
             }
@@ -289,7 +392,7 @@ namespace PlanAthena.Forms
             var prerequisActuels = _metierService.GetPrerequisForMetier(_metierSelectionne.MetierId).ToList();
             if (prerequisActuels.Remove(prerequisIdASupprimer))
             {
-                _metierService.ModifierMetier(_metierSelectionne.MetierId, _metierSelectionne.Nom, string.Join(",", prerequisActuels));
+                _metierService.ModifierMetier(_metierSelectionne.MetierId, _metierSelectionne.Nom, string.Join(",", prerequisActuels), _metierSelectionne.CouleurHex);
                 RafraichirListePrerequis();
                 RafraichirListeMetiers();
             }
@@ -348,7 +451,5 @@ namespace PlanAthena.Forms
         {
             this.Close();
         }
-
-        // Supprimé : txtMetierId_TextChanged et txtNom_TextChanged car la sauvegarde est maintenant explicite
     }
 }

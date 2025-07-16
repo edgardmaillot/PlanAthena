@@ -1,5 +1,3 @@
-// Fichier : Forms/TacheForm.cs
-
 using PlanAthena.Controls;
 using PlanAthena.Data;
 using PlanAthena.Forms;
@@ -13,19 +11,19 @@ namespace PlanAthena.Forms
     {
         private readonly TacheService _tacheService;
         private readonly MetierService _metierService;
-        private readonly DependanceService _dependanceService;
+        private readonly DecoupageTachesService _decoupageTachesService;
 
         private List<TacheRecord> _tachesBrutes = new List<TacheRecord>();
-        private List<TacheRecord> _tachesOptimisees = new List<TacheRecord>();
+        private List<MetierRecord> _metiers = new List<MetierRecord>();
         private readonly PertDiagramControl _pertControl;
         private TacheDetailForm _tacheDetailForm;
 
-        public TacheForm(TacheService tacheService, MetierService metierService, DependanceService dependanceService)
+        public TacheForm(TacheService tacheService, MetierService metierService, DecoupageTachesService decoupageTachesService)
         {
             InitializeComponent();
             _tacheService = tacheService ?? throw new ArgumentNullException(nameof(tacheService));
             _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
-            _dependanceService = dependanceService ?? throw new ArgumentNullException(nameof(dependanceService));
+            _decoupageTachesService = decoupageTachesService ?? throw new ArgumentNullException(nameof(decoupageTachesService));
 
             _pertControl = new PertDiagramControl();
             _pertControl.Dock = DockStyle.Fill;
@@ -46,6 +44,7 @@ namespace PlanAthena.Forms
             _tacheDetailForm.Show();
             _tacheDetailForm.TacheSauvegardee += (s, e) =>
             {
+                System.Diagnostics.Debug.WriteLine("[TacheForm] Tâche sauvegardée - Rafraîchissement");
                 ChargerDonnees();
                 RafraichirAffichage();
             };
@@ -57,31 +56,32 @@ namespace PlanAthena.Forms
             RafraichirAffichage();
         }
 
+        /// <summary>
+        /// Charge les données depuis la source de vérité (TacheService)
+        /// </summary>
         private void ChargerDonnees()
         {
+            var ancienCount = _tachesBrutes.Count;
             _tachesBrutes = _tacheService.ObtenirToutesLesTaches();
+            _metiers = _metierService.GetAllMetiers().ToList();
+
+            System.Diagnostics.Debug.WriteLine($"[TacheForm] ChargerDonnees: {ancienCount} -> {_tachesBrutes.Count} tâches");
         }
 
+        /// <summary>
+        /// AFFICHAGE SIMPLIFIÉ: Montre directement les décisions du chef
+        /// </summary>
         private void RafraichirAffichage()
         {
             try
             {
-                // Étape 1: Calculer les dépendances complètes et optimisées
-                _tachesOptimisees = _dependanceService.CalculerDependancesMetier(_tachesBrutes);
+                // Traiter pour IHM avec gestion des surcharges
+                var tachesPourIHM = _decoupageTachesService.TraiterPourIHM(_tachesBrutes);
 
-                // Étape 2: Vérifier les cycles (optionnel - pour debuggage)
-                var cycles = _dependanceService.DetecterCyclesDependances(_tachesOptimisees);
-                if (cycles.Any())
-                {
-                    MessageBox.Show($"Attention: Cycles détectés dans les dépendances:\n{string.Join("\n", cycles)}",
-                        "Cycles de dépendances", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
-
-                // Étape 3: Charger les tâches optimisées dans le diagramme
                 var filtreRecherche = txtRecherche.Text;
-                _pertControl.ChargerTaches(_tachesOptimisees, filtreRecherche);
+                _pertControl.ChargerDonnees(tachesPourIHM, _metiers, filtreRecherche, _metierService);
 
-                // Étape 4: Mettre à jour les statistiques
+                // Mettre à jour les statistiques
                 RafraichirStatistiques();
             }
             catch (Exception ex)
@@ -89,46 +89,70 @@ namespace PlanAthena.Forms
                 MessageBox.Show($"Erreur lors du rafraîchissement de l'affichage:\n{ex.Message}",
                     "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
-                // En cas d'erreur, fallback sur les données brutes
+                // Fallback: Afficher les données brutes
                 var filtreRecherche = txtRecherche.Text;
-                _pertControl.ChargerTaches(_tachesBrutes, filtreRecherche);
+                _pertControl.ChargerDonnees(_tachesBrutes, _metiers, filtreRecherche, _metierService);
                 RafraichirStatistiquesSimples();
             }
         }
 
+        /// <summary>
+        /// Statistiques combinées chef + solveur
+        /// </summary>
         private void RafraichirStatistiques()
         {
-            var totalTaches = _tachesBrutes.Count;
+            var totalTachesBrutes = _tachesBrutes.Count;
             var tachesAvecMetier = _tachesBrutes.Count(t => !string.IsNullOrEmpty(t.MetierId));
-            var pourcentageMapping = totalTaches > 0 ? (double)tachesAvecMetier / totalTaches * 100 : 0;
+            var pourcentageMapping = totalTachesBrutes > 0 ? (double)tachesAvecMetier / totalTachesBrutes * 100 : 0;
+            var jalonsUtilisateur = _tachesBrutes.Count(t => _metierService.EstJalon(t));
 
-            // Statistiques sur les dépendances
-            var statsDependances = _dependanceService.ObtenirStatistiques(_tachesBrutes, _tachesOptimisees);
+            try
+            {
+                // Obtenir les tâches pour IHM (avec jalons de sync)
+                var tachesPourIHM = _decoupageTachesService.TraiterPourIHM(_tachesBrutes);
+                var jalonsSync = tachesPourIHM.Count(t => _metierService.EstJalon(t)) - jalonsUtilisateur;
 
-            lblStatistiques.Text = $"Tâches: {totalTaches} | " +
-                                  $"Blocs: {_tachesBrutes.Select(t => t.BlocId).Distinct().Count()} | " +
-                                  $"Avec métier: {tachesAvecMetier} ({pourcentageMapping:F0}%) | " +
-                                  $"Dépendances: {statsDependances.NombreDependancesOptimisees} " +
-                                  $"(réduit de {statsDependances.NombreDependancesSupprimees})";
+                // Obtenir les stats de préparation solveur
+                var tachesSolveur = _decoupageTachesService.PreparerPourSolveur(_tachesBrutes);
+                var statsDecoupage = _decoupageTachesService.ObtenirStatistiques(_tachesBrutes, tachesSolveur);
+
+                lblStatistiques.Text = $"Chef: {totalTachesBrutes} tâches ({jalonsUtilisateur} jalons) | " +
+                                      $"IHM: {tachesPourIHM.Count} (+{jalonsSync} jalons sync) | " +
+                                      $"Solveur: {tachesSolveur.Count} " +
+                                      $"({statsDecoupage.TachesLonguesDecoupees} découpées, " +
+                                      $"{statsDecoupage.JalonsTechniquesCreees} jalons tech.) | " +
+                                      $"Blocs: {_tachesBrutes.Select(t => t.BlocId).Distinct().Count()} | " +
+                                      $"Avec métier: {tachesAvecMetier} ({pourcentageMapping:F0}%)";
+            }
+            catch (Exception)
+            {
+                RafraichirStatistiquesSimples();
+            }
         }
 
+        /// <summary>
+        /// Statistiques de base en cas d'erreur
+        /// </summary>
         private void RafraichirStatistiquesSimples()
         {
             var totalTaches = _tachesBrutes.Count;
             var tachesAvecMetier = _tachesBrutes.Count(t => !string.IsNullOrEmpty(t.MetierId));
             var pourcentageMapping = totalTaches > 0 ? (double)tachesAvecMetier / totalTaches * 100 : 0;
+            var jalonsUtilisateur = _tachesBrutes.Count(t => _metierService.EstJalon(t));
 
             lblStatistiques.Text = $"Tâches: {totalTaches} | " +
                                   $"Blocs: {_tachesBrutes.Select(t => t.BlocId).Distinct().Count()} | " +
-                                  $"Avec métier: {tachesAvecMetier} ({pourcentageMapping:F0}%)";
+                                  $"Avec métier: {tachesAvecMetier} ({pourcentageMapping:F0}%) | " +
+                                  $"Jalons: {jalonsUtilisateur}";
         }
 
         private void PertControl_TacheSelected(object sender, TacheSelectedEventArgs e)
         {
             // Afficher les informations de la tâche sélectionnée
-            lblTacheSelectionnee.Text = $"Sélectionnée: {e.Tache.TacheId} - {e.Tache.TacheNom}";
+            var typeAffichage = _metierService.EstJalon(e.Tache) ? "Jalon" : "Tâche";
+            lblTacheSelectionnee.Text = $"Sélectionnée: {e.Tache.TacheId} - {e.Tache.TacheNom} [{typeAffichage}]";
 
-            // Optionnel: Afficher les détails des dépendances dans le tooltip ou status
+            // Afficher les dépendances
             if (!string.IsNullOrEmpty(e.Tache.Dependencies))
             {
                 var dependances = e.Tache.Dependencies.Split(',').Select(d => d.Trim()).ToList();
@@ -136,9 +160,35 @@ namespace PlanAthena.Forms
             }
         }
 
+        /// <summary>
+        /// ÉDITION CORRIGÉE: Gestion spéciale des jalons J_Sync_
+        /// </summary>
         private void PertControl_TacheDoubleClicked(object sender, TacheSelectedEventArgs e)
         {
-            // Rechercher la tâche originale (brute) pour l'édition
+            System.Diagnostics.Debug.WriteLine($"[TacheForm] Double-clic sur tâche: {e.Tache.TacheId}");
+
+            // GESTION SPÉCIALE: Jalons J_Sync_
+            if (_tacheService.EstJalonSync(e.Tache.TacheId))
+            {
+                System.Diagnostics.Debug.WriteLine($"[TacheForm] Édition jalon J_Sync_: {e.Tache.TacheId}");
+
+                // Chercher d'abord dans les données brutes si une surcharge existe
+                var surchargeExistante = _tachesBrutes.FirstOrDefault(t => t.TacheId == e.Tache.TacheId);
+
+                if (surchargeExistante != null)
+                {
+                    // Éditer la surcharge existante
+                    AfficherDetailsTache(surchargeExistante, false);
+                }
+                else
+                {
+                    // Créer une nouvelle surcharge basée sur le jalon technique
+                    AfficherDetailsTacheJalonSync(e.Tache, true);
+                }
+                return;
+            }
+
+            // GESTION NORMALE: Toutes les autres tâches
             var tacheOriginale = _tachesBrutes.FirstOrDefault(t => t.TacheId == e.Tache.TacheId);
             if (tacheOriginale != null)
             {
@@ -151,11 +201,34 @@ namespace PlanAthena.Forms
             }
         }
 
+        private void AfficherDetailsTacheJalonSync(TacheRecord jalonSync, bool modeCreation)
+        {
+            var message = $"Vous allez créer une surcharge personnalisée du jalon :\n\n" +
+                         $"ID: {jalonSync.TacheId}\n" +
+                         $"Fonction: Synchroniser la fin du métier dans ce bloc\n\n" +
+                         $"Vous pourrez modifier :\n" +
+                         $"• Le nom du jalon\n" +
+                         $"• La durée d'attente (heures estimées)\n\n" +
+                         $"Les dépendances seront recalculées automatiquement.\n\n" +
+                         $"Continuer ?";
+
+            var result = MessageBox.Show(message, "Personnaliser Jalon de Synchronisation",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                _tacheDetailForm.ModeJalonSync = true;
+                _tacheDetailForm.ChargerTache(jalonSync, modeCreation);
+            }
+        }
+
         private void AfficherDetailsTache(TacheRecord tache, bool modeCreation)
         {
+            _tacheDetailForm.ModeJalonSync = false;
             _tacheDetailForm.ChargerTache(tache, modeCreation);
         }
 
+        
         #region Événements Interface
 
         private void txtRecherche_TextChanged(object sender, EventArgs e)
@@ -168,21 +241,41 @@ namespace PlanAthena.Forms
             AfficherDetailsTache(null, true);
         }
 
+        private void btnNouveauJalon_Click(object sender, EventArgs e)
+        {
+            // Créer un nouveau jalon pré-configuré
+            var nouveauJalon = new TacheRecord
+            {
+                HeuresHommeEstimees = 0,
+                MetierId = _metierService.GetJalonMetierId(),
+                TacheNom = "Attente 0 heures"
+            };
+
+            // Sélectionner le premier lot/bloc par défaut
+            var lots = _tacheService.ObtenirTousLesLots();
+            var blocs = _tacheService.ObtenirTousLesBlocs();
+            if (lots.Any())
+            {
+                nouveauJalon.LotId = lots.First().LotId;
+                nouveauJalon.LotNom = lots.First().LotNom;
+                nouveauJalon.LotPriorite = lots.First().Priorite;
+            }
+            if (blocs.Any())
+            {
+                nouveauJalon.BlocId = blocs.First().BlocId;
+                nouveauJalon.BlocNom = blocs.First().BlocNom;
+                nouveauJalon.BlocCapaciteMaxOuvriers = blocs.First().CapaciteMaxOuvriers;
+            }
+
+            AfficherDetailsTache(nouveauJalon, true);
+        }
+
         private void btnModifierTache_Click(object sender, EventArgs e)
         {
             var tacheSelectionnee = _pertControl.TacheSelectionnee;
             if (tacheSelectionnee != null)
             {
-                var tacheOriginale = _tachesBrutes.FirstOrDefault(t => t.TacheId == tacheSelectionnee.TacheId);
-                if (tacheOriginale != null)
-                {
-                    AfficherDetailsTache(tacheOriginale, false);
-                }
-                else
-                {
-                    MessageBox.Show("Impossible de trouver la tâche originale pour l'édition.",
-                        "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
+                AfficherDetailsTache(tacheSelectionnee, false);
             }
             else
             {
@@ -201,7 +294,8 @@ namespace PlanAthena.Forms
                 return;
             }
 
-            var result = MessageBox.Show($"Êtes-vous sûr de vouloir supprimer la tâche '{tacheSelectionnee.TacheId}' ?\n\nNom: {tacheSelectionnee.TacheNom}\nCette action est irréversible.",
+            var typeElement = _metierService.EstJalon(tacheSelectionnee) ? "jalon" : "tâche";
+            var result = MessageBox.Show($"Êtes-vous sûr de vouloir supprimer {typeElement} '{tacheSelectionnee.TacheId}' ?\n\nNom: {tacheSelectionnee.TacheNom}\nCette action est irréversible.",
                 "Confirmation de suppression", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (result == DialogResult.Yes)
@@ -213,7 +307,8 @@ namespace PlanAthena.Forms
                     RafraichirAffichage();
                     lblTacheSelectionnee.Text = "Aucune sélection";
                     _tacheDetailForm.ChargerTache(null, true);
-                    MessageBox.Show("Tâche supprimée avec succès.", "Suppression", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show($"{char.ToUpper(typeElement[0])}{typeElement.Substring(1)} supprimé{(typeElement == "tâche" ? "e" : "")} avec succès.",
+                        "Suppression", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
@@ -229,8 +324,36 @@ namespace PlanAthena.Forms
 
         private void btnMappingAuto_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("La fonction de mapping automatique est en cours de développement.",
-                "Fonctionnalité en développement", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            var result = MessageBox.Show("Voulez-vous appliquer automatiquement les suggestions de dépendances métier à toutes les tâches ?\n\n" +
+                                       "Cela ajoutera les dépendances suggérées sans écraser les dépendances existantes.",
+                "Mapping automatique", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                try
+                {
+                    int compteur = 0;
+                    foreach (var tache in _tachesBrutes.Where(t => !_metierService.EstJalon(t)))
+                    {
+                        var suggestions = _tacheService.SuggererDependancesMetier(tache);
+                        if (suggestions.Any())
+                        {
+                            _tacheService.AppliquerSuggestionsMetier(tache.TacheId);
+                            compteur++;
+                        }
+                    }
+
+                    ChargerDonnees();
+                    RafraichirAffichage();
+                    MessageBox.Show($"Suggestions appliquées à {compteur} tâches.",
+                        "Mapping terminé", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Erreur lors du mapping automatique :\n{ex.Message}",
+                        "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
 
         private void btnPan_Click(object sender, EventArgs e)
@@ -252,30 +375,31 @@ namespace PlanAthena.Forms
         {
             try
             {
-                var cycles = _dependanceService.DetecterCyclesDependances(_tachesOptimisees);
-                var statsDependances = _dependanceService.ObtenirStatistiques(_tachesBrutes, _tachesOptimisees);
+                var statsChef = _tacheService.ObtenirStatistiques();
+                var tachesSolveur = _decoupageTachesService.PreparerPourSolveur(_tachesBrutes);
+                var statsDecoupage = _decoupageTachesService.ObtenirStatistiques(_tachesBrutes, tachesSolveur);
 
-                var message = $"Analyse des dépendances:\n\n" +
-                             $"• Dépendances originales: {statsDependances.NombreDependancesOriginales}\n" +
-                             $"• Dépendances optimisées: {statsDependances.NombreDependancesOptimisees}\n" +
-                             $"• Dépendances supprimées: {statsDependances.NombreDependancesSupprimees}\n" +
-                             $"• Réduction: {statsDependances.PourcentageReduction:F1}%\n\n";
+                var message = $"Analyse du flux Chef → Solveur:\n\n" +
+                             $"📋 DONNÉES DU CHEF:\n" +
+                             $"• Tâches totales: {statsChef.NombreTachesTotal}\n" +
+                             $"• Jalons utilisateur: {statsChef.JalonsSurcharge}\n" +
+                             $"• Heures totales: {statsChef.HeuresHommeTotal}h\n" +
+                             $"• Avec dépendances: {statsChef.TachesAvecDependances}\n" +
+                             $"• Blocs: {statsChef.NombreBlocsUniques}\n" +
+                             $"• Lots: {statsChef.NombreLotsUniques}\n\n" +
+                             $"⚙️ PRÉPARATION SOLVEUR:\n" +
+                             $"• Tâches finales: {tachesSolveur.Count}\n" +
+                             $"• Tâches découpées: {statsDecoupage.TachesLonguesDecoupees}\n" +
+                             $"• Sous-tâches créées: {statsDecoupage.SousTachesCreees}\n" +
+                             $"• Jalons techniques: {statsDecoupage.JalonsTechniquesCreees}\n" +
+                             $"• Taux découpage: {statsDecoupage.TauxDecoupage:F1}%\n\n" +
+                             $"✅ Les décisions du chef sont respectées intégralement";
 
-                if (cycles.Any())
-                {
-                    message += $"⚠️ CYCLES DÉTECTÉS:\n{string.Join("\n", cycles)}";
-                }
-                else
-                {
-                    message += "✅ Aucun cycle détecté";
-                }
-
-                MessageBox.Show(message, "Analyse des dépendances", MessageBoxButtons.OK,
-                    cycles.Any() ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
+                MessageBox.Show(message, "Analyse Chef → Solveur", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Erreur lors de l'analyse des dépendances:\n{ex.Message}",
+                MessageBox.Show($"Erreur lors de l'analyse:\n{ex.Message}",
                     "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }

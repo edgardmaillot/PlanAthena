@@ -37,99 +37,99 @@ namespace PlanAthena.Utilities
         }
 
         private (List<TacheRecord> TachesMisesAJour, List<TacheRecord> TachesFictives) CreerTachesDeSynchro(IReadOnlyList<TacheRecord> taches)
+{
+    var tachesParBloc = taches.GroupBy(t => t.BlocId).ToList();
+    var tachesMisesAJourGlobal = new List<TacheRecord>();
+    var tachesFictivesGlobales = new List<TacheRecord>();
+    var mapTaches = taches.ToDictionary(t => t.TacheId);
+
+    foreach (var groupeBloc in tachesParBloc)
+    {
+        var blocId = groupeBloc.Key;
+        var tachesDuBloc = groupeBloc.ToList();
+        var noeudsDeSynchro = new Dictionary<string, string>();
+        var tachesFictivesDuBloc = new List<TacheRecord>();
+
+        // Identifier les métiers qui servent de prérequis à D'AUTRES métiers dans ce bloc
+        var metiersPrerequisIds = new HashSet<string>();
+        foreach (var tache in tachesDuBloc)
         {
-            var tachesParBloc = taches.GroupBy(t => t.BlocId).ToList();
-            var tachesMisesAJourGlobal = new List<TacheRecord>();
-            var tachesFictivesGlobales = new List<TacheRecord>();
-            var mapTaches = taches.ToDictionary(t => t.TacheId);
-
-            foreach (var groupeBloc in tachesParBloc)
+            var dependancesIds = tache.Dependencies?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Enumerable.Empty<string>();
+            foreach (var depId in dependancesIds)
             {
-                var blocId = groupeBloc.Key;
-                var tachesDuBloc = groupeBloc.ToList();
-                var noeudsDeSynchro = new Dictionary<string, string>();
-                var tachesFictivesDuBloc = new List<TacheRecord>();
-
-                // Identifier les métiers qui servent de prérequis à D'AUTRES métiers dans ce bloc
-                var metiersPrerequisIds = new HashSet<string>();
-                foreach (var tache in tachesDuBloc)
+                if (mapTaches.TryGetValue(depId, out var tachePrecedente) && tachePrecedente.MetierId != tache.MetierId)
                 {
-                    var dependancesIds = tache.Dependencies?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Enumerable.Empty<string>();
-                    foreach (var depId in dependancesIds)
+                    if (!string.IsNullOrEmpty(tachePrecedente.MetierId))
                     {
-                        if (mapTaches.TryGetValue(depId, out var tachePrecedente) && tachePrecedente.MetierId != tache.MetierId)
-                        {
-                            if (!string.IsNullOrEmpty(tachePrecedente.MetierId))
-                            {
-                                metiersPrerequisIds.Add(tachePrecedente.MetierId);
-                            }
-                        }
+                        metiersPrerequisIds.Add(tachePrecedente.MetierId);
                     }
                 }
-
-                // Créer une tâche de synchro pour chaque métier prérequis identifié
-                foreach (var metierId in metiersPrerequisIds)
-                {
-                    var tachesDuMetier = tachesDuBloc.Where(t => t.MetierId == metierId).ToList();
-                    if (tachesDuMetier.Any())
-                    {
-                        string idTacheFictive = $"Sync_{metierId}_{blocId}";
-                        var tacheDeReference = tachesDuMetier.First();
-
-                        var tacheFictive = new TacheRecord
-                        {
-                            TacheId = idTacheFictive,
-                            TacheNom = $"Fin du métier {metierId} dans le bloc {tacheDeReference.BlocNom}",
-                            HeuresHommeEstimees = 0,
-                            Dependencies = string.Join(",", tachesDuMetier.Select(t => t.TacheId)),
-                            BlocId = blocId,
-                            BlocNom = tacheDeReference.BlocNom,
-                            MetierId = _metierService.GetOrCreateSyncMetierId(0),
-                            LotId = tacheDeReference.LotId,
-                            LotNom = tacheDeReference.LotNom,
-                            LotPriorite = tacheDeReference.LotPriorite,
-                            BlocCapaciteMaxOuvriers = tacheDeReference.BlocCapaciteMaxOuvriers
-                        };
-                        tachesFictivesDuBloc.Add(tacheFictive);
-                        noeudsDeSynchro[metierId] = idTacheFictive;
-                    }
-                }
-
-                // Remplacer les multiples dépendances vers un métier par une seule dépendance vers la tâche de synchro
-                var tachesMisesAJourDuBloc = new List<TacheRecord>();
-                foreach (var tache in tachesDuBloc)
-                {
-                    var dependancesInitiales = tache.Dependencies?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList() ?? new List<string>();
-                    var nouvellesDependances = new List<string>();
-                    var metiersDejaLies = new HashSet<string>();
-
-                    foreach (var depId in dependancesInitiales)
-                    {
-                        if (mapTaches.TryGetValue(depId, out var tachePrecedente) &&
-                            tachePrecedente.MetierId != tache.MetierId &&
-                            noeudsDeSynchro.TryGetValue(tachePrecedente.MetierId, out var idTacheFictive))
-                        {
-                            if (metiersDejaLies.Add(tachePrecedente.MetierId))
-                            {
-                                nouvellesDependances.Add(idTacheFictive);
-                            }
-                        }
-                        else
-                        {
-                            nouvellesDependances.Add(depId);
-                        }
-                    }
-                    var tacheMiseAJour = CopierTache(tache);
-                    tacheMiseAJour.Dependencies = string.Join(",", nouvellesDependances.Distinct());
-                    tachesMisesAJourDuBloc.Add(tacheMiseAJour);
-                }
-
-                tachesMisesAJourGlobal.AddRange(tachesMisesAJourDuBloc);
-                tachesFictivesGlobales.AddRange(tachesFictivesDuBloc);
             }
-
-            return (tachesMisesAJourGlobal, tachesFictivesGlobales);
         }
+
+        // Créer une tâche de synchro pour chaque métier prérequis identifié
+        foreach (var metierId in metiersPrerequisIds)
+        {
+            var tachesDuMetier = tachesDuBloc.Where(t => t.MetierId == metierId).ToList();
+            if (tachesDuMetier.Any())
+            {
+                string idTacheFictive = $"Sync_{metierId}_{blocId}";
+                var tacheDeReference = tachesDuMetier.First();
+
+                var tacheFictive = new TacheRecord
+                {
+                    TacheId = idTacheFictive,
+                    TacheNom = $"Fin du métier {metierId} dans le bloc {tacheDeReference.BlocNom}",
+                    HeuresHommeEstimees = 0,
+                    Dependencies = string.Join(",", tachesDuMetier.Select(t => t.TacheId)),
+                    BlocId = blocId,
+                    BlocNom = tacheDeReference.BlocNom,
+                    MetierId = _metierService.GetOrCreateSyncMetierId(0),
+                    LotId = tacheDeReference.LotId,
+                    LotNom = tacheDeReference.LotNom,
+                    LotPriorite = tacheDeReference.LotPriorite,
+                    BlocCapaciteMaxOuvriers = tacheDeReference.BlocCapaciteMaxOuvriers
+                };
+                tachesFictivesDuBloc.Add(tacheFictive);
+                noeudsDeSynchro[metierId] = idTacheFictive;
+            }
+        }
+
+        // Remplacer les multiples dépendances vers un métier par une seule dépendance vers la tâche de synchro
+        var tachesMisesAJourDuBloc = new List<TacheRecord>();
+        foreach (var tache in tachesDuBloc)
+        {
+            var dependancesInitiales = tache.Dependencies?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList() ?? new List<string>();
+            var nouvellesDependances = new List<string>();
+            var metiersDejaLies = new HashSet<string>();
+
+            foreach (var depId in dependancesInitiales)
+            {
+                if (mapTaches.TryGetValue(depId, out var tachePrecedente) && 
+                    tachePrecedente.MetierId != tache.MetierId && 
+                    noeudsDeSynchro.TryGetValue(tachePrecedente.MetierId, out var idTacheFictive))
+                {
+                    if (metiersDejaLies.Add(tachePrecedente.MetierId))
+                    {
+                        nouvellesDependances.Add(idTacheFictive);
+                    }
+                }
+                else
+                {
+                    nouvellesDependances.Add(depId);
+                }
+            }
+            var tacheMiseAJour = CopierTache(tache);
+            tacheMiseAJour.Dependencies = string.Join(",", nouvellesDependances.Distinct());
+            tachesMisesAJourDuBloc.Add(tacheMiseAJour);
+        }
+        
+        tachesMisesAJourGlobal.AddRange(tachesMisesAJourDuBloc);
+        tachesFictivesGlobales.AddRange(tachesFictivesDuBloc);
+    }
+
+    return (tachesMisesAJourGlobal, tachesFictivesGlobales);
+}
 
         private (List<TacheRecord> TachesDecoupees, Dictionary<string, List<string>> TableReliaison) DecouperTachesLongues(IReadOnlyList<TacheRecord> rawTaches)
         {
