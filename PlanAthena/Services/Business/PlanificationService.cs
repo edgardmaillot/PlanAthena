@@ -3,7 +3,10 @@ using PlanAthena.Core.Facade.Dto.Output;
 using PlanAthena.Data;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.Processing;
-using PlanAthena.Utilities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PlanAthena.Services.Business
 {
@@ -17,27 +20,28 @@ namespace PlanAthena.Services.Business
     {
         private readonly PlanAthenaCoreFacade _facade;
         private readonly DataTransformer _dataTransformer;
-        private readonly DecoupageTachesService _decoupageTachesService;
+        // CORRIGÉ : Le nom de la variable est maintenant cohérent avec son type.
+        private readonly PreparationSolveurService _preparationSolveurService;
 
-        private IReadOnlyList<OuvrierRecord> _ouvriers = new List<OuvrierRecord>();
-        private IReadOnlyList<TacheRecord> _taches = new List<TacheRecord>();
-        private IReadOnlyList<MetierRecord> _metiers = new List<MetierRecord>();
+        private IReadOnlyList<Ouvrier> _ouvriers = new List<Ouvrier>();
+        private IReadOnlyList<Tache> _taches = new List<Tache>();
+        private IReadOnlyList<Metier> _metiers = new List<Metier>();
 
         public PlanificationService(
             PlanAthenaCoreFacade facade,
             DataTransformer dataTransformer,
-            DecoupageTachesService decoupageTachesService)
+            PreparationSolveurService preparationSolveurService) // CORRIGÉ
         {
             _facade = facade ?? throw new ArgumentNullException(nameof(facade));
             _dataTransformer = dataTransformer ?? throw new ArgumentNullException(nameof(dataTransformer));
-            _decoupageTachesService = decoupageTachesService ?? throw new ArgumentNullException(nameof(decoupageTachesService));
+            _preparationSolveurService = preparationSolveurService ?? throw new ArgumentNullException(nameof(preparationSolveurService)); // CORRIGÉ
         }
 
-        public void ChargerDonnees(IReadOnlyList<OuvrierRecord> ouvriers, IReadOnlyList<TacheRecord> taches, IReadOnlyList<MetierRecord> metiers)
+        public void ChargerDonnees(IReadOnlyList<Ouvrier> ouvriers, IReadOnlyList<Tache> taches, IReadOnlyList<Metier> metiers)
         {
-            _ouvriers = ouvriers ?? new List<OuvrierRecord>();
-            _taches = taches ?? new List<TacheRecord>();
-            _metiers = metiers ?? new List<MetierRecord>();
+            _ouvriers = ouvriers ?? new List<Ouvrier>();
+            _taches = taches ?? new List<Tache>();
+            _metiers = metiers ?? new List<Metier>();
         }
 
         public bool ValiderDonneesChargees()
@@ -45,9 +49,6 @@ namespace PlanAthena.Services.Business
             return _ouvriers.Any() && _metiers.Any() && _taches.Any();
         }
 
-        /// <summary>
-        /// FLUX SIMPLIFIÉ : Données chef → Découpage → Solveur
-        /// </summary>
         public async Task<ProcessChantierResultDto> LancerPlanificationAsync(ConfigurationUI configuration)
         {
             if (configuration == null)
@@ -58,10 +59,9 @@ namespace PlanAthena.Services.Business
 
             try
             {
-                // ÉTAPE UNIQUE: Découpage pour le solveur (respect total des décisions du chef)
-                var tachesPourSolveur = _decoupageTachesService.PreparerPourSolveur(_taches);
+                // La logique ici reste la même, mais le nom de la variable est plus clair.
+                var tachesPourSolveur = _preparationSolveurService.PreparerPourSolveur(_taches);
 
-                // Transformation vers DLL Core
                 var inputDto = _dataTransformer.TransformToChantierSetupDto(
                     _ouvriers.ToList(),
                     tachesPourSolveur,
@@ -69,9 +69,7 @@ namespace PlanAthena.Services.Business
                     configuration
                 );
 
-                // Appel solveur
                 var resultat = await _facade.ProcessChantierAsync(inputDto);
-
                 return resultat;
             }
             catch (Exception ex)
@@ -80,9 +78,7 @@ namespace PlanAthena.Services.Business
             }
         }
 
-        /// <summary>
-        /// NOUVELLES STATISTIQUES SIMPLIFIÉES
-        /// </summary>
+        // CORRIGÉ : La méthode a été entièrement revue pour ne plus dépendre d'ObtenirStatistiques.
         public StatistiquesSimplifiees ObtenirStatistiquesTraitement()
         {
             if (!ValiderDonneesChargees())
@@ -92,17 +88,22 @@ namespace PlanAthena.Services.Business
 
             try
             {
-                var tachesSolveur = _decoupageTachesService.PreparerPourSolveur(_taches);
-                var statsDecoupage = _decoupageTachesService.ObtenirStatistiques(_taches, tachesSolveur);
+                var tachesPourSolveur = _preparationSolveurService.PreparerPourSolveur(_taches);
+
+                // On calcule les statistiques directement ici.
+                int tachesLonguesDecoupees = _taches.Count(t => !t.EstJalon && t.HeuresHommeEstimees > 8);
+                // Les "jalons techniques" sont maintenant des "tâches de regroupement" invisibles.
+                // On les compte en comparant le nombre de tâches avant et après préparation.
+                int tachesDeRegroupement = tachesPourSolveur.Count(t => t.TacheNom.StartsWith("Regroupement de"));
 
                 return new StatistiquesSimplifiees
                 {
                     TachesChef = _taches.Count,
-                    TachesSolveur = tachesSolveur.Count,
-                    TachesDecoupees = statsDecoupage.TachesLonguesDecoupees,
-                    JalonsTechniques = statsDecoupage.JalonsTechniquesCreees,
-                    Resume = $"Chef: {_taches.Count} tâches → Solveur: {tachesSolveur.Count} " +
-                            $"({statsDecoupage.TachesLonguesDecoupees} découpées, {statsDecoupage.JalonsTechniquesCreees} jalons techniques)"
+                    TachesSolveur = tachesPourSolveur.Count,
+                    TachesDecoupees = tachesLonguesDecoupees,
+                    JalonsTechniques = tachesDeRegroupement, // Renommé pour la cohérence de l'IHM
+                    Resume = $"Chef: {_taches.Count} tâches → Solveur: {tachesPourSolveur.Count} " +
+                            $"({tachesLonguesDecoupees} découpées, {tachesDeRegroupement} regroupements)"
                 };
             }
             catch (Exception)
@@ -116,41 +117,28 @@ namespace PlanAthena.Services.Business
             }
         }
 
-        /// <summary>
-        /// Obtient les tâches telles que définies par le chef (pour l'IHM)
-        /// </summary>
-        public List<TacheRecord> ObtenirTachesLogiques()
+        public List<Tache> ObtenirTachesLogiques()
         {
             if (!ValiderDonneesChargees())
-                return new List<TacheRecord>();
-
-            // SIMPLE: Retourner directement les tâches du chef
+                return new List<Tache>();
             return _taches.ToList();
         }
 
-        /// <summary>
-        /// Obtient les tâches prêtes pour le solveur (avec découpage)
-        /// </summary>
-        public List<TacheRecord> ObtenirTachesPourSolveur()
+        public List<Tache> ObtenirTachesPourSolveur()
         {
             if (!ValiderDonneesChargees())
-                return new List<TacheRecord>();
-
+                return new List<Tache>();
             try
             {
-                return _decoupageTachesService.PreparerPourSolveur(_taches);
+                return _preparationSolveurService.PreparerPourSolveur(_taches);
             }
             catch (Exception)
             {
-                return _taches.ToList(); // Fallback sur les tâches chef
+                return _taches.ToList();
             }
         }
     }
 
-    /// <summary>
-    /// NOUVELLES STATISTIQUES SIMPLIFIÉES
-    /// Remplace StatistiquesCompletesTraitement
-    /// </summary>
     public class StatistiquesSimplifiees
     {
         public int TachesChef { get; set; }

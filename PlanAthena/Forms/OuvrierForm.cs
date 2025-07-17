@@ -10,10 +10,10 @@ namespace PlanAthena.Forms
         //private readonly CsvDataService _csvDataService;
         //private readonly ExcelReader _excelReader;
 
-        private List<OuvrierRecord> _ouvriers = new List<OuvrierRecord>();
-        private List<MetierRecord> _metiers = new List<MetierRecord>();
+        private List<Ouvrier> _ouvriers = new List<Ouvrier>();
+        private List<Metier> _metiers = new List<Metier>();
         private OuvrierInfo _ouvrierSelectionne = null;
-        private OuvrierRecord _competenceSelectionnee = null;
+        private Ouvrier _competenceSelectionnee = null;
         private bool _enModification = false;
 
         public OuvrierForm(OuvrierService ouvrierService, MetierService metierService)
@@ -195,7 +195,7 @@ namespace PlanAthena.Forms
         {
             if (listViewCompetences.SelectedItems.Count > 0)
             {
-                _competenceSelectionnee = listViewCompetences.SelectedItems[0].Tag as OuvrierRecord;
+                _competenceSelectionnee = listViewCompetences.SelectedItems[0].Tag as Ouvrier;
                 btnModifierCompetence.Enabled = true;
                 btnSupprimerCompetence.Enabled = true;
             }
@@ -360,7 +360,7 @@ namespace PlanAthena.Forms
             using var dialog = new CompetenceDialog(metiersDisponibles, null);
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                var nouvelleCompetence = new OuvrierRecord
+                var nouvelleCompetence = new Ouvrier
                 {
                     OuvrierId = _ouvrierSelectionne.OuvrierId,
                     Nom = _ouvrierSelectionne.Nom,
@@ -399,7 +399,7 @@ namespace PlanAthena.Forms
                 return;
             }
 
-            using var dialog = new CompetenceDialog(new List<MetierRecord> { metier }, _competenceSelectionnee);
+            using var dialog = new CompetenceDialog(new List<Metier> { metier }, _competenceSelectionnee);
             if (dialog.ShowDialog() == DialogResult.OK)
             {
                 try

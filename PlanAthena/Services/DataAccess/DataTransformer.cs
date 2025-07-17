@@ -17,9 +17,9 @@ namespace PlanAthena.Services.DataAccess
         }
 
         public ChantierSetupInputDto TransformToChantierSetupDto(
-            List<OuvrierRecord> ouvriers,
-            List<TacheRecord> processedTaches,
-            List<MetierRecord> allMetiers,
+            List<Ouvrier> ouvriers,
+            List<Tache> processedTaches,
+            List<Metier> allMetiers,
             ConfigurationUI configurationUI)
         {
             if (ouvriers == null) throw new ArgumentNullException(nameof(ouvriers));
@@ -121,22 +121,5 @@ namespace PlanAthena.Services.DataAccess
                 Ouvriers = ouvriersDto
             };
         }
-    }
-
-    /// <summary>
-    /// Classe pour encapsuler la configuration de l'interface utilisateur
-    /// </summary>
-    public class ConfigurationUI
-    {
-        public List<DayOfWeek> JoursOuvres { get; set; } = new List<DayOfWeek>();
-        public int HeureDebutJournee { get; set; }
-        public int HeuresTravailEffectifParJour { get; set; }
-        public string TypeDeSortie { get; set; } = "Analyse et Estimation";
-        public string Description { get; set; } = "";
-        public DateTime? DateDebutSouhaitee { get; set; }
-        public DateTime? DateFinSouhaitee { get; set; }
-        public int DureeJournaliereStandardHeures { get; set; }
-        public decimal PenaliteChangementOuvrierPourcentage { get; set; }
-        public decimal CoutIndirectJournalierPourcentage { get; set; }
     }
 }

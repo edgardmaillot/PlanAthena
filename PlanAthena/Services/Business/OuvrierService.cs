@@ -8,7 +8,7 @@ namespace PlanAthena.Services.Business
     /// </summary>
     public class OuvrierService
     {
-        private readonly List<OuvrierRecord> _ouvriers = new List<OuvrierRecord>();
+        private readonly List<Ouvrier> _ouvriers = new List<Ouvrier>();
         private readonly CsvDataService _csvDataService;
         private readonly ExcelReader _excelReader;
 
@@ -23,7 +23,7 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Ajoute un nouvel ouvrier
         /// </summary>
-        public void AjouterOuvrier(OuvrierRecord ouvrier)
+        public void AjouterOuvrier(Ouvrier ouvrier)
         {
             if (ouvrier == null)
                 throw new ArgumentNullException(nameof(ouvrier));
@@ -40,7 +40,7 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Met à jour un ouvrier existant
         /// </summary>
-        public void ModifierOuvrier(OuvrierRecord ouvrierModifie)
+        public void ModifierOuvrier(Ouvrier ouvrierModifie)
         {
             if (ouvrierModifie == null)
                 throw new ArgumentNullException(nameof(ouvrierModifie));
@@ -105,7 +105,7 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Obtient tous les ouvriers
         /// </summary>
-        public List<OuvrierRecord> ObtenirTousLesOuvriers()
+        public List<Ouvrier> ObtenirTousLesOuvriers()
         {
             return _ouvriers.ToList();
         }
@@ -113,7 +113,7 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Obtient un ouvrier par son ID (avec toutes ses compétences)
         /// </summary>
-        public List<OuvrierRecord> ObtenirOuvrierParId(string ouvrierId)
+        public List<Ouvrier> ObtenirOuvrierParId(string ouvrierId)
         {
             return _ouvriers.Where(o => o.OuvrierId == ouvrierId).ToList();
         }
@@ -141,7 +141,7 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Obtient les ouvriers ayant une compétence spécifique
         /// </summary>
-        public List<OuvrierRecord> ObtenirOuvriersParMetier(string metierId)
+        public List<Ouvrier> ObtenirOuvriersParMetier(string metierId)
         {
             return _ouvriers.Where(o => o.MetierId == metierId).ToList();
         }
@@ -171,7 +171,7 @@ namespace PlanAthena.Services.Business
         /// </summary>
         public int ImporterDepuisCsv(string filePath, bool remplacerExistants = true)
         {
-            var ouvriersImportes = _csvDataService.ImportCsv<OuvrierRecord>(filePath);
+            var ouvriersImportes = _csvDataService.ImportCsv<Ouvrier>(filePath);
 
             if (remplacerExistants)
             {
@@ -206,7 +206,7 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Charge les ouvriers depuis une liste (utilisé par PlanificationService)
         /// </summary>
-        public void ChargerOuvriers(List<OuvrierRecord> ouvriers)
+        public void ChargerOuvriers(List<Ouvrier> ouvriers)
         {
             _ouvriers.Clear();
             if (ouvriers != null)

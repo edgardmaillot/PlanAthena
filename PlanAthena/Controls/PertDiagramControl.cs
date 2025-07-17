@@ -13,8 +13,8 @@ namespace PlanAthena.Controls
     public partial class PertDiagramControl : UserControl
     {
         private readonly GViewer _viewer;
-        private List<TacheRecord> _taches = new List<TacheRecord>();
-        private List<MetierRecord> _metiers = new List<MetierRecord>();
+        private List<Tache> _taches = new List<Tache>();
+        private List<Metier> _metiers = new List<Metier>();
         private MetierService _metierService; // Ajouté pour identifier les jalons
         private Graph _graph;
 
@@ -40,7 +40,7 @@ namespace PlanAthena.Controls
         private bool _isPanning = false;
         private Point _panStartPoint;
         private PrintDocument _printDocument;
-        public TacheRecord TacheSelectionnee { get; private set; }
+        public Tache TacheSelectionnee { get; private set; }
 
         // Variables pour mémoriser l'état de la vue (simplifié)
         private double _dernierZoom = 0.8;
@@ -229,9 +229,9 @@ namespace PlanAthena.Controls
 
         #endregion
 
-        public void ChargerTaches(List<TacheRecord> taches, string filtreRecherche = "")
+        public void ChargerTaches(List<Tache> taches, string filtreRecherche = "")
         {
-            _taches = taches ?? new List<TacheRecord>();
+            _taches = taches ?? new List<Tache>();
             _couleursByMetier.Clear();
             _couleurIndex = 0;
             GenererDiagramme(filtreRecherche);
@@ -241,9 +241,9 @@ namespace PlanAthena.Controls
         /// Charge les métiers pour pouvoir utiliser leurs couleurs personnalisées
         /// </summary>
         /// <param name="metiers">Liste des métiers avec leurs couleurs</param>
-        public void ChargerMetiers(List<MetierRecord> metiers)
+        public void ChargerMetiers(List<Metier> metiers)
         {
-            _metiers = metiers ?? new List<MetierRecord>();
+            _metiers = metiers ?? new List<Metier>();
             _couleursByMetier.Clear();
             _couleurIndex = 0;
         }
@@ -255,10 +255,10 @@ namespace PlanAthena.Controls
         /// <param name="metiers">Liste des métiers avec leurs couleurs</param>
         /// <param name="filtreRecherche">Filtre de recherche optionnel</param>
         /// <param name="metierService">Service pour identifier les jalons (optionnel)</param>
-        public void ChargerDonnees(List<TacheRecord> taches, List<MetierRecord> metiers, string filtreRecherche = "", MetierService metierService = null)
+        public void ChargerDonnees(List<Tache> taches, List<Metier> metiers, string filtreRecherche = "", MetierService metierService = null)
         {
-            _taches = taches ?? new List<TacheRecord>();
-            _metiers = metiers ?? new List<MetierRecord>();
+            _taches = taches ?? new List<Tache>();
+            _metiers = metiers ?? new List<Metier>();
             _metierService = metierService; // Stocker la référence pour identifier les jalons
             _couleursByMetier.Clear();
             _couleurIndex = 0;
@@ -377,7 +377,7 @@ namespace PlanAthena.Controls
             node.Label.FontSize = 14;
         }
 
-        private void CreerClusterPourBloc(string blocId, List<TacheRecord> tachesDuBloc)
+        private void CreerClusterPourBloc(string blocId, List<Tache> tachesDuBloc)
         {
             if (!tachesDuBloc.Any()) return;
 
@@ -404,13 +404,13 @@ namespace PlanAthena.Controls
             _graph.RootSubgraph.AddSubgraph(cluster);
         }
 
-        private DrawingNode CreerNoeudTache(TacheRecord tache)
+        private DrawingNode CreerNoeudTache(Tache tache)
         {
             var nodeId = tache.TacheId;
             var node = _graph.AddNode(nodeId);
 
             // Vérifier si c'est un jalon
-            bool estJalon = _metierService?.EstJalon(tache) ?? (tache.MetierId == "JALON");
+            bool estJalon = tache.EstJalon;
 
             var metierAffiche = !string.IsNullOrEmpty(tache.MetierId) ? tache.MetierId : "❌ Non assigné";
 
@@ -453,6 +453,10 @@ namespace PlanAthena.Controls
             // MODIFICATION PRINCIPALE : Forme différente pour les jalons
             if (estJalon)
             {
+                if (tache.Type == TypeActivite.JalonDeSynchronisation || tache.Type == TypeActivite.JalonTechnique)
+                {
+                    node.Attr.FillColor = Microsoft.Msagl.Drawing.Color.LightGoldenrodYellow; // Une couleur distincte pour les jalons auto
+                }
                 node.Attr.Shape = Shape.Diamond;
                 node.Attr.LineWidth = 3;
                 node.Attr.Padding = 3;          // Très compact
@@ -494,7 +498,7 @@ namespace PlanAthena.Controls
             return node;
         }
 
-        private void AjouterDependances(List<TacheRecord> tachesAffichees)
+        private void AjouterDependances(List<Tache> tachesAffichees)
         {
             var idsAffiches = new HashSet<string>(tachesAffichees.Select(t => t.TacheId));
 
@@ -524,12 +528,6 @@ namespace PlanAthena.Controls
         {
             if (string.IsNullOrEmpty(metierId))
                 return Microsoft.Msagl.Drawing.Color.MistyRose;
-
-            // Couleur spéciale pour les jalons
-            if (_metierService?.EstJalon(metierId) ?? (metierId == "JALON"))
-            {
-                return Microsoft.Msagl.Drawing.Color.Gold; // Couleur dorée pour les jalons
-            }
 
             // Priorité 1: Utiliser la couleur personnalisée du métier si elle existe
             if (!string.IsNullOrEmpty(metierId) && _metiers != null)
@@ -582,7 +580,7 @@ namespace PlanAthena.Controls
             try
             {
                 var objectUnderMouse = _viewer.ObjectUnderMouseCursor;
-                if (objectUnderMouse?.DrawingObject is DrawingNode node && node.UserData is TacheRecord tache)
+                if (objectUnderMouse?.DrawingObject is DrawingNode node && node.UserData is Tache tache)
                 {
                     TacheSelectionnee = tache;
                     TacheSelected?.Invoke(this, new TacheSelectedEventArgs(tache));
@@ -602,7 +600,7 @@ namespace PlanAthena.Controls
             try
             {
                 var objectUnderMouse = _viewer.ObjectUnderMouseCursor;
-                if (objectUnderMouse?.DrawingObject is DrawingNode node && node.UserData is TacheRecord tache)
+                if (objectUnderMouse?.DrawingObject is DrawingNode node && node.UserData is Tache tache)
                 {
                     TacheDoubleClicked?.Invoke(this, new TacheSelectedEventArgs(tache));
                 }
@@ -617,9 +615,9 @@ namespace PlanAthena.Controls
             // Réinitialiser tous les nœuds
             foreach (DrawingNode node in _graph.Nodes)
             {
-                if (node.UserData is TacheRecord tache)
+                if (node.UserData is Tache tache)
                 {
-                    bool estJalon = _metierService?.EstJalon(tache) ?? (tache.MetierId == "JALON");
+                    bool estJalon = tache.EstJalon;
 
                     if (estJalon)
                     {
@@ -705,7 +703,7 @@ namespace PlanAthena.Controls
             if (node != null)
             {
                 MettreEnEvidenceTache(node);
-                TacheSelectionnee = node.UserData as TacheRecord;
+                TacheSelectionnee = node.UserData as Tache;
                 return true;
             }
             return false;
@@ -734,8 +732,8 @@ namespace PlanAthena.Controls
 
     public class TacheSelectedEventArgs : EventArgs
     {
-        public TacheRecord Tache { get; }
-        public TacheSelectedEventArgs(TacheRecord tache)
+        public Tache Tache { get; }
+        public TacheSelectedEventArgs(Tache tache)
         {
             Tache = tache;
         }

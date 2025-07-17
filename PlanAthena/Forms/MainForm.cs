@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using PlanAthena.Core.Application;
 using PlanAthena.Core.Facade;
 using PlanAthena.Core.Infrastructure;
+using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.Processing;
@@ -19,7 +20,7 @@ namespace PlanAthena.Forms
         private readonly ProjetService _projetService;
         private readonly GanttExportService _ganttExportService;
         private readonly ConfigurationBuilder _configBuilder;
-        private readonly DecoupageTachesService _decoupageTachesService;
+        private readonly PreparationSolveurService _decoupageTachesService;
 
         private InformationsProjet _projetActuel;
         private PlanAthena.Core.Facade.Dto.Output.ProcessChantierResultDto _dernierResultatPlanification;
@@ -36,7 +37,7 @@ namespace PlanAthena.Forms
             _projetService = _serviceProvider.GetRequiredService<ProjetService>();
             _ganttExportService = _serviceProvider.GetRequiredService<GanttExportService>();
             _configBuilder = _serviceProvider.GetRequiredService<ConfigurationBuilder>();
-            _decoupageTachesService = _serviceProvider.GetRequiredService<DecoupageTachesService>();
+            _decoupageTachesService = _serviceProvider.GetRequiredService<PreparationSolveurService>();
 
             InitializeInterface();
             CreerNouveauProjetParDefaut();
@@ -207,7 +208,8 @@ namespace PlanAthena.Forms
 
         private void OuvrirGestionTaches_Click(object sender, EventArgs e)
         {
-            using var form = new TacheForm(_tacheService, _metierService, _decoupageTachesService);
+            var dependanceBuilder = _serviceProvider.GetRequiredService<DependanceBuilder>();
+            using var form = new TacheForm(_tacheService, _metierService, dependanceBuilder); // Doit passer le DependanceBuilder
             form.ShowDialog();
         }
 
@@ -385,7 +387,7 @@ namespace PlanAthena.Forms
             try
             {
                 var resume = _projetService.ObtenirResumeProjet();
-                var jalonsUtilisateur = _tacheService.ObtenirToutesLesTaches().Count(t => _metierService.EstJalon(t));
+                var jalonsUtilisateur = _tacheService.ObtenirToutesLesTaches().Count(t => t.Type == TypeActivite.JalonUtilisateur);
 
                 lblResume.Text = $"Résumé: {resume.StatistiquesOuvriers.NombreOuvriersTotal} ouvriers, {resume.NombreMetiers} métiers, {resume.StatistiquesTaches.NombreTachesTotal} tâches (+{jalonsUtilisateur} jalons)";
                 lblMapping.Text = $"Mapping: {resume.StatistiquesMappingMetiers.PourcentageMapping:F0}% ({resume.StatistiquesMappingMetiers.TachesAvecMetier}/{resume.StatistiquesMappingMetiers.TotalTaches} tâches)";
@@ -466,8 +468,11 @@ namespace PlanAthena.Forms
             serviceCollection.AddScoped<GanttExportService>();
             serviceCollection.AddScoped<ConfigurationBuilder>();
 
+
             // NOUVEAUX SERVICES
-            serviceCollection.AddScoped<DecoupageTachesService>();
+            serviceCollection.AddScoped<PreparationSolveurService>();
+            serviceCollection.AddScoped<TopologieDependanceService>();
+            serviceCollection.AddScoped<DependanceBuilder>();
 
             return serviceCollection.BuildServiceProvider();
         }

@@ -7,10 +7,10 @@ namespace PlanAthena.Forms
     /// </summary>
     public partial class SelectionMetierDialog : System.Windows.Forms.Form
     {
-        public MetierRecord MetierSelectionne { get; private set; }
+        public Metier MetierSelectionne { get; private set; }
         private ListView listViewMetiers;
 
-        public SelectionMetierDialog(List<MetierRecord> metiersDisponibles)
+        public SelectionMetierDialog(List<Metier> metiersDisponibles)
         {
             InitializeComponent();
             InitialiserListe(metiersDisponibles);
@@ -78,7 +78,7 @@ namespace PlanAthena.Forms
         {
             if (listViewMetiers.SelectedItems.Count > 0)
             {
-                MetierSelectionne = listViewMetiers.SelectedItems[0].Tag as MetierRecord;
+                MetierSelectionne = listViewMetiers.SelectedItems[0].Tag as Metier;
                 this.DialogResult = DialogResult.OK;
                 this.Close();
             }
@@ -88,11 +88,11 @@ namespace PlanAthena.Forms
         {
             if (listViewMetiers.SelectedItems.Count > 0)
             {
-                MetierSelectionne = listViewMetiers.SelectedItems[0].Tag as MetierRecord;
+                MetierSelectionne = listViewMetiers.SelectedItems[0].Tag as Metier;
             }
         }
 
-        private void InitialiserListe(List<MetierRecord> metiers)
+        private void InitialiserListe(List<Metier> metiers)
         {
             foreach (var metier in metiers.OrderBy(m => m.MetierId))
             {

@@ -20,7 +20,7 @@ namespace PlanAthena.Utilities
         /// Prépare les tâches pour le solveur : crée les nœuds de synchro et découpe les tâches longues.
         /// PRE-REQUIS: Les tâches en entrée doivent déjà avoir leurs dépendances métier matérialisées.
         /// </summary>
-        public List<TacheRecord> ProcessTachesPourSolveur(IReadOnlyList<TacheRecord> tachesAvecDependances)
+        public List<Tache> ProcessTachesPourSolveur(IReadOnlyList<Tache> tachesAvecDependances)
         {
             // Étape 1 : Créer les tâches de synchronisation à partir des dépendances existantes
             var (tachesAvecSynchro, tachesFictives) = CreerTachesDeSynchro(tachesAvecDependances);
@@ -36,11 +36,11 @@ namespace PlanAthena.Utilities
             return tachesFinales;
         }
 
-        private (List<TacheRecord> TachesMisesAJour, List<TacheRecord> TachesFictives) CreerTachesDeSynchro(IReadOnlyList<TacheRecord> taches)
+        private (List<Tache> TachesMisesAJour, List<Tache> TachesFictives) CreerTachesDeSynchro(IReadOnlyList<Tache> taches)
 {
     var tachesParBloc = taches.GroupBy(t => t.BlocId).ToList();
-    var tachesMisesAJourGlobal = new List<TacheRecord>();
-    var tachesFictivesGlobales = new List<TacheRecord>();
+    var tachesMisesAJourGlobal = new List<Tache>();
+    var tachesFictivesGlobales = new List<Tache>();
     var mapTaches = taches.ToDictionary(t => t.TacheId);
 
     foreach (var groupeBloc in tachesParBloc)
@@ -48,7 +48,7 @@ namespace PlanAthena.Utilities
         var blocId = groupeBloc.Key;
         var tachesDuBloc = groupeBloc.ToList();
         var noeudsDeSynchro = new Dictionary<string, string>();
-        var tachesFictivesDuBloc = new List<TacheRecord>();
+        var tachesFictivesDuBloc = new List<Tache>();
 
         // Identifier les métiers qui servent de prérequis à D'AUTRES métiers dans ce bloc
         var metiersPrerequisIds = new HashSet<string>();
@@ -76,27 +76,28 @@ namespace PlanAthena.Utilities
                 string idTacheFictive = $"Sync_{metierId}_{blocId}";
                 var tacheDeReference = tachesDuMetier.First();
 
-                var tacheFictive = new TacheRecord
-                {
-                    TacheId = idTacheFictive,
-                    TacheNom = $"Fin du métier {metierId} dans le bloc {tacheDeReference.BlocNom}",
-                    HeuresHommeEstimees = 0,
-                    Dependencies = string.Join(",", tachesDuMetier.Select(t => t.TacheId)),
-                    BlocId = blocId,
-                    BlocNom = tacheDeReference.BlocNom,
-                    MetierId = _metierService.GetOrCreateSyncMetierId(0),
-                    LotId = tacheDeReference.LotId,
-                    LotNom = tacheDeReference.LotNom,
-                    LotPriorite = tacheDeReference.LotPriorite,
-                    BlocCapaciteMaxOuvriers = tacheDeReference.BlocCapaciteMaxOuvriers
-                };
-                tachesFictivesDuBloc.Add(tacheFictive);
+                        var tacheFictive = new Tache
+                        {
+                            TacheId = idTacheFictive,
+                            TacheNom = $"Fin du métier {metierId} dans le bloc {tacheDeReference.BlocNom}",
+                            Type = TypeActivite.JalonDeSynchronisation,
+                            HeuresHommeEstimees = 0,
+                            Dependencies = string.Join(",", tachesDuMetier.Select(t => t.TacheId)),
+                            BlocId = blocId,
+                            BlocNom = tacheDeReference.BlocNom,
+                            MetierId = "",
+                            LotId = tacheDeReference.LotId,
+                            LotNom = tacheDeReference.LotNom,
+                            LotPriorite = tacheDeReference.LotPriorite,
+                            BlocCapaciteMaxOuvriers = tacheDeReference.BlocCapaciteMaxOuvriers
+                        };
+                        tachesFictivesDuBloc.Add(tacheFictive);
                 noeudsDeSynchro[metierId] = idTacheFictive;
             }
         }
 
         // Remplacer les multiples dépendances vers un métier par une seule dépendance vers la tâche de synchro
-        var tachesMisesAJourDuBloc = new List<TacheRecord>();
+        var tachesMisesAJourDuBloc = new List<Tache>();
         foreach (var tache in tachesDuBloc)
         {
             var dependancesInitiales = tache.Dependencies?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList() ?? new List<string>();
@@ -131,9 +132,9 @@ namespace PlanAthena.Utilities
     return (tachesMisesAJourGlobal, tachesFictivesGlobales);
 }
 
-        private (List<TacheRecord> TachesDecoupees, Dictionary<string, List<string>> TableReliaison) DecouperTachesLongues(IReadOnlyList<TacheRecord> rawTaches)
+        private (List<Tache> TachesDecoupees, Dictionary<string, List<string>> TableReliaison) DecouperTachesLongues(IReadOnlyList<Tache> rawTaches)
         {
-            var tachesIntermediaires = new List<TacheRecord>();
+            var tachesIntermediaires = new List<Tache>();
             var tableDeReliaison = new Dictionary<string, List<string>>();
 
             foreach (var tache in rawTaches)
@@ -152,9 +153,9 @@ namespace PlanAthena.Utilities
             return (tachesIntermediaires, tableDeReliaison);
         }
 
-        private List<TacheRecord> SplitSingleTask(TacheRecord originalTache)
+        private List<Tache> SplitSingleTask(Tache originalTache)
         {
-            var nouvellesTaches = new List<TacheRecord>();
+            var nouvellesTaches = new List<Tache>();
             int heuresRestantes = originalTache.HeuresHommeEstimees;
             int compteur = 1;
 
@@ -180,11 +181,11 @@ namespace PlanAthena.Utilities
             return nouvellesTaches;
         }
 
-        private List<TacheRecord> RelierDependances(IReadOnlyList<TacheRecord> taches, Dictionary<string, List<string>> tableReliaisonDecoupage)
+        private List<Tache> RelierDependances(IReadOnlyList<Tache> taches, Dictionary<string, List<string>> tableReliaisonDecoupage)
         {
             if (!tableReliaisonDecoupage.Any()) return taches.ToList();
 
-            var tachesFinales = new List<TacheRecord>();
+            var tachesFinales = new List<Tache>();
             foreach (var tache in taches)
             {
                 if (string.IsNullOrEmpty(tache.Dependencies))
@@ -215,9 +216,9 @@ namespace PlanAthena.Utilities
             return tachesFinales;
         }
 
-        private TacheRecord CopierTache(TacheRecord source)
+        private Tache CopierTache(Tache source)
         {
-            return new TacheRecord
+            return new Tache
             {
                 TacheId = source.TacheId,
                 TacheNom = source.TacheNom,

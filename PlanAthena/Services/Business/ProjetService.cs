@@ -228,7 +228,7 @@ namespace PlanAthena.Services.Business
                 // Import des métiers
                 if (!string.IsNullOrEmpty(cheminMetiers) && File.Exists(cheminMetiers))
                 {
-                    var metiers = _csvDataService.ImportCsv<MetierRecord>(cheminMetiers);
+                    var metiers = _csvDataService.ImportCsv<Metier>(cheminMetiers);
                     _metierService.RemplacerTousLesMetiers(metiers);
                     resume.MetiersImportes = metiers.Count;
                 }
@@ -269,7 +269,7 @@ namespace PlanAthena.Services.Business
         public InformationsProjet CreerNouveauProjet(string nomProjet, string description = "")
         {
             // Vider toutes les données existantes
-            _metierService.RemplacerTousLesMetiers(new List<MetierRecord>());
+            _metierService.RemplacerTousLesMetiers(new List<Metier>());
             _ouvrierService.Vider();
             _tacheService.Vider();
 
@@ -302,19 +302,6 @@ namespace PlanAthena.Services.Business
     }
 
     #region Classes de support
-
-    /// <summary>
-    /// Structure de données complète d'un projet
-    /// </summary>
-    public class ProjetData
-    {
-        public InformationsProjet InformationsProjet { get; set; } = new InformationsProjet();
-        public List<MetierRecord> Metiers { get; set; } = new List<MetierRecord>();
-        public List<OuvrierRecord> Ouvriers { get; set; } = new List<OuvrierRecord>();
-        public List<TacheRecord> Taches { get; set; } = new List<TacheRecord>();
-        public DateTime DateSauvegarde { get; set; }
-        public string VersionApplication { get; set; } = "";
-    }
 
     /// <summary>
     /// Informations générales sur un projet

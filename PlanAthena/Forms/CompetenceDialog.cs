@@ -8,7 +8,7 @@ namespace PlanAthena.Forms
     /// </summary>
     public partial class CompetenceDialog : System.Windows.Forms.Form
     {
-        public MetierRecord MetierSelectionne { get; private set; }
+        public Metier MetierSelectionne { get; private set; }
         public NiveauExpertise NiveauExpertise { get; private set; }
         public int? PerformancePct { get; private set; }
 
@@ -17,7 +17,7 @@ namespace PlanAthena.Forms
         private NumericUpDown numPerformance;
         private readonly bool _modificationMode;
 
-        public CompetenceDialog(List<MetierRecord> metiersDisponibles, OuvrierRecord competenceExistante = null)
+        public CompetenceDialog(List<Metier> metiersDisponibles, Ouvrier competenceExistante = null)
         {
             _modificationMode = competenceExistante != null;
             InitializeComponent();
@@ -111,7 +111,7 @@ namespace PlanAthena.Forms
             this.StartPosition = FormStartPosition.CenterParent;
         }
 
-        private void InitialiserDonnees(List<MetierRecord> metiersDisponibles, OuvrierRecord competenceExistante)
+        private void InitialiserDonnees(List<Metier> metiersDisponibles, Ouvrier competenceExistante)
         {
             // Remplir la liste des métiers
             cmbMetier.DataSource = metiersDisponibles.OrderBy(m => m.Nom).ToList();
@@ -166,7 +166,7 @@ namespace PlanAthena.Forms
                 return;
             }
 
-            MetierSelectionne = cmbMetier.SelectedItem as MetierRecord;
+            MetierSelectionne = cmbMetier.SelectedItem as Metier;
             NiveauExpertise = ((dynamic)cmbNiveau.SelectedItem).Value;
             PerformancePct = (int)numPerformance.Value;
         }

@@ -2,7 +2,7 @@ using PlanAthena.Core.Facade.Dto.Enums;
 
 namespace PlanAthena.Data
 {
-    public class OuvrierRecord
+    public class Ouvrier
     {
         public string OuvrierId { get; set; }
         public string Nom { get; set; }

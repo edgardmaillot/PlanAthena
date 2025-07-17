@@ -1,28 +1,26 @@
 namespace PlanAthena.Data
 {
     /// <summary>
-    /// Représente une tâche dans le système de planification
+    /// Représente une activité dans le système de planification, qui peut être une tâche ou un jalon.
     /// </summary>
-    public class TacheRecord
+    public class Tache
     {
         public string TacheId { get; set; } = "";
         public string TacheNom { get; set; } = "";
         public int HeuresHommeEstimees { get; set; }
         public string MetierId { get; set; } = "";
         public string Dependencies { get; set; } = "";
-
-        /// <summary>
-        /// Liste des IDs de tâches à exclure des dépendances héritées du métier
-        /// Format: "ID1,ID2,ID3"
-        /// </summary>
         public string ExclusionsDependances { get; set; } = "";
 
-        // SUPPRIMÉ: public bool EstSurchargeJalon { get; set; } = false;
+        // NOUVEAU: Propriétés pour définir la nature de l'activité
+        public TypeActivite Type { get; set; } = TypeActivite.Tache;
+        public bool EstJalon => Type != TypeActivite.Tache;
 
+
+        // Propriétés de regroupement
         public string LotId { get; set; } = "";
         public string LotNom { get; set; } = "";
         public int LotPriorite { get; set; }
-
         public string BlocId { get; set; } = "";
         public string BlocNom { get; set; } = "";
         public int BlocCapaciteMaxOuvriers { get; set; }

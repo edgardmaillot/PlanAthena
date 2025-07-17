@@ -8,7 +8,7 @@ namespace PlanAthena.Forms
     {
         private readonly MetierService _metierService;
         private readonly CsvDataService _csvDataService;
-        private MetierRecord _metierSelectionne = null;
+        private Metier _metierSelectionne = null;
 
         // Le mode "Modification" est maintenant géré par l'état des contrôles
         private bool IsEditing => txtMetierId.ReadOnly == false;
@@ -45,7 +45,7 @@ namespace PlanAthena.Forms
             if (idMetierSelectionne != null)
             {
                 var itemToReselect = listViewMetiers.Items.Cast<ListViewItem>()
-                    .FirstOrDefault(item => (item.Tag as MetierRecord)?.MetierId == idMetierSelectionne);
+                    .FirstOrDefault(item => (item.Tag as Metier)?.MetierId == idMetierSelectionne);
                 if (itemToReselect != null)
                 {
                     itemToReselect.Selected = true;
@@ -108,7 +108,7 @@ namespace PlanAthena.Forms
             lblStatut.Text = (affiches == total) ? $"{total} métier(s)" : $"{affiches}/{total} métier(s) affiché(s)";
         }
 
-        private void AfficherDetailsMetier(MetierRecord metier)
+        private void AfficherDetailsMetier(Metier metier)
         {
             _metierSelectionne = metier;
             if (metier == null)
@@ -191,7 +191,7 @@ namespace PlanAthena.Forms
         {
             if (listViewMetiers.SelectedItems.Count > 0)
             {
-                var metier = listViewMetiers.SelectedItems[0].Tag as MetierRecord;
+                var metier = listViewMetiers.SelectedItems[0].Tag as Metier;
                 AfficherDetailsMetier(metier);
                 btnModifier.Enabled = true;
                 btnSupprimer.Enabled = true;
@@ -272,7 +272,7 @@ namespace PlanAthena.Forms
         private void btnNouveau_Click(object sender, EventArgs e)
         {
             // On passe en "mode édition" pour un nouvel objet
-            _metierSelectionne = new MetierRecord { MetierId = "NOUVEAU_METIER", Nom = "Nouveau métier", CouleurHex = "" };
+            _metierSelectionne = new Metier { MetierId = "NOUVEAU_METIER", Nom = "Nouveau métier", CouleurHex = "" };
 
             AfficherDetailsMetier(_metierSelectionne);
 
@@ -304,7 +304,7 @@ namespace PlanAthena.Forms
 
                     if (txtMetierId.Text == "NOUVEAU_METIER" || !_metierService.GetAllMetiers().Any(m => m.MetierId == _metierSelectionne.MetierId)) // C'est un nouveau métier
                     {
-                        _metierService.AjouterMetier(new MetierRecord
+                        _metierService.AjouterMetier(new Metier
                         {
                             MetierId = txtMetierId.Text,
                             Nom = txtNom.Text,
@@ -409,7 +409,7 @@ namespace PlanAthena.Forms
             {
                 try
                 {
-                    var metiersImportes = _csvDataService.ImportCsv<MetierRecord>(ofd.FileName);
+                    var metiersImportes = _csvDataService.ImportCsv<Metier>(ofd.FileName);
                     _metierService.RemplacerTousLesMetiers(metiersImportes);
                     RafraichirAffichageComplet();
                     MessageBox.Show($"{metiersImportes.Count} métiers ont été importés et ont remplacé les données existantes.", "Import réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
