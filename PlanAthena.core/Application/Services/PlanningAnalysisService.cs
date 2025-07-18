@@ -13,9 +13,15 @@ namespace PlanAthena.Core.Application.Services
             IReadOnlyList<AffectationDto> affectations,
             Chantier chantierDeReference)
         {
-            if (!affectations.Any())
+            // Nous filtrons les affectations pour exclure les jalons et leurs ouvriers virtuels.
+            // Les analyses de performance (KPIs) ne doivent refléter que le travail réel effectué par des ressources réelles.
+            // Les ouvriers virtuels sont identifiés par leur ID qui respecte une convention de nommage.
+            var affectationsReelles = affectations
+                .Where(a => !a.OuvrierId.StartsWith("VIRTUAL"))
+                .ToList();
+
+            if (!affectationsReelles.Any())
             {
-                // Retourner un rapport vide si pas d'affectations
                 return Task.FromResult(new PlanningAnalysisReportDto
                 {
                     KpisGlobaux = new GlobalKpiDto(),
@@ -24,7 +30,8 @@ namespace PlanAthena.Core.Application.Services
             }
 
             var kpisParOuvrier = new List<WorkerKpiDto>();
-            var affectationsParOuvrier = affectations.GroupBy(a => a.OuvrierId);
+            // L'analyse se base maintenant sur les affectations réelles filtrées.
+            var affectationsParOuvrier = affectationsReelles.GroupBy(a => a.OuvrierId);
 
             foreach (var groupeOuvrier in affectationsParOuvrier)
             {
@@ -59,24 +66,20 @@ namespace PlanAthena.Core.Application.Services
         }
 
         private (int joursPresence, double heuresTravaillees) CalculerPresenceEtHeures(
-    IReadOnlyList<AffectationDto> affectationsOuvrier,
-    CalendrierOuvreChantier calendrier)
+            IReadOnlyList<AffectationDto> affectationsOuvrier,
+            CalendrierOuvreChantier calendrier)
         {
             if (!affectationsOuvrier.Any()) return (0, 0);
 
-            // Le calcul des heures travaillées est maintenant direct
-            double heuresTravaillees = affectationsOuvrier.Sum(a => (double)a.DureeHeures);
+            // Le calcul des heures travaillées est direct car les jalons (durée 0) sont déjà filtrés.
+            double heuresTravaillees = affectationsOuvrier.Sum(a => a.DureeHeures);
 
-            // Pour les jours de présence, nous devons calculer la date de fin de chaque tâche
-            var dateMin = affectationsOuvrier.Min(a => a.DateDebut);
-            var dateMax = affectationsOuvrier.Max(a => a.DateDebut.AddHours(a.DureeHeures));
-
-            int joursDePresence = 0;
-            // On s'assure de compter le nombre de jours ouvrés uniques où il y a eu une activité
             var joursActifs = new HashSet<DateTime>();
             foreach (var affectation in affectationsOuvrier)
             {
                 var dateCourante = affectation.DateDebut.Date;
+                // La durée d'une affectation réelle est en heures ouvrées, donc on ne peut pas simplement ajouter des heures.
+                // On se base sur les slots pour déterminer la présence.
                 var dateFinTache = affectation.DateDebut.AddHours(affectation.DureeHeures).Date;
                 while (dateCourante <= dateFinTache)
                 {
@@ -85,7 +88,7 @@ namespace PlanAthena.Core.Application.Services
                 }
             }
 
-            joursDePresence = joursActifs.Count(jour => calendrier.EstJourOuvre(NodaTime.LocalDate.FromDateTime(jour)));
+            int joursDePresence = joursActifs.Count(jour => calendrier.EstJourOuvre(NodaTime.LocalDate.FromDateTime(jour)));
 
             return (joursDePresence, heuresTravaillees);
         }

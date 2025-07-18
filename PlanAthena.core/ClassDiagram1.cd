@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<ClassDiagram MajorVersion="1" MinorVersion="1">
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="NameAndType">
   <Class Name="PlanAthena.Core.Application.Services.ChantierSetupInputMapper" BaseTypeListCollapsed="true">
     <Position X="36.75" Y="9.75" Width="2.75" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAACAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAQAACAAABABAhAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Application\Services\ChantierSetupInputMapper.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" Collapsed="true" />
@@ -149,7 +149,7 @@
   <Class Name="PlanAthena.Core.Domain.Tache">
     <Position X="13.25" Y="3.5" Width="3.25" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAgAAAAAACAAAAAAAAIACAAAAAgAAABAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAgAAAAAACAAAAAAAAIACAAAAAgAQABAAAAAAA=</HashCode>
       <FileName>Domain\Tache.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
@@ -186,7 +186,7 @@
   <Class Name="PlanAthena.Core.Infrastructure.Services.OrTools.TacheModelBuilder">
     <Position X="45" Y="4.75" Width="2.75" />
     <TypeIdentifier>
-      <HashCode>AAAAIAAAAAAAIQEAAICAQAAAAAAAAAAIAAAAAQAAAAA=</HashCode>
+      <HashCode>AAAAIAAABAAAAQAAAIKAAAAAAAAAAAAoAAAAAQAAAAA=</HashCode>
       <FileName>Infrastructure\Services\OrTools\TacheModelBuilder.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -231,7 +231,7 @@
     <Position X="27.75" Y="13.5" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAABAAgAAgAAAAAAAAAAAAAAAAAAAgAAAAEAAAAAAAA=</HashCode>
-      <FileName>Infrastructure\Services\PlanningAnalysisService.cs</FileName>
+      <FileName>Application\Services\PlanningAnalysisService.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" Collapsed="true" />
   </Class>
@@ -352,6 +352,13 @@
     <Position X="21.25" Y="11.75" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAEAAAAAAAAAAAAAAAAAIBACAAAAAAAAAhA=</HashCode>
+      <FileName>Facade\Dto\Enums\Enums.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="PlanAthena.Core.Facade.Dto.Enums.TypeActivite">
+    <Position X="23" Y="13.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAEAAAAAAAAgAAAAAAAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Facade\Dto\Enums\Enums.cs</FileName>
     </TypeIdentifier>
   </Enum>

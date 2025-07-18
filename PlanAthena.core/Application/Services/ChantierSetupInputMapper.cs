@@ -5,12 +5,26 @@ using PlanAthena.Core.Domain.ValueObjects;
 using PlanAthena.Core.Facade.Dto.Enums;
 using PlanAthena.Core.Facade.Dto.Input;
 using PlanAthena.Core.Facade.Dto.Output;
+using System.Linq;
 
 namespace PlanAthena.Core.Application.Services
 {
+    /// <summary>
+    /// Service responsable de la transformation du DTO d'entrée (ChantierSetupInputDto)
+    /// en un agrégat de domaine Chantier complet et cohérent. C'est ici que la logique
+    /// d'injection des entités virtuelles pour les jalons est implémentée, afin de
+    /// présenter un modèle unifié au reste de l'application.
+    /// </summary>
     public class ChantierSetupInputMapper : IChantierSetupInputMapper
     {
         private readonly ICalendrierService _calendrierService;
+
+        // Définition de constantes pour les entités virtuelles afin de garantir la cohérence
+        // et de faciliter la maintenance. Ces IDs ne doivent pas entrer en conflit avec les données réelles.
+        private const string VIRTUAL_METIER_ID = "SYS_JALON_METIER";
+        private const string VIRTUAL_METIER_NOM = "Métier Virtuel pour Jalons";
+        private const string VIRTUAL_OUVRIER_NOM = "Ouvrier Virtuel";
+        private const string VIRTUAL_OUVRIER_PRENOM_PREFIX = "Jalon";
 
         public ChantierSetupInputMapper(ICalendrierService calendrierService)
         {
@@ -38,7 +52,13 @@ namespace PlanAthena.Core.Application.Services
                     inputDto.DateDebutSouhaitee,
                     inputDto.DateFinSouhaitee);
 
-                // 3. Mapper Metiers
+                // 3. Logique d'injection des entités virtuelles
+                // On vérifie en amont s'il y a des jalons. Si ce n'est pas le cas,
+                // on évite de créer inutilement le métier virtuel.
+                bool hasMilestones = inputDto.Taches.Any(t => t.Type != TypeActivite.Tache);
+                Metier? metierVirtuel = null;
+
+                // 4. Mapper Metiers
                 var metiersDomaine = new List<Metier>();
                 foreach (var metierDto in inputDto.Metiers)
                 {
@@ -47,7 +67,16 @@ namespace PlanAthena.Core.Application.Services
                     metiersDomaine.Add(new Metier(metierId, metierDto.Nom, prerequisIds));
                 }
 
-                // 4. Mapper Ouvriers et leurs Compétences
+                // Si des jalons existent, on crée UN SEUL métier virtuel qui leur sera commun.
+                // Cela simplifie le modèle en aval : pour le solveur, un jalon est juste une tâche
+                // requérant un métier spécifique (le métier virtuel).
+                if (hasMilestones)
+                {
+                    metierVirtuel = new Metier(new MetierId(VIRTUAL_METIER_ID), VIRTUAL_METIER_NOM, Enumerable.Empty<MetierId>());
+                    metiersDomaine.Add(metierVirtuel);
+                }
+
+                // 5. Mapper Ouvriers et leurs Compétences
                 var ouvriersDomaine = new List<Ouvrier>();
                 foreach (var ouvrierDto in inputDto.Ouvriers)
                 {
@@ -65,7 +94,10 @@ namespace PlanAthena.Core.Application.Services
                     ouvriersDomaine.Add(new Ouvrier(ouvrierId, ouvrierDto.Nom, ouvrierDto.Prenom, coutJournalier, competencesDomaine));
                 }
 
-                // 5. Mapper Blocs et leurs Taches
+                // Compteur pour garantir des IDs uniques pour les ouvriers virtuels
+                long virtualWorkerIdCounter = 0;
+
+                // 6. Mapper Blocs et leurs Taches (avec injection pour les jalons)
                 var blocsDomaine = new List<BlocTravail>();
                 foreach (var blocDto in inputDto.Blocs)
                 {
@@ -79,15 +111,48 @@ namespace PlanAthena.Core.Application.Services
                     {
                         var tacheId = new TacheId(tacheDto.TacheId);
                         var duree = new DureeHeuresHomme(tacheDto.HeuresHommeEstimees);
-                        var metierRequisId = new MetierId(tacheDto.MetierId);
                         var dependances = tacheDto.Dependencies.Select(id => new TacheId(id)).ToList();
+                        MetierId metierRequisId;
 
-                        tachesPourCeBloc.Add(new Tache(tacheId, tacheDto.Nom, blocId, duree, metierRequisId, dependances));
+                        if (tacheDto.Type == TypeActivite.Tache)
+                        {
+                            // Cas standard : une tâche réelle avec un métier réel.
+                            metierRequisId = new MetierId(tacheDto.MetierId);
+                        }
+                        else
+                        {
+                            // Cas d'un jalon : on applique la stratégie d'injection.
+                            if (metierVirtuel == null)
+                                throw new InvalidOperationException("Incohérence interne: Un jalon a été trouvé mais le métier virtuel n'a pas été initialisé.");
+
+                            // On assigne le métier virtuel au jalon.
+                            metierRequisId = metierVirtuel.Id;
+
+                            // Chaque jalon doit être traité comme une tâche indépendante par le solveur.
+                            // Pour y parvenir sans compliquer la logique du solveur, nous créons un ouvrier virtuel
+                            // unique pour chaque jalon. Cet ouvrier est le seul à posséder la compétence du "métier jalon".
+                            // Le solveur n'aura donc d'autre choix que d'assigner cet ouvrier à ce jalon,
+                            // isolant ainsi le jalon des autres tâches.
+                            virtualWorkerIdCounter++;
+                            var ouvrierVirtuelId = new OuvrierId($"VIRTUAL_OUVRIER_{virtualWorkerIdCounter}");
+                            var competenceVirtuelle = new Competence(metierVirtuel.Id, NiveauExpertise.Maitre, 100);
+                            var ouvrierVirtuel = new Ouvrier(
+                                ouvrierVirtuelId,
+                                VIRTUAL_OUVRIER_NOM,
+                                $"{VIRTUAL_OUVRIER_PRENOM_PREFIX} '{tacheDto.Nom}'",
+                                new CoutJournalier(0), // Un jalon n'a pas de coût.
+                                new[] { competenceVirtuelle });
+
+                            ouvriersDomaine.Add(ouvrierVirtuel);
+                        }
+
+                        // On crée l'entité Tache en passant le type et le MetierId (réel ou virtuel).
+                        tachesPourCeBloc.Add(new Tache(tacheId, tacheDto.Nom, tacheDto.Type, blocId, duree, metierRequisId, dependances));
                     }
                     blocsDomaine.Add(new BlocTravail(blocId, blocDto.Nom, capacite, tachesPourCeBloc));
                 }
 
-                // 6. Mapper Lots
+                // 7. Mapper Lots
                 var lotsDomaine = new List<LotTravaux>();
                 foreach (var lotDto in inputDto.Lots)
                 {
@@ -102,7 +167,7 @@ namespace PlanAthena.Core.Application.Services
                         lotDto.DateFinAuPlusTardSouhaitee));
                 }
 
-                // 7. Mapper ConfigurationCdC (si présente)
+                // 8. Mapper ConfigurationCdC (si présente)
                 ConfigurationChantier? configCdCDomaine = null;
                 if (inputDto.ConfigurationCdC != null)
                 {
@@ -111,7 +176,9 @@ namespace PlanAthena.Core.Application.Services
                         inputDto.ConfigurationCdC.MetiersClefsIds);
                 }
 
-                // 8. Créer l'agrégat Chantier
+                // 9. Créer l'agrégat Chantier
+                // Les listes (metiersDomaine, ouvriersDomaine) contiennent maintenant les entités réelles ET virtuelles.
+                // L'objet Chantier est donc complet et cohérent pour le reste du système.
                 chantierDomaine = new Chantier(
                     chantierId,
                     inputDto.Description,

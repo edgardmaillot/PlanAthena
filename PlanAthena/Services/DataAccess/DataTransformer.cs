@@ -1,17 +1,17 @@
 using PlanAthena.Core.Facade.Dto.Input;
 using PlanAthena.Data;
-using PlanAthena.Services.Business;
-using PlanAthena.Utilities;
+// Ajout pour éviter d'écrire les noms complets partout dans la méthode de mapping
+using CoreEnums = PlanAthena.Core.Facade.Dto.Enums;
 
 namespace PlanAthena.Services.DataAccess
 {
     /// <summary>
-    /// Service de transformation des données CSV vers les DTOs PlanAthena
+    /// Service de transformation des données CSV vers les DTOs de la DLL PlanAthena.Core.
+    /// Agit comme une couche anti-corruption, traduisant les modèles de données externes
+    /// en contrats d'entrée stables et propres pour le cœur du système.
     /// </summary>
     public class DataTransformer
     {
-        
-
         public DataTransformer()
         {
         }
@@ -31,9 +31,11 @@ namespace PlanAthena.Services.DataAccess
             {
                 TacheId = t.TacheId,
                 Nom = t.TacheNom,
+                // CORRECTION : Mappe l'énumération du projet de données vers l'énumération de la DLL Core.
+                Type = MapToCoreTypeActivite(t.Type),
                 BlocId = t.BlocId,
                 HeuresHommeEstimees = t.HeuresHommeEstimees,
-                MetierId = t.MetierId,
+                MetierId = t.MetierId ?? string.Empty,
                 Dependencies = t.Dependencies?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>()
             }).ToList();
 
@@ -79,6 +81,8 @@ namespace PlanAthena.Services.DataAccess
                     Competences = g.Select(c => new CompetenceDto
                     {
                         MetierId = c.MetierId,
+                        // RESTAURATION : Le cast direct est conservé tel que dans le code original.
+                        // Cela suppose que c.NiveauExpertise est un type (probablement int) compatible avec l'énumération de la DLL.
                         Niveau = (PlanAthena.Core.Facade.Dto.Enums.NiveauExpertise)c.NiveauExpertise,
                         PerformancePct = c.PerformancePct
                     }).ToList()
@@ -120,6 +124,25 @@ namespace PlanAthena.Services.DataAccess
                 Metiers = metiersDto,
                 Ouvriers = ouvriersDto
             };
+        }
+
+        /// <summary>
+        /// Mappe l'énumération TypeActivite de la couche Data vers celle de la DLL Core.
+        /// </summary>
+        private CoreEnums.TypeActivite MapToCoreTypeActivite(PlanAthena.Data.TypeActivite sourceType)
+        {
+            switch (sourceType)
+            {
+                case PlanAthena.Data.TypeActivite.Tache:
+                    return CoreEnums.TypeActivite.Tache;
+                case PlanAthena.Data.TypeActivite.JalonUtilisateur:
+                    return CoreEnums.TypeActivite.JalonUtilisateur;
+                case PlanAthena.Data.TypeActivite.JalonDeSynchronisation:
+                case PlanAthena.Data.TypeActivite.JalonTechnique:
+                    return CoreEnums.TypeActivite.JalonTechnique;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(sourceType), $"Valeur TypeActivite non supportée pour le mapping : {sourceType}");
+            }
         }
     }
 }

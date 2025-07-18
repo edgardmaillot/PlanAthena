@@ -1,3 +1,5 @@
+// Fichier: Services/Business/PlanificationService.cs
+
 using PlanAthena.Core.Facade;
 using PlanAthena.Core.Facade.Dto.Output;
 using PlanAthena.Data;
@@ -20,7 +22,6 @@ namespace PlanAthena.Services.Business
     {
         private readonly PlanAthenaCoreFacade _facade;
         private readonly DataTransformer _dataTransformer;
-        // CORRIGÉ : Le nom de la variable est maintenant cohérent avec son type.
         private readonly PreparationSolveurService _preparationSolveurService;
 
         private IReadOnlyList<Ouvrier> _ouvriers = new List<Ouvrier>();
@@ -30,11 +31,11 @@ namespace PlanAthena.Services.Business
         public PlanificationService(
             PlanAthenaCoreFacade facade,
             DataTransformer dataTransformer,
-            PreparationSolveurService preparationSolveurService) // CORRIGÉ
+            PreparationSolveurService preparationSolveurService)
         {
             _facade = facade ?? throw new ArgumentNullException(nameof(facade));
             _dataTransformer = dataTransformer ?? throw new ArgumentNullException(nameof(dataTransformer));
-            _preparationSolveurService = preparationSolveurService ?? throw new ArgumentNullException(nameof(preparationSolveurService)); // CORRIGÉ
+            _preparationSolveurService = preparationSolveurService ?? throw new ArgumentNullException(nameof(preparationSolveurService));
         }
 
         public void ChargerDonnees(IReadOnlyList<Ouvrier> ouvriers, IReadOnlyList<Tache> taches, IReadOnlyList<Metier> metiers)
@@ -59,7 +60,6 @@ namespace PlanAthena.Services.Business
 
             try
             {
-                // La logique ici reste la même, mais le nom de la variable est plus clair.
                 var tachesPourSolveur = _preparationSolveurService.PreparerPourSolveur(_taches);
 
                 var inputDto = _dataTransformer.TransformToChantierSetupDto(
@@ -78,7 +78,7 @@ namespace PlanAthena.Services.Business
             }
         }
 
-        // CORRIGÉ : La méthode a été entièrement revue pour ne plus dépendre d'ObtenirStatistiques.
+        // CORRIGÉ : La méthode a été entièrement revue pour être plus robuste.
         public StatistiquesSimplifiees ObtenirStatistiquesTraitement()
         {
             if (!ValiderDonneesChargees())
@@ -90,20 +90,21 @@ namespace PlanAthena.Services.Business
             {
                 var tachesPourSolveur = _preparationSolveurService.PreparerPourSolveur(_taches);
 
-                // On calcule les statistiques directement ici.
-                int tachesLonguesDecoupees = _taches.Count(t => !t.EstJalon && t.HeuresHommeEstimees > 8);
-                // Les "jalons techniques" sont maintenant des "tâches de regroupement" invisibles.
-                // On les compte en comparant le nombre de tâches avant et après préparation.
-                int tachesDeRegroupement = tachesPourSolveur.Count(t => t.TacheNom.StartsWith("Regroupement de"));
+                // Calcul plus fiable des statistiques :
+                // 1. Tâches découpées : on compte les tâches originales qui satisfont la condition.
+                int tachesLonguesDecoupees = _taches.Count(t => t.Type == TypeActivite.Tache && t.HeuresHommeEstimees > 8);
+
+                // 2. Jalons techniques : on compte les tâches du bon type dans le résultat final.
+                int jalonsTechniquesCrees = tachesPourSolveur.Count(t => t.Type == TypeActivite.JalonTechnique);
 
                 return new StatistiquesSimplifiees
                 {
                     TachesChef = _taches.Count,
                     TachesSolveur = tachesPourSolveur.Count,
                     TachesDecoupees = tachesLonguesDecoupees,
-                    JalonsTechniques = tachesDeRegroupement, // Renommé pour la cohérence de l'IHM
+                    JalonsTechniques = jalonsTechniquesCrees,
                     Resume = $"Chef: {_taches.Count} tâches → Solveur: {tachesPourSolveur.Count} " +
-                            $"({tachesLonguesDecoupees} découpées, {tachesDeRegroupement} regroupements)"
+                            $"({tachesLonguesDecoupees} découpées, {jalonsTechniquesCrees} jalons tech.)"
                 };
             }
             catch (Exception)
@@ -134,6 +135,7 @@ namespace PlanAthena.Services.Business
             }
             catch (Exception)
             {
+                // En cas d'erreur, retourner la liste originale pour éviter un crash.
                 return _taches.ToList();
             }
         }

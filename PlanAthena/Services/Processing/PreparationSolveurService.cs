@@ -1,21 +1,25 @@
+// Fichier: Services/Processing/PreparationSolveurService.cs
+// Version finale et validée
+
 using PlanAthena.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Diagnostics;
 
 namespace PlanAthena.Services.Processing
 {
     /// <summary>
     /// Service responsable de la préparation technique des données pour le solveur.
-    /// Gère le découpage des tâches longues et la création des tâches de regroupement.
+    /// Gère le découpage des tâches longues pour parallélisation et la création des jalons techniques pour la convergence.
     /// </summary>
     public class PreparationSolveurService
     {
         private const int HEURE_LIMITE_DECOUPAGE = 8;
         private const int MAX_HEURES_PAR_SOUS_TACHE = 7;
-        private const string TACHE_REGROUPEMENT_PREFIX = "JT_"; // JT pour "Jonction Technique"
+        private const string JALON_TECHNIQUE_PREFIX = "JT_";
         private const string DECOUPAGE_SUFFIX = "_P";
 
-        // Le service n'a plus besoin de MetierService
         public PreparationSolveurService() { }
 
         public List<Tache> PreparerPourSolveur(IReadOnlyList<Tache> tachesDuProjet)
@@ -23,35 +27,41 @@ namespace PlanAthena.Services.Processing
             if (tachesDuProjet == null || !tachesDuProjet.Any())
                 return new List<Tache>();
 
-            var (tachesDecoupees, tableDecoupage) = DecouperTachesLongues(tachesDuProjet);
-            var tachesAvecRegroupement = CreerTachesDeRegroupement(tachesDecoupees, tableDecoupage);
-            var tachesFinales = MettreAJourDependances(tachesAvecRegroupement, tableDecoupage);
+            LogTaches("État initial avant préparation :", tachesDuProjet);
+
+            var tachesDeTravail = tachesDuProjet.Select(CopierTache).ToList();
+
+            var (tachesDecoupees, tableDecoupage) = DecouperTachesLongues(tachesDeTravail);
+            LogTaches("État après découpage des tâches longues :", tachesDecoupees, tableDecoupage);
+
+            var tachesAvecJalons = CreerJalonsTechniques(tachesDecoupees, tableDecoupage);
+            LogTaches("État après création des jalons techniques :", tachesAvecJalons, tableDecoupage);
+
+            var tachesFinales = MettreAJourDependances(tachesAvecJalons, tableDecoupage);
+            LogTaches("État final prêt pour le solveur :", tachesFinales);
 
             return tachesFinales;
         }
 
-        // ... (Les méthodes privées DecouperTachesLongues, CreerTachesDeRegroupement, etc. suivent)
-        // Note : J'ai renommé JalonTechnique en TacheDeRegroupement pour la clarté.
-
         private (List<Tache> TachesDecoupees, Dictionary<string, List<string>> TableDecoupage) DecouperTachesLongues(IReadOnlyList<Tache> taches)
         {
-            var tachesDecoupees = new List<Tache>();
+            var tachesResultat = new List<Tache>();
             var tableDecoupage = new Dictionary<string, List<string>>();
 
             foreach (var tache in taches)
             {
-                if (tache.EstJalon || tache.HeuresHommeEstimees <= HEURE_LIMITE_DECOUPAGE)
+                if (tache.Type == TypeActivite.JalonUtilisateur || tache.HeuresHommeEstimees <= HEURE_LIMITE_DECOUPAGE)
                 {
-                    tachesDecoupees.Add(CopierTache(tache));
+                    tachesResultat.Add(tache);
                 }
                 else
                 {
                     var sousTaches = DecouperTacheUnique(tache);
-                    tachesDecoupees.AddRange(sousTaches);
+                    tachesResultat.AddRange(sousTaches);
                     tableDecoupage[tache.TacheId] = sousTaches.Select(st => st.TacheId).ToList();
                 }
             }
-            return (tachesDecoupees, tableDecoupage);
+            return (tachesResultat, tableDecoupage);
         }
 
         private List<Tache> DecouperTacheUnique(Tache tacheOriginale)
@@ -69,16 +79,9 @@ namespace PlanAthena.Services.Processing
                 sousTache.TacheId = nouvelId;
                 sousTache.TacheNom = $"{tacheOriginale.TacheNom} (Partie {compteur})";
                 sousTache.HeuresHommeEstimees = heuresPourCeBloc;
-                sousTache.Type = TypeActivite.Tache; // Une sous-tâche n'est jamais un jalon
+                sousTache.Type = TypeActivite.Tache;
+                sousTache.Dependencies = tacheOriginale.Dependencies;
 
-                if (compteur == 1)
-                {
-                    sousTache.Dependencies = tacheOriginale.Dependencies;
-                }
-                else
-                {
-                    sousTache.Dependencies = $"{tacheOriginale.TacheId}{DECOUPAGE_SUFFIX}{compteur - 1}";
-                }
                 sousTaches.Add(sousTache);
                 heuresRestantes -= heuresPourCeBloc;
                 compteur++;
@@ -86,90 +89,63 @@ namespace PlanAthena.Services.Processing
             return sousTaches;
         }
 
-        private List<Tache> CreerTachesDeRegroupement(List<Tache> taches, Dictionary<string, List<string>> tableDecoupage)
+        private List<Tache> CreerJalonsTechniques(List<Tache> taches, Dictionary<string, List<string>> tableDecoupage)
         {
-            var tachesFinales = new List<Tache>(taches);
-            var regroupementsCrees = new Dictionary<string, string>();
+            var tachesAvecJalons = new List<Tache>(taches);
 
-            var dependants = new Dictionary<string, List<string>>();
-            foreach (var tache in taches)
+            foreach (var originalId in tableDecoupage.Keys.ToList())
             {
-                if (string.IsNullOrEmpty(tache.Dependencies)) continue;
-                var deps = tache.Dependencies.Split(',').Select(d => d.Trim()).Where(d => !string.IsNullOrEmpty(d));
-                foreach (var dep in deps)
+                string idJalon = $"{JALON_TECHNIQUE_PREFIX}{originalId}";
+                var sousTachesIds = tableDecoupage[originalId];
+                var tacheRef = taches.First(t => t.TacheId == sousTachesIds.First());
+
+                var jalon = new Tache
                 {
-                    if (tableDecoupage.ContainsKey(dep))
-                    {
-                        if (!dependants.ContainsKey(dep)) dependants[dep] = new List<string>();
-                        dependants[dep].Add(tache.TacheId);
-                    }
-                }
-            }
-
-            foreach (var kvp in dependants.Where(d => d.Value.Count > 1))
-            {
-                string tacheOriginaleId = kvp.Key;
-                if (!tableDecoupage.TryGetValue(tacheOriginaleId, out var sousTaches)) continue;
-
-                string idRegroupement = $"{TACHE_REGROUPEMENT_PREFIX}{tacheOriginaleId}";
-                var dernierePartie = sousTaches.Last();
-                var tacheRef = taches.First(t => t.TacheId == dernierePartie);
-
-                var tacheRegroupement = new Tache
-                {
-                    TacheId = idRegroupement,
-                    TacheNom = $"Regroupement de {tacheOriginaleId}",
-                    Type = TypeActivite.Tache,
+                    TacheId = idJalon,
+                    TacheNom = $"Convergence technique de {originalId}",
+                    Type = TypeActivite.JalonTechnique,
                     HeuresHommeEstimees = 0,
-                    Dependencies = dernierePartie,
+                    Dependencies = string.Join(",", sousTachesIds),
+                    MetierId = "",
                     BlocId = tacheRef.BlocId,
                     BlocNom = tacheRef.BlocNom,
                     LotId = tacheRef.LotId,
-                    LotNom = tacheRef.LotNom,
-                    LotPriorite = tacheRef.LotPriorite,
-                    BlocCapaciteMaxOuvriers = tacheRef.BlocCapaciteMaxOuvriers
+                    LotNom = tacheRef.LotNom
                 };
-                tachesFinales.Add(tacheRegroupement);
-                regroupementsCrees[tacheOriginaleId] = idRegroupement;
+                tachesAvecJalons.Add(jalon);
+
+                tableDecoupage[originalId] = new List<string> { idJalon };
             }
 
-            foreach (var kvp in regroupementsCrees)
-            {
-                tableDecoupage[kvp.Key] = new List<string> { kvp.Value };
-            }
-
-            return tachesFinales;
+            return tachesAvecJalons;
         }
 
         private List<Tache> MettreAJourDependances(List<Tache> taches, Dictionary<string, List<string>> tableDecoupage)
         {
-            var tachesFinales = new List<Tache>();
             foreach (var tache in taches)
             {
                 if (string.IsNullOrEmpty(tache.Dependencies))
                 {
-                    tachesFinales.Add(tache);
                     continue;
                 }
-                var nouvellesDeps = new List<string>();
+
+                var nouvellesDeps = new HashSet<string>();
                 var anciennesDeps = tache.Dependencies.Split(',').Select(d => d.Trim()).Where(d => !string.IsNullOrEmpty(d));
 
-                foreach (var dep in anciennesDeps)
+                foreach (var depId in anciennesDeps)
                 {
-                    if (tableDecoupage.TryGetValue(dep, out var nouvelleDep))
+                    if (tableDecoupage.TryGetValue(depId, out var nouvellesRefs))
                     {
-                        nouvellesDeps.Add(nouvelleDep.Last());
+                        nouvellesDeps.Add(nouvellesRefs.Last());
                     }
                     else
                     {
-                        nouvellesDeps.Add(dep);
+                        nouvellesDeps.Add(depId);
                     }
                 }
-                var tacheMiseAJour = CopierTache(tache);
-                tacheMiseAJour.Dependencies = string.Join(",", nouvellesDeps.Distinct());
-                tachesFinales.Add(tacheMiseAJour);
+                tache.Dependencies = string.Join(",", nouvellesDeps);
             }
-            return tachesFinales;
+            return taches;
         }
 
         private Tache CopierTache(Tache source)
@@ -190,6 +166,26 @@ namespace PlanAthena.Services.Processing
                 BlocCapaciteMaxOuvriers = source.BlocCapaciteMaxOuvriers,
                 Type = source.Type
             };
+        }
+
+        [Conditional("DEBUG")]
+        private void LogTaches(string titre, IReadOnlyList<Tache> taches, Dictionary<string, List<string>> tableDecoupage = null)
+        {
+            Debug.WriteLine($"\n--- {titre} ({taches.Count} éléments) ---");
+            foreach (var tache in taches.OrderBy(t => t.TacheId))
+            {
+                Debug.WriteLine($"  - ID: {tache.TacheId,-40} | Nom: {tache.TacheNom,-50} | Type: {tache.Type,-15} | Durée: {tache.HeuresHommeEstimees,2}h | Dépend de: [{tache.Dependencies}]");
+            }
+
+            if (tableDecoupage != null && tableDecoupage.Any())
+            {
+                Debug.WriteLine("\n  --- Table de Découpage Actuelle ---");
+                foreach (var kvp in tableDecoupage.OrderBy(k => k.Key))
+                {
+                    Debug.WriteLine($"    - Origine: {kvp.Key,-40} -> Mappe vers: [{string.Join(", ", kvp.Value)}]");
+                }
+            }
+            Debug.WriteLine("--- Fin de la section ---\n");
         }
     }
 }

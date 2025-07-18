@@ -1,10 +1,13 @@
 // PlanAthena.Core.Facade.Dto.Input.TacheDto.cs
+using PlanAthena.Core.Facade.Dto.Enums;
+
 namespace PlanAthena.Core.Facade.Dto.Input
 {
     public record TacheDto
     {
         public required string TacheId { get; init; }
         public required string Nom { get; init; }
+        public required TypeActivite Type { get; init; }
         public required string BlocId { get; init; }
         public required int HeuresHommeEstimees { get; init; } // Peut être 0.
         public required string MetierId { get; init; }

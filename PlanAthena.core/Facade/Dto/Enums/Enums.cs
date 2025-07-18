@@ -15,7 +15,14 @@ namespace PlanAthena.Core.Facade.Dto.Enums
         Expert = 3,
         Maitre = 4
     }
-
+    // Permet de distinguer les tâches qui représentent un travail réel (et nécessitent des ressources)
+    // des jalons qui sont des points de repère temporels sans consommation de travail.
+    public enum TypeActivite
+    {
+        Tache = 0,            // Une tâche standard qui consomme des heures-homme et requiert un métier.
+        JalonUtilisateur = 1, // Un jalon défini par l'utilisateur, sans durée ni métier intrinsèque.
+        JalonTechnique = 2    // Un jalon généré par le système (ex: début/fin de lot), pour des besoins internes.
+    }
     // Enums pour la sortie (DTO ChantierSetupAnalysisResultDto)
     public enum EtatTraitementInput
     {

@@ -1,6 +1,7 @@
 // PlanAthena.Core.Application.Validation.InputDtoValidators.cs
-using FluentValidation; // Assurez-vous que le NuGet FluentValidation est installé
+using FluentValidation;
 using PlanAthena.Core.Facade.Dto.Input;
+using PlanAthena.Core.Facade.Dto.Enums; 
 
 namespace PlanAthena.Core.Application.Validation
 {
@@ -68,6 +69,7 @@ namespace PlanAthena.Core.Application.Validation
     }
 
     // --- Validateurs pour DTOs Imbriqués ---
+    
     public class CalendrierTravailDefinitionDtoValidator : AbstractValidator<CalendrierTravailDefinitionDto>
     {
         public CalendrierTravailDefinitionDtoValidator()
@@ -80,8 +82,6 @@ namespace PlanAthena.Core.Application.Validation
 
             RuleFor(x => x.HeureDebutJournee).InclusiveBetween(0, 23);
             RuleFor(x => x.HeuresTravailEffectifParJour).GreaterThan(0).LessThanOrEqualTo(24);
-
-            // JoursChomes : chaque date doit être valide, pas de validation de doublons pour l'instant (HashSet dans VO s'en charge)
         }
     }
 
@@ -103,7 +103,16 @@ namespace PlanAthena.Core.Application.Validation
             RuleFor(x => x.Nom).NotEmpty().MaximumLength(250);
             RuleFor(x => x.BlocId).NotEmpty();
             RuleFor(x => x.HeuresHommeEstimees).GreaterThanOrEqualTo(0);
-            RuleFor(x => x.MetierId).NotEmpty();
+            RuleFor(x => x.Type).IsInEnum(); // Valide que le type fourni est une valeur correcte de l'enum.
+
+            // Un MetierId n'a de sens que pour une tâche qui représente un travail réel.
+            // Pour un jalon, ce champ sera vide dans le DTO d'entrée et sera peuplé
+            // plus tard par la logique applicative avec un métier "virtuel". Cette règle
+            // permet donc aux jalons de passer cette première étape de validation.
+            RuleFor(x => x.MetierId)
+                .NotEmpty()
+                .When(x => x.Type == TypeActivite.Tache)
+                .WithMessage("Un MetierId doit être fourni pour une activité de type 'Tache'.");
 
             RuleFor(x => x.Dependencies)
                 .Must((tache, deps) => NotContainSelfReference(tache.TacheId, deps))
