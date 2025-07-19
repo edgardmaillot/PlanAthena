@@ -51,7 +51,7 @@ namespace PlanAthena.Forms
                 return result;
             }
         }
-        private void MettreAJourListesDeroulantes()
+        public void MettreAJourListesDeroulantes()
         {
             _suppressEvents = true;
             try

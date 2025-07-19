@@ -100,6 +100,52 @@ namespace PlanAthena.Services.Business
 
         #endregion
 
-        
+
+        // Liste statique des couleurs de fallback, centralisée ICI
+        // Utilisé dans PertDiagramSettings.cs pour les tâches métier 
+        private static readonly Color[] FallbackColors = {
+        Color.LightBlue, Color.LightGreen, Color.LightYellow,
+        Color.LightPink, Color.LightGray, Color.LightCyan,
+        Color.LightSalmon
+    };
+        private int _fallbackColorIndex = 0;
+        private readonly Dictionary<string, Color> _assignedFallbackColors = new Dictionary<string, Color>();
+
+        /// <summary>
+        /// NOUVELLE MÉTHODE : Obtient la couleur d'affichage pour un métier.
+        /// Priorité 1: Utilise la couleur personnalisée si elle est valide.
+        /// Priorité 2: Attribue et mémorise une couleur de fallback unique.
+        /// </summary>
+        public Color GetDisplayColorForMetier(string metierId)
+        {
+            if (string.IsNullOrEmpty(metierId))
+            {
+                return Color.MistyRose; // Couleur pour "non assigné"
+            }
+
+            var metier = GetMetierById(metierId);
+
+            // Priorité 1: Couleur personnalisée
+            if (metier != null && !string.IsNullOrEmpty(metier.CouleurHex))
+            {
+                try
+                {
+                    return ColorTranslator.FromHtml(metier.CouleurHex);
+                }
+                catch
+                {
+                    // La couleur est malformée, on passe au fallback
+                }
+            }
+
+            // Priorité 2: Couleur de fallback
+            if (!_assignedFallbackColors.ContainsKey(metierId))
+            {
+                _assignedFallbackColors[metierId] = FallbackColors[_fallbackColorIndex % FallbackColors.Length];
+                _fallbackColorIndex++;
+            }
+            return _assignedFallbackColors[metierId];
+        }
+
     }
 }

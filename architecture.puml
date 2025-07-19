@@ -1,0 +1,116 @@
+@startuml
+' --- Configuration pour une meilleure visibilité ---
+skinparam componentStyle uml2
+skinparam linetype ortho
+skinparam ranksep 80
+skinparam nodesep 80
+skinparam minlen 2
+
+skinparam package {
+  borderColor #555555
+  borderThickness 2
+  fontColor #333333
+}
+skinparam class {
+  borderColor #007ACC
+  backgroundColor #DDEEFF
+  arrowColor #005588
+  shadowing false
+}
+title Architecture Générale de l'Application (Vue Complète)
+
+' ================================================
+' ===              COUCHE UI (Forms)           ===
+' ================================================
+package "Couche UI (Forms)" {
+  class MainForm {
+    + SauvegarderProjet_Click()
+    + ChargerProjet_Click()
+  }
+}
+
+' ================================================
+' ===      COUCHE SERVICE (Logique Métier)     ===
+' ================================================
+package "Couche Service (Logique Métier)" {
+  ' --- Les orchestrateurs de haut niveau ---
+  class ProjetService
+  class PlanificationService
+  
+  ' --- Les gardiens des données de base ---
+  class TacheService
+  class OuvrierService
+  class MetierService
+}
+
+' ================================================
+' ===  SERVICES DE TRAITEMENT / PROCESSING     ===
+' ================================================
+package "Services de Traitement / Processing" {
+    class PreparationSolveurService
+    class DataTransformer
+}
+
+' ================================================
+' ===      COEUR TECHNIQUE (FAÇADE)            ===
+' ================================================
+package "Coeur Technique (Façade)" {
+  class PlanAthenaCoreFacade
+}
+
+' ================================================
+' ===    MODÈLES DU DOMAINE (Les données)      ===
+' ================================================
+package "Modèles de Données" {
+    class ProjetData <<DTO>>
+    class Tache
+    class Ouvrier
+    class Metier
+}
+
+
+' ================================================
+' === COUCHE INFRASTRUCTURE (Accès externe)    ===
+' ================================================
+package "Infrastructure" {
+  class CsvDataService
+  class "System.Text.Json" as JsonSerializer <<library>>
+  class "System.IO" as FileSystem <<library>>
+}
+
+' ================================================
+' ===            RELATIONS / FLUX              ===
+' ================================================
+
+' --- L'UI utilise les services orchestrateurs ---
+MainForm --> ProjetService : "sauvegarde/charge"
+MainForm --> PlanificationService : "planifie"
+
+' --- Le Pipeline de Planification ---
+PlanificationService --> PreparationSolveurService
+PlanificationService --> DataTransformer
+PlanificationService --> PlanAthenaCoreFacade
+
+' --- L'orchestrateur ProjetService ---
+' Il utilise les services de base pour agréger/distribuer les données
+ProjetService --> TacheService : "agrège/distribue"
+ProjetService --> OuvrierService : "agrège/distribue"
+ProjetService --> MetierService : "agrège/distribue"
+ProjetService --> CsvDataService : "pour l'export/import groupé"
+
+' Pour la sauvegarde JSON, il crée un DTO et utilise le système de fichiers
+ProjetService ..> ProjetData : "crée/lit"
+ProjetService ..> JsonSerializer : "sérialise/désérialise"
+ProjetService ..> FileSystem : "lit/écrit fichier"
+
+' --- Collaboration générale entre Services ---
+PlanificationService --> TacheService : "charge les données"
+PlanificationService --> OuvrierService : "charge les données"
+PlanificationService --> MetierService : "charge les données"
+
+' --- Les services sont les gardiens des modèles de données ---
+TacheService "1" o-- "*" Tache : "gère"
+OuvrierService "1" o-- "*" Ouvrier : "gère"
+MetierService "1" o-- "*" Metier : "gère"
+
+@enduml

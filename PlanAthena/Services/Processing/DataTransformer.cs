@@ -1,9 +1,12 @@
 using PlanAthena.Core.Facade.Dto.Input;
 using PlanAthena.Data;
+using PlanAthena.Services.DataAccess;
+
+
 // Ajout pour éviter d'écrire les noms complets partout dans la méthode de mapping
 using CoreEnums = PlanAthena.Core.Facade.Dto.Enums;
 
-namespace PlanAthena.Services.DataAccess
+namespace PlanAthena.Services.Processing
 {
     /// <summary>
     /// Service de transformation des données CSV vers les DTOs de la DLL PlanAthena.Core.
@@ -83,7 +86,7 @@ namespace PlanAthena.Services.DataAccess
                         MetierId = c.MetierId,
                         // RESTAURATION : Le cast direct est conservé tel que dans le code original.
                         // Cela suppose que c.NiveauExpertise est un type (probablement int) compatible avec l'énumération de la DLL.
-                        Niveau = (PlanAthena.Core.Facade.Dto.Enums.NiveauExpertise)c.NiveauExpertise,
+                        Niveau = c.NiveauExpertise,
                         PerformancePct = c.PerformancePct
                     }).ToList()
                 }).ToList();
@@ -129,16 +132,16 @@ namespace PlanAthena.Services.DataAccess
         /// <summary>
         /// Mappe l'énumération TypeActivite de la couche Data vers celle de la DLL Core.
         /// </summary>
-        private CoreEnums.TypeActivite MapToCoreTypeActivite(PlanAthena.Data.TypeActivite sourceType)
+        private CoreEnums.TypeActivite MapToCoreTypeActivite(TypeActivite sourceType)
         {
             switch (sourceType)
             {
-                case PlanAthena.Data.TypeActivite.Tache:
+                case TypeActivite.Tache:
                     return CoreEnums.TypeActivite.Tache;
-                case PlanAthena.Data.TypeActivite.JalonUtilisateur:
+                case TypeActivite.JalonUtilisateur:
                     return CoreEnums.TypeActivite.JalonUtilisateur;
-                case PlanAthena.Data.TypeActivite.JalonDeSynchronisation:
-                case PlanAthena.Data.TypeActivite.JalonTechnique:
+                case TypeActivite.JalonDeSynchronisation:
+                case TypeActivite.JalonTechnique:
                     return CoreEnums.TypeActivite.JalonTechnique;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(sourceType), $"Valeur TypeActivite non supportée pour le mapping : {sourceType}");

@@ -13,6 +13,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestSolver", "TestSolver\Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlanAthena", "PlanAthena\PlanAthena.csproj", "{71D02847-936E-43BF-8D16-E4606A5E471A}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Éléments de solution", "Éléments de solution", "{9C8CB701-102D-CF49-A3E0-89AC09D42C2C}"
+	ProjectSection(SolutionItems) = preProject
+		architecture.puml = architecture.puml
+		Cible_V0.2.1.puml = Cible_V0.2.1.puml
+		GestionTaches.puml = GestionTaches.puml
+		PreparationSolveurService.puml = PreparationSolveurService.puml
+		PreparationSolveurServiceSEQ.puml = PreparationSolveurServiceSEQ.puml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

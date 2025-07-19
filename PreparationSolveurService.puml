@@ -1,0 +1,52 @@
+@startuml
+' On utilise la syntaxe correcte pour un Diagramme d'Activité
+
+title Pipeline de Traitement - PreparationSolveurService
+
+' Le point de départ du processus
+start
+
+' La "partition" est parfaite pour montrer que toutes ces étapes
+' se déroulent à l'intérieur de notre service.
+partition PreparationSolveurService {
+
+  ' La première activité (action)
+  :Découper les tâches longues;
+  note right
+    <b>Entrée :</b> Liste des tâches du projet.
+    <b>Sortie :</b>
+    - Liste de tâches avec les tâches longues remplacées
+      par des sous-tâches.
+    - Une "Table de Découpage" qui mappe
+      l'ID original vers les IDs des sous-tâches.
+  end note
+
+  ' La deuxième activité
+  :Créer les jalons techniques;
+  note right
+    <b>Entrée :</b> Liste des tâches découpées et la table.
+    <b>Sortie :</b>
+    - Liste enrichie avec de nouveaux Jalons Techniques.
+    - La "Table de Découpage" est mise à jour pour que
+      l'ID original pointe maintenant vers le Jalon Technique.
+  end note
+
+  ' La troisième activité
+  :Mettre à jour les dépendances des autres tâches;
+   note right
+    <b>Entrée :</b> Liste complète avec jalons et la table.
+    <b>Sortie :</b>
+    - Une liste de tâches où les dépendances qui
+      pointaient vers une tâche découpée pointent
+      maintenant vers le bon jalon de convergence.
+  end note
+
+}
+
+' Le résultat final du processus
+:Tâches prêtes pour le solveur;
+
+' Le point de fin
+stop
+
+@enduml

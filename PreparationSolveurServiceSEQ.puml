@@ -1,0 +1,39 @@
+@startuml
+title Diagramme de Séquence : Lancement de la Planification
+
+actor Utilisateur
+
+participant MainForm as UI
+participant PlanificationService as PlanSvc
+participant PreparationSolveurService as PrepSvc
+participant DataTransformer as TransSvc
+participant PlanAthenaCoreFacade as Facade
+
+Utilisateur -> UI : clique sur "Lancer Planification"
+
+activate UI
+UI -> PlanSvc : LancerPlanificationAsync(config)
+activate PlanSvc
+
+PlanSvc -> PrepSvc : PreparerPourSolveur(tachesProjet)
+activate PrepSvc
+PrepSvc --> PlanSvc : tachesPourSolveur
+deactivate PrepSvc
+
+PlanSvc -> TransSvc : TransformToChantierSetupDto(...)
+activate TransSvc
+TransSvc --> PlanSvc : inputDto
+deactivate TransSvc
+
+PlanSvc -> Facade : ProcessChantierAsync(inputDto)
+activate Facade
+Facade --> PlanSvc : resultatDto
+deactivate Facade
+
+PlanSvc --> UI : resultatDto
+deactivate PlanSvc
+
+UI -> Utilisateur : Affiche les résultats
+deactivate UI
+
+@enduml

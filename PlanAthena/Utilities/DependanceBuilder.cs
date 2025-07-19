@@ -1,4 +1,4 @@
-// Fichier : DependanceBuilder.cs
+// Fichier : PlanAthena.Utilities/DependanceBuilder.cs
 
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
@@ -7,30 +7,35 @@ using System.Linq;
 
 namespace PlanAthena.Utilities
 {
-    /// <summary>
-    /// Fournit des services pour construire et optimiser la structure des dépendances
-    /// entre les tâches d'un projet.
-    /// </summary>
     public class DependanceBuilder
     {
         private readonly TopologieDependanceService _topologieService;
 
-        
         public DependanceBuilder(TopologieDependanceService topologieService)
         {
             _topologieService = topologieService;
         }
 
+        /// <summary>
+        /// Processus complet et sécurisé qui enrichit et nettoie les dépendances des tâches.
+        /// </summary>
         public void ConstruireDependancesLogiques(List<Tache> taches, MetierService metierService)
         {
             if (taches == null || !taches.Any()) return;
 
+            // Étape 1 : Applique la topologie pour AJOUTER les dépendances métier manquantes.
             _topologieService.AppliquerDependancesInterMetiers(taches);
+
+            // Étape 2 : Crée les jalons de synchronisation pour simplifier les relations N:M.
             CreerEtLierJalonsDeSynchro(taches);
+
+            // Étape 3 : Nettoie les dépendances transitives (redondantes) créées aux étapes précédentes.
+            SimplifierDependancesTransitives(taches);
         }
 
         private void CreerEtLierJalonsDeSynchro(List<Tache> taches)
         {
+            // Votre logique originale et fonctionnelle, sécurisée.
             var nouveauxJalons = new List<Tache>();
             var tachesParBloc = taches.GroupBy(t => t.BlocId);
 
@@ -38,16 +43,11 @@ namespace PlanAthena.Utilities
             {
                 var tachesDuBloc = groupeBloc.ToList();
                 if (tachesDuBloc.Count < 2) continue;
-
                 var mapTachesDuBloc = tachesDuBloc.ToDictionary(t => t.TacheId);
-
-                // --- DEBUT DE LA LOGIQUE CORRIGÉE ---
-
-                // Phase 1: Pré-calculer combien d'enfants a chaque tâche parente
                 var childCounts = new Dictionary<string, int>();
                 foreach (var tache in tachesDuBloc)
                 {
-                    var dependancesIds = (tache.Dependencies ?? "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    var dependancesIds = (tache.Dependencies ?? "").Split(new[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries | System.StringSplitOptions.TrimEntries);
                     foreach (var parentId in dependancesIds)
                     {
                         if (mapTachesDuBloc.ContainsKey(parentId))
@@ -58,34 +58,16 @@ namespace PlanAthena.Utilities
                     }
                 }
                 if (!childCounts.Any()) continue;
-
-                // Phase 2: Analyser les groupes de relations par métier parent
-                var tousLesLiens = tachesDuBloc
-                    .SelectMany(enfant => (enfant.Dependencies ?? "").Split(',').Select(d => d.Trim()).Where(d => !string.IsNullOrEmpty(d)),
-                                (enfant, parentId) => new { Enfant = enfant, ParentId = parentId })
-                    .Where(lien => mapTachesDuBloc.ContainsKey(lien.ParentId))
-                    .Select(lien => new { Enfant = lien.Enfant, Parent = mapTachesDuBloc[lien.ParentId] })
-                    .ToList();
-
-                var groupesParMetierParent = tousLesLiens
-                    .Where(l => !string.IsNullOrEmpty(l.Parent.MetierId))
-                    .GroupBy(l => l.Parent.MetierId);
+                var tousLesLiens = tachesDuBloc.SelectMany(enfant => (enfant.Dependencies ?? "").Split(',').Select(d => d.Trim()).Where(d => !string.IsNullOrEmpty(d)), (enfant, parentId) => new { Enfant = enfant, ParentId = parentId }).Where(lien => mapTachesDuBloc.ContainsKey(lien.ParentId)).Select(lien => new { Enfant = lien.Enfant, Parent = mapTachesDuBloc[lien.ParentId] }).ToList();
+                var groupesParMetierParent = tousLesLiens.Where(l => !string.IsNullOrEmpty(l.Parent.MetierId)).GroupBy(l => l.Parent.MetierId);
 
                 foreach (var groupe in groupesParMetierParent)
                 {
                     var groupeParent = groupe.Select(l => l.Parent).Distinct().ToList();
                     var groupeEnfant = groupe.Select(l => l.Enfant).Distinct().ToList();
-
-                    // RÈGLE CRITIQUE DE NON-CHEVAUCHEMENT :
-                    // Si une tâche est à la fois parente et enfant dans ce groupe, ce n'est pas
-                    // une relation N:M à simplifier, mais une chaîne de tâches du même métier. On l'ignore.
                     var parentIds = groupeParent.Select(p => p.TacheId).ToHashSet();
-                    if (groupeEnfant.Any(e => parentIds.Contains(e.TacheId)))
-                    {
-                        continue; // Ignorer ce groupe, il est invalide pour le jalonnement.
-                    }
 
-                    // Appliquer les conditions maintenant que le groupe est validé
+                    if (groupeEnfant.Any(e => parentIds.Contains(e.TacheId))) continue;
                     if (groupeParent.Count <= 1 || groupeEnfant.Count <= 1) continue;
 
                     bool aUnFanOut = groupeParent.Any(parent => childCounts.GetValueOrDefault(parent.TacheId, 0) > 1);
@@ -94,8 +76,13 @@ namespace PlanAthena.Utilities
                     if (aUnFanOut && aUnFanIn)
                     {
                         string idJalon = $"J_Sync_{groupe.Key}_{groupeBloc.Key}";
-                        var refTache = groupeParent.First();
 
+                        if (taches.Any(t => t.TacheId == idJalon))
+                        {
+                            continue;
+                        }
+
+                        var refTache = groupeParent.First();
                         var jalon = new Tache
                         {
                             TacheId = idJalon,
@@ -111,27 +98,74 @@ namespace PlanAthena.Utilities
                         };
                         nouveauxJalons.Add(jalon);
 
-                        // Phase 3: Relier les dépendances immédiatement et proprement
-                        // On ne modifie QUE les tâches du groupe enfant.
                         foreach (var enfant in groupeEnfant)
                         {
                             var depsActuelles = (enfant.Dependencies ?? "").Split(',').Select(d => d.Trim()).ToHashSet();
-
-                            // Retirer toutes les dépendances vers les parents du groupe
                             depsActuelles.ExceptWith(parentIds);
-
-                            // Ajouter la dépendance vers le nouveau jalon
                             depsActuelles.Add(jalon.TacheId);
-
                             enfant.Dependencies = string.Join(",", depsActuelles.OrderBy(d => d));
                         }
                     }
                 }
             }
-
             if (nouveauxJalons.Any())
             {
                 taches.AddRange(nouveauxJalons);
+            }
+        }
+
+        /// <summary>
+        /// NOUVELLE MÉTHODE : Implémente la Règle B.1 - Simplification Transitive.
+        /// Pour chaque tâche, supprime les dépendances "grand-parent" redondantes.
+        /// </summary>
+        private void SimplifierDependancesTransitives(List<Tache> taches)
+        {
+            var mapTaches = taches.ToDictionary(t => t.TacheId);
+
+            foreach (var tache in taches)
+            {
+                var parentsDirectsIds = (tache.Dependencies ?? "")
+                    .Split(',')
+                    .Select(d => d.Trim())
+                    .Where(d => !string.IsNullOrEmpty(d))
+                    .ToList();
+
+                if (parentsDirectsIds.Count < 2) continue;
+
+                var grandsParentsIds = new HashSet<string>();
+
+                // On collecte tous les "grands-parents" en explorant les parents directs
+                foreach (var parentId in parentsDirectsIds)
+                {
+                    if (mapTaches.TryGetValue(parentId, out var parentTache))
+                    {
+                        var parentDependencies = (parentTache.Dependencies ?? "").Split(',').Select(d => d.Trim());
+                        grandsParentsIds.UnionWith(parentDependencies);
+                    }
+                }
+
+                if (!grandsParentsIds.Any()) continue;
+
+                // On reconstruit la liste des dépendances en ne gardant que les parents
+                // qui ne sont PAS également des grands-parents.
+                var dependancesFinales = parentsDirectsIds
+                    .Where(parentId => !grandsParentsIds.Contains(parentId))
+                    .ToList();
+
+                // Il est possible qu'un parent direct ait été retiré, donc on s'assure
+                // qu'il reste au moins une dépendance si la liste originale n'était pas vide.
+                // S'il ne reste rien, c'est qu'il ne faut dépendre que des grands-parents, via les parents.
+                // On garde donc la liste non filtrée dans ce cas pour ne pas rompre la chaîne.
+                // Ce cas est très rare mais constitue une sécurité.
+                if (parentsDirectsIds.Any() && !dependancesFinales.Any())
+                {
+                    // Ne rien faire, garder les dépendances originales pour ne pas isoler la tâche.
+                    // La logique existante est suffisante.
+                }
+                else
+                {
+                    tache.Dependencies = string.Join(",", dependancesFinales.Distinct().OrderBy(d => d));
+                }
             }
         }
     }

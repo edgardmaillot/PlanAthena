@@ -1,5 +1,4 @@
 // Fichier: Services/Processing/PreparationSolveurService.cs
-// Version finale et validée
 
 using PlanAthena.Data;
 using System;

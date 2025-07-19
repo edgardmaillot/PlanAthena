@@ -1,12 +1,14 @@
 // Fichier : TacheForm.cs
 
 using PlanAthena.Controls;
+using PlanAthena.Controls.Config;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Windows.Forms;
 
 namespace PlanAthena.Forms
@@ -31,6 +33,7 @@ namespace PlanAthena.Forms
 
             _pertControl = new PertDiagramControl();
             _pertControl.Dock = DockStyle.Fill;
+            _pertControl.Initialize(_metierService, new PertDiagramSettings());
             _pertControl.TacheSelected += PertControl_TacheSelected;
             _pertControl.TacheDoubleClicked += PertControl_TacheDoubleClicked;
 
@@ -64,7 +67,7 @@ namespace PlanAthena.Forms
         private void ChargerDonnees()
         {
             _tachesBrutes = _tacheService.ObtenirToutesLesTaches();
-            _metiers = _metierService.GetAllMetiers().ToList();
+            _tacheDetailForm.MettreAJourListesDeroulantes();
         }
 
         private void RafraichirAffichage()
@@ -73,7 +76,7 @@ namespace PlanAthena.Forms
             // Toute transformation (création de dépendances/jalons) a déjà eu lieu
             // en amont via le DependanceBuilder sur action utilisateur.
             var filtreRecherche = txtRecherche.Text;
-            _pertControl.ChargerDonnees(_tachesBrutes, _metiers, filtreRecherche, _metierService);
+            _pertControl.ChargerDonnees(_tachesBrutes, filtreRecherche);
 
             RafraichirStatistiques();
         }
@@ -225,12 +228,20 @@ namespace PlanAthena.Forms
             {
                 try
                 {
-                    // Action explicite : on utilise le builder pour traiter la liste de tâches actuelle.
-                    _dependanceBuilder.ConstruireDependancesLogiques(_tachesBrutes, _metierService);
-                    _tacheService.ChargerTaches(_tachesBrutes); // On force la mise à jour de la liste dans le service.
+                    // === LE FLUX DE DONNÉES CORRECT ===
+                    // 1. On récupère TOUJOURS la dernière version des données depuis la source de vérité.
+                    var tachesActuelles = _tacheService.ObtenirToutesLesTaches();
 
+                    // 2. On applique le traitement sur cette liste fraîche.
+                    _dependanceBuilder.ConstruireDependancesLogiques(tachesActuelles, _metierService);
+
+                    // 3. On met à jour la source de vérité avec le résultat.
+                    _tacheService.ChargerTaches(tachesActuelles);
+
+                    // 4. On rafraîchit l'UI, qui va elle-même relire la source de vérité.
                     ChargerDonnees();
                     RafraichirAffichage();
+
                     MessageBox.Show("Dépendances initialisées et graphe simplifié avec succès.", "Opération terminée", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
@@ -239,11 +250,13 @@ namespace PlanAthena.Forms
                 }
             }
         }
+
         private void btnImportExcelFieldwire_Click(object sender, EventArgs e)
         {
             MessageBox.Show("L'import Excel Fieldwire/Dalux n'est pas encore implémenté.",
                 "Fonctionnalité en développement", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
+
         private void btnImporter_Click(object sender, EventArgs e)
         {
             using var ofd = new OpenFileDialog { Filter = "Fichiers CSV (*.csv)|*.csv", Title = "Importer les tâches" };
@@ -256,15 +269,20 @@ namespace PlanAthena.Forms
 
                 var nombreImporte = _tacheService.ImporterDepuisCsv(ofd.FileName, result == DialogResult.Yes);
 
-                // WORKFLOW D'INTÉGRATION : On appelle le builder juste après l'import.
+                // === LE FLUX DE DONNÉES CORRECT ===
+                // 1. On récupère la liste fraîchement importée depuis la source de vérité.
                 var toutesLesTaches = _tacheService.ObtenirToutesLesTaches();
+
+                // 2. On applique le traitement.
                 _dependanceBuilder.ConstruireDependancesLogiques(toutesLesTaches, _metierService);
-                _tacheService.ChargerTaches(toutesLesTaches); // On sauvegarde le résultat du builder dans le service.
+
+                // 3. On met à jour la source de vérité.
+                _tacheService.ChargerTaches(toutesLesTaches);
 
                 MessageBox.Show($"{nombreImporte} tâches importées et dépendances initialisées. L'interface va être rafraîchie.", "Import réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
+                // 4. On rafraîchit l'UI.
                 ChargerDonnees();
-                // Il n'est pas nécessaire de recréer le formulaire de détail, juste le rafraîchir.
                 AfficherDetailsTache(null, true);
                 RafraichirAffichage();
             }

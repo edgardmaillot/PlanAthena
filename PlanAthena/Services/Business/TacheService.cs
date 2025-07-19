@@ -500,6 +500,11 @@ namespace PlanAthena.Services.Business
             _compteurTaches = 1;
             _compteurJalons = 1;
         }
+
+        internal void ImporterDepuisCsv(object fileName, bool v)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     #region Classes de support

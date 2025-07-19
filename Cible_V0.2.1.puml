@@ -1,0 +1,98 @@
+@startuml
+' --- Configuration pour une meilleure visibilité ---
+skinparam componentStyle uml2
+skinparam linetype ortho
+skinparam ranksep 80
+skinparam nodesep 80
+skinparam minlen 2
+
+skinparam package {
+  borderColor #555555
+  borderThickness 2
+  fontColor #333333
+}
+skinparam class {
+  borderColor #007ACC
+  backgroundColor #DDEEFF
+  arrowColor #005588
+  shadowing false
+}
+title Architecture Cible (avec Blocs & Lots comme entités)
+
+' ================================================
+' ===      COUCHE SERVICE (Logique Métier)     ===
+' ================================================
+package "Couche Service (Logique Métier)" {
+  ' --- Les orchestrateurs de haut niveau ---
+  class ProjetService
+  class PlanificationService
+  
+  ' --- Les gardiens des données de base ---
+  class TacheService
+  class OuvrierService
+  class MetierService
+  
+  ' --- NOUVEAUX SERVICES DÉDIÉS ---
+  class BlocService
+  class LotService
+}
+
+' ================================================
+' ===    MODÈLES DU DOMAINE (Les données)      ===
+' ================================================
+package "Modèles de Données" {
+    class Tache {
+      + TacheId
+      ' Ne contient plus que les IDs !
+      + BlocId
+      + LotId
+    }
+    class Ouvrier
+    class Metier
+    
+    ' --- NOUVEAUX MODÈLES DÉDIÉS ---
+    class Bloc {
+      + BlocId
+      + Nom
+      + CapaciteMaxOuvriers
+    }
+    class Lot {
+      + LotId
+      + Nom
+      + Priorite
+    }
+}
+
+
+' ================================================
+' ===            RELATIONS / FLUX              ===
+' ================================================
+' Note : J'ai volontairement simplifié en cachant l'UI et l'infra
+' pour se concentrer sur les changements dans la couche Service/Données.
+
+' --- Les orchestrateurs utilisent les services ---
+ProjetService --> TacheService
+ProjetService --> OuvrierService
+ProjetService --> MetierService
+ProjetService --> BlocService  
+ProjetService --> LotService   
+
+PlanificationService --> TacheService
+' ... et les autres services
+
+' --- Les services gèrent les modèles ---
+TacheService "1" o-- "*" Tache : "gère"
+OuvrierService "1" o-- "*" Ouvrier : "gère"
+MetierService "1" o-- "*" Metier : "gère"
+BlocService "1" o-- "*" Bloc : "gère"   ' NOUVEAU
+LotService "1" o-- "*" Lot : "gère"     ' NOUVEAU
+
+' --- TacheService dépend maintenant des nouveaux services ---
+TacheService --> BlocService : "valide l'existence d'un bloc"
+TacheService --> LotService  : "valide l'existence d'un lot"
+
+' --- Relations logiques entre les modèles ---
+Tache " *" -- " 1" Bloc : "appartient à"
+Tache " *" -- " 1" Lot  : "appartient à"
+
+@enduml
