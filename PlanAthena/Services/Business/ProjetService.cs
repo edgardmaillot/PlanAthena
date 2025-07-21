@@ -1,6 +1,11 @@
 using PlanAthena.Data;
 using PlanAthena.Services.DataAccess;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace PlanAthena.Services.Business
 {
@@ -13,17 +18,23 @@ namespace PlanAthena.Services.Business
         private readonly TacheService _tacheService;
         private readonly MetierService _metierService;
         private readonly CsvDataService _csvDataService;
+        private readonly LotService _lotService;
+        private readonly BlocService _blocService;
 
         public ProjetService(
             OuvrierService ouvrierService,
             TacheService tacheService,
             MetierService metierService,
-            CsvDataService csvDataService)
+            CsvDataService csvDataService,
+            LotService lotService,
+            BlocService blocService)
         {
             _ouvrierService = ouvrierService ?? throw new ArgumentNullException(nameof(ouvrierService));
             _tacheService = tacheService ?? throw new ArgumentNullException(nameof(tacheService));
             _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
             _csvDataService = csvDataService ?? throw new ArgumentNullException(nameof(csvDataService));
+            _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
+            _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
         }
         public bool ValiderDonneesAvantPlanification(out string message)
         {
@@ -70,11 +81,13 @@ namespace PlanAthena.Services.Business
                 var projetData = new ProjetData
                 {
                     InformationsProjet = informationsProjet,
+                    Metiers = _metierService.GetAllMetiers().ToList(),
                     Ouvriers = _ouvrierService.ObtenirTousLesOuvriers(),
                     Taches = _tacheService.ObtenirToutesLesTaches(),
-                    Metiers = _metierService.GetAllMetiers().ToList(),
+                    Lots = _lotService.ObtenirTousLesLots(),
+                    Blocs = _blocService.ObtenirTousLesBlocs(),
                     DateSauvegarde = DateTime.Now,
-                    VersionApplication = "1.0.0" // TODO: Récupérer depuis AssemblyInfo
+                    VersionApplication = "0.2.2"
                 };
 
                 var options = new JsonSerializerOptions
@@ -93,7 +106,8 @@ namespace PlanAthena.Services.Business
         }
 
         /// <summary>
-        /// Charge un projet complet depuis un fichier JSON
+        /// Charge un projet complet depuis un fichier JSON.
+        /// Gère de manière transparente la migration depuis l'ancien format de fichier.
         /// </summary>
         /// <param name="filePath">Chemin du fichier de projet</param>
         /// <returns>Informations du projet chargé</returns>
@@ -105,17 +119,20 @@ namespace PlanAthena.Services.Business
             try
             {
                 var jsonString = File.ReadAllText(filePath);
-                var projetData = JsonSerializer.Deserialize<ProjetData>(jsonString);
+                var jsonNode = JsonNode.Parse(jsonString);
 
-                if (projetData == null)
+                if (jsonNode == null)
                     throw new ProjetException("Le fichier de projet est invalide ou corrompu.");
 
-                // Charger les données dans les services
-                _metierService.RemplacerTousLesMetiers(projetData.Metiers);
-                _ouvrierService.ChargerOuvriers(projetData.Ouvriers);
-                _tacheService.ChargerTaches(projetData.Taches);
-
-                return projetData.InformationsProjet;
+                // Détecter si c'est un ancien format (absence de la propriété "Lots")
+                if (jsonNode["Lots"] == null)
+                {
+                    return ChargerAncienProjet(jsonNode);
+                }
+                else
+                {
+                    return ChargerNouveauProjet(jsonNode);
+                }
             }
             catch (JsonException ex)
             {
@@ -126,6 +143,80 @@ namespace PlanAthena.Services.Business
                 throw new ProjetException($"Erreur lors du chargement du projet: {ex.Message}", ex);
             }
         }
+
+        private InformationsProjet ChargerNouveauProjet(JsonNode jsonNode)
+        {
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var projetData = jsonNode.Deserialize<ProjetData>(options);
+            if (projetData == null)
+                throw new ProjetException("Le fichier de projet est invalide ou corrompu.");
+
+            // Charger les données dans l'ordre de dépendance
+            _metierService.RemplacerTousLesMetiers(projetData.Metiers);
+            _ouvrierService.ChargerOuvriers(projetData.Ouvriers);
+            _lotService.RemplacerTousLesLots(projetData.Lots);
+            _blocService.RemplacerTousLesBlocs(projetData.Blocs);
+            _tacheService.ChargerTaches(projetData.Taches);
+
+            return projetData.InformationsProjet;
+        }
+
+        private InformationsProjet ChargerAncienProjet(JsonNode jsonNode)
+        {
+            // Classe temporaire pour désérialiser l'ancienne structure de tâche
+            // uniquement utilisée pour la migration.
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var oldProjectData = jsonNode.Deserialize<OldProjetDataFormat>(options);
+
+            if (oldProjectData == null)
+                throw new ProjetException("L'ancien format de projet n'a pas pu être lu.");
+
+            // Étape 1: Déduire et créer les lots et blocs uniques
+            var lotsUniques = oldProjectData.Taches
+                .Where(t => !string.IsNullOrEmpty(t.LotId))
+                .GroupBy(t => t.LotId)
+                .Select(g => new Lot
+                {
+                    LotId = g.Key,
+                    Nom = g.First().LotNom,
+                    Priorite = g.First().LotPriorite,
+                    CheminFichierPlan = "" // Information non disponible dans l'ancien format
+                }).ToList();
+
+            var blocsUniques = oldProjectData.Taches
+                .Where(t => !string.IsNullOrEmpty(t.BlocId))
+                .GroupBy(t => t.BlocId)
+                .Select(g => new Bloc
+                {
+                    BlocId = g.Key,
+                    Nom = g.First().BlocNom,
+                    CapaciteMaxOuvriers = g.First().BlocCapaciteMaxOuvriers
+                }).ToList();
+
+            // Étape 2: Créer les nouvelles tâches avec la structure épurée
+            var nouvellesTaches = oldProjectData.Taches.Select(oldTache => new Tache
+            {
+                TacheId = oldTache.TacheId,
+                TacheNom = oldTache.TacheNom,
+                HeuresHommeEstimees = oldTache.HeuresHommeEstimees,
+                MetierId = oldTache.MetierId,
+                Dependencies = oldTache.Dependencies,
+                ExclusionsDependances = oldTache.ExclusionsDependances,
+                Type = oldTache.Type,
+                LotId = oldTache.LotId,
+                BlocId = oldTache.BlocId
+            }).ToList();
+
+            // Étape 3: Charger toutes les données dans les services
+            _metierService.RemplacerTousLesMetiers(oldProjectData.Metiers);
+            _ouvrierService.ChargerOuvriers(oldProjectData.Ouvriers);
+            _lotService.RemplacerTousLesLots(lotsUniques);
+            _blocService.RemplacerTousLesBlocs(blocsUniques);
+            _tacheService.ChargerTaches(nouvellesTaches);
+
+            return oldProjectData.InformationsProjet;
+        }
+
 
         /// <summary>
         /// Valide qu'un fichier de projet est valide
@@ -144,6 +235,8 @@ namespace PlanAthena.Services.Business
                     return validation;
                 }
 
+                // Pour la validation, nous ne nous soucions pas du format (ancien/nouveau)
+                // tant que les informations de base sont présentes.
                 var jsonString = File.ReadAllText(filePath);
                 var projetData = JsonSerializer.Deserialize<ProjetData>(jsonString);
 
@@ -180,80 +273,22 @@ namespace PlanAthena.Services.Business
 
         #endregion
 
-        #region Export/Import CSV groupé
+        #region Export/Import CSV groupé (Non fonctionnel - à traiter dans une phase ultérieure)
 
         /// <summary>
         /// Exporte toutes les données vers des fichiers CSV séparés
         /// </summary>
-        /// <param name="dossierDestination">Dossier de destination</param>
-        /// <param name="prefixeNom">Préfixe pour les noms de fichiers</param>
         public void ExporterToutVersCsv(string dossierDestination, string prefixeNom = "export")
         {
-            if (!Directory.Exists(dossierDestination))
-                Directory.CreateDirectory(dossierDestination);
-
-            try
-            {
-                // Export des métiers
-                var cheminMetiers = Path.Combine(dossierDestination, $"{prefixeNom}_metiers.csv");
-                _csvDataService.ExportCsv(_metierService.GetAllMetiers(), cheminMetiers);
-
-                // Export des ouvriers
-                var cheminOuvriers = Path.Combine(dossierDestination, $"{prefixeNom}_ouvriers.csv");
-                _ouvrierService.ExporterVersCsv(cheminOuvriers);
-
-                // Export des tâches
-                var cheminTaches = Path.Combine(dossierDestination, $"{prefixeNom}_taches.csv");
-                _tacheService.ExporterVersCsv(cheminTaches);
-            }
-            catch (Exception ex)
-            {
-                throw new ProjetException($"Erreur lors de l'export CSV: {ex.Message}", ex);
-            }
+            throw new NotImplementedException("La fonctionnalité d'export CSV doit être revue pour la nouvelle structure de données.");
         }
 
         /// <summary>
         /// Importe toutes les données depuis des fichiers CSV
         /// </summary>
-        /// <param name="cheminMetiers">Chemin du fichier métiers</param>
-        /// <param name="cheminOuvriers">Chemin du fichier ouvriers</param>
-        /// <param name="cheminTaches">Chemin du fichier tâches</param>
-        /// <returns>Résumé de l'import</returns>
         public ResumeImport ImporterToutDepuisCsv(string cheminMetiers, string cheminOuvriers, string cheminTaches)
         {
-            var resume = new ResumeImport();
-
-            try
-            {
-                // Import des métiers
-                if (!string.IsNullOrEmpty(cheminMetiers) && File.Exists(cheminMetiers))
-                {
-                    var metiers = _csvDataService.ImportCsv<Metier>(cheminMetiers);
-                    _metierService.RemplacerTousLesMetiers(metiers);
-                    resume.MetiersImportes = metiers.Count;
-                }
-
-                // Import des ouvriers
-                if (!string.IsNullOrEmpty(cheminOuvriers) && File.Exists(cheminOuvriers))
-                {
-                    resume.OuvriersImportes = _ouvrierService.ImporterDepuisCsv(cheminOuvriers);
-                }
-
-                // Import des tâches
-                if (!string.IsNullOrEmpty(cheminTaches) && File.Exists(cheminTaches))
-                {
-                    resume.TachesImportees = _tacheService.ImporterDepuisCsv(cheminTaches);
-                }
-
-                resume.Succes = true;
-                return resume;
-            }
-            catch (Exception ex)
-            {
-                resume.Succes = false;
-                resume.MessageErreur = ex.Message;
-                return resume;
-            }
+            throw new NotImplementedException("La fonctionnalité d'import CSV doit être revue pour la nouvelle structure de données.");
         }
 
         #endregion
@@ -263,15 +298,14 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Crée un nouveau projet vide
         /// </summary>
-        /// <param name="nomProjet">Nom du projet</param>
-        /// <param name="description">Description du projet</param>
-        /// <returns>Informations du nouveau projet</returns>
         public InformationsProjet CreerNouveauProjet(string nomProjet, string description = "")
         {
             // Vider toutes les données existantes
             _metierService.RemplacerTousLesMetiers(new List<Metier>());
             _ouvrierService.Vider();
             _tacheService.Vider();
+            _lotService.Vider();
+            _blocService.Vider();
 
             return new InformationsProjet
             {
@@ -286,7 +320,6 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Obtient un résumé du projet actuel
         /// </summary>
-        /// <returns>Résumé des données du projet</returns>
         public ResumeProjet ObtenirResumeProjet()
         {
             return new ResumeProjet
@@ -335,8 +368,7 @@ namespace PlanAthena.Services.Business
         public string MessageErreur { get; set; } = "";
         public int MetiersImportes { get; set; }
         public int OuvriersImportes { get; set; }
-        public int TachesImportees { get; set; }
-
+        public int TachesImportees { get; set; } 
         public int TotalImporte => MetiersImportes + OuvriersImportes + TachesImportees;
     }
 
@@ -360,6 +392,38 @@ namespace PlanAthena.Services.Business
         public ProjetException(string message, Exception innerException) : base(message, innerException) { }
     }
 
+
+    #endregion
+
+    #region Classes de support pour la migration
+
+    /// <summary>
+    /// DTO temporaire utilisé uniquement pour la migration d'anciens fichiers projet.
+    /// </summary>
+    internal class OldTacheFormat
+    {
+        public string TacheId { get; set; }
+        public string TacheNom { get; set; }
+        public int HeuresHommeEstimees { get; set; }
+        public string MetierId { get; set; }
+        public string Dependencies { get; set; }
+        public string ExclusionsDependances { get; set; }
+        public TypeActivite Type { get; set; }
+        public string LotId { get; set; }
+        public string LotNom { get; set; }
+        public int LotPriorite { get; set; }
+        public string BlocId { get; set; }
+        public string BlocNom { get; set; }
+        public int BlocCapaciteMaxOuvriers { get; set; }
+    }
+
+    internal class OldProjetDataFormat
+    {
+        public InformationsProjet InformationsProjet { get; set; }
+        public List<Metier> Metiers { get; set; }
+        public List<Ouvrier> Ouvriers { get; set; }
+        public List<OldTacheFormat> Taches { get; set; }
+    }
 
     #endregion
 }

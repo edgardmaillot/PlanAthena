@@ -1,4 +1,8 @@
 using PlanAthena.Data;
+using System.Collections.Generic;
+using System.Linq;
+using System;
+using System.Drawing;
 
 namespace PlanAthena.Services.Business
 {
@@ -68,7 +72,7 @@ namespace PlanAthena.Services.Business
             {
                 foreach (var metier in metiers)
                 {
-                    if (!_metiers.ContainsKey(metier.MetierId))
+                    if (!string.IsNullOrEmpty(metier.MetierId) && !_metiers.ContainsKey(metier.MetierId))
                     {
                         _metiers.Add(metier.MetierId, metier);
                     }
@@ -100,9 +104,72 @@ namespace PlanAthena.Services.Business
 
         #endregion
 
+        #region Tri Topologique
+
+        /// <summary>
+        /// Retourne la liste des métiers ordonnée selon leurs dépendances (tri topologique).
+        /// Les métiers sans dépendances apparaissent en premier.
+        /// </summary>
+        /// <returns>Une liste ordonnée de métiers.</returns>
+        public List<Metier> ObtenirMetiersTriesParDependance()
+        {
+            var sortedList = new List<Metier>();
+            var inDegree = new Dictionary<string, int>();
+            var graph = new Dictionary<string, List<string>>();
+            var allMetierIds = _metiers.Keys;
+
+            foreach (var metierId in allMetierIds)
+            {
+                inDegree[metierId] = 0;
+                graph[metierId] = new List<string>();
+            }
+
+            foreach (var metier in _metiers.Values)
+            {
+                var prerequis = GetPrerequisForMetier(metier.MetierId);
+                foreach (var prerequisId in prerequis)
+                {
+                    if (allMetierIds.Contains(prerequisId))
+                    {
+                        graph[prerequisId].Add(metier.MetierId);
+                        inDegree[metier.MetierId]++;
+                    }
+                }
+            }
+
+            var queue = new Queue<string>(allMetierIds.Where(m => inDegree[m] == 0));
+
+            while (queue.Count > 0)
+            {
+                var metierId = queue.Dequeue();
+                sortedList.Add(_metiers[metierId]);
+
+                foreach (var neighbor in graph[metierId])
+                {
+                    inDegree[neighbor]--;
+                    if (inDegree[neighbor] == 0)
+                    {
+                        queue.Enqueue(neighbor);
+                    }
+                }
+            }
+
+            // Si la liste triée ne contient pas tous les métiers, il y a une dépendance circulaire.
+            // On ajoute les métiers restants à la fin pour éviter de planter.
+            if (sortedList.Count < _metiers.Count)
+            {
+                var metiersManquants = _metiers.Values.Where(m => !sortedList.Contains(m));
+                sortedList.AddRange(metiersManquants);
+            }
+
+            return sortedList;
+        }
+
+        #endregion
+
+        #region Couleurs
 
         // Liste statique des couleurs de fallback, centralisée ICI
-        // Utilisé dans PertDiagramSettings.cs pour les tâches métier 
         private static readonly Color[] FallbackColors = {
         Color.LightBlue, Color.LightGreen, Color.LightYellow,
         Color.LightPink, Color.LightGray, Color.LightCyan,
@@ -112,7 +179,7 @@ namespace PlanAthena.Services.Business
         private readonly Dictionary<string, Color> _assignedFallbackColors = new Dictionary<string, Color>();
 
         /// <summary>
-        /// NOUVELLE MÉTHODE : Obtient la couleur d'affichage pour un métier.
+        /// Obtient la couleur d'affichage pour un métier.
         /// Priorité 1: Utilise la couleur personnalisée si elle est valide.
         /// Priorité 2: Attribue et mémorise une couleur de fallback unique.
         /// </summary>
@@ -147,5 +214,6 @@ namespace PlanAthena.Services.Business
             return _assignedFallbackColors[metierId];
         }
 
+        #endregion
     }
 }

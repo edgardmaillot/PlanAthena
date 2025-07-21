@@ -7,6 +7,9 @@ using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.Processing;
 using PlanAthena.Utilities;
+using System;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace PlanAthena.Forms
 {
@@ -20,7 +23,9 @@ namespace PlanAthena.Forms
         private readonly ProjetService _projetService;
         private readonly GanttExportService _ganttExportService;
         private readonly ConfigurationBuilder _configBuilder;
-        private readonly PreparationSolveurService _decoupageTachesService;
+        // Ajout des services pour les lots et blocs
+        private readonly LotService _lotService;
+        private readonly BlocService _blocService;
 
         private InformationsProjet _projetActuel;
         private PlanAthena.Core.Facade.Dto.Output.ProcessChantierResultDto _dernierResultatPlanification;
@@ -30,6 +35,7 @@ namespace PlanAthena.Forms
             InitializeComponent();
             _serviceProvider = ConfigureServices();
 
+            // Récupération de tous les services nécessaires
             _planificationService = _serviceProvider.GetRequiredService<PlanificationService>();
             _ouvrierService = _serviceProvider.GetRequiredService<OuvrierService>();
             _tacheService = _serviceProvider.GetRequiredService<TacheService>();
@@ -37,10 +43,40 @@ namespace PlanAthena.Forms
             _projetService = _serviceProvider.GetRequiredService<ProjetService>();
             _ganttExportService = _serviceProvider.GetRequiredService<GanttExportService>();
             _configBuilder = _serviceProvider.GetRequiredService<ConfigurationBuilder>();
-            _decoupageTachesService = _serviceProvider.GetRequiredService<PreparationSolveurService>();
+            _lotService = _serviceProvider.GetRequiredService<LotService>();
+            _blocService = _serviceProvider.GetRequiredService<BlocService>();
 
             InitializeInterface();
             CreerNouveauProjetParDefaut();
+        }
+        private ServiceProvider ConfigureServices()
+        {
+            var serviceCollection = new ServiceCollection();
+
+            serviceCollection.AddApplicationServices();
+            serviceCollection.AddInfrastructureServices();
+            serviceCollection.AddScoped<PlanAthena.Core.Application.Interfaces.IConstructeurProblemeOrTools, PlanAthena.Core.Infrastructure.Services.OrTools.ConstructeurProblemeOrTools>();
+            serviceCollection.AddScoped<PlanAthenaCoreFacade>();
+
+            serviceCollection.AddSingleton<MetierService>();
+            serviceCollection.AddSingleton<OuvrierService>();
+            serviceCollection.AddSingleton<TacheService>();
+            serviceCollection.AddSingleton<ProjetService>();
+            serviceCollection.AddSingleton<LotService>();
+            serviceCollection.AddSingleton<BlocService>();
+
+            serviceCollection.AddScoped<CsvDataService>();
+            serviceCollection.AddScoped<ExcelReader>();
+            serviceCollection.AddScoped<DataTransformer>();
+            serviceCollection.AddScoped<PlanificationService>();
+            serviceCollection.AddScoped<GanttExportService>();
+            serviceCollection.AddScoped<ConfigurationBuilder>();
+
+            serviceCollection.AddScoped<PreparationSolveurService>();
+            serviceCollection.AddScoped<TopologieDependanceService>();
+            serviceCollection.AddScoped<DependanceBuilder>();
+
+            return serviceCollection.BuildServiceProvider();
         }
 
         private void InitializeInterface()
@@ -84,11 +120,15 @@ namespace PlanAthena.Forms
             menuProjet.DropDownItems.Add(new ToolStripSeparator());
             menuProjet.DropDownItems.Add("❌ Quitter", null, Quitter_Click);
 
-            var menuTaches = new ToolStripMenuItem("⚙️ Tâches", null, OuvrirGestionTaches_Click);
-            var menuMetiers = new ToolStripMenuItem("📋 Métiers", null, OuvrirGestionMetiers_Click);
-            var menuOuvriers = new ToolStripMenuItem("👷 Ouvriers", null, OuvrirGestionOuvriers_Click);
+            var menuDonnees = new ToolStripMenuItem("Structure du projet");
+            menuDonnees.DropDownItems.Add("📋 Métiers", null, OuvrirGestionMetiers_Click);
+            menuDonnees.DropDownItems.Add("👷 Ouvriers", null, OuvrirGestionOuvriers_Click);
+            menuDonnees.DropDownItems.Add("📦 Lots", null, OuvrirGestionLots_Click);
+            menuDonnees.DropDownItems.Add("🧱 Blocs", null, OuvrirGestionBlocs_Click);
 
-            menuStrip.Items.AddRange(new ToolStripItem[] { menuProjet, menuTaches, menuMetiers, menuOuvriers });
+            var menuTaches = new ToolStripMenuItem("⚙️ Gérer les Tâches", null, OuvrirGestionTaches_Click);
+
+            menuStrip.Items.AddRange(new ToolStripItem[] { menuProjet, menuDonnees, menuTaches });
             this.MainMenuStrip = menuStrip;
             this.Controls.Add(menuStrip);
         }
@@ -153,64 +193,43 @@ namespace PlanAthena.Forms
 
         private void ExportCsvTout_Click(object sender, EventArgs e)
         {
-            using var fbd = new FolderBrowserDialog { Description = "Sélectionner le dossier d'export" };
-            if (fbd.ShowDialog() == DialogResult.OK)
-            {
-                try
-                {
-                    var prefixe = _projetActuel?.NomProjet?.Replace(" ", "_") ?? "export";
-                    _projetService.ExporterToutVersCsv(fbd.SelectedPath, prefixe);
-                    Log($"Export CSV complet effectué dans : {fbd.SelectedPath}");
-                }
-                catch (Exception ex)
-                {
-                    Log($"ERREUR lors de l'export : {ex.Message}");
-                    MessageBox.Show($"Erreur lors de l'export :\n{ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
+            MessageBox.Show("L'export CSV est en cours de refonte et sera disponible dans une prochaine version.", "Fonctionnalité indisponible", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void ImportCsvGroupe_Click(object sender, EventArgs e)
         {
-            using var dialog = new ImportCsvGroupeDialog();
-            if (dialog.ShowDialog() == DialogResult.OK)
-            {
-                try
-                {
-                    var resume = _projetService.ImporterToutDepuisCsv(dialog.CheminMetiers, dialog.CheminOuvriers, dialog.CheminTaches);
-                    if (resume.Succes)
-                    {
-                        Log($"Import groupé réussi : {resume.MetiersImportes} métiers, {resume.OuvriersImportes} ouvriers, {resume.TachesImportees} tâches");
-                    }
-                    else
-                    {
-                        Log($"ERREUR lors de l'import groupé : {resume.MessageErreur}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log($"ERREUR lors de l'import groupé : {ex.Message}");
-                }
-            }
+            MessageBox.Show("L'import CSV est en cours de refonte et sera disponible dans une prochaine version.", "Fonctionnalité indisponible", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void OuvrirGestionMetiers_Click(object sender, EventArgs e)
         {
             using var form = new MetierForm(_metierService);
-            form.ShowDialog();
+            form.ShowDialog(this);
         }
 
         private void OuvrirGestionOuvriers_Click(object sender, EventArgs e)
         {
             using var form = new OuvrierForm(_ouvrierService, _metierService);
-            form.ShowDialog();
+            form.ShowDialog(this);
+        }
+
+        private void OuvrirGestionLots_Click(object sender, EventArgs e)
+        {
+            using var form = new LotForm(_lotService, _tacheService);
+            form.ShowDialog(this);
+        }
+
+        private void OuvrirGestionBlocs_Click(object sender, EventArgs e)
+        {
+            using var form = new BlocForm(_blocService, _tacheService);
+            form.ShowDialog(this);
         }
 
         private void OuvrirGestionTaches_Click(object sender, EventArgs e)
         {
             var dependanceBuilder = _serviceProvider.GetRequiredService<DependanceBuilder>();
-            using var form = new TacheForm(_tacheService, _metierService, dependanceBuilder); // Doit passer le DependanceBuilder
-            form.ShowDialog();
+            using var form = new TacheForm(_tacheService, _metierService, dependanceBuilder, _lotService, _blocService);
+            form.ShowDialog(this);
         }
 
         private void Quitter_Click(object sender, EventArgs e)
@@ -444,39 +463,7 @@ namespace PlanAthena.Forms
             rtbLog.ScrollToCaret();
         }
 
-        private ServiceProvider ConfigureServices()
-        {
-            var serviceCollection = new ServiceCollection();
-
-            // Services PlanAthena Core (existants)
-            serviceCollection.AddApplicationServices();
-            serviceCollection.AddInfrastructureServices();
-            serviceCollection.AddScoped<PlanAthena.Core.Application.Interfaces.IConstructeurProblemeOrTools, PlanAthena.Core.Infrastructure.Services.OrTools.ConstructeurProblemeOrTools>();
-            serviceCollection.AddScoped<PlanAthenaCoreFacade>();
-
-            // Services qui contiennent des données d'état doivent être Singleton
-            serviceCollection.AddSingleton<MetierService>();
-            serviceCollection.AddSingleton<OuvrierService>();
-            serviceCollection.AddSingleton<TacheService>();
-            serviceCollection.AddSingleton<ProjetService>();
-
-            // Les services "sans état" ou utilitaires peuvent rester Scoped ou Transient
-            serviceCollection.AddScoped<CsvDataService>();
-            serviceCollection.AddScoped<ExcelReader>();
-            serviceCollection.AddScoped<DataTransformer>();
-            serviceCollection.AddScoped<PlanificationService>();
-            serviceCollection.AddScoped<GanttExportService>();
-            serviceCollection.AddScoped<ConfigurationBuilder>();
-
-
-            // NOUVEAUX SERVICES
-            serviceCollection.AddScoped<PreparationSolveurService>();
-            serviceCollection.AddScoped<TopologieDependanceService>();
-            serviceCollection.AddScoped<DependanceBuilder>();
-
-            return serviceCollection.BuildServiceProvider();
-        }
-
+        
         private void AfficherResultatDansLog(PlanAthena.Core.Facade.Dto.Output.ProcessChantierResultDto resultat)
         {
             if (resultat == null) { Log("Le résultat retourné par la façade est null."); return; }

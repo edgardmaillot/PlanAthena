@@ -1,0 +1,102 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam linetype ortho
+skinparam ranksep 60
+skinparam nodesep 60
+
+title Structure Cible pour la Phase 0
+
+package "Modèles de Données (PlanAthena.Data)" {
+    class Lot <<(N,orchid) NOUVEAU>> {
+        + LotId: string
+        + Nom: string
+        + Priorite: int
+        + CheminFichierPlan: string
+    }
+
+    class Bloc <<(N,orchid) NOUVEAU>> {
+        + BlocId: string
+        + Nom: string
+        + CapaciteMaxOuvriers: int
+    }
+
+    class Tache <<MODIFIÉ>> {
+        + TacheId: string
+        + TacheNom: string
+        + ...
+        -- Références --
+        + LotId: string
+        + BlocId: string
+    }
+    note right of Tache
+        Les propriétés dénormalisées
+        (LotNom, BlocNom, etc.)
+        sont **supprimées**.
+    end note
+
+    class ProjetData <<MODIFIÉ>> {
+        + InformationsProjet
+        + List<Metier>
+        + List<Ouvrier>
+        + List<Tache>
+        -- NOUVEAU --
+        + List<Lot>
+        + List<Bloc>
+    }
+}
+
+package "Couche Service (PlanAthena.Services.Business)" {
+    class LotService <<(N,orchid) NOUVEAU>> {
+        + AjouterLot(Lot)
+        + ObtenirTousLesLots(): List<Lot>
+        + RemplacerTousLesLots(List<Lot>)
+        + Vider()
+    }
+    
+    class BlocService <<(N,orchid) NOUVEAU>> {
+        + AjouterBloc(Bloc)
+        + ObtenirTousLesBlocs(): List<Bloc>
+        + RemplacerTousLesBlocs(List<Bloc>)
+        + Vider()
+    }
+
+    class TacheService <<MODIFIÉ>> {
+        ' Responsabilités sur Lots/Blocs retirées
+        + AjouterTache(Tache)
+        + ModifierTache(Tache)
+        + ObtenirToutesLesTaches(): List<Tache>
+        + ...
+    }
+    note right of TacheService
+      Ne gère plus les infos
+      de Lots et Blocs.
+      Dépend des nouveaux services
+      pour la validation des IDs.
+    end note
+
+    class ProjetService <<MODIFIÉ>> {
+        + SauvegarderProjet(...)
+        + ChargerProjet(...)
+        + CreerNouveauProjet(...)
+    }
+}
+
+' --- Relations ---
+ProjetService --> LotService : "utilise"
+ProjetService --> BlocService : "utilise"
+
+TacheService --> LotService : "valide Id"
+TacheService --> BlocService : "valide Id"
+
+LotService "1" o-- "*" Lot : "gère"
+BlocService "1" o-- "*" Bloc : "gère"
+
+Tache " *" -- " 1" Lot : "appartient à"
+Tache " *" -- " 1" Bloc : "appartient à"
+
+ProjetData "1" o-- "*" Lot : "contient"
+ProjetData "1" o-- "*" Bloc : "contient"
+ProjetData "1" o-- "*" Tache : "contient"
+
+@enduml

@@ -9,33 +9,43 @@ using System.Windows.Forms;
 
 namespace PlanAthena.Forms
 {
+    /// <summary>
+    /// Gère l'affichage et l'édition des détails d'une seule Tâche ou Jalon.
+    /// Ce formulaire est conçu pour être utilisé de deux manières :
+    /// 1. Embarqué dans un autre formulaire (ex: TacheForm) pour un affichage passif.
+    /// 2. Affiché en tant que fenêtre de dialogue modale (popup) pour la création ou l'édition ciblée.
+    /// </summary>
     public partial class TacheDetailForm : System.Windows.Forms.Form
     {
+        // Services
         private readonly TacheService _tacheService;
         private readonly MetierService _metierService;
+        private readonly LotService _lotService;
+        private readonly BlocService _blocService;
+
+        // État interne
         private Tache _tache;
         private bool _modeCreation;
         private bool _suppressEvents = false;
 
-        private List<LotInfo> _lotsDisponibles;
-        private List<BlocInfo> _blocsDisponibles;
+        // Sources de données pour les ComboBox
+        private List<Bloc> _blocsDisponibles;
         private List<Tache> _toutesLesTaches;
 
         public event EventHandler TacheSauvegardee;
 
-        public TacheDetailForm(TacheService tacheService, MetierService metierService)
+        public TacheDetailForm(TacheService tacheService, MetierService metierService, LotService lotService, BlocService blocService)
         {
             InitializeComponent();
             _tacheService = tacheService;
             _metierService = metierService;
+            _lotService = lotService;
+            _blocService = blocService;
 
             MettreAJourListesDeroulantes();
             ChargerTache(null, true);
         }
 
-        /// <summary>
-        /// Représente un item de dépendance dans la CheckedListBox
-        /// </summary>
         public class DependanceItem
         {
             public string TacheId { get; set; }
@@ -45,7 +55,7 @@ namespace PlanAthena.Forms
 
             public override string ToString()
             {
-                var result = $"{TacheId} - {TacheNom}";
+                var result = $"{TacheNom}";
                 if (EstHeritee) result += " (hérité)";
                 if (EstExclue) result += " (exclu)";
                 return result;
@@ -63,16 +73,11 @@ namespace PlanAthena.Forms
                 cmbMetier.DisplayMember = "Nom";
                 cmbMetier.ValueMember = "MetierId";
 
-                _lotsDisponibles = _tacheService.ObtenirTousLesLots();
-                cmbLotNom.DataSource = null;
-                cmbLotNom.DataSource = _lotsDisponibles;
-                cmbLotNom.DisplayMember = "LotNom";
-                cmbLotNom.ValueMember = "LotId";
 
-                _blocsDisponibles = _tacheService.ObtenirTousLesBlocs();
+                _blocsDisponibles = _blocService.ObtenirTousLesBlocs();
                 cmbBlocNom.DataSource = null;
                 cmbBlocNom.DataSource = _blocsDisponibles;
-                cmbBlocNom.DisplayMember = "BlocNom";
+                cmbBlocNom.DisplayMember = "Nom";
                 cmbBlocNom.ValueMember = "BlocId";
 
                 _toutesLesTaches = _tacheService.ObtenirToutesLesTaches();
@@ -91,37 +96,26 @@ namespace PlanAthena.Forms
                 _tache = tache;
                 _modeCreation = modeCreation;
 
-                this.grpTache.Text = _modeCreation ? "Nouvelle Activité" : $"Détails: {_tache?.TacheId}";
+                // Mise à jour des titres
+                this.Text = _modeCreation ? "Nouvelle Activité" : $"Détails: {_tache?.TacheId}";
+                this.grpTache.Text = this.Text;
 
                 if (_tache == null)
                 {
                     _tache = new Tache { HeuresHommeEstimees = 8, Type = TypeActivite.Tache };
-                    if (_lotsDisponibles.Any())
-                    {
-                        var premierLot = _lotsDisponibles.First();
-                        _tache.LotId = premierLot.LotId;
-                        _tache.LotNom = premierLot.LotNom;
-                        _tache.LotPriorite = premierLot.Priorite;
-                    }
-                    if (_blocsDisponibles.Any())
-                    {
-                        var premierBloc = _blocsDisponibles.First();
-                        _tache.BlocId = premierBloc.BlocId;
-                        _tache.BlocNom = premierBloc.BlocNom;
-                        _tache.BlocCapaciteMaxOuvriers = premierBloc.CapaciteMaxOuvriers;
-                    }
+                    // La logique de LotId est gérée par le formulaire appelant (TacheForm)
+                    if (_blocsDisponibles.Any()) _tache.BlocId = _blocsDisponibles.First().BlocId;
                 }
+
+                txtTacheId.Visible = false; // On cache le champ ID en mode création
+                
 
                 txtTacheId.Text = _tache.TacheId ?? "";
                 txtTacheNom.Text = _tache.TacheNom ?? "";
                 numHeuresHomme.Value = _tache.HeuresHommeEstimees;
                 chkEstJalon.Checked = _tache.EstJalon;
 
-                if (!string.IsNullOrEmpty(_tache.LotId)) cmbLotNom.SelectedValue = _tache.LotId;
-                else if (cmbLotNom.Items.Count > 0) cmbLotNom.SelectedIndex = 0;
-
-                if (!string.IsNullOrEmpty(_tache.BlocId)) cmbBlocNom.SelectedValue = _tache.BlocId;
-                else if (cmbBlocNom.Items.Count > 0) cmbBlocNom.SelectedIndex = 0;
+                cmbBlocNom.SelectedValue = !string.IsNullOrEmpty(_tache.BlocId) ? _tache.BlocId : cmbBlocNom.Items.Count > 0 ? cmbBlocNom.Items[0] : null;
 
                 if (_tache.EstJalon || string.IsNullOrEmpty(_tache.MetierId))
                 {
@@ -133,9 +127,10 @@ namespace PlanAthena.Forms
                     cmbMetier.SelectedItem = metierItem ?? cmbMetier.Items[0];
                 }
 
-                txtTacheId.ReadOnly = !_modeCreation;
                 cmbMetier.Enabled = !_tache.EstJalon;
                 btnSauvegarder.Enabled = true;
+                btnSupprimer.Visible = !modeCreation;
+                btnAnnuler.Visible = this.Modal;
             }
             finally
             {
@@ -154,7 +149,6 @@ namespace PlanAthena.Forms
             var exclusions = ObtenirExclusions();
 
             var tachesCandidates = _toutesLesTaches
-                //.Where(t => t.TacheId != _tache.TacheId && (t.BlocId == _tache.BlocId || t.EstJalon))
                 .Where(t => t.TacheId != _tache.TacheId && t.BlocId == _tache.BlocId)
                 .OrderBy(t => t.TacheId)
                 .ToList();
@@ -216,22 +210,12 @@ namespace PlanAthena.Forms
 
         private void cmbBlocNom_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (_suppressEvents || _tache == null || !(cmbBlocNom.SelectedItem is BlocInfo selectedBloc)) return;
+            if (_suppressEvents || _tache == null || !(cmbBlocNom.SelectedItem is Bloc selectedBloc)) return;
             _tache.BlocId = selectedBloc.BlocId;
-            _tache.BlocNom = selectedBloc.BlocNom;
-            _tache.BlocCapaciteMaxOuvriers = selectedBloc.CapaciteMaxOuvriers;
             numBlocCapacite.Value = selectedBloc.CapaciteMaxOuvriers;
             ChargerListeDependances();
         }
 
-        private void cmbLotNom_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (_suppressEvents || _tache == null || !(cmbLotNom.SelectedItem is LotInfo selectedLot)) return;
-            _tache.LotId = selectedLot.LotId;
-            _tache.LotNom = selectedLot.LotNom;
-            _tache.LotPriorite = selectedLot.Priorite;
-            numLotPriorite.Value = selectedLot.Priorite;
-        }
 
         private void cmbMetier_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -243,10 +227,8 @@ namespace PlanAthena.Forms
         private void chkEstJalon_CheckedChanged(object sender, EventArgs e)
         {
             if (_suppressEvents || _tache == null) return;
-
             bool estJalon = chkEstJalon.Checked;
             cmbMetier.Enabled = !estJalon;
-
             if (estJalon)
             {
                 _tache.Type = TypeActivite.JalonUtilisateur;
@@ -287,16 +269,61 @@ namespace PlanAthena.Forms
                 }
 
                 TacheSauvegardee?.Invoke(this, EventArgs.Empty);
-                MessageBox.Show("Tâche sauvegardée avec succès.", "Sauvegarde", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                _modeCreation = false;
-                MettreAJourListesDeroulantes();
-                ChargerTache(_tache, false); // Recharger pour rafraîchir l'état
+                if (this.Modal)
+                {
+                    this.DialogResult = DialogResult.OK;
+                    this.Close();
+                }
+                else
+                {
+                    MessageBox.Show("Tâche sauvegardée avec succès.", "Sauvegarde", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    _modeCreation = false;
+                    MettreAJourListesDeroulantes();
+                    ChargerTache(_tache, false);
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Erreur lors de la sauvegarde :\n{ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void btnSupprimer_Click(object sender, EventArgs e)
+        {
+            if (_modeCreation || _tache == null) return;
+
+            var result = MessageBox.Show($"Êtes-vous sûr de vouloir supprimer la tâche '{_tache.TacheNom}' ?",
+                "Confirmation de suppression", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+            if (result == DialogResult.Yes)
+            {
+                try
+                {
+                    _tacheService.SupprimerTache(_tache.TacheId);
+                    TacheSauvegardee?.Invoke(this, EventArgs.Empty);
+
+                    if (this.Modal)
+                    {
+                        this.DialogResult = DialogResult.OK;
+                        this.Close();
+                    }
+                    else
+                    {
+                        ChargerTache(null, true); // Vide le formulaire embarqué
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Erreur lors de la suppression :\n{ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void btnAnnuler_Click(object sender, EventArgs e)
+        {
+            this.DialogResult = DialogResult.Cancel;
+            this.Close();
         }
 
         private bool ValiderSaisie()
@@ -348,8 +375,7 @@ namespace PlanAthena.Forms
             var item = (DependanceItem)chkListDependances.Items[e.Index];
             e.DrawBackground();
             Color textColor = item.EstExclue ? Color.Red : (item.EstHeritee ? Color.Blue : Color.Black);
-            Font font = item.EstExclue ? new Font(e.Font, FontStyle.Strikeout) : (item.EstHeritee ? new Font(e.Font, FontStyle.Italic) : e.Font);
-
+            Font font = item.EstExclue ? new Font(e.Font, System.Drawing.FontStyle.Strikeout) : (item.EstHeritee ? new Font(e.Font, System.Drawing.FontStyle.Italic) : e.Font);
             using (var brush = new SolidBrush(textColor))
             {
                 e.Graphics.DrawString(item.ToString(), font, brush, e.Bounds);

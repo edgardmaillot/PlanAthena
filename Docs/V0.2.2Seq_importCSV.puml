@@ -1,0 +1,58 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+' -- Paramètres de séquence corrigés --
+skinparam sequenceArrowColor #BF360C
+skinparam sequenceLifeLineBorderColor #DD4814
+skinparam sequenceParticipantBackgroundColor #FFF0E6
+
+title Comportement (Nouveau) : Import d'un CSV de Tâches
+
+actor "Utilisateur" as User
+participant "TacheForm" as UI
+participant "TacheService" as TacheSvc
+participant "LotService" as LotSvc
+participant "BlocService" as BlocSvc
+
+User -> UI : Clique "Importer CSV"
+activate UI
+UI -> TacheSvc : ImporterDepuisCsv(filePath)
+activate TacheSvc
+
+TacheSvc -> TacheSvc : Lit le fichier CSV
+TacheSvc -> TacheSvc : **Étape 1: Extraire les Lots/Blocs uniques**
+note right: Analyse les colonnes LotNom, BlocNom, etc.\npour créer une liste de Lots/Blocs à créer/mettre à jour.
+
+loop Pour chaque Lot unique trouvé dans le CSV
+    TacheSvc -> LotSvc : ObtenirLotParId(lotId)
+    activate LotSvc
+    LotSvc --> TacheSvc : null (le lot n'existe pas)
+    deactivate LotSvc
+    
+    TacheSvc -> LotSvc : AjouterLot(nouveauLot)
+    activate LotSvc
+    deactivate LotSvc
+end
+
+loop Pour chaque Bloc unique trouvé dans le CSV
+    TacheSvc -> BlocSvc : ObtenirBlocParId(blocId)
+    activate BlocSvc
+    BlocSvc --> TacheSvc : null (le bloc n'existe pas)
+    deactivate BlocSvc
+
+    TacheSvc -> BlocSvc : AjouterBloc(nouveauBloc)
+    activate BlocSvc
+    deactivate BlocSvc
+end
+
+TacheSvc -> TacheSvc : **Étape 2: Créer les Tâches**
+note right: Maintenant que les Lots/Blocs existent,\nle service peut créer les objets Tache\nen utilisant les LotId et BlocId corrects.
+
+TacheSvc -> TacheSvc : Ajoute les nouvelles tâches à la liste interne
+
+TacheSvc --> UI : retourne le nombre de tâches importées
+deactivate TacheSvc
+UI -> UI : Rafraîchit l'affichage
+deactivate UI
+
+@enduml

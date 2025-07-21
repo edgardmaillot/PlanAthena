@@ -1,5 +1,8 @@
 using PlanAthena.Data;
 using PlanAthena.Services.DataAccess;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace PlanAthena.Services.Business
 {
@@ -13,16 +16,20 @@ namespace PlanAthena.Services.Business
         private readonly CsvDataService _csvDataService;
         private readonly ExcelReader _excelReader;
         private readonly MetierService _metierService;
+        private readonly LotService _lotService;
+        private readonly BlocService _blocService;
 
         // Compteurs pour génération d'ID automatique
         private int _compteurTaches = 1;
         private int _compteurJalons = 1;
 
-        public TacheService(CsvDataService csvDataService, ExcelReader excelReader, MetierService metierService)
+        public TacheService(CsvDataService csvDataService, ExcelReader excelReader, MetierService metierService, LotService lotService, BlocService blocService)
         {
             _csvDataService = csvDataService ?? throw new ArgumentNullException(nameof(csvDataService));
             _excelReader = excelReader ?? throw new ArgumentNullException(nameof(excelReader));
             _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
+            _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
+            _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
         }
 
         #region CRUD Tâches - SIMPLIFIÉ
@@ -47,6 +54,13 @@ namespace PlanAthena.Services.Business
                 throw new InvalidOperationException($"La tâche {tache.TacheId} existe déjà.");
             }
 
+            // Validation de l'existence des IDs de référence
+            if (!string.IsNullOrEmpty(tache.LotId) && _lotService.ObtenirLotParId(tache.LotId) == null)
+                throw new InvalidOperationException($"Le lot avec l'ID '{tache.LotId}' n'existe pas. Veuillez le créer avant d'ajouter la tâche.");
+
+            if (!string.IsNullOrEmpty(tache.BlocId) && _blocService.ObtenirBlocParId(tache.BlocId) == null)
+                throw new InvalidOperationException($"Le bloc avec l'ID '{tache.BlocId}' n'existe pas. Veuillez le créer avant d'ajouter la tâche.");
+
             _taches.Add(tache);
         }
 
@@ -62,18 +76,21 @@ namespace PlanAthena.Services.Business
             if (tacheExistante == null)
                 throw new InvalidOperationException($"Tâche {tacheModifiee.TacheId} non trouvée.");
 
-            // Mise à jour de TOUTES les propriétés
+            // Validation de l'existence des IDs de référence
+            if (!string.IsNullOrEmpty(tacheModifiee.LotId) && _lotService.ObtenirLotParId(tacheModifiee.LotId) == null)
+                throw new InvalidOperationException($"Le lot avec l'ID '{tacheModifiee.LotId}' n'existe pas.");
+
+            if (!string.IsNullOrEmpty(tacheModifiee.BlocId) && _blocService.ObtenirBlocParId(tacheModifiee.BlocId) == null)
+                throw new InvalidOperationException($"Le bloc avec l'ID '{tacheModifiee.BlocId}' n'existe pas.");
+
+            // Mise à jour des propriétés de la tâche
             tacheExistante.TacheNom = tacheModifiee.TacheNom;
             tacheExistante.HeuresHommeEstimees = tacheModifiee.HeuresHommeEstimees;
             tacheExistante.MetierId = tacheModifiee.MetierId;
             tacheExistante.Dependencies = tacheModifiee.Dependencies;
             tacheExistante.ExclusionsDependances = tacheModifiee.ExclusionsDependances;
             tacheExistante.LotId = tacheModifiee.LotId;
-            tacheExistante.LotNom = tacheModifiee.LotNom;
-            tacheExistante.LotPriorite = tacheModifiee.LotPriorite;
             tacheExistante.BlocId = tacheModifiee.BlocId;
-            tacheExistante.BlocNom = tacheModifiee.BlocNom;
-            tacheExistante.BlocCapaciteMaxOuvriers = tacheModifiee.BlocCapaciteMaxOuvriers;
         }
 
         /// <summary>
@@ -114,7 +131,7 @@ namespace PlanAthena.Services.Business
             string prefixe;
             int compteur;
 
-            if (tache.EstJalon) // MODIFIÉ
+            if (tache.EstJalon)
             {
                 prefixe = "J";
                 compteur = _compteurJalons++;
@@ -134,7 +151,7 @@ namespace PlanAthena.Services.Business
                 compteur++;
             } while (true);
 
-            if (tache.EstJalon) // MODIFIÉ
+            if (tache.EstJalon)
                 _compteurJalons = compteur + 1;
             else
                 _compteurTaches = compteur + 1;
@@ -146,22 +163,24 @@ namespace PlanAthena.Services.Business
         /// </summary>
         private void MettreAJourCompteurs()
         {
-            var maxTache = 0;
-            var maxJalon = 0;
-
-            foreach (var tache in _taches)
+            if (!_taches.Any())
             {
-                if (tache.TacheId?.StartsWith("T") == true &&
-                    int.TryParse(tache.TacheId.Substring(1), out var numTache))
-                {
-                    maxTache = Math.Max(maxTache, numTache);
-                }
-                else if (tache.TacheId?.StartsWith("J") == true &&
-                         int.TryParse(tache.TacheId.Substring(1), out var numJalon))
-                {
-                    maxJalon = Math.Max(maxJalon, numJalon);
-                }
+                _compteurTaches = 1;
+                _compteurJalons = 1;
+                return;
             }
+
+            var maxTache = _taches
+                .Where(t => t.TacheId?.StartsWith("T") == true && int.TryParse(t.TacheId.Substring(1), out _))
+                .Select(t => int.Parse(t.TacheId.Substring(1)))
+                .DefaultIfEmpty(0)
+                .Max();
+
+            var maxJalon = _taches
+                .Where(t => t.TacheId?.StartsWith("J") == true && int.TryParse(t.TacheId.Substring(1), out _))
+                .Select(t => int.Parse(t.TacheId.Substring(1)))
+                .DefaultIfEmpty(0)
+                .Max();
 
             _compteurTaches = maxTache + 1;
             _compteurJalons = maxJalon + 1;
@@ -203,176 +222,72 @@ namespace PlanAthena.Services.Business
             return _taches.Where(t => t.LotId == lotId).ToList();
         }
 
+        #endregion
+
+        #region Import/Export (Non fonctionnel après refonte - à traiter dans une phase ultérieure)
+
         /// <summary>
-        /// Obtient les tâches ayant des dépendances non résolues
+        /// Importe les tâches depuis un fichier CSV.
+        /// ATTENTION: Cette méthode n'est plus fonctionnelle et doit être ré-implémentée.
         /// </summary>
-        public List<Tache> ObtenirTachesAvecDependancesManquantes()
+        public int ImporterDepuisCsv(string filePath, bool remplacerExistantes = true)
         {
-            var result = new List<Tache>();
+            // La logique de cette méthode doit être entièrement revue pour gérer la création
+            // implicite des lots et blocs, comme discuté dans notre conception.
+            throw new NotImplementedException("L'import CSV doit être ré-implémenté pour gérer la nouvelle structure de Lots/Blocs.");
+        }
 
-            foreach (var tache in _taches.Where(t => !string.IsNullOrEmpty(t.Dependencies)))
+        /// <summary>
+        /// Exporte les tâches vers un fichier CSV.
+        /// ATTENTION: Cette méthode n'est plus fonctionnelle et doit être ré-implémentée.
+        /// </summary>
+        public void ExporterVersCsv(string filePath)
+        {
+            // La logique de cette méthode doit être entièrement revue pour enrichir les données
+            // de tâches avec les informations de lots et blocs avant l'export.
+            throw new NotImplementedException("L'export CSV doit être ré-implémenté pour gérer la nouvelle structure de Lots/Blocs.");
+        }
+
+        /// <summary>
+        /// Charge les tâches depuis une liste (utilisé par ProjetService)
+        /// </summary>
+        public void ChargerTaches(List<Tache> taches)
+        {
+            _taches.Clear();
+            if (taches != null)
             {
-                var dependances = tache.Dependencies.Split(',').Select(d => d.Trim());
-                var dependancesManquantes = dependances.Where(dep =>
-                    !_taches.Any(t => t.TacheId == dep)).ToList();
+                _taches.AddRange(taches);
+                MettreAJourCompteurs();
+            }
+        }
 
-                if (dependancesManquantes.Any())
-                {
-                    result.Add(tache);
-                }
+        #endregion
+
+        #region Statistiques
+
+        /// <summary>
+        /// Obtient des statistiques sur les tâches du chef
+        /// </summary>
+        public StatistiquesTaches ObtenirStatistiques()
+        {
+            if (!_taches.Any())
+            {
+                return new StatistiquesTaches();
             }
 
-            return result;
-        }
-
-        /// <summary>
-        /// Obtient tous les jalons (utilisateur)
-        /// </summary>
-        public List<Tache> ObtenirJalons()
-        {
-            return _taches.Where(t => t.EstJalon).ToList();
-        }
-
-        /// <summary>
-        /// Copie une tâche (méthode utilitaire)
-        /// </summary>
-        private Tache CopierTache(Tache source)
-        {
-            return new Tache
+            return new StatistiquesTaches
             {
-                TacheId = source.TacheId,
-                TacheNom = source.TacheNom,
-                HeuresHommeEstimees = source.HeuresHommeEstimees,
-                MetierId = source.MetierId,
-                Dependencies = source.Dependencies,
-                ExclusionsDependances = source.ExclusionsDependances,
-                LotId = source.LotId,
-                LotNom = source.LotNom,
-                LotPriorite = source.LotPriorite,
-                BlocId = source.BlocId,
-                BlocNom = source.BlocNom,
-                BlocCapaciteMaxOuvriers = source.BlocCapaciteMaxOuvriers
+                NombreTachesTotal = _taches.Count,
+                HeuresHommeTotal = _taches.Sum(t => t.HeuresHommeEstimees),
+
+                HeuresHommeMoyenneParTache = _taches.Any(t => !t.EstJalon)
+                    ? _taches.Where(t => !t.EstJalon).Average(t => t.HeuresHommeEstimees)
+                    : 0,
+                NombreBlocsUniques = _taches.Select(t => t.BlocId).Distinct().Count(),
+                NombreLotsUniques = _taches.Select(t => t.LotId).Distinct().Count(),
+                TachesAvecDependances = _taches.Count(t => !string.IsNullOrWhiteSpace(t.Dependencies)),
+                JalonsSurcharge = _taches.Count(t => t.Type == TypeActivite.JalonUtilisateur)
             };
-        }
-        #endregion
-
-        
-
-        #region Gestion Blocs
-
-        /// <summary>
-        /// Obtient tous les blocs uniques
-        /// </summary>
-        public List<BlocInfo> ObtenirTousLesBlocs()
-        {
-            return _taches
-                .GroupBy(t => t.BlocId)
-                .Select(g => new BlocInfo
-                {
-                    BlocId = g.Key,
-                    BlocNom = g.First().BlocNom,
-                    CapaciteMaxOuvriers = g.First().BlocCapaciteMaxOuvriers,
-                    NombreTaches = g.Count(),
-                    HeuresHommeTotal = g.Sum(t => t.HeuresHommeEstimees)
-                })
-                .OrderBy(b => b.BlocNom)
-                .ToList();
-        }
-
-        /// <summary>
-        /// Met à jour les informations d'un bloc
-        /// </summary>
-        public void ModifierBloc(string blocId, string nouveauNom, int nouvelleCapacite)
-        {
-            var tachesDuBloc = _taches.Where(t => t.BlocId == blocId).ToList();
-            if (!tachesDuBloc.Any())
-                throw new InvalidOperationException($"Bloc {blocId} non trouvé.");
-
-            foreach (var tache in tachesDuBloc)
-            {
-                tache.BlocNom = nouveauNom;
-                tache.BlocCapaciteMaxOuvriers = nouvelleCapacite;
-            }
-        }
-
-        #endregion
-
-        #region Gestion Lots
-
-        /// <summary>
-        /// Obtient tous les lots uniques
-        /// </summary>
-        public List<LotInfo> ObtenirTousLesLots()
-        {
-            return _taches
-                .GroupBy(t => t.LotId)
-                .Select(g => new LotInfo
-                {
-                    LotId = g.Key,
-                    LotNom = g.First().LotNom,
-                    Priorite = g.First().LotPriorite,
-                    NombreTaches = g.Count(),
-                    HeuresHommeTotal = g.Sum(t => t.HeuresHommeEstimees),
-                    BlocsAssocies = g.Select(t => t.BlocId).Distinct().ToList()
-                })
-                .OrderBy(l => l.Priorite)
-                .ThenBy(l => l.LotNom)
-                .ToList();
-        }
-
-        /// <summary>
-        /// Met à jour les informations d'un lot
-        /// </summary>
-        public void ModifierLot(string lotId, string nouveauNom, int nouvellePriorite)
-        {
-            var tachesDuLot = _taches.Where(t => t.LotId == lotId).ToList();
-            if (!tachesDuLot.Any())
-                throw new InvalidOperationException($"Lot {lotId} non trouvé.");
-
-            foreach (var tache in tachesDuLot)
-            {
-                tache.LotNom = nouveauNom;
-                tache.LotPriorite = nouvellePriorite;
-            }
-        }
-
-        #endregion
-
-        #region Mapping Tâches-Métiers COMPATIBILITÉ
-
-        /// <summary>
-        /// Associe une tâche à un métier
-        /// </summary>
-        public void AssocierTacheMetier(string tacheId, string metierId)
-        {
-            if (string.IsNullOrWhiteSpace(tacheId))
-                throw new ArgumentException("L'ID de la tâche ne peut pas être vide.");
-
-            if (string.IsNullOrWhiteSpace(metierId))
-                throw new ArgumentException("L'ID du métier ne peut pas être vide.");
-
-            var tache = ObtenirTacheParId(tacheId);
-            if (tache == null)
-                throw new InvalidOperationException($"Tâche {tacheId} non trouvée.");
-
-            tache.MetierId = metierId;
-        }
-
-        /// <summary>
-        /// Obtient le métier associé à une tâche
-        /// </summary>
-        public string ObtenirMetierPourTache(string tacheId)
-        {
-            var tache = ObtenirTacheParId(tacheId);
-            return tache?.MetierId;
-        }
-
-        /// <summary>
-        /// Obtient toutes les tâches sans métier assigné
-        /// </summary>
-        public List<Tache> ObtenirTachesSansMetier()
-        {
-            return _taches.Where(t => string.IsNullOrWhiteSpace(t.MetierId)).ToList();
         }
 
         /// <summary>
@@ -394,103 +309,6 @@ namespace PlanAthena.Services.Business
 
         #endregion
 
-        #region Import/Export
-
-        /// <summary>
-        /// Importe les tâches depuis un fichier CSV
-        /// </summary>
-        public int ImporterDepuisCsv(string filePath, bool remplacerExistantes = true)
-        {
-            var tachesImportees = _csvDataService.ImportCsv<Tache>(filePath);
-
-            if (remplacerExistantes)
-            {
-                _taches.Clear();
-            }
-
-            _taches.AddRange(tachesImportees);
-
-            // Mettre à jour les compteurs basés sur les IDs existants
-            MettreAJourCompteurs();
-
-            return tachesImportees.Count;
-        }
-
-        /// <summary>
-        /// Importe les tâches depuis un fichier Excel Fieldwire/Dalux
-        /// </summary>
-        public int ImporterDepuisExcelFieldwire(string filePath)
-        {
-            // TODO: Implémentation spécifique au format Fieldwire/Dalux
-            var donneesExcel = _excelReader.ImportFieldwireTaches(filePath);
-            return 0;
-        }
-
-        /// <summary>
-        /// Exporte les tâches vers un fichier CSV
-        /// </summary>
-        public void ExporterVersCsv(string filePath)
-        {
-            _csvDataService.ExportCsv(_taches, filePath);
-        }
-
-        /// <summary>
-        /// Charge les tâches depuis une liste (utilisé par PlanificationService)
-        /// </summary>
-        public void ChargerTaches(List<Tache> taches)
-        {
-            _taches.Clear();
-
-            if (taches != null)
-            {
-                _taches.AddRange(taches);
-                MettreAJourCompteurs();
-            }
-        }
-
-        #endregion
-
-        #region Statistiques
-
-        /// <summary>
-        /// Obtient des statistiques sur les tâches du chef
-        /// </summary>
-        public StatistiquesTaches ObtenirStatistiques()
-        {
-            if (!_taches.Any())
-            {
-                return new StatistiquesTaches
-                {
-                    NombreTachesTotal = 0,
-                    HeuresHommeTotal = 0,
-                    HeuresHommeMoyenneParTache = 0,
-                    NombreBlocsUniques = 0,
-                    NombreLotsUniques = 0,
-                    TachesAvecDependances = 0,
-                    JalonsSurcharge = 0 
-                };
-            }
-
-            // MODIFIÉ : On compte les jalons utilisateur directement.
-            var jalons = _taches.Count(t => t.Type == TypeActivite.JalonUtilisateur);
-
-            return new StatistiquesTaches
-            {
-                NombreTachesTotal = _taches.Count,
-                HeuresHommeTotal = _taches.Sum(t => t.HeuresHommeEstimees),
-
-                HeuresHommeMoyenneParTache = _taches.Any(t => !t.EstJalon)
-                    ? _taches.Where(t => !t.EstJalon).Average(t => t.HeuresHommeEstimees)
-                    : 0,
-                NombreBlocsUniques = _taches.Select(t => t.BlocId).Distinct().Count(),
-                NombreLotsUniques = _taches.Select(t => t.LotId).Distinct().Count(),
-                TachesAvecDependances = _taches.Count(t => !string.IsNullOrWhiteSpace(t.Dependencies)),
-                JalonsSurcharge = jalons
-            };
-        }
-
-        #endregion
-
         /// <summary>
         /// Efface toutes les données
         /// </summary>
@@ -500,39 +318,9 @@ namespace PlanAthena.Services.Business
             _compteurTaches = 1;
             _compteurJalons = 1;
         }
-
-        internal void ImporterDepuisCsv(object fileName, bool v)
-        {
-            throw new NotImplementedException();
-        }
     }
 
     #region Classes de support
-
-    /// <summary>
-    /// Informations sur un bloc
-    /// </summary>
-    public class BlocInfo
-    {
-        public string BlocId { get; set; } = "";
-        public string BlocNom { get; set; } = "";
-        public int CapaciteMaxOuvriers { get; set; }
-        public int NombreTaches { get; set; }
-        public int HeuresHommeTotal { get; set; }
-    }
-
-    /// <summary>
-    /// Informations sur un lot
-    /// </summary>
-    public class LotInfo
-    {
-        public string LotId { get; set; } = "";
-        public string LotNom { get; set; } = "";
-        public int Priorite { get; set; }
-        public int NombreTaches { get; set; }
-        public int HeuresHommeTotal { get; set; }
-        public List<string> BlocsAssocies { get; set; } = new List<string>();
-    }
 
     /// <summary>
     /// Statistiques sur les tâches

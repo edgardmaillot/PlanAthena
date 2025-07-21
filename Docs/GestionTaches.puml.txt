@@ -1,0 +1,72 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam linetype ortho
+skinparam ranksep 80
+skinparam nodesep 80
+skinparam package { borderColor #555555, borderThickness 2 }
+skinparam class { borderColor #DD4814, backgroundColor #FFF0E6, arrowColor #BF360C }
+
+title Architecture de la fonctionnalité "Gestion des Tâches" (v0.2.2)
+
+package "Gestion des Tâches (UI)" {
+  class TacheForm <<MODIFIÉ>> {
+    - _lotActif: Lot
+    - _metierEnModeCreation: Metier
+    --
+    + CreerBoutonsMetiers()
+    + cmbLots_SelectedIndexChanged()
+    + PertControl_TacheDemandee()
+  }
+
+  class TacheDetailForm <<MODIFIÉ>> {
+    + ChargerTache(tache, modeCreation)
+  }
+
+  class PertDiagramControl <<MODIFIÉ>> {
+    + ChargerDonnees(tachesFiltrees, ...)
+    + event TacheSelected
+    + event TacheDoubleClicked
+    + event TacheDemandee <<(N,orchid) NOUVEAU>>
+  }
+}
+
+package "Services & Utilitaires" {
+  class TacheService
+  class LotService <<(N,orchid) NOUVEAU>>
+  class BlocService <<(N,orchid) NOUVEAU>>
+  
+  class MetierService {
+    + ObtenirMetiersTriesParDependance() <<(N,orchid) NOUVEAU>>
+  }
+
+  class DependanceBuilder
+  class TopologieDependanceService
+}
+
+' --- Relations / Flux ---
+' TacheForm est le chef d'orchestre
+TacheForm --> TacheService
+TacheForm --> LotService : "pour filtrer et gérer"
+TacheForm --> BlocService : "pour gérer"
+TacheForm --> MetierService : "pour trier et afficher"
+TacheForm --> DependanceBuilder
+TacheForm *-- "1" PertDiagramControl
+TacheForm *-- "1" TacheDetailForm : "est embarqué"
+
+' Le contrôle de diagramme dépend des services pour afficher les infos
+PertDiagramControl --> LotService
+PertDiagramControl --> BlocService
+PertDiagramControl --> MetierService
+
+' Le formulaire de détail a aussi besoin des services
+TacheDetailForm --> TacheService
+TacheDetailForm --> MetierService
+TacheDetailForm --> LotService
+TacheDetailForm --> BlocService
+
+' Communication par événements
+PertDiagramControl .> TacheForm : Déclenche les événements
+TacheDetailForm .> TacheForm : TacheSauvegardee
+
+@enduml

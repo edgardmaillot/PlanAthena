@@ -1,22 +1,30 @@
 using PlanAthena.Core.Facade.Dto.Input;
 using PlanAthena.Data;
+using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
-
-
+using System;
+using System.Collections.Generic;
+using System.Linq;
 // Ajout pour éviter d'écrire les noms complets partout dans la méthode de mapping
 using CoreEnums = PlanAthena.Core.Facade.Dto.Enums;
 
 namespace PlanAthena.Services.Processing
 {
     /// <summary>
-    /// Service de transformation des données CSV vers les DTOs de la DLL PlanAthena.Core.
-    /// Agit comme une couche anti-corruption, traduisant les modèles de données externes
+    /// Service de transformation des données du projet vers les DTOs de la DLL PlanAthena.Core.
+    /// Agit comme une couche anti-corruption, traduisant les modèles de données internes
     /// en contrats d'entrée stables et propres pour le cœur du système.
     /// </summary>
     public class DataTransformer
     {
-        public DataTransformer()
+        private static readonly string[] s_splitChars = { "," };
+        private readonly LotService _lotService;
+        private readonly BlocService _blocService;
+
+        public DataTransformer(LotService lotService, BlocService blocService)
         {
+            _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
+            _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
         }
 
         public ChantierSetupInputDto TransformToChantierSetupDto(
@@ -25,43 +33,43 @@ namespace PlanAthena.Services.Processing
             List<Metier> allMetiers,
             ConfigurationUI configurationUI)
         {
-            if (ouvriers == null) throw new ArgumentNullException(nameof(ouvriers));
-            if (processedTaches == null) throw new ArgumentNullException(nameof(processedTaches));
-            if (configurationUI == null) throw new ArgumentNullException(nameof(configurationUI));
+            ArgumentNullException.ThrowIfNull(ouvriers);
+            ArgumentNullException.ThrowIfNull(processedTaches);
+            ArgumentNullException.ThrowIfNull(configurationUI);
 
             // Transformation des tâches
             var tachesDto = processedTaches.Select(t => new TacheDto
             {
                 TacheId = t.TacheId,
                 Nom = t.TacheNom,
-                // CORRECTION : Mappe l'énumération du projet de données vers l'énumération de la DLL Core.
                 Type = MapToCoreTypeActivite(t.Type),
                 BlocId = t.BlocId,
                 HeuresHommeEstimees = t.HeuresHommeEstimees,
                 MetierId = t.MetierId ?? string.Empty,
-                Dependencies = t.Dependencies?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>()
+                Dependencies = t.Dependencies?.Split(s_splitChars, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>()
             }).ToList();
 
-            // Transformation des blocs
-            var blocsDto = processedTaches
-                .GroupBy(t => t.BlocId)
-                .Select(g => g.First())
-                .Select(t => new BlocTravailDto
+            // Transformation des blocs depuis le BlocService
+            var blocsDto = _blocService.ObtenirTousLesBlocs()
+                .Select(b => new BlocTravailDto
                 {
-                    BlocId = t.BlocId,
-                    Nom = t.BlocNom,
-                    CapaciteMaxOuvriers = t.BlocCapaciteMaxOuvriers
+                    BlocId = b.BlocId,
+                    Nom = b.Nom,
+                    CapaciteMaxOuvriers = b.CapaciteMaxOuvriers
                 }).ToList();
 
-            // Transformation des lots
-            var lotsDto = processedTaches
+            // Transformation des lots depuis le LotService
+            var blocIdsParLot = processedTaches
                 .GroupBy(t => t.LotId)
-                .Select(g => new LotTravauxDto
+                .ToDictionary(g => g.Key, g => g.Select(t => t.BlocId).Distinct().ToList());
+
+            var lotsDto = _lotService.ObtenirTousLesLots()
+                .Select(l => new LotTravauxDto
                 {
-                    LotId = g.Key,
-                    Nom = g.First().LotNom,
-                    Priorite = g.First().LotPriorite,
-                    BlocIds = g.Select(b => b.BlocId).Distinct().ToList()
+                    LotId = l.LotId,
+                    Nom = l.Nom,
+                    Priorite = l.Priorite,
+                    BlocIds = blocIdsParLot.GetValueOrDefault(l.LotId, new List<string>())
                 }).ToList();
 
             // Transformation des métiers
@@ -69,26 +77,28 @@ namespace PlanAthena.Services.Processing
             {
                 MetierId = m.MetierId,
                 Nom = m.Nom,
-                PrerequisMetierIds = m.PrerequisMetierIds?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>()
+                PrerequisMetierIds = m.PrerequisMetierIds?.Split(s_splitChars, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>()
             }).ToList();
 
             // Transformation des ouvriers
             var ouvriersDto = ouvriers
                 .GroupBy(o => o.OuvrierId)
-                .Select(g => new OuvrierDto
+                .Select(g =>
                 {
-                    OuvrierId = g.Key,
-                    Nom = g.First().Nom,
-                    Prenom = g.First().Prenom,
-                    CoutJournalier = g.First().CoutJournalier,
-                    Competences = g.Select(c => new CompetenceDto
+                    var premierOuvrier = g.First();
+                    return new OuvrierDto
                     {
-                        MetierId = c.MetierId,
-                        // RESTAURATION : Le cast direct est conservé tel que dans le code original.
-                        // Cela suppose que c.NiveauExpertise est un type (probablement int) compatible avec l'énumération de la DLL.
-                        Niveau = c.NiveauExpertise,
-                        PerformancePct = c.PerformancePct
-                    }).ToList()
+                        OuvrierId = g.Key,
+                        Nom = premierOuvrier.Nom,
+                        Prenom = premierOuvrier.Prenom,
+                        CoutJournalier = premierOuvrier.CoutJournalier,
+                        Competences = g.Select(c => new CompetenceDto
+                        {
+                            MetierId = c.MetierId,
+                            Niveau = c.NiveauExpertise,
+                            PerformancePct = c.PerformancePct
+                        }).ToList()
+                    };
                 }).ToList();
 
             // Transformation du calendrier
@@ -100,12 +110,12 @@ namespace PlanAthena.Services.Processing
             };
 
             // Configuration d'optimisation
-            OptimizationConfigDto optimConfig = null;
+            OptimizationConfigDto? optimConfig = null;
             if (configurationUI.TypeDeSortie != "Analyse et Estimation")
             {
                 optimConfig = new OptimizationConfigDto
                 {
-                    TypeDeSortie = configurationUI.TypeDeSortie,
+                    TypeDeSortie = configurationUI.TypeDeSortie ?? string.Empty,
                     DureeJournaliereStandardHeures = configurationUI.DureeJournaliereStandardHeures,
                     PenaliteChangementOuvrierPourcentage = configurationUI.PenaliteChangementOuvrierPourcentage,
                     CoutIndirectJournalierPourcentage = configurationUI.CoutIndirectJournalierPourcentage
@@ -132,20 +142,14 @@ namespace PlanAthena.Services.Processing
         /// <summary>
         /// Mappe l'énumération TypeActivite de la couche Data vers celle de la DLL Core.
         /// </summary>
-        private CoreEnums.TypeActivite MapToCoreTypeActivite(TypeActivite sourceType)
-        {
-            switch (sourceType)
+        private static CoreEnums.TypeActivite MapToCoreTypeActivite(TypeActivite sourceType) =>
+            sourceType switch
             {
-                case TypeActivite.Tache:
-                    return CoreEnums.TypeActivite.Tache;
-                case TypeActivite.JalonUtilisateur:
-                    return CoreEnums.TypeActivite.JalonUtilisateur;
-                case TypeActivite.JalonDeSynchronisation:
-                case TypeActivite.JalonTechnique:
-                    return CoreEnums.TypeActivite.JalonTechnique;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(sourceType), $"Valeur TypeActivite non supportée pour le mapping : {sourceType}");
-            }
-        }
+                TypeActivite.Tache => CoreEnums.TypeActivite.Tache,
+                TypeActivite.JalonUtilisateur => CoreEnums.TypeActivite.JalonUtilisateur,
+                TypeActivite.JalonDeSynchronisation => CoreEnums.TypeActivite.JalonTechnique,
+                TypeActivite.JalonTechnique => CoreEnums.TypeActivite.JalonTechnique,
+                _ => throw new ArgumentOutOfRangeException(nameof(sourceType), $"Valeur TypeActivite non supportée pour le mapping : {sourceType}"),
+            };
     }
 }

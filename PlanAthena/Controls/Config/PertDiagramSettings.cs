@@ -71,7 +71,7 @@ namespace PlanAthena.Controls.Config
         #region Labels & Texte
 
         public string JalonAvecDureeIcon { get; set; } = "⏳";
-        public string JalonSansDureeIcon { get; set; } = "🏁";
+        public string JalonSansDureeIcon { get; set; } = "◆";
         public string UnassignedMetierLabel { get; set; } = "❌ Non assigné";
         public int TacheNomMaxLength { get; set; } = 20;
         public int MetierNomMaxLength { get; set; } = 18;

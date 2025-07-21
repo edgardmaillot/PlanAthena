@@ -1,0 +1,59 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+' -- Paramètres de séquence corrigés --
+skinparam sequenceArrowColor #005588
+skinparam sequenceLifeLineBorderColor #007ACC
+skinparam sequenceParticipantBackgroundColor #DDEEFF
+
+title Comportement (Corrigé) : Chargement d'un Projet .json
+
+actor "Utilisateur" as User
+participant "MainForm" as UI
+participant "ProjetService" as ProjSvc
+participant "MetierService" as MetierSvc
+participant "OuvrierService" as OuvrierSvc
+participant "LotService" as LotSvc
+participant "BlocService" as BlocSvc
+participant "TacheService" as TacheSvc
+
+User -> UI : Clique "Charger Projet"
+activate UI
+UI -> ProjSvc : ChargerProjet(filePath)
+activate ProjSvc
+
+ProjSvc -> ProjSvc : Lit et Désérialise le fichier .json
+
+note over ProjSvc: L'ordre de chargement est crucial !
+
+ProjSvc -> MetierSvc : RemplacerTousLesMetiers(...)
+activate MetierSvc
+deactivate MetierSvc
+
+ProjSvc -> OuvrierSvc : ChargerOuvriers(...)
+activate OuvrierSvc
+deactivate OuvrierSvc
+
+ProjSvc -> LotSvc : RemplacerTousLesLots(...)
+activate LotSvc
+deactivate LotSvc
+
+ProjSvc -> BlocSvc : RemplacerTousLesBlocs(...)
+activate BlocSvc
+deactivate BlocSvc
+
+note right of ProjSvc
+  Les entités de référence sont
+  chargées **avant** les tâches.
+end note
+
+ProjSvc -> TacheSvc : ChargerTaches(...)
+activate TacheSvc
+deactivate TacheSvc
+
+ProjSvc --> UI : retourne InformationsProjet
+deactivate ProjSvc
+
+UI -> UI : Met à jour l'affichage
+deactivate UI
+@enduml

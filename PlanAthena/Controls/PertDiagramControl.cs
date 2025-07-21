@@ -1,15 +1,16 @@
-// Fichier : PlanAthena.Controls/PertDiagramControl.cs (Version Refactorisée)
-
 using Microsoft.Msagl.Drawing;
 using Microsoft.Msagl.GraphViewerGdi;
 using Microsoft.Msagl.Layout.Layered;
 using PlanAthena.Controls.Config;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.Drawing.Printing;
+using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
-using System.Drawing;
 using DrawingEdge = Microsoft.Msagl.Drawing.Edge;
 using DrawingNode = Microsoft.Msagl.Drawing.Node;
 
@@ -22,14 +23,14 @@ namespace PlanAthena.Controls
         private readonly GViewer _viewer;
         private Graph _graph;
 
-        // Dépendances injectées via Initialize()
         private PertDiagramSettings _settings;
         private PertNodeBuilder _nodeBuilder;
+        private MetierService _metierService;
+        private LotService _lotService;
+        private BlocService _blocService;
 
-        // Données chargées
         private List<Tache> _taches = new List<Tache>();
 
-        // État interne
         private bool _isPanning = false;
         private Point _panStartPoint;
         private PrintDocument _printDocument;
@@ -53,15 +54,14 @@ namespace PlanAthena.Controls
             this.Controls.Add(_viewer);
         }
 
-        /// <summary>
-        /// Initialise le contrôle avec ses dépendances. Doit être appelée après la création.
-        /// </summary>
-        public void Initialize(MetierService metierService, PertDiagramSettings settings)
+        public void Initialize(MetierService metierService, LotService lotService, BlocService blocService, PertDiagramSettings settings)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
-            _nodeBuilder = new PertNodeBuilder(settings, metierService);
+            _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
+            _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
+            _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
+            _nodeBuilder = new PertNodeBuilder(settings, _metierService);
 
-            // Le viewer est configuré ici, car il dépend des settings
             ConfigurerViewer();
 
             _viewer.MouseClick += Viewer_MouseClick;
@@ -78,14 +78,13 @@ namespace PlanAthena.Controls
             _viewer.ToolBarIsVisible = false;
             _viewer.ZoomF = _settings.DefaultZoom;
             _viewer.OutsideAreaBrush = new SolidBrush(_settings.OutsideAreaColor);
-
             var tooltip = new ToolTip();
             tooltip.SetToolTip(_viewer, "Clic sur objet = Sélection | Clic sur fond = Déplacement vue | Double-clic = Éditer");
         }
 
         #endregion
 
-        #region Méthodes Publiques (Chargement, Contrôles UI)
+        #region Méthodes Publiques
 
         public void ChargerDonnees(List<Tache> taches, string filtreRecherche = "")
         {
@@ -115,14 +114,11 @@ namespace PlanAthena.Controls
 
         public void ImprimerDiagramme()
         {
-            // (Code de ImprimerDiagramme inchangé)
             if (_viewer.Graph == null) return;
-
             if (_printDocument == null)
             {
                 _printDocument = new PrintDocument();
                 _printDocument.DefaultPageSettings.Landscape = true;
-
                 _printDocument.PrintPage += (sender, e) =>
                 {
                     var bmp = new Bitmap(e.PageBounds.Width, e.PageBounds.Height);
@@ -132,7 +128,6 @@ namespace PlanAthena.Controls
                     bmp.Dispose();
                 };
             }
-
             using (var printDialog = new PrintDialog { Document = _printDocument })
             {
                 if (printDialog.ShowDialog() == DialogResult.OK)
@@ -145,13 +140,11 @@ namespace PlanAthena.Controls
 
         public void ZoomToutAjuster()
         {
-            // (Code de ZoomToutAjuster inchangé mais utilise _settings.DefaultZoom)
             try
             {
                 if (_viewer.Graph == null) return;
                 var bounds = _viewer.Graph.BoundingBox;
                 var clientSize = _viewer.ClientSize;
-
                 if (bounds.Width > 0 && bounds.Height > 0 && clientSize.Width > 0 && clientSize.Height > 0)
                 {
                     double margin = 80;
@@ -166,34 +159,19 @@ namespace PlanAthena.Controls
             catch { /* Gérer l'exception si nécessaire */ }
         }
 
-        public bool RechercherTache(string tacheId)
-        {
-            var node = _graph?.FindNode(tacheId);
-            if (node != null)
-            {
-                MettreEnEvidenceTache(node);
-                TacheSelectionnee = node.UserData as Tache;
-                return true;
-            }
-            return false;
-        }
-
         #endregion
 
-        #region Génération du Diagramme (logique principale)
+        #region Génération du Diagramme
 
         private void GenererDiagramme(string filtreRecherche)
         {
-            if (_nodeBuilder == null) return; // Sécurité : ne rien faire si pas initialisé
-
+            if (_nodeBuilder == null) return;
             _graph = new Graph("DiagrammePERT");
             ConfigurerLayoutOptimal(_graph);
-
             var tachesAffichees = FiltrerTaches(_taches, filtreRecherche);
-
             if (!tachesAffichees.Any())
             {
-                CreerNoeudInformation("Aucune tâche à afficher");
+                CreerNoeudInformation("Aucune tâche à afficher pour ce lot");
             }
             else
             {
@@ -204,7 +182,6 @@ namespace PlanAthena.Controls
                 }
                 AjouterDependances(tachesAffichees);
             }
-
             _viewer.Graph = _graph;
             this.BeginInvoke(new Action(() => { try { ZoomToutAjuster(); } catch { } }));
         }
@@ -213,12 +190,14 @@ namespace PlanAthena.Controls
         {
             if (string.IsNullOrWhiteSpace(filtre)) return taches;
             var recherche = filtre.ToLower();
+            var matchingLotIds = _lotService.ObtenirTousLesLots().Where(l => l.Nom.ToLower().Contains(recherche)).Select(l => l.LotId).ToHashSet();
+            var matchingBlocIds = _blocService.ObtenirTousLesBlocs().Where(b => b.Nom.ToLower().Contains(recherche)).Select(b => b.BlocId).ToHashSet();
             return taches.Where(t =>
                 t.TacheId.ToLower().Contains(recherche) ||
                 t.TacheNom.ToLower().Contains(recherche) ||
-                t.BlocId.ToLower().Contains(recherche) ||
-                t.LotId.ToLower().Contains(recherche) ||
-                (!string.IsNullOrEmpty(t.MetierId) && t.MetierId.ToLower().Contains(recherche))
+                (!string.IsNullOrEmpty(t.MetierId) && t.MetierId.ToLower().Contains(recherche)) ||
+                matchingLotIds.Contains(t.LotId) ||
+                matchingBlocIds.Contains(t.BlocId)
             ).ToList();
         }
 
@@ -231,7 +210,6 @@ namespace PlanAthena.Controls
             graph.Attr.MinNodeHeight = _settings.LayoutMinNodeHeight;
             graph.Attr.MinNodeWidth = _settings.LayoutMinNodeWidth;
             graph.Attr.Margin = _settings.LayoutMargin;
-
             graph.LayoutAlgorithmSettings = new SugiyamaLayoutSettings
             {
                 RepetitionCoefficientForOrdering = _settings.SugiyamaRepetitionCoefficient,
@@ -244,30 +222,22 @@ namespace PlanAthena.Controls
         private void CreerClusterPourBloc(string blocId, List<Tache> tachesDuBloc)
         {
             if (!tachesDuBloc.Any()) return;
-
-            var premiereTache = tachesDuBloc.First();
+            var bloc = _blocService.ObtenirBlocParId(blocId);
+            if (bloc == null) return;
             var cluster = new Subgraph(blocId)
             {
-                LabelText = string.Format(
-                    _settings.ClusterLabelFormat,
-                    premiereTache.BlocNom,
-                    tachesDuBloc.Count,
-                    tachesDuBloc.Sum(t => t.HeuresHommeEstimees))
+                LabelText = string.Format(_settings.ClusterLabelFormat, bloc.Nom, tachesDuBloc.Count, tachesDuBloc.Sum(t => t.HeuresHommeEstimees))
             };
-
             cluster.Attr.FillColor = _settings.ClusterFillColor;
             cluster.Attr.Color = _settings.ClusterBorderColor;
             cluster.Attr.LineWidth = _settings.ClusterLineWidth;
             cluster.Label.FontColor = _settings.ClusterFontColor;
             cluster.Label.FontSize = (int)_settings.ClusterFontSize;
-
             foreach (var tache in tachesDuBloc.OrderBy(t => t.TacheId))
             {
-                // ON DÉLÈGUE LA CRÉATION AU BUILDER !
                 var node = _nodeBuilder.BuildNodeFromTache(tache, _graph);
                 cluster.AddNode(node);
             }
-
             _graph.RootSubgraph.AddSubgraph(cluster);
         }
 
@@ -324,11 +294,11 @@ namespace PlanAthena.Controls
         {
             if (e.Button != System.Windows.Forms.MouseButtons.Left || _isPanning) return;
             var objectUnderMouse = _viewer.ObjectUnderMouseCursor;
-            if (objectUnderMouse?.DrawingObject is DrawingNode node && node.UserData is Tache tache)
+            if (objectUnderMouse?.DrawingObject is DrawingNode selectedNode && selectedNode.UserData is Tache tache)
             {
                 TacheSelectionnee = tache;
                 TacheSelected?.Invoke(this, new TacheSelectedEventArgs(tache));
-                MettreEnEvidenceTache(node);
+                MettreEnEvidenceTache(selectedNode);
             }
         }
 
@@ -344,20 +314,16 @@ namespace PlanAthena.Controls
         private void MettreEnEvidenceTache(DrawingNode nodeSelectionne)
         {
             if (_graph == null || !_graph.Nodes.Any()) return;
-
-            // Réinitialiser tous les nœuds et arêtes
-            foreach (var node in _graph.Nodes) { _nodeBuilder.ApplyNodeStyle(node, node.UserData as Tache, (node.UserData as Tache)?.EstJalon ?? false); }
+            foreach (var node in _graph.Nodes) { _nodeBuilder.ApplyNodeStyle(node, node.UserData as Tache); }
             foreach (var edge in _graph.Edges)
             {
                 edge.Attr.Color = _settings.EdgeDefaultColor;
                 edge.Attr.LineWidth = _settings.EdgeDefaultWidth;
             }
-
             if (nodeSelectionne != null)
             {
                 nodeSelectionne.Attr.LineWidth = _settings.HighlightLineWidth;
                 nodeSelectionne.Attr.Color = _settings.HighlightBorderColor;
-
                 foreach (var edge in _graph.Edges)
                 {
                     if (edge.Source == nodeSelectionne.Id || edge.Target == nodeSelectionne.Id)

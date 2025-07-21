@@ -27,13 +27,9 @@ namespace PlanAthena.Controls.Config
         public Node BuildNodeFromTache(Tache tache, Graph graph)
         {
             var node = graph.AddNode(tache.TacheId);
-            bool estJalon = tache.EstJalon;
 
-            // Définir le label du noeud
             node.LabelText = GetNodeLabel(tache);
-
-            // Appliquer le style (forme, couleur, taille, etc.)
-            ApplyNodeStyle(node, tache, estJalon);
+            ApplyNodeStyle(node, tache);
 
             node.UserData = tache;
             return node;
@@ -44,7 +40,7 @@ namespace PlanAthena.Controls.Config
             if (tache.EstJalon)
             {
                 return tache.HeuresHommeEstimees > 0
-                    ? _settings.JalonAvecDureeIcon
+                    ? $"{_settings.JalonAvecDureeIcon}{tache.HeuresHommeEstimees}"
                     : _settings.JalonSansDureeIcon;
             }
 
@@ -68,11 +64,11 @@ namespace PlanAthena.Controls.Config
                 tache.HeuresHommeEstimees);
         }
 
-        public void ApplyNodeStyle(Node node, Tache tache, bool estJalon)
+        public void ApplyNodeStyle(Node node, Tache tache)
         {
             node.Attr.FillColor = GetFillColor(tache);
 
-            if (estJalon)
+            if (tache.EstJalon)
             {
                 node.Attr.Shape = _settings.JalonShape;
                 node.Attr.LineWidth = _settings.JalonLineWidth;

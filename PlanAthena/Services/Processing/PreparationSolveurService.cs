@@ -1,10 +1,11 @@
 // Fichier: Services/Processing/PreparationSolveurService.cs
 
 using PlanAthena.Data;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
+using System;
+using PlanAthena.Services.Business;
 
 namespace PlanAthena.Services.Processing
 {
@@ -19,11 +20,12 @@ namespace PlanAthena.Services.Processing
         private const string JALON_TECHNIQUE_PREFIX = "JT_";
         private const string DECOUPAGE_SUFFIX = "_P";
 
+        // Constructeur vide car les méthodes de traitement sont statiques ou n'ont pas de dépendances d'état.
         public PreparationSolveurService() { }
 
         public List<Tache> PreparerPourSolveur(IReadOnlyList<Tache> tachesDuProjet)
         {
-            if (tachesDuProjet == null || !tachesDuProjet.Any())
+            if (tachesDuProjet == null || tachesDuProjet.Count == 0)
                 return new List<Tache>();
 
             LogTaches("État initial avant préparation :", tachesDuProjet);
@@ -42,7 +44,7 @@ namespace PlanAthena.Services.Processing
             return tachesFinales;
         }
 
-        private (List<Tache> TachesDecoupees, Dictionary<string, List<string>> TableDecoupage) DecouperTachesLongues(IReadOnlyList<Tache> taches)
+        private static (List<Tache> TachesDecoupees, Dictionary<string, List<string>> TableDecoupage) DecouperTachesLongues(IReadOnlyList<Tache> taches)
         {
             var tachesResultat = new List<Tache>();
             var tableDecoupage = new Dictionary<string, List<string>>();
@@ -63,7 +65,7 @@ namespace PlanAthena.Services.Processing
             return (tachesResultat, tableDecoupage);
         }
 
-        private List<Tache> DecouperTacheUnique(Tache tacheOriginale)
+        private static List<Tache> DecouperTacheUnique(Tache tacheOriginale)
         {
             var sousTaches = new List<Tache>();
             int heuresRestantes = tacheOriginale.HeuresHommeEstimees;
@@ -88,15 +90,15 @@ namespace PlanAthena.Services.Processing
             return sousTaches;
         }
 
-        private List<Tache> CreerJalonsTechniques(List<Tache> taches, Dictionary<string, List<string>> tableDecoupage)
+        private static List<Tache> CreerJalonsTechniques(List<Tache> taches, Dictionary<string, List<string>> tableDecoupage)
         {
             var tachesAvecJalons = new List<Tache>(taches);
 
-            foreach (var originalId in tableDecoupage.Keys.ToList())
+            foreach (var originalId in tableDecoupage.Keys)
             {
                 string idJalon = $"{JALON_TECHNIQUE_PREFIX}{originalId}";
                 var sousTachesIds = tableDecoupage[originalId];
-                var tacheRef = taches.First(t => t.TacheId == sousTachesIds.First());
+                var tacheRef = taches.First(t => t.TacheId == sousTachesIds[0]);
 
                 var jalon = new Tache
                 {
@@ -107,9 +109,7 @@ namespace PlanAthena.Services.Processing
                     Dependencies = string.Join(",", sousTachesIds),
                     MetierId = "",
                     BlocId = tacheRef.BlocId,
-                    BlocNom = tacheRef.BlocNom,
-                    LotId = tacheRef.LotId,
-                    LotNom = tacheRef.LotNom
+                    LotId = tacheRef.LotId
                 };
                 tachesAvecJalons.Add(jalon);
 
@@ -119,7 +119,7 @@ namespace PlanAthena.Services.Processing
             return tachesAvecJalons;
         }
 
-        private List<Tache> MettreAJourDependances(List<Tache> taches, Dictionary<string, List<string>> tableDecoupage)
+        private static List<Tache> MettreAJourDependances(List<Tache> taches, Dictionary<string, List<string>> tableDecoupage)
         {
             foreach (var tache in taches)
             {
@@ -135,7 +135,7 @@ namespace PlanAthena.Services.Processing
                 {
                     if (tableDecoupage.TryGetValue(depId, out var nouvellesRefs))
                     {
-                        nouvellesDeps.Add(nouvellesRefs.Last());
+                        nouvellesDeps.Add(nouvellesRefs[^1]); // ^1 est l'équivalent de .Last() mais plus performant
                     }
                     else
                     {
@@ -147,7 +147,7 @@ namespace PlanAthena.Services.Processing
             return taches;
         }
 
-        private Tache CopierTache(Tache source)
+        private static Tache CopierTache(Tache source)
         {
             return new Tache
             {
@@ -158,17 +158,13 @@ namespace PlanAthena.Services.Processing
                 Dependencies = source.Dependencies,
                 ExclusionsDependances = source.ExclusionsDependances,
                 LotId = source.LotId,
-                LotNom = source.LotNom,
-                LotPriorite = source.LotPriorite,
                 BlocId = source.BlocId,
-                BlocNom = source.BlocNom,
-                BlocCapaciteMaxOuvriers = source.BlocCapaciteMaxOuvriers,
                 Type = source.Type
             };
         }
 
         [Conditional("DEBUG")]
-        private void LogTaches(string titre, IReadOnlyList<Tache> taches, Dictionary<string, List<string>> tableDecoupage = null)
+        private static void LogTaches(string titre, IReadOnlyList<Tache> taches, Dictionary<string, List<string>>? tableDecoupage = null)
         {
             Debug.WriteLine($"\n--- {titre} ({taches.Count} éléments) ---");
             foreach (var tache in taches.OrderBy(t => t.TacheId))
@@ -176,7 +172,7 @@ namespace PlanAthena.Services.Processing
                 Debug.WriteLine($"  - ID: {tache.TacheId,-40} | Nom: {tache.TacheNom,-50} | Type: {tache.Type,-15} | Durée: {tache.HeuresHommeEstimees,2}h | Dépend de: [{tache.Dependencies}]");
             }
 
-            if (tableDecoupage != null && tableDecoupage.Any())
+            if (tableDecoupage != null && tableDecoupage.Count > 0)
             {
                 Debug.WriteLine("\n  --- Table de Découpage Actuelle ---");
                 foreach (var kvp in tableDecoupage.OrderBy(k => k.Key))

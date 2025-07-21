@@ -1,10 +1,11 @@
 @startuml
 ' --- Configuration pour une meilleure visibilité ---
+top to bottom direction
 skinparam componentStyle uml2
-skinparam linetype ortho
+skinparam linetype polyline
 skinparam ranksep 80
 skinparam nodesep 80
-skinparam minlen 2
+
 
 skinparam package {
   borderColor #555555
@@ -17,16 +18,16 @@ skinparam class {
   arrowColor #005588
   shadowing false
 }
-title Architecture Générale de l'Application (Vue Complète)
+title Architecture Générale de l'Application (v0.2.2)
 
 ' ================================================
 ' ===              COUCHE UI (Forms)           ===
 ' ================================================
 package "Couche UI (Forms)" {
-  class MainForm {
-    + SauvegarderProjet_Click()
-    + ChargerProjet_Click()
-  }
+  class MainForm
+  class TacheForm
+  class LotForm <<(N,orchid) NOUVEAU>>
+  class BlocForm <<(N,orchid) NOUVEAU>>
 }
 
 ' ================================================
@@ -41,6 +42,8 @@ package "Couche Service (Logique Métier)" {
   class TacheService
   class OuvrierService
   class MetierService
+  class LotService <<(N,orchid) NOUVEAU>>
+  class BlocService <<(N,orchid) NOUVEAU>>
 }
 
 ' ================================================
@@ -49,13 +52,7 @@ package "Couche Service (Logique Métier)" {
 package "Services de Traitement / Processing" {
     class PreparationSolveurService
     class DataTransformer
-}
-
-' ================================================
-' ===      COEUR TECHNIQUE (FAÇADE)            ===
-' ================================================
-package "Coeur Technique (Façade)" {
-  class PlanAthenaCoreFacade
+    class DependanceBuilder
 }
 
 ' ================================================
@@ -63,17 +60,17 @@ package "Coeur Technique (Façade)" {
 ' ================================================
 package "Modèles de Données" {
     class ProjetData <<DTO>>
-    class Tache
+    class Tache <<MODIFIÉ>>
     class Ouvrier
     class Metier
+    class Lot <<(N,orchid) NOUVEAU>>
+    class Bloc <<(N,orchid) NOUVEAU>>
 }
-
 
 ' ================================================
 ' === COUCHE INFRASTRUCTURE (Accès externe)    ===
 ' ================================================
 package "Infrastructure" {
-  class CsvDataService
   class "System.Text.Json" as JsonSerializer <<library>>
   class "System.IO" as FileSystem <<library>>
 }
@@ -81,36 +78,44 @@ package "Infrastructure" {
 ' ================================================
 ' ===            RELATIONS / FLUX              ===
 ' ================================================
-
-' --- L'UI utilise les services orchestrateurs ---
-MainForm --> ProjetService : "sauvegarde/charge"
-MainForm --> PlanificationService : "planifie"
+' --- L'UI utilise les services ---
+MainForm --> ProjetService
+MainForm --> PlanificationService
+TacheForm --> LotService
+TacheForm --> BlocService
+LotForm --> LotService
+BlocForm --> BlocService
 
 ' --- Le Pipeline de Planification ---
 PlanificationService --> PreparationSolveurService
 PlanificationService --> DataTransformer
-PlanificationService --> PlanAthenaCoreFacade
+PlanificationService --> TacheService
+PlanificationService --> OuvrierService
+PlanificationService --> MetierService
 
-' --- L'orchestrateur ProjetService ---
-' Il utilise les services de base pour agréger/distribuer les données
-ProjetService --> TacheService : "agrège/distribue"
-ProjetService --> OuvrierService : "agrège/distribue"
-ProjetService --> MetierService : "agrège/distribue"
-ProjetService --> CsvDataService : "pour l'export/import groupé"
+' --- Services de traitement ---
+DataTransformer --> LotService
+DataTransformer --> BlocService
+DependanceBuilder --> LotService
+DependanceBuilder --> BlocService
+PreparationSolveurService --> LotService
+PreparationSolveurService --> BlocService
 
-' Pour la sauvegarde JSON, il crée un DTO et utilise le système de fichiers
+' --- Orchestrateur ProjetService ---
+ProjetService --> TacheService
+ProjetService --> OuvrierService
+ProjetService --> MetierService
+ProjetService --> LotService
+ProjetService --> BlocService
 ProjetService ..> ProjetData : "crée/lit"
-ProjetService ..> JsonSerializer : "sérialise/désérialise"
-ProjetService ..> FileSystem : "lit/écrit fichier"
+ProjetService ..> JsonSerializer
+ProjetService ..> FileSystem
 
-' --- Collaboration générale entre Services ---
-PlanificationService --> TacheService : "charge les données"
-PlanificationService --> OuvrierService : "charge les données"
-PlanificationService --> MetierService : "charge les données"
-
-' --- Les services sont les gardiens des modèles de données ---
+' --- Les services gèrent leurs modèles de données ---
 TacheService "1" o-- "*" Tache : "gère"
 OuvrierService "1" o-- "*" Ouvrier : "gère"
 MetierService "1" o-- "*" Metier : "gère"
+LotService "1" o-- "*" Lot : "gère"
+BlocService "1" o-- "*" Bloc : "gère"
 
 @enduml

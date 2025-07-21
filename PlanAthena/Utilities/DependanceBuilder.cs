@@ -2,6 +2,7 @@
 
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -13,15 +14,15 @@ namespace PlanAthena.Utilities
 
         public DependanceBuilder(TopologieDependanceService topologieService)
         {
-            _topologieService = topologieService;
+            _topologieService = topologieService ?? throw new ArgumentNullException(nameof(topologieService));
         }
 
         /// <summary>
         /// Processus complet et sécurisé qui enrichit et nettoie les dépendances des tâches.
         /// </summary>
-        public void ConstruireDependancesLogiques(List<Tache> taches, MetierService metierService)
+        public void ConstruireDependancesLogiques(List<Tache> taches)
         {
-            if (taches == null || !taches.Any()) return;
+            if (taches == null || taches.Count == 0) return;
 
             // Étape 1 : Applique la topologie pour AJOUTER les dépendances métier manquantes.
             _topologieService.AppliquerDependancesInterMetiers(taches);
@@ -33,33 +34,45 @@ namespace PlanAthena.Utilities
             SimplifierDependancesTransitives(taches);
         }
 
-        private void CreerEtLierJalonsDeSynchro(List<Tache> taches)
+        private static void CreerEtLierJalonsDeSynchro(List<Tache> taches)
         {
-            // Votre logique originale et fonctionnelle, sécurisée.
             var nouveauxJalons = new List<Tache>();
             var tachesParBloc = taches.GroupBy(t => t.BlocId);
+            char[] splitChars = { ',' };
 
             foreach (var groupeBloc in tachesParBloc)
             {
                 var tachesDuBloc = groupeBloc.ToList();
                 if (tachesDuBloc.Count < 2) continue;
+
                 var mapTachesDuBloc = tachesDuBloc.ToDictionary(t => t.TacheId);
+
                 var childCounts = new Dictionary<string, int>();
                 foreach (var tache in tachesDuBloc)
                 {
-                    var dependancesIds = (tache.Dependencies ?? "").Split(new[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries | System.StringSplitOptions.TrimEntries);
+                    var dependancesIds = tache.Dependencies.Split(splitChars, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                     foreach (var parentId in dependancesIds)
                     {
                         if (mapTachesDuBloc.ContainsKey(parentId))
                         {
-                            if (!childCounts.ContainsKey(parentId)) childCounts[parentId] = 0;
-                            childCounts[parentId]++;
+                            childCounts.TryGetValue(parentId, out int currentCount);
+                            childCounts[parentId] = currentCount + 1;
                         }
                     }
                 }
-                if (!childCounts.Any()) continue;
-                var tousLesLiens = tachesDuBloc.SelectMany(enfant => (enfant.Dependencies ?? "").Split(',').Select(d => d.Trim()).Where(d => !string.IsNullOrEmpty(d)), (enfant, parentId) => new { Enfant = enfant, ParentId = parentId }).Where(lien => mapTachesDuBloc.ContainsKey(lien.ParentId)).Select(lien => new { Enfant = lien.Enfant, Parent = mapTachesDuBloc[lien.ParentId] }).ToList();
-                var groupesParMetierParent = tousLesLiens.Where(l => !string.IsNullOrEmpty(l.Parent.MetierId)).GroupBy(l => l.Parent.MetierId);
+
+                if (childCounts.Count == 0) continue;
+
+                var tousLesLiens = tachesDuBloc
+                    .SelectMany(enfant => enfant.Dependencies.Split(splitChars, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+                                (enfant, parentId) => new { Enfant = enfant, ParentId = parentId })
+                    .Where(lien => mapTachesDuBloc.ContainsKey(lien.ParentId))
+                    .Select(lien => new { lien.Enfant, Parent = mapTachesDuBloc[lien.ParentId] })
+                    .ToList();
+
+                var groupesParMetierParent = tousLesLiens
+                    .Where(l => !string.IsNullOrEmpty(l.Parent.MetierId))
+                    .GroupBy(l => l.Parent.MetierId);
 
                 foreach (var groupe in groupesParMetierParent)
                 {
@@ -71,18 +84,14 @@ namespace PlanAthena.Utilities
                     if (groupeParent.Count <= 1 || groupeEnfant.Count <= 1) continue;
 
                     bool aUnFanOut = groupeParent.Any(parent => childCounts.GetValueOrDefault(parent.TacheId, 0) > 1);
-                    bool aUnFanIn = groupeEnfant.Any(enfant => (enfant.Dependencies ?? "").Split(',').Length > 1);
+                    bool aUnFanIn = groupeEnfant.Any(enfant => enfant.Dependencies.Split(',').Length > 1);
 
                     if (aUnFanOut && aUnFanIn)
                     {
                         string idJalon = $"J_Sync_{groupe.Key}_{groupeBloc.Key}";
+                        if (taches.Any(t => t.TacheId == idJalon)) continue;
 
-                        if (taches.Any(t => t.TacheId == idJalon))
-                        {
-                            continue;
-                        }
-
-                        var refTache = groupeParent.First();
+                        var refTache = groupeParent[0];
                         var jalon = new Tache
                         {
                             TacheId = idJalon,
@@ -90,9 +99,7 @@ namespace PlanAthena.Utilities
                             Type = TypeActivite.JalonUtilisateur,
                             Dependencies = string.Join(",", groupeParent.Select(t => t.TacheId)),
                             BlocId = refTache.BlocId,
-                            BlocNom = refTache.BlocNom,
                             LotId = refTache.LotId,
-                            LotNom = refTache.LotNom,
                             HeuresHommeEstimees = 0,
                             MetierId = ""
                         };
@@ -100,7 +107,7 @@ namespace PlanAthena.Utilities
 
                         foreach (var enfant in groupeEnfant)
                         {
-                            var depsActuelles = (enfant.Dependencies ?? "").Split(',').Select(d => d.Trim()).ToHashSet();
+                            var depsActuelles = enfant.Dependencies.Split(',').Select(d => d.Trim()).ToHashSet();
                             depsActuelles.ExceptWith(parentIds);
                             depsActuelles.Add(jalon.TacheId);
                             enfant.Dependencies = string.Join(",", depsActuelles.OrderBy(d => d));
@@ -108,23 +115,24 @@ namespace PlanAthena.Utilities
                     }
                 }
             }
-            if (nouveauxJalons.Any())
+
+            if (nouveauxJalons.Count > 0)
             {
                 taches.AddRange(nouveauxJalons);
             }
         }
 
         /// <summary>
-        /// NOUVELLE MÉTHODE : Implémente la Règle B.1 - Simplification Transitive.
+        /// Implémente la Règle B.1 - Simplification Transitive.
         /// Pour chaque tâche, supprime les dépendances "grand-parent" redondantes.
         /// </summary>
-        private void SimplifierDependancesTransitives(List<Tache> taches)
+        private static void SimplifierDependancesTransitives(List<Tache> taches)
         {
             var mapTaches = taches.ToDictionary(t => t.TacheId);
 
             foreach (var tache in taches)
             {
-                var parentsDirectsIds = (tache.Dependencies ?? "")
+                var parentsDirectsIds = (tache.Dependencies ?? string.Empty)
                     .Split(',')
                     .Select(d => d.Trim())
                     .Where(d => !string.IsNullOrEmpty(d))
@@ -134,33 +142,24 @@ namespace PlanAthena.Utilities
 
                 var grandsParentsIds = new HashSet<string>();
 
-                // On collecte tous les "grands-parents" en explorant les parents directs
                 foreach (var parentId in parentsDirectsIds)
                 {
                     if (mapTaches.TryGetValue(parentId, out var parentTache))
                     {
-                        var parentDependencies = (parentTache.Dependencies ?? "").Split(',').Select(d => d.Trim());
+                        var parentDependencies = (parentTache.Dependencies ?? string.Empty).Split(',').Select(d => d.Trim());
                         grandsParentsIds.UnionWith(parentDependencies);
                     }
                 }
 
-                if (!grandsParentsIds.Any()) continue;
+                if (grandsParentsIds.Count == 0) continue;
 
-                // On reconstruit la liste des dépendances en ne gardant que les parents
-                // qui ne sont PAS également des grands-parents.
                 var dependancesFinales = parentsDirectsIds
                     .Where(parentId => !grandsParentsIds.Contains(parentId))
                     .ToList();
 
-                // Il est possible qu'un parent direct ait été retiré, donc on s'assure
-                // qu'il reste au moins une dépendance si la liste originale n'était pas vide.
-                // S'il ne reste rien, c'est qu'il ne faut dépendre que des grands-parents, via les parents.
-                // On garde donc la liste non filtrée dans ce cas pour ne pas rompre la chaîne.
-                // Ce cas est très rare mais constitue une sécurité.
-                if (parentsDirectsIds.Any() && !dependancesFinales.Any())
+                if (parentsDirectsIds.Count > 0 && dependancesFinales.Count == 0)
                 {
                     // Ne rien faire, garder les dépendances originales pour ne pas isoler la tâche.
-                    // La logique existante est suffisante.
                 }
                 else
                 {

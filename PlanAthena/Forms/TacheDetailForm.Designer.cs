@@ -17,322 +17,269 @@ namespace PlanAthena.Forms
 
         private void InitializeComponent()
         {
-            this.txtTacheId = new System.Windows.Forms.TextBox();
-            this.txtTacheNom = new System.Windows.Forms.TextBox();
-            this.numHeuresHomme = new System.Windows.Forms.NumericUpDown();
-            this.cmbMetier = new System.Windows.Forms.ComboBox();
-            this.chkListDependances = new System.Windows.Forms.CheckedListBox(); // MODIFIÉ
-            this.cmbLotNom = new System.Windows.Forms.ComboBox();
-            this.numLotPriorite = new System.Windows.Forms.NumericUpDown();
-            this.cmbBlocNom = new System.Windows.Forms.ComboBox();
-            this.numBlocCapacite = new System.Windows.Forms.NumericUpDown();
-            this.btnSauvegarder = new System.Windows.Forms.Button();
-            this.chkEstJalon = new System.Windows.Forms.CheckBox(); // NOUVEAU
-            this.grpTache = new System.Windows.Forms.GroupBox();
-            this.lblTacheId = new System.Windows.Forms.Label();
-            this.lblTacheNom = new System.Windows.Forms.Label();
-            this.lblHeures = new System.Windows.Forms.Label();
-            this.lblMetier = new System.Windows.Forms.Label();
-            this.grpLot = new System.Windows.Forms.GroupBox();
-            this.lblLotNom = new System.Windows.Forms.Label();
-            this.lblLotPrio = new System.Windows.Forms.Label();
-            this.grpBloc = new System.Windows.Forms.GroupBox();
-            this.lblBlocNom = new System.Windows.Forms.Label();
-            this.lblBlocCap = new System.Windows.Forms.Label();
-            this.grpDep = new System.Windows.Forms.GroupBox();
-            ((System.ComponentModel.ISupportInitialize)(this.numHeuresHomme)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numLotPriorite)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numBlocCapacite)).BeginInit();
-            this.grpTache.SuspendLayout();
-            this.grpLot.SuspendLayout();
-            this.grpBloc.SuspendLayout();
-            this.grpDep.SuspendLayout();
-            this.SuspendLayout();
-            // 
-            // grpTache
-            // 
-            this.grpTache.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.grpTache.Controls.Add(this.lblTacheId);
-            this.grpTache.Controls.Add(this.txtTacheId);
-            this.grpTache.Controls.Add(this.lblTacheNom);
-            this.grpTache.Controls.Add(this.txtTacheNom);
-            this.grpTache.Controls.Add(this.lblHeures);
-            this.grpTache.Controls.Add(this.numHeuresHomme);
-            this.grpTache.Controls.Add(this.chkEstJalon);
-            this.grpTache.Controls.Add(this.lblMetier);
-            this.grpTache.Controls.Add(this.cmbMetier);
-            this.grpTache.Location = new System.Drawing.Point(12, 12);
-            this.grpTache.Name = "grpTache";
-            this.grpTache.Size = new System.Drawing.Size(360, 160); // MODIFIÉ
-            this.grpTache.TabIndex = 0;
-            this.grpTache.TabStop = false;
-            this.grpTache.Text = "Informations Tâche";
-            // 
-            // lblTacheId
-            // 
-            this.lblTacheId.AutoSize = true;
-            this.lblTacheId.Location = new System.Drawing.Point(10, 25);
-            this.lblTacheId.Name = "lblTacheId";
-            this.lblTacheId.Size = new System.Drawing.Size(60, 15);
-            this.lblTacheId.TabIndex = 0;
-            this.lblTacheId.Text = "ID Tâche:";
+            txtTacheId = new TextBox();
+            txtTacheNom = new TextBox();
+            numHeuresHomme = new NumericUpDown();
+            cmbMetier = new ComboBox();
+            chkListDependances = new CheckedListBox();
+            cmbBlocNom = new ComboBox();
+            numBlocCapacite = new NumericUpDown();
+            btnSauvegarder = new Button();
+            chkEstJalon = new CheckBox();
+            grpTache = new GroupBox();
+            lblTacheNom = new Label();
+            lblHeures = new Label();
+            lblMetier = new Label();
+            grpBloc = new GroupBox();
+            lblBlocNom = new Label();
+            lblBlocCap = new Label();
+            grpDep = new GroupBox();
+            flowLayoutPanelActions = new FlowLayoutPanel();
+            btnAnnuler = new Button();
+            btnSupprimer = new Button();
+            ((System.ComponentModel.ISupportInitialize)numHeuresHomme).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numBlocCapacite).BeginInit();
+            grpTache.SuspendLayout();
+            grpBloc.SuspendLayout();
+            grpDep.SuspendLayout();
+            flowLayoutPanelActions.SuspendLayout();
+            SuspendLayout();
             // 
             // txtTacheId
             // 
-            this.txtTacheId.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtTacheId.Location = new System.Drawing.Point(86, 22);
-            this.txtTacheId.Name = "txtTacheId";
-            this.txtTacheId.ReadOnly = true; // MODIFIÉ
-            this.txtTacheId.Size = new System.Drawing.Size(268, 23);
-            this.txtTacheId.TabIndex = 1;
-            this.txtTacheId.BackColor = System.Drawing.SystemColors.Control; // AJOUTÉ
-            this.txtTacheId.PlaceholderText = "Auto-généré"; // AJOUTÉ
-            // 
-            // lblTacheNom
-            // 
-            this.lblTacheNom.AutoSize = true;
-            this.lblTacheNom.Location = new System.Drawing.Point(10, 54);
-            this.lblTacheNom.Name = "lblTacheNom";
-            this.lblTacheNom.Size = new System.Drawing.Size(37, 15);
-            this.lblTacheNom.TabIndex = 2;
-            this.lblTacheNom.Text = "Nom:";
+            txtTacheId.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            txtTacheId.BackColor = SystemColors.Control;
+            txtTacheId.Location = new Point(192, 50);
+            txtTacheId.Name = "txtTacheId";
+            txtTacheId.PlaceholderText = "Auto-généré";
+            txtTacheId.ReadOnly = true;
+            txtTacheId.Size = new Size(149, 23);
+            txtTacheId.TabIndex = 1;
             // 
             // txtTacheNom
             // 
-            this.txtTacheNom.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtTacheNom.Location = new System.Drawing.Point(86, 51);
-            this.txtTacheNom.Name = "txtTacheNom";
-            this.txtTacheNom.Size = new System.Drawing.Size(268, 23);
-            this.txtTacheNom.TabIndex = 3;
-            // 
-            // lblHeures
-            // 
-            this.lblHeures.AutoSize = true;
-            this.lblHeures.Location = new System.Drawing.Point(10, 83);
-            this.lblHeures.Name = "lblHeures";
-            this.lblHeures.Size = new System.Drawing.Size(98, 15);
-            this.lblHeures.TabIndex = 4;
-            this.lblHeures.Text = "Durée estimée:";
+            txtTacheNom.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            txtTacheNom.Location = new Point(86, 22);
+            txtTacheNom.Name = "txtTacheNom";
+            txtTacheNom.Size = new Size(268, 23);
+            txtTacheNom.TabIndex = 3;
             // 
             // numHeuresHomme
             // 
-            this.numHeuresHomme.Location = new System.Drawing.Point(114, 80);
-            this.numHeuresHomme.Maximum = new decimal(new int[] {
-            9999,
-            0,
-            0,
-            0});
-            this.numHeuresHomme.Name = "numHeuresHomme";
-            this.numHeuresHomme.Size = new System.Drawing.Size(72, 23);
-            this.numHeuresHomme.TabIndex = 5;
-            this.numHeuresHomme.ValueChanged += new System.EventHandler(this.numHeuresHomme_ValueChanged); // AJOUTÉ
-            // 
-            // chkEstJalon
-            // 
-            this.chkEstJalon.AutoSize = true;
-            this.chkEstJalon.Location = new System.Drawing.Point(10, 109);
-            this.chkEstJalon.Name = "chkEstJalon";
-            this.chkEstJalon.Size = new System.Drawing.Size(141, 19);
-            this.chkEstJalon.TabIndex = 6;
-            this.chkEstJalon.Text = "🏁 Jalon d'attente";
-            this.chkEstJalon.UseVisualStyleBackColor = true;
-            this.chkEstJalon.CheckedChanged += new System.EventHandler(this.chkEstJalon_CheckedChanged); // AJOUTÉ
-            // 
-            // lblMetier
-            // 
-            this.lblMetier.AutoSize = true;
-            this.lblMetier.Location = new System.Drawing.Point(10, 135);
-            this.lblMetier.Name = "lblMetier";
-            this.lblMetier.Size = new System.Drawing.Size(46, 15);
-            this.lblMetier.TabIndex = 7;
-            this.lblMetier.Text = "Métier:";
+            numHeuresHomme.Location = new Point(114, 51);
+            numHeuresHomme.Maximum = new decimal(new int[] { 9999, 0, 0, 0 });
+            numHeuresHomme.Name = "numHeuresHomme";
+            numHeuresHomme.Size = new Size(72, 23);
+            numHeuresHomme.TabIndex = 5;
+            numHeuresHomme.ValueChanged += numHeuresHomme_ValueChanged;
             // 
             // cmbMetier
             // 
-            this.cmbMetier.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.cmbMetier.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbMetier.FormattingEnabled = true;
-            this.cmbMetier.Location = new System.Drawing.Point(86, 131);
-            this.cmbMetier.Name = "cmbMetier";
-            this.cmbMetier.Size = new System.Drawing.Size(268, 23);
-            this.cmbMetier.TabIndex = 8;
-            this.cmbMetier.SelectedIndexChanged += new System.EventHandler(this.cmbMetier_SelectedIndexChanged); // AJOUTÉ
-            // 
-            // grpLot
-            // 
-            this.grpLot.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.grpLot.Controls.Add(this.lblLotNom);
-            this.grpLot.Controls.Add(this.cmbLotNom);
-            this.grpLot.Controls.Add(this.lblLotPrio);
-            this.grpLot.Controls.Add(this.numLotPriorite);
-            this.grpLot.Location = new System.Drawing.Point(12, 180); // MODIFIÉ
-            this.grpLot.Name = "grpLot";
-            this.grpLot.Size = new System.Drawing.Size(360, 55);
-            this.grpLot.TabIndex = 1;
-            this.grpLot.TabStop = false;
-            this.grpLot.Text = "Informations Lot";
-            // 
-            // lblLotNom
-            // 
-            this.lblLotNom.AutoSize = true;
-            this.lblLotNom.Location = new System.Drawing.Point(10, 25);
-            this.lblLotNom.Name = "lblLotNom";
-            this.lblLotNom.Size = new System.Drawing.Size(37, 15);
-            this.lblLotNom.TabIndex = 2;
-            this.lblLotNom.Text = "Nom:";
-            // 
-            // cmbLotNom
-            // 
-            this.cmbLotNom.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbLotNom.FormattingEnabled = true;
-            this.cmbLotNom.Location = new System.Drawing.Point(86, 22);
-            this.cmbLotNom.Name = "cmbLotNom";
-            this.cmbLotNom.Size = new System.Drawing.Size(168, 23);
-            this.cmbLotNom.TabIndex = 3;
-            this.cmbLotNom.SelectedIndexChanged += new System.EventHandler(this.cmbLotNom_SelectedIndexChanged);
-            // 
-            // lblLotPrio
-            // 
-            this.lblLotPrio.AutoSize = true;
-            this.lblLotPrio.Location = new System.Drawing.Point(260, 25);
-            this.lblLotPrio.Name = "lblLotPrio";
-            this.lblLotPrio.Size = new System.Drawing.Size(50, 15);
-            this.lblLotPrio.TabIndex = 4;
-            this.lblLotPrio.Text = "Priorité:";
-            // 
-            // numLotPriorite
-            // 
-            this.numLotPriorite.Location = new System.Drawing.Point(316, 22);
-            this.numLotPriorite.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
-            this.numLotPriorite.Name = "numLotPriorite";
-            this.numLotPriorite.ReadOnly = true;
-            this.numLotPriorite.Size = new System.Drawing.Size(38, 23);
-            this.numLotPriorite.TabIndex = 5;
-            this.numLotPriorite.Value = new decimal(new int[] { 1, 0, 0, 0 });
-            // 
-            // grpBloc
-            // 
-            this.grpBloc.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.grpBloc.Controls.Add(this.lblBlocNom);
-            this.grpBloc.Controls.Add(this.cmbBlocNom);
-            this.grpBloc.Controls.Add(this.lblBlocCap);
-            this.grpBloc.Controls.Add(this.numBlocCapacite);
-            this.grpBloc.Location = new System.Drawing.Point(12, 241); // MODIFIÉ
-            this.grpBloc.Name = "grpBloc";
-            this.grpBloc.Size = new System.Drawing.Size(360, 55);
-            this.grpBloc.TabIndex = 2;
-            this.grpBloc.TabStop = false;
-            this.grpBloc.Text = "Informations Bloc";
-            // 
-            // lblBlocNom
-            // 
-            this.lblBlocNom.AutoSize = true;
-            this.lblBlocNom.Location = new System.Drawing.Point(10, 25);
-            this.lblBlocNom.Name = "lblBlocNom";
-            this.lblBlocNom.Size = new System.Drawing.Size(37, 15);
-            this.lblBlocNom.TabIndex = 2;
-            this.lblBlocNom.Text = "Nom:";
-            // 
-            // cmbBlocNom
-            // 
-            this.cmbBlocNom.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbBlocNom.FormattingEnabled = true;
-            this.cmbBlocNom.Location = new System.Drawing.Point(86, 22);
-            this.cmbBlocNom.Name = "cmbBlocNom";
-            this.cmbBlocNom.Size = new System.Drawing.Size(168, 23);
-            this.cmbBlocNom.TabIndex = 3;
-            this.cmbBlocNom.SelectedIndexChanged += new System.EventHandler(this.cmbBlocNom_SelectedIndexChanged);
-            // 
-            // lblBlocCap
-            // 
-            this.lblBlocCap.AutoSize = true;
-            this.lblBlocCap.Location = new System.Drawing.Point(260, 25);
-            this.lblBlocCap.Name = "lblBlocCap";
-            this.lblBlocCap.Size = new System.Drawing.Size(55, 15);
-            this.lblBlocCap.TabIndex = 4;
-            this.lblBlocCap.Text = "Capacité:";
-            // 
-            // numBlocCapacite
-            // 
-            this.numBlocCapacite.Location = new System.Drawing.Point(316, 22);
-            this.numBlocCapacite.Maximum = new decimal(new int[] { 50, 0, 0, 0 });
-            this.numBlocCapacite.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
-            this.numBlocCapacite.Name = "numBlocCapacite";
-            this.numBlocCapacite.ReadOnly = true;
-            this.numBlocCapacite.Size = new System.Drawing.Size(38, 23);
-            this.numBlocCapacite.TabIndex = 5;
-            this.numBlocCapacite.Value = new decimal(new int[] { 1, 0, 0, 0 });
-            // 
-            // grpDep
-            // 
-            this.grpDep.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.grpDep.Controls.Add(this.chkListDependances);
-            this.grpDep.Location = new System.Drawing.Point(12, 302); // MODIFIÉ
-            this.grpDep.Name = "grpDep";
-            this.grpDep.Size = new System.Drawing.Size(360, 120); // MODIFIÉ
-            this.grpDep.TabIndex = 3;
-            this.grpDep.TabStop = false;
-            this.grpDep.Text = "Dépendances (bleu=hérité métier, rouge=exclu)";
+            cmbMetier.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            cmbMetier.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbMetier.FormattingEnabled = true;
+            cmbMetier.Location = new Point(86, 102);
+            cmbMetier.Name = "cmbMetier";
+            cmbMetier.Size = new Size(268, 23);
+            cmbMetier.TabIndex = 8;
+            cmbMetier.SelectedIndexChanged += cmbMetier_SelectedIndexChanged;
             // 
             // chkListDependances
             // 
-            this.chkListDependances.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.chkListDependances.CheckOnClick = true;
-            this.chkListDependances.FormattingEnabled = true;
-            this.chkListDependances.Location = new System.Drawing.Point(10, 22);
-            this.chkListDependances.Name = "chkListDependances";
-            this.chkListDependances.Size = new System.Drawing.Size(344, 88);
-            this.chkListDependances.TabIndex = 0;
-            this.chkListDependances.DrawMode = DrawMode.OwnerDrawFixed; // AJOUTÉ
-            this.chkListDependances.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.chkListDependances_DrawItem); // AJOUTÉ
+            chkListDependances.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            chkListDependances.CheckOnClick = true;
+            chkListDependances.FormattingEnabled = true;
+            chkListDependances.Location = new Point(10, 22);
+            chkListDependances.Name = "chkListDependances";
+            chkListDependances.Size = new Size(344, 148);
+            chkListDependances.TabIndex = 0;
+            chkListDependances.DrawItem += chkListDependances_DrawItem;
+            // 
+            // cmbBlocNom
+            // 
+            cmbBlocNom.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbBlocNom.FormattingEnabled = true;
+            cmbBlocNom.Location = new Point(86, 22);
+            cmbBlocNom.Name = "cmbBlocNom";
+            cmbBlocNom.Size = new Size(168, 23);
+            cmbBlocNom.TabIndex = 3;
+            cmbBlocNom.SelectedIndexChanged += cmbBlocNom_SelectedIndexChanged;
+            // 
+            // numBlocCapacite
+            // 
+            numBlocCapacite.Location = new Point(316, 22);
+            numBlocCapacite.Maximum = new decimal(new int[] { 50, 0, 0, 0 });
+            numBlocCapacite.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            numBlocCapacite.Name = "numBlocCapacite";
+            numBlocCapacite.ReadOnly = true;
+            numBlocCapacite.Size = new Size(38, 23);
+            numBlocCapacite.TabIndex = 5;
+            numBlocCapacite.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // btnSauvegarder
             // 
-            this.btnSauvegarder.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSauvegarder.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.btnSauvegarder.Location = new System.Drawing.Point(12, 428); // MODIFIÉ
-            this.btnSauvegarder.Name = "btnSauvegarder";
-            this.btnSauvegarder.Size = new System.Drawing.Size(360, 30);
-            this.btnSauvegarder.TabIndex = 4;
-            this.btnSauvegarder.Text = "💾 Sauvegarder les modifications";
-            this.btnSauvegarder.UseVisualStyleBackColor = true;
-            this.btnSauvegarder.Click += new System.EventHandler(this.btnSauvegarder_Click);
+            btnSauvegarder.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnSauvegarder.Location = new Point(5, 3);
+            btnSauvegarder.Name = "btnSauvegarder";
+            btnSauvegarder.Size = new Size(180, 30);
+            btnSauvegarder.TabIndex = 0;
+            btnSauvegarder.Text = "💾 Sauvegarder";
+            btnSauvegarder.UseVisualStyleBackColor = true;
+            btnSauvegarder.Click += btnSauvegarder_Click;
+            // 
+            // chkEstJalon
+            // 
+            chkEstJalon.AutoSize = true;
+            chkEstJalon.Location = new Point(10, 80);
+            chkEstJalon.Name = "chkEstJalon";
+            chkEstJalon.Size = new Size(118, 19);
+            chkEstJalon.TabIndex = 6;
+            chkEstJalon.Text = "🏁 Jalon d'attente";
+            chkEstJalon.UseVisualStyleBackColor = true;
+            chkEstJalon.CheckedChanged += chkEstJalon_CheckedChanged;
+            // 
+            // grpTache
+            // 
+            grpTache.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            grpTache.Controls.Add(txtTacheId);
+            grpTache.Controls.Add(lblTacheNom);
+            grpTache.Controls.Add(txtTacheNom);
+            grpTache.Controls.Add(lblHeures);
+            grpTache.Controls.Add(numHeuresHomme);
+            grpTache.Controls.Add(chkEstJalon);
+            grpTache.Controls.Add(lblMetier);
+            grpTache.Controls.Add(cmbMetier);
+            grpTache.Location = new Point(12, 12);
+            grpTache.Name = "grpTache";
+            grpTache.Size = new Size(360, 132);
+            grpTache.TabIndex = 0;
+            grpTache.TabStop = false;
+            grpTache.Text = "Informations Tâche";
+            // 
+            // lblTacheNom
+            // 
+            lblTacheNom.AutoSize = true;
+            lblTacheNom.Location = new Point(10, 25);
+            lblTacheNom.Name = "lblTacheNom";
+            lblTacheNom.Size = new Size(37, 15);
+            lblTacheNom.TabIndex = 2;
+            lblTacheNom.Text = "Nom:";
+            // 
+            // lblHeures
+            // 
+            lblHeures.AutoSize = true;
+            lblHeures.Location = new Point(10, 54);
+            lblHeures.Name = "lblHeures";
+            lblHeures.Size = new Size(85, 15);
+            lblHeures.TabIndex = 4;
+            lblHeures.Text = "Durée estimée:";
+            // 
+            // lblMetier
+            // 
+            lblMetier.AutoSize = true;
+            lblMetier.Location = new Point(10, 106);
+            lblMetier.Name = "lblMetier";
+            lblMetier.Size = new Size(44, 15);
+            lblMetier.TabIndex = 7;
+            lblMetier.Text = "Métier:";
+            // 
+            // grpBloc
+            // 
+            grpBloc.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            grpBloc.Controls.Add(lblBlocNom);
+            grpBloc.Controls.Add(cmbBlocNom);
+            grpBloc.Controls.Add(lblBlocCap);
+            grpBloc.Controls.Add(numBlocCapacite);
+            grpBloc.Location = new Point(12, 150);
+            grpBloc.Name = "grpBloc";
+            grpBloc.Size = new Size(360, 55);
+            grpBloc.TabIndex = 2;
+            grpBloc.TabStop = false;
+            grpBloc.Text = "Informations Bloc";
+            // 
+            // lblBlocNom
+            // 
+            lblBlocNom.AutoSize = true;
+            lblBlocNom.Location = new Point(10, 25);
+            lblBlocNom.Name = "lblBlocNom";
+            lblBlocNom.Size = new Size(37, 15);
+            lblBlocNom.TabIndex = 2;
+            lblBlocNom.Text = "Nom:";
+            // 
+            // lblBlocCap
+            // 
+            lblBlocCap.AutoSize = true;
+            lblBlocCap.Location = new Point(260, 25);
+            lblBlocCap.Name = "lblBlocCap";
+            lblBlocCap.Size = new Size(56, 15);
+            lblBlocCap.TabIndex = 4;
+            lblBlocCap.Text = "Capacité:";
+            // 
+            // grpDep
+            // 
+            grpDep.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            grpDep.Controls.Add(chkListDependances);
+            grpDep.Location = new Point(12, 211);
+            grpDep.Name = "grpDep";
+            grpDep.Size = new Size(360, 177);
+            grpDep.TabIndex = 3;
+            grpDep.TabStop = false;
+            grpDep.Text = "Dépendances (bleu=hérité métier, rouge=exclu)";
+            // 
+            // flowLayoutPanelActions
+            // 
+            flowLayoutPanelActions.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            flowLayoutPanelActions.Controls.Add(btnAnnuler);
+            flowLayoutPanelActions.Controls.Add(btnSupprimer);
+            flowLayoutPanelActions.Controls.Add(btnSauvegarder);
+            flowLayoutPanelActions.FlowDirection = FlowDirection.RightToLeft;
+            flowLayoutPanelActions.Location = new Point(12, 394);
+            flowLayoutPanelActions.Name = "flowLayoutPanelActions";
+            flowLayoutPanelActions.Size = new Size(360, 35);
+            flowLayoutPanelActions.TabIndex = 4;
+            // 
+            // btnAnnuler
+            // 
+            btnAnnuler.Location = new Point(282, 3);
+            btnAnnuler.Name = "btnAnnuler";
+            btnAnnuler.Size = new Size(75, 30);
+            btnAnnuler.TabIndex = 2;
+            btnAnnuler.Text = "Annuler";
+            btnAnnuler.UseVisualStyleBackColor = true;
+            btnAnnuler.Click += btnAnnuler_Click;
+            // 
+            // btnSupprimer
+            // 
+            btnSupprimer.BackColor = Color.MistyRose;
+            btnSupprimer.Location = new Point(191, 3);
+            btnSupprimer.Name = "btnSupprimer";
+            btnSupprimer.Size = new Size(85, 30);
+            btnSupprimer.TabIndex = 1;
+            btnSupprimer.Text = "Supprimer";
+            btnSupprimer.UseVisualStyleBackColor = false;
+            btnSupprimer.Click += btnSupprimer_Click;
             // 
             // TacheDetailForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(384, 470); // MODIFIÉ
-            this.Controls.Add(this.btnSauvegarder);
-            this.Controls.Add(this.grpDep);
-            this.Controls.Add(this.grpBloc);
-            this.Controls.Add(this.grpLot);
-            this.Controls.Add(this.grpTache);
-            this.MinimumSize = new System.Drawing.Size(400, 500); // AJOUTÉ
-            this.Name = "TacheDetailForm";
-            this.Text = "Détails de la Tâche";
-            ((System.ComponentModel.ISupportInitialize)(this.numHeuresHomme)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numLotPriorite)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numBlocCapacite)).EndInit();
-            this.grpTache.ResumeLayout(false);
-            this.grpTache.PerformLayout();
-            this.grpLot.ResumeLayout(false);
-            this.grpLot.PerformLayout();
-            this.grpBloc.ResumeLayout(false);
-            this.grpBloc.PerformLayout();
-            this.grpDep.ResumeLayout(false);
-            this.ResumeLayout(false);
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(384, 441);
+            Controls.Add(flowLayoutPanelActions);
+            Controls.Add(grpDep);
+            Controls.Add(grpBloc);
+            Controls.Add(grpTache);
+            MinimumSize = new Size(400, 480);
+            Name = "TacheDetailForm";
+            Text = "Détails de l'Activité";
+            ((System.ComponentModel.ISupportInitialize)numHeuresHomme).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numBlocCapacite).EndInit();
+            grpTache.ResumeLayout(false);
+            grpTache.PerformLayout();
+            grpBloc.ResumeLayout(false);
+            grpBloc.PerformLayout();
+            grpDep.ResumeLayout(false);
+            flowLayoutPanelActions.ResumeLayout(false);
+            ResumeLayout(false);
         }
 
         #endregion
@@ -341,24 +288,21 @@ namespace PlanAthena.Forms
         private System.Windows.Forms.TextBox txtTacheNom;
         private System.Windows.Forms.NumericUpDown numHeuresHomme;
         private System.Windows.Forms.ComboBox cmbMetier;
-        private System.Windows.Forms.CheckedListBox chkListDependances; // MODIFIÉ
-        private System.Windows.Forms.ComboBox cmbLotNom;
-        private System.Windows.Forms.NumericUpDown numLotPriorite;
+        private System.Windows.Forms.CheckedListBox chkListDependances;
         private System.Windows.Forms.ComboBox cmbBlocNom;
         private System.Windows.Forms.NumericUpDown numBlocCapacite;
         private System.Windows.Forms.Button btnSauvegarder;
-        private System.Windows.Forms.CheckBox chkEstJalon; // NOUVEAU
+        private System.Windows.Forms.CheckBox chkEstJalon;
         private System.Windows.Forms.GroupBox grpTache;
-        private System.Windows.Forms.Label lblTacheId;
         private System.Windows.Forms.Label lblTacheNom;
         private System.Windows.Forms.Label lblHeures;
         private System.Windows.Forms.Label lblMetier;
-        private System.Windows.Forms.GroupBox grpLot;
-        private System.Windows.Forms.Label lblLotNom;
-        private System.Windows.Forms.Label lblLotPrio;
         private System.Windows.Forms.GroupBox grpBloc;
         private System.Windows.Forms.Label lblBlocNom;
         private System.Windows.Forms.Label lblBlocCap;
         private System.Windows.Forms.GroupBox grpDep;
+        private System.Windows.Forms.FlowLayoutPanel flowLayoutPanelActions;
+        private System.Windows.Forms.Button btnAnnuler;
+        private System.Windows.Forms.Button btnSupprimer;
     }
 }
