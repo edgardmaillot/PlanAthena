@@ -1,0 +1,84 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam linetype ortho
+skinparam ranksep 50
+skinparam nodesep 70
+
+title Diagramme de Classe Détaillé - ProcessChantierUseCase
+
+package "Facade" {
+    class PlanAthenaCoreFacade {
+        - _processChantierUseCase: IProcessChantierUseCase
+        + PlanAthenaCoreFacade(IProcessChantierUseCase)
+        + ProcessChantierAsync(inputDto): Task<ProcessChantierResultDto>
+    }
+}
+
+package "Application.UseCases" {
+    class ProcessChantierUseCase implements IProcessChantierUseCase {
+        - _fluentValidator: IValidator<ChantierSetupInputDto>
+        - _inputMapper: IChantierSetupInputMapper
+        - _chantierValidationService: IChantierValidationService
+        - _feasibilityService: IInitialFeasibilityAnalysisService
+        - _keyResourceService: IKeyResourceSuggestionService
+        - _calendrierService: ICalendrierService
+        - _problemeBuilder: IConstructeurProblemeOrTools
+        - _solutionInterpreter: ISolutionInterpreterService
+        - _planningAnalyzer: IPlanningAnalysisService
+        + ExecuteAsync(inputDto): Task<ProcessChantierResultDto>
+        -- private methods --
+        - ValiderEtCreerChantierAsync(...)
+        - AnalyserUniquementAsync(...)
+        - ExecuterOptimisationEtAnalyseAsync(...)
+    }
+}
+
+package "Application.Interfaces" {
+    interface IProcessChantierUseCase {
+        + ExecuteAsync(inputDto): Task<ProcessChantierResultDto>
+    }
+    interface IValidator<T>
+    interface IChantierSetupInputMapper
+    interface IChantierValidationService
+    interface IInitialFeasibilityAnalysisService
+    interface IKeyResourceSuggestionService
+    interface ICalendrierService
+    interface IConstructeurProblemeOrTools
+    interface ISolutionInterpreterService
+    interface IPlanningAnalysisService
+}
+
+package "Facade.Dto" {
+    package "Input" {
+        class ChantierSetupInputDto
+        class OptimizationConfigDto
+    }
+    package "Output" {
+        class ProcessChantierResultDto
+        class PlanningOptimizationResultDto
+        class AnalyseRessourcesResultatDto
+    }
+}
+
+' --- Relations ---
+PlanAthenaCoreFacade --> IProcessChantierUseCase : "utilise"
+ProcessChantierUseCase --|> IProcessChantierUseCase
+
+ProcessChantierUseCase --> "1" IValidator
+ProcessChantierUseCase --> "1" IChantierSetupInputMapper
+ProcessChantierUseCase --> "1" IChantierValidationService
+ProcessChantierUseCase --> "1" IInitialFeasibilityAnalysisService
+ProcessChantierUseCase --> "1" IKeyResourceSuggestionService
+ProcessChantierUseCase --> "1" ICalendrierService
+ProcessChantierUseCase --> "1" IConstructeurProblemeOrTools
+ProcessChantierUseCase --> "1" ISolutionInterpreterService
+ProcessChantierUseCase --> "1" IPlanningAnalysisService
+
+ProcessChantierUseCase ..> ChantierSetupInputDto : "prend en entrée"
+ProcessChantierUseCase ..> ProcessChantierResultDto : "retourne"
+ProcessChantierResultDto o-- "? 1" PlanningOptimizationResultDto
+ProcessChantierResultDto o-- "? 1" AnalyseRessourcesResultatDto
+ChantierSetupInputDto o-- "? 1" OptimizationConfigDto
+
+@enduml

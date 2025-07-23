@@ -1,0 +1,49 @@
+@startuml
+title Diagramme de Séquence : Interprétation de la Solution du Solveur (Corrigé)
+
+participant "caller: ProcessChantierUseCase" as Caller
+participant "interpreter:\nISolutionInterpreterService" as Interpreter
+participant "solver:\nCpSolver" as Solver
+
+Caller -> Interpreter : InterpreterLaSolution(solver, modeleCpSat, probleme)
+activate Interpreter
+
+create "affectations: List<AffectationDto>" as AffectationsList
+Interpreter -> AffectationsList : new()
+
+loop pour chaque (key, assignVar) dans modeleCpSat.TachesAssignables
+    Interpreter -> Solver : BooleanValue(assignVar)
+    activate Solver
+    Solver --> Interpreter : estAssignee
+    deactivate Solver
+    
+    alt estAssignee == true
+        note right of Interpreter
+            1. Récupérer TacheId et OuvrierId
+            2. Récupérer l'IntervalVar associé
+        end note
+
+        Interpreter -> Solver : Value(intervalVar.StartExpr())
+        activate Solver
+        Solver --> Interpreter : startSlotIndex
+        deactivate Solver
+
+        Interpreter -> Solver : Value(intervalVar.SizeExpr())
+        activate Solver
+        Solver --> Interpreter : dureeEnSlots
+        deactivate Solver
+        
+        note right of Interpreter
+            3. Traduire startSlotIndex en DateTime
+               via probleme.EchelleTemps
+        end note
+        
+        create "affectation: AffectationDto" as Affectation
+        Interpreter -> Affectation : new()
+        Interpreter -> AffectationsList : Add(affectation)
+    end
+end
+
+Interpreter --> Caller : affectations
+deactivate Interpreter
+@enduml

@@ -1,0 +1,84 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam linetype ortho
+title Architecture et Modèles de Données de la "Gestion des Tâches" (v2.0)
+' --- MODÈLES DU DOMAINE ---
+package "Modèles du Domaine" #LightCyan {
+class Tache {
++ TacheId: string
++ TacheNom: string
++ HeuresHommeEstimees: int
++ MetierId: string
++ Dependencies: string
++ ExclusionsDependances: string
++ LotId: string
++ BlocId: string
+- Type: TypeActivite
++ EstJalon(): bool
+}
+note right of Tache::EstJalon
+<b>Rôle :</b> Propriété publique en lecture seule
+pour simplifier les vérifications.
+<b>Implémentation :</b>
+return this.Type != TypeActivite.Tache;
+end note
+class Metier {
+    + MetierId: string
+    + Nom: string
+    + PrerequisMetierIds: string
+    + CouleurHex: string
+}
+
+class Lot {
+    + LotId: string
+    + Nom: string
+    + Priorite: int
+}
+
+
+class Bloc {
+    + BlocId: string
+    + Nom: string
+    + CapaciteMaxOuvriers: int
+}
+
+enum TypeActivite {
+    Tache
+    JalonUtilisateur
+    JalonDeSynchronisation
+    JalonTechnique
+}
+
+}
+' --- RELATIONS ENTRE MODÈLES ---
+Tache "N" -- "1" Lot : appartient à
+Tache "N" -- "1" Bloc : appartient à
+Tache "N" ..> "1" Metier : "est réalisé par"
+Tache "1" -- "1" TypeActivite : utilise (privément)
+' --- COUCHES APPLICATIVES ---
+package "Gestion des Tâches (UI)" {
+class TacheForm
+class TacheDetailForm
+class PertDiagramControl
+}
+package "Librairies Externes" {
+class "Microsoft.Msagl v1.1.6" as MSAGL_LIB
+class "QuikGraph v2.5.0" as QUIKGRAPH_LIB
+}
+package "Services & Utilitaires" {
+class TacheService
+class MetierService
+class DependanceBuilder <<Cerveau>>
+}
+' --- RELATIONS INTER-COUCHES ---
+TacheForm --> DependanceBuilder
+TacheDetailForm --> DependanceBuilder
+TacheForm --> TacheService
+TacheDetailForm --> TacheService
+PertDiagramControl --> TacheService
+DependanceBuilder --> TacheService
+DependanceBuilder --> MetierService
+DependanceBuilder ..> QUIKGRAPH_LIB
+PertDiagramControl ..> MSAGL_LIB
+@enduml

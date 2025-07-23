@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using System.Drawing;
+using QuikGraph;
+using QuikGraph.Algorithms;
 
 namespace PlanAthena.Services.Business
 {
     /// <summary>
     /// Gère la connaissance et la logique métier liées aux métiers.
-    /// Sert de point de vérité unique pour la liste des métiers.
+    /// Sert de point de vérité unique pour la liste des métiers et leurs dépendances.
+    /// Utilise QuikGraph pour assurer un tri topologique robuste.
     /// </summary>
     public class MetierService
     {
@@ -102,67 +105,70 @@ namespace PlanAthena.Services.Business
             return Array.Empty<string>();
         }
 
+        /// <summary>
+        /// Obtient la liste complète et transitive de tous les prérequis pour un métier donné.
+        /// </summary>
+        public HashSet<string> GetTransitivePrerequisites(string metierId)
+        {
+            var allPrereqs = new HashSet<string>();
+            var toExplore = new Queue<string>(GetPrerequisForMetier(metierId));
+
+            while (toExplore.Count > 0)
+            {
+                var current = toExplore.Dequeue();
+                if (allPrereqs.Add(current)) // Si on l'ajoute (il n'y était pas déjà)
+                {
+                    var parents = GetPrerequisForMetier(current);
+                    foreach (var parent in parents)
+                    {
+                        toExplore.Enqueue(parent);
+                    }
+                }
+            }
+            return allPrereqs;
+        }
+
+
         #endregion
 
         #region Tri Topologique
 
         /// <summary>
-        /// Retourne la liste des métiers ordonnée selon leurs dépendances (tri topologique).
-        /// Les métiers sans dépendances apparaissent en premier.
+        /// Retourne la liste des métiers ordonnée selon leurs dépendances (tri topologique), en utilisant QuikGraph.
+        /// Les métiers sans dépendances apparaissent en premier. Gère la détection de cycles.
         /// </summary>
         /// <returns>Une liste ordonnée de métiers.</returns>
         public List<Metier> ObtenirMetiersTriesParDependance()
         {
-            var sortedList = new List<Metier>();
-            var inDegree = new Dictionary<string, int>();
-            var graph = new Dictionary<string, List<string>>();
-            var allMetierIds = _metiers.Keys;
+            var graph = new AdjacencyGraph<string, Edge<string>>();
+            var metiersCollection = _metiers.Values;
 
-            foreach (var metierId in allMetierIds)
-            {
-                inDegree[metierId] = 0;
-                graph[metierId] = new List<string>();
-            }
+            graph.AddVertexRange(metiersCollection.Select(m => m.MetierId));
 
-            foreach (var metier in _metiers.Values)
+            foreach (var metier in metiersCollection)
             {
                 var prerequis = GetPrerequisForMetier(metier.MetierId);
                 foreach (var prerequisId in prerequis)
                 {
-                    if (allMetierIds.Contains(prerequisId))
+                    if (_metiers.ContainsKey(prerequisId))
                     {
-                        graph[prerequisId].Add(metier.MetierId);
-                        inDegree[metier.MetierId]++;
+                        graph.AddEdge(new Edge<string>(prerequisId, metier.MetierId));
                     }
                 }
             }
 
-            var queue = new Queue<string>(allMetierIds.Where(m => inDegree[m] == 0));
-
-            while (queue.Count > 0)
+            try
             {
-                var metierId = queue.Dequeue();
-                sortedList.Add(_metiers[metierId]);
-
-                foreach (var neighbor in graph[metierId])
-                {
-                    inDegree[neighbor]--;
-                    if (inDegree[neighbor] == 0)
-                    {
-                        queue.Enqueue(neighbor);
-                    }
-                }
+                var sortedIds = graph.TopologicalSort().ToList();
+                return sortedIds.Select(id => _metiers[id]).ToList();
             }
-
-            // Si la liste triée ne contient pas tous les métiers, il y a une dépendance circulaire.
-            // On ajoute les métiers restants à la fin pour éviter de planter.
-            if (sortedList.Count < _metiers.Count)
+            catch (NonAcyclicGraphException)
             {
-                var metiersManquants = _metiers.Values.Where(m => !sortedList.Contains(m));
-                sortedList.AddRange(metiersManquants);
+                // Une dépendance circulaire a été détectée entre les métiers.
+                // On retourne une liste non triée pour éviter de planter l'UI.
+                // Un mécanisme de logging ou de notification à l'utilisateur serait idéal ici.
+                return metiersCollection.OrderBy(m => m.Nom).ToList();
             }
-
-            return sortedList;
         }
 
         #endregion
@@ -171,10 +177,10 @@ namespace PlanAthena.Services.Business
 
         // Liste statique des couleurs de fallback, centralisée ICI
         private static readonly Color[] FallbackColors = {
-        Color.LightBlue, Color.LightGreen, Color.LightYellow,
-        Color.LightPink, Color.LightGray, Color.LightCyan,
-        Color.LightSalmon
-    };
+            Color.LightBlue, Color.LightGreen, Color.LightYellow,
+            Color.LightPink, Color.LightGray, Color.LightCyan,
+            Color.LightSalmon
+        };
         private int _fallbackColorIndex = 0;
         private readonly Dictionary<string, Color> _assignedFallbackColors = new Dictionary<string, Color>();
 

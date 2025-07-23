@@ -1,0 +1,51 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam sequence { 
+    ArrowColor #1E8449, 
+    LifeLineBorderColor #239B56, 
+    ParticipantBackgroundColor #E8F8F5 }
+
+title Comportement (Amélioré) : Création de Tâche par Popup
+
+actor User
+
+box "Couche UI"
+    participant "panelOutilsMetiers\n(dans TacheForm)" as PanelMetiers
+    participant "TacheForm" as UI
+    participant "TacheDetailForm\n(en Popup)" as DetailPopup
+end box
+
+box "Couche Service"
+    participant "TacheService" as TacheSvc
+end box
+
+User -> PanelMetiers : 1. Clique sur un bouton "Métier"
+activate PanelMetiers
+
+PanelMetiers -> UI : Déclenche MetierButton_Click()
+deactivate PanelMetiers
+activate UI
+
+UI -> DetailPopup ** : 2. Crée une nouvelle instance\nde TacheDetailForm
+activate DetailPopup
+
+UI -> DetailPopup : 3. Pré-remplit un nouvel objet Tache\n(avec MetierId et LotId actif)
+UI -> DetailPopup : 4. Appelle ChargerTache(nouvelleTache, true)
+
+UI -> DetailPopup : 5. Affiche en mode Popup\n(ShowDialog())
+note right of UI : TacheForm est en pause,\nen attente du résultat de la popup.
+
+User -> DetailPopup : 6. Remplit les détails\n(Nom, Bloc, etc.) et clique sur "Sauvegarder"
+
+DetailPopup -> TacheSvc : 7. Appelle AjouterTache(tache)
+activate TacheSvc
+deactivate TacheSvc
+
+DetailPopup -> DetailPopup : 8. Met this.DialogResult = DialogResult.OK
+DetailPopup --> UI : 9. Se ferme et retourne OK
+deactivate DetailPopup
+
+UI -> UI : 10. Détecte le résultat OK et rafraîchit son affichage
+deactivate UI
+@enduml

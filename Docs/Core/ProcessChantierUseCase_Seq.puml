@@ -1,0 +1,139 @@
+@startuml
+title Diagramme de Séquence : Processus de Traitement d'un Chantier (Détaillé)
+
+actor Client
+participant PlanAthenaCoreFacade as Facade
+participant ProcessChantierUseCase as UseCase
+participant "IValidator" as Validator
+participant "IChantierSetupInputMapper" as Mapper
+participant "IChantierValidationService" as ChantierValidator
+
+Client -> Facade : ProcessChantierAsync(inputDto)
+activate Facade
+Facade -> UseCase : ExecuteAsync(inputDto)
+activate UseCase
+
+group Validation et Création du Domaine
+    UseCase -> Validator : ValidateAsync(inputDto)
+    activate Validator
+    Validator --> UseCase : validationResult
+    deactivate Validator
+
+    alt validation Fluent KO
+        UseCase --> Facade : return new ProcessChantierResultDto(EchecValidation)
+        Facade --> Client : resultDto
+        deactivate UseCase
+        deactivate Facade
+        destroy UseCase
+    end
+
+    UseCase -> Mapper : MapToDomainAsync(inputDto)
+    activate Mapper
+    Mapper --> UseCase : (chantier, mappingMessages)
+    deactivate Mapper
+
+    alt mapping KO (chantier is null)
+        UseCase --> Facade : return new ProcessChantierResultDto(EchecValidation)
+        Facade --> Client : resultDto
+        deactivate UseCase
+        deactivate Facade
+        destroy UseCase
+    end
+
+    UseCase -> ChantierValidator : ValiderChantierCompletAsync(inputDto, chantier)
+    activate ChantierValidator
+    ChantierValidator --> UseCase : cycleMessages
+    deactivate ChantierValidator
+    
+    alt Erreurs de validation (cycles, etc.)
+        UseCase --> Facade : return new ProcessChantierResultDto(EchecValidation)
+        Facade --> Client : resultDto
+        deactivate UseCase
+        deactivate Facade
+        destroy UseCase
+    end
+end
+
+alt inputDto.OptimizationConfig == null
+    group Mode : Analyse Uniquement
+        participant "ICalendrierService" as Calendrier
+        participant "IConstructeurProblemeOrTools" as Builder
+        participant "CpSolver" as Solver
+        participant "IInitialFeasibility..." as Feasibility
+        participant "IKeyResource..." as KeyResource
+
+        UseCase -> Calendrier : CreerEchelleTempsOuvree(...)
+        activate Calendrier
+        Calendrier --> UseCase : echelleTemps
+        deactivate Calendrier
+        
+        UseCase -> Builder : ConstruireModele(..., "COUT")
+        activate Builder
+        Builder --> UseCase : modeleCpSat
+        deactivate Builder
+        
+        create Solver
+        UseCase -> Solver : Solve(modeleCpSat.Model)
+        activate Solver
+        Solver --> UseCase : solverStatus
+        deactivate Solver
+        destroy Solver
+
+        UseCase -> Feasibility : AnalyserFaisabiliteAsync(chantier)
+        activate Feasibility
+        Feasibility --> UseCase : feasibilityMessages
+        deactivate Feasibility
+
+        UseCase -> KeyResource : SuggererOuvriersClesAsync(chantier)
+        activate KeyResource
+        KeyResource --> UseCase : suggestedKeyResourceIds
+        deactivate KeyResource
+        
+        UseCase -> UseCase : Assemble ProcessChantierResultDto
+    end
+else inputDto.OptimizationConfig != null
+    group Mode : Optimisation et Analyse
+        participant "ICalendrierService" as Calendrier
+        participant "IConstructeurProblemeOrTools" as Builder
+        participant "CpSolver" as Solver
+        participant "ISolutionInterpreterService" as Interpreter
+        participant "IPlanningAnalysisService" as Analyzer
+
+        UseCase -> Calendrier : CreerEchelleTempsOuvree(...)
+        activate Calendrier
+        Calendrier --> UseCase : echelleTemps
+        deactivate Calendrier
+        
+        UseCase -> Builder : ConstruireModele(..., objectif)
+        activate Builder
+        Builder --> UseCase : modeleCpSat
+        deactivate Builder
+
+        create Solver
+        UseCase -> Solver : Solve(modeleCpSat.Model)
+        activate Solver
+        Solver --> UseCase : solverStatus
+        deactivate Solver
+        destroy Solver
+
+        alt Solution Trouvée (Optimal ou Feasible)
+            UseCase -> Interpreter : InterpreterLaSolution(...)
+            activate Interpreter
+            Interpreter --> UseCase : affectations
+            deactivate Interpreter
+            
+            UseCase -> Analyzer : AnalyserLePlanningAsync(affectations, chantier)
+            activate Analyzer
+            Analyzer --> UseCase : analysisReport
+            deactivate Analyzer
+        end
+        UseCase -> UseCase : Assemble ProcessChantierResultDto
+    end
+end
+
+UseCase --> Facade : resultDto
+deactivate UseCase
+Facade --> Client : resultDto
+deactivate Facade
+
+@enduml

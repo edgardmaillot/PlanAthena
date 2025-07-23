@@ -1,0 +1,131 @@
+@startuml
+!theme plain
+skinparam class {
+  borderColor #007ACC
+  backgroundColor #DDEEFF
+  arrowColor #005588
+}
+title DependanceBuilder - Architecture des Classes (Refactoring Focus)
+
+' ================================================
+' ===        CLASSE PRINCIPALE À REFACTORER     ===
+' ================================================
+class DependanceBuilder <<CERVEAU>> {
+  -MetierService _metierService
+  -int _jalonSyncCounter
+  __Méthodes Publiques__
+  +AppliquerEtSimplifierDependances(List<Tache> taches) : void
+  +ObtenirEtatDependancesPourTache(Tache tache, List<Tache> contexte) : List<DependanceAffichage>
+  +ConstruireDependancesLogiques(List<Tache> taches) : ValidationResult
+  __Méthodes Privées (≤30 lignes chacune)__
+  -TraiterBloc(string blocId, List<Tache> taches, List<Tache> nouveauxJalons) : void
+  -GenererDependancesMetier(BidirectionalGraph graph, List<Tache> tachesDuBloc) : void
+  -AppliquerReductionTransitive(BidirectionalGraph graph) : BidirectionalGraph
+  -FactoriserAvecJalons(BidirectionalGraph graph, Dictionary<string,Tache> tacheMap, List<Tache> nouveauxJalons) : void
+  -MettreAJourModelesDepuisGraphe(BidirectionalGraph graph, List<Tache> taches) : void
+  -EstFactorisationNecessaire(List<string> predecesseurs, Dictionary<string,Tache> tacheMap) : bool
+  -ObtenirPrerequisFinaux(string metierId, HashSet<string> metiersPresents) : HashSet<string>
+  -TrouverFinsDeChaineDansGraphe(string metierId, Dictionary<string,Tache> tacheMap, BidirectionalGraph graph) : IEnumerable<string>
+  -TrouverMetiersSatisfaitsParGraphe(string tacheId, BidirectionalGraph graph, Dictionary<string,Tache> tacheMap) : HashSet<string>
+}
+
+' ================================================
+' ===           CLASSES DTO/UTILITAIRES         ===
+' ================================================
+class DependanceAffichage <<DTO>> {
+  +Tache TachePredecesseur
+  +EtatDependance Etat  
+  +bool EstHeritee
+  +ToString() : string
+}
+
+class ValidationResult <<DTO>> {
+  +bool EstValide
+  +string MessageErreur
+  +{static} Success() : ValidationResult
+  +{static} Error(string message) : ValidationResult
+}
+
+enum EtatDependance {
+  Neutre
+  Suggeree  
+  Stricte
+  Exclue
+}
+
+' ================================================
+' ===      DÉPENDANCES EXTERNES (EXISTANTES)    ===
+' ================================================
+class MetierService <<EXISTANT>> {
+  +GetPrerequisForMetier(string metierId) : IReadOnlyList<string>
+  +GetTransitivePrerequisites(string metierId) : HashSet<string>
+  +GetMetierById(string metierId) : Metier
+}
+
+class Tache <<EXISTANT>> {
+  +string TacheId
+  +string TacheNom  
+  +string MetierId
+  +string Dependencies
+  +string ExclusionsDependances
+  +string BlocId
+  +string LotId
+  +TypeActivite Type
+  +bool EstJalon
+}
+
+enum TypeActivite <<EXISTANT>> {
+  Tache
+  JalonUtilisateur
+  JalonDeSynchronisation
+  JalonTechnique
+}
+
+class "QuikGraph.BidirectionalGraph" as BidirectionalGraph <<LIBRARY>> {
+  +AddVertex(string vertex) : bool
+  +AddEdge(Edge<string> edge) : bool  
+  +InEdges(string vertex) : IEnumerable<Edge<string>>
+  +OutEdges(string vertex) : IEnumerable<Edge<string>>
+  +IsDirectedAcyclicGraph() : bool
+}
+
+class "QuikGraph.Algorithms.TransitiveReductionAlgorithm" as TransitiveReductionAlgorithm <<LIBRARY>> {
+  +Compute() : void
+  +TransitiveReduction : IBidirectionalGraph<string,Edge<string>>
+}
+
+' ================================================
+' ===                RELATIONS                   ===
+' ================================================
+DependanceBuilder --> MetierService : utilise
+DependanceBuilder --> BidirectionalGraph : manipule  
+DependanceBuilder --> TransitiveReductionAlgorithm : utilise
+DependanceBuilder ..> DependanceAffichage : produit
+DependanceBuilder ..> ValidationResult : retourne
+
+DependanceAffichage --> Tache : référence
+DependanceAffichage --> EtatDependance : utilise
+
+Tache --> TypeActivite : utilise
+
+note right of DependanceBuilder::TraiterBloc
+  <b>Règle 1:</b> Isolation stricte par bloc
+  Ne traite que les tâches du bloc donné
+end note
+
+note right of DependanceBuilder::GenererDependancesMetier  
+  <b>Règles 2 & 3:</b> Primauté manuel + Suggestion ciblée
+  Respecte exclusions et arrête dès métier trouvé
+end note
+
+note right of DependanceBuilder::FactoriserAvecJalons
+  <b>Règle 5:</b> Anti-croisements multiples
+  Crée jalons uniquement si nécessaire
+end note
+
+note right of TransitiveReductionAlgorithm
+  <b>Règle 4:</b> Anti-redondance
+  Supprime liens transitifs automatiquement
+end note
+
+@enduml

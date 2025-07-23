@@ -1,0 +1,55 @@
+@startuml
+title Diagramme de Séquence "Zoom" : CoutModelBuilder.Construire
+
+participant "constructeur: Constructeur..." as Constructeur
+participant "coutBuilder: CoutModelBuilder" as Builder
+participant "model: CpModel" as Model
+
+Constructeur -> Builder : Construire(model, probleme, intervals, assignables, makespan)
+activate Builder
+
+Builder -> Builder : PreparerCachesTemporels(echelleTemps)
+activate Builder
+note right: Met en cache les listes de slots par jour\npour optimiser les calculs suivants.
+deactivate Builder
+
+group Calcul des Coûts RH
+    note over Builder
+        Crée les variables `ouvrierTravailleLeJour`
+        pour chaque (ouvrier, jour) possible.
+    end note
+    
+    loop pour chaque (ouvrierId, jour)
+        note over Builder
+            Lie `ouvrierTravailleLeJour` aux assignations de tâches
+            qui chevauchent ce jour-là.
+        end note
+        Builder -> Model : AddMaxEquality(...)
+    end
+
+    loop pour chaque (key, travailleCeJourVar)
+        note over Builder: `cout = travailleCeJourVar * coutJournalierOuvrier`
+    end
+end group
+
+
+group Calcul des Coûts Indirects
+    note over Builder
+        Crée les variables `jourActif` pour chaque
+        jour du planning.
+    end note
+
+    loop pour chaque jour
+        Builder -> Model : Add(makespan > jourStartSlot).OnlyEnforceIf(jourActif)
+        note right: Le jour est "actif" si le makespan\n(fin du chantier) est après son début.
+    end
+    
+    note over Builder: `cout = totalJoursActifs * coutIndirectParJour`
+end
+
+Builder -> Model : NewIntVar(coutRh, coutIndirect, coutTotal)
+Builder -> Model : Add(coutTotal == coutRh + coutIndirect)
+
+Builder --> Constructeur : (coutTotal, coutRh, coutIndirect)
+deactivate Builder
+@enduml

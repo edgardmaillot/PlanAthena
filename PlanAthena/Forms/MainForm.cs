@@ -73,7 +73,6 @@ namespace PlanAthena.Forms
             serviceCollection.AddScoped<ConfigurationBuilder>();
 
             serviceCollection.AddScoped<PreparationSolveurService>();
-            serviceCollection.AddScoped<TopologieDependanceService>();
             serviceCollection.AddScoped<DependanceBuilder>();
 
             return serviceCollection.BuildServiceProvider();
@@ -100,9 +99,9 @@ namespace PlanAthena.Forms
             chkDateDebut.Checked = true;
             chkDateFin.Checked = true;
 
-            var timerMiseAJour = new System.Windows.Forms.Timer { Interval = 2000 };
-            timerMiseAJour.Tick += (s, e) => MettreAJourResume();
-            timerMiseAJour.Start();
+            //var timerMiseAJour = new System.Windows.Forms.Timer { Interval = 2000 };
+            //timerMiseAJour.Tick += (s, e) => MettreAJourResume();
+            //timerMiseAJour.Start();
 
             Log("Application prête. Créez un nouveau projet ou chargez un projet existant.");
         }

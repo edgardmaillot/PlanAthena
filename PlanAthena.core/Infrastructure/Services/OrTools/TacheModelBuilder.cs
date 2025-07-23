@@ -68,13 +68,21 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
 
         private long CalculerBorneSuperieureMakespan(ProblemeOptimisation probleme)
         {
-            var chantier = probleme.Chantier;
-            var totalHeuresHommeReelles = chantier.ObtenirToutesLesTaches().Where(t => t.Type == TypeActivite.Tache).Sum(t => (long)t.HeuresHommeEstimees.Value);
-            var nombreOuvriers = chantier.Ouvriers.Values.Count(o => !o.Id.Value.StartsWith("VIRTUAL"));
-            var estimationSequentielle = totalHeuresHommeReelles;
-            var estimationParallele = nombreOuvriers > 0 ? totalHeuresHommeReelles / nombreOuvriers : totalHeuresHommeReelles;
-            var horizonComplet = probleme.EchelleTemps.NombreTotalSlots;
-            return Math.Min(estimationSequentielle, horizonComplet);
+            // La seule borne supérieure vraiment sûre est la fin de la fenêtre de planification.
+            // Toute autre estimation (séquentielle, parallèle) peut être trop restrictive
+            // à cause des contraintes de calendrier (jours non ouvrés, contrainte NoSplitOverDays).
+            return probleme.EchelleTemps.NombreTotalSlots;
+
+
+            /*  L'ancien calcul plus contraignant retournait trop souvent des chantiers infaisables
+                var chantier = probleme.Chantier;
+                var totalHeuresHommeReelles = chantier.ObtenirToutesLesTaches().Where(t => t.Type == TypeActivite.Tache).Sum(t => (long)t.HeuresHommeEstimees.Value);
+                var nombreOuvriers = chantier.Ouvriers.Values.Count(o => !o.Id.Value.StartsWith("VIRTUAL"));
+                var estimationSequentielle = totalHeuresHommeReelles;
+                var estimationParallele = nombreOuvriers > 0 ? totalHeuresHommeReelles / nombreOuvriers : totalHeuresHommeReelles;
+                var horizonComplet = probleme.EchelleTemps.NombreTotalSlots;
+                return Math.Min(estimationSequentielle, horizonComplet);
+            */
         }
 
         private void CreerVariablesDeDecision(

@@ -14,7 +14,7 @@ namespace PlanAthena.Data
         public TypeActivite Type { get; set; } = TypeActivite.Tache;
         public bool EstJalon => Type != TypeActivite.Tache;
 
-                public string LotId { get; set; } = "";
+        public string LotId { get; set; } = "";
         public string BlocId { get; set; } = "";
                 
         public override string ToString()

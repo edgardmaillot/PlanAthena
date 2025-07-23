@@ -20,7 +20,7 @@ namespace PlanAthena.Core.Application.Services
         public Task<List<MessageValidationDto>> ValiderChantierCompletAsync(ChantierSetupInputDto inputDto, Chantier? chantier)
         {
             var messages = new List<MessageValidationDto>();
-
+            System.Diagnostics.Debug.WriteLine($"[DEBUG_TRACE] Validation Service");
             // Si le chantier est null, le mapping a déjà échoué.
             // On ne peut pas faire de validation de logique métier.
             if (chantier == null)

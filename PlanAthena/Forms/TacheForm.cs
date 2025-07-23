@@ -14,25 +14,29 @@ namespace PlanAthena.Forms
     /// <summary>
     /// Représente l'interface principale de gestion des tâches du projet.
     /// Son rôle est de fournir un espace de travail interactif centré sur un "Lot" de travaux.
-    /// Il orchestre l'affichage du diagramme PERT, la création de nouvelles activités via une barre d'outils,
-    /// et l'affichage des détails d'une activité sélectionnée.
+    /// 
+    /// PRINCIPE ARCHITECTURAL CLÉ :
+    /// Ce formulaire n'embarque PAS de cache de données local (ex: _tachesBrutes).
+    /// Il s'appuie systématiquement sur les services (TacheService, LotService, etc.) comme
+    /// source de vérité unique. À chaque rafraîchissement, les données sont lues
+    /// directement depuis le service, garantissant ainsi que l'affichage n'est jamais
+    /// désynchronisé et éliminant une source majeure de bugs.
     /// </summary>
     public partial class TacheForm : System.Windows.Forms.Form
     {
-        // Services
+        // Services (sources de vérité)
         private readonly TacheService _tacheService;
         private readonly MetierService _metierService;
         private readonly DependanceBuilder _dependanceBuilder;
         private readonly LotService _lotService;
         private readonly BlocService _blocService;
 
-        // Données
-        private List<Tache> _tachesBrutes = new List<Tache>();
+        // État de l'UI
         private Lot _lotActif = null;
 
         // Contrôles UI
         private readonly PertDiagramControl _pertControl;
-        private readonly TacheDetailForm _tacheDetailForm; // Formulaire embarqué pour l'affichage des détails
+        private readonly TacheDetailForm _tacheDetailForm;
         private readonly ToolTip _toolTipMetiers = new ToolTip();
 
         public TacheForm(TacheService tacheService, MetierService metierService, DependanceBuilder dependanceBuilder, LotService lotService, BlocService blocService)
@@ -46,16 +50,15 @@ namespace PlanAthena.Forms
 
             _pertControl = new PertDiagramControl();
             _pertControl.Dock = DockStyle.Fill;
-            _pertControl.Initialize(_metierService, _lotService, _blocService, new PertDiagramSettings());
+            _pertControl.Initialize(_metierService, _lotService, _blocService, _dependanceBuilder, new PertDiagramSettings());
             _pertControl.TacheSelected += PertControl_TacheSelected;
             _pertControl.TacheDoubleClicked += PertControl_TacheDoubleClicked;
 
             this.panelDiagrammeCentral.Controls.Add(_pertControl);
 
-            // Le formulaire de détail est maintenant doublement utilisé :
-            // 1. Embarqué, pour un affichage rapide des détails (lecture seule).
-            // 2. En popup, pour la création / modification.
-            _tacheDetailForm = new TacheDetailForm(_tacheService, _metierService, _lotService, _blocService);
+            // Le formulaire de détail a maintenant besoin du DependanceBuilder.
+            // On le crée une seule fois et on le réutilise pour éviter les fuites de mémoire.
+            _tacheDetailForm = new TacheDetailForm(_tacheService, _metierService, _lotService, _blocService, _dependanceBuilder);
             IntegrerFormulaireDetails();
         }
 
@@ -67,35 +70,72 @@ namespace PlanAthena.Forms
             panelDetailsTache.Controls.Add(_tacheDetailForm);
             _tacheDetailForm.Show();
 
-            // Si une sauvegarde est faite depuis le formulaire embarqué, on rafraîchit.
-            _tacheDetailForm.TacheSauvegardee += (s, e) =>
-            {
-                ChargerDonneesProjet();
-                RafraichirAffichageDiagramme();
-            };
+            _tacheDetailForm.TacheSauvegardee += (s, e) => RafraichirDiagrammeEtStatistiques();
         }
 
         private void TacheForm_Load(object sender, EventArgs e)
         {
-            ChargerDonneesProjet();
-            PeuplerComboBoxLots();
-            CreerBoutonsMetiers();
-            RafraichirAffichageDiagramme();
+            RafraichirVueComplete();
         }
+
+        #region Logique de Rafraîchissement
+
+        private void RafraichirVueComplete()
+        {
+            var idLotActif = _lotActif?.LotId;
+            PeuplerComboBoxLots();
+            if (idLotActif != null)
+            {
+                var itemToReselect = cmbLots.Items.Cast<Lot>().FirstOrDefault(l => l.LotId == idLotActif);
+                cmbLots.SelectedItem = itemToReselect;
+            }
+            if (cmbLots.SelectedItem == null && cmbLots.Items.Count > 0)
+            {
+                cmbLots.SelectedIndex = 0;
+            }
+            CreerBoutonsMetiers();
+            _tacheDetailForm.MettreAJourListesDeroulantes();
+            RafraichirDiagrammeEtStatistiques();
+            _tacheDetailForm.ChargerTache(null, true);
+        }
+
+        private void RafraichirDiagrammeEtStatistiques()
+        {
+            var toutesLesTaches = _tacheService.ObtenirToutesLesTaches();
+            List<Tache> tachesAffichees = new List<Tache>();
+            if (_lotActif != null)
+            {
+                tachesAffichees = toutesLesTaches.Where(t => t.LotId == _lotActif.LotId).ToList();
+            }
+            _pertControl.ChargerDonnees(tachesAffichees, txtRecherche.Text);
+            RafraichirStatistiques(toutesLesTaches);
+        }
+
+        private void PeuplerComboBoxLots()
+        {
+            var lots = _lotService.ObtenirTousLesLots();
+            cmbLots.DataSource = null;
+            cmbLots.DataSource = lots;
+            cmbLots.DisplayMember = "Nom";
+            cmbLots.ValueMember = "LotId";
+        }
+
+        private void RafraichirStatistiques(List<Tache> toutesLesTaches)
+        {
+            var totalTaches = toutesLesTaches.Count;
+            int tachesLotActif = _lotActif != null ? toutesLesTaches.Count(t => t.LotId == _lotActif.LotId) : 0;
+            lblStatistiques.Text = $"Total Projet: {totalTaches} tâches | Lot Actif '{_lotActif?.Nom ?? "Aucun"}': {tachesLotActif} tâches";
+        }
+
+        #endregion
 
         #region Gestion de la Barre d'Outils Métiers et Création
 
-        /// <summary>
-        /// Construit dynamiquement la barre d'outils latérale pour la création d'activités.
-        /// Affiche les métiers triés logiquement, ainsi qu'un bouton dédié pour les jalons.
-        /// </summary>
         private void CreerBoutonsMetiers()
         {
             panelOutilsMetiersDynamiques.Controls.Clear();
-
             var metiersTries = _metierService.ObtenirMetiersTriesParDependance()
-                .Where(m => m.MetierId != "JALON" && m.MetierId != "SYNC_0H"); // Nettoyage des anciens méta-métiers
-
+                .Where(m => m.MetierId != "JALON" && m.MetierId != "SYNC_0H");
             int yPos = 10;
             foreach (var metier in metiersTries)
             {
@@ -109,7 +149,6 @@ namespace PlanAthena.Forms
                     FlatStyle = FlatStyle.Popup
                 };
                 btn.Click += MetierButton_Click;
-
                 var prerequis = _metierService.GetPrerequisForMetier(metier.MetierId);
                 if (prerequis.Any())
                 {
@@ -120,16 +159,12 @@ namespace PlanAthena.Forms
                 {
                     _toolTipMetiers.SetToolTip(btn, "Aucun prérequis");
                 }
-
                 panelOutilsMetiersDynamiques.Controls.Add(btn);
                 yPos += 35;
             }
-
-            // Ajout d'un séparateur et du bouton de création de jalon à la fin.
             var separator = new Label { BorderStyle = BorderStyle.Fixed3D, Height = 2, Width = 160, Location = new Point(11, yPos + 5) };
             panelOutilsMetiersDynamiques.Controls.Add(separator);
             yPos += 15;
-
             var btnJalon = new Button
             {
                 Text = "◆ Créer Jalon/Attente",
@@ -143,9 +178,6 @@ namespace PlanAthena.Forms
             panelOutilsMetiersDynamiques.Controls.Add(btnJalon);
         }
 
-        /// <summary>
-        /// Gère le clic sur un bouton métier pour initier la création d'une nouvelle tâche.
-        /// </summary>
         private void MetierButton_Click(object sender, EventArgs e)
         {
             if (_lotActif == null)
@@ -153,10 +185,9 @@ namespace PlanAthena.Forms
                 MessageBox.Show("Veuillez d'abord sélectionner un lot actif.", "Action impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-
             if (sender is Button { Tag: Metier metier })
             {
-                using var form = new TacheDetailForm(_tacheService, _metierService, _lotService, _blocService);
+                using var form = new TacheDetailForm(_tacheService, _metierService, _lotService, _blocService, _dependanceBuilder);
                 var nouvelleTache = new Tache
                 {
                     MetierId = metier.MetierId,
@@ -165,18 +196,13 @@ namespace PlanAthena.Forms
                     HeuresHommeEstimees = 8
                 };
                 form.ChargerTache(nouvelleTache, true);
-
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {
-                    ChargerDonneesProjet();
-                    RafraichirAffichageDiagramme();
+                    RafraichirDiagrammeEtStatistiques();
                 }
             }
         }
 
-        /// <summary>
-        /// Gère le clic sur le bouton de création de jalon.
-        /// </summary>
         private void JalonButton_Click(object sender, EventArgs e)
         {
             if (_lotActif == null)
@@ -184,8 +210,10 @@ namespace PlanAthena.Forms
                 MessageBox.Show("Veuillez d'abord sélectionner un lot actif.", "Action impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+            using var form = new TacheDetailForm(_tacheService, _metierService, _lotService, _blocService, _dependanceBuilder);
 
-            using var form = new TacheDetailForm(_tacheService, _metierService, _lotService, _blocService);
+            // Correction: La définition d'un jalon se fait uniquement via la propriété 'Type'.
+            // L'affectation à 'EstJalon' a été supprimée.
             var nouveauJalon = new Tache
             {
                 Type = TypeActivite.JalonUtilisateur,
@@ -194,79 +222,32 @@ namespace PlanAthena.Forms
                 LotId = _lotActif.LotId
             };
             form.ChargerTache(nouveauJalon, true);
-
             if (form.ShowDialog(this) == DialogResult.OK)
             {
-                ChargerDonneesProjet();
-                RafraichirAffichageDiagramme();
+                RafraichirDiagrammeEtStatistiques();
             }
         }
 
         #endregion
 
-        #region Reste du Code (Logique d'affichage et événements)
-
-        private void ChargerDonneesProjet()
-        {
-            _tachesBrutes = _tacheService.ObtenirToutesLesTaches();
-            _tacheDetailForm.MettreAJourListesDeroulantes();
-        }
-
-        private void PeuplerComboBoxLots()
-        {
-            var lots = _lotService.ObtenirTousLesLots();
-            cmbLots.DataSource = lots;
-            cmbLots.DisplayMember = "Nom";
-            cmbLots.ValueMember = "LotId";
-
-            if (lots.Any())
-            {
-                cmbLots.SelectedIndex = 0;
-                _lotActif = cmbLots.SelectedItem as Lot;
-            }
-            else
-            {
-                _lotActif = null;
-            }
-        }
-
-        private void RafraichirAffichageDiagramme()
-        {
-            List<Tache> tachesAffichees = new List<Tache>();
-            if (_lotActif != null)
-            {
-                tachesAffichees = _tachesBrutes.Where(t => t.LotId == _lotActif.LotId).ToList();
-            }
-            _pertControl.ChargerDonnees(tachesAffichees, txtRecherche.Text);
-            RafraichirStatistiques();
-        }
-
-        private void RafraichirStatistiques()
-        {
-            var totalTaches = _tachesBrutes.Count;
-            int tachesLotActif = _lotActif != null ? _tachesBrutes.Count(t => t.LotId == _lotActif.LotId) : 0;
-            lblStatistiques.Text = $"Total Projet: {totalTaches} tâches | Lot Actif '{_lotActif?.Nom ?? "Aucun"}': {tachesLotActif} tâches";
-        }
+        #region Événements et Logique d'Affichage
 
         private void PertControl_TacheSelected(object sender, TacheSelectedEventArgs e)
         {
-            // Un simple clic met à jour le panneau de détails embarqué pour une consultation rapide.
             _tacheDetailForm.ChargerTache(e.Tache, false);
             lblTacheSelectionnee.Text = $"Sélectionnée: {e.Tache.TacheId} - {e.Tache.TacheNom}";
         }
 
         private void PertControl_TacheDoubleClicked(object sender, TacheSelectedEventArgs e)
         {
-            // Un double-clic ouvre une popup pour une édition focalisée.
-            var tacheOriginale = _tachesBrutes.FirstOrDefault(t => t.TacheId == e.Tache.TacheId);
+            var tacheOriginale = _tacheService.ObtenirTacheParId(e.Tache.TacheId);
             if (tacheOriginale != null)
             {
-                using var form = new TacheDetailForm(_tacheService, _metierService, _lotService, _blocService);
+                using var form = new TacheDetailForm(_tacheService, _metierService, _lotService, _blocService, _dependanceBuilder);
                 form.ChargerTache(tacheOriginale, false);
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {
-                    ChargerDonneesProjet();
-                    RafraichirAffichageDiagramme();
+                    RafraichirDiagrammeEtStatistiques();
                 }
             }
         }
@@ -276,8 +257,7 @@ namespace PlanAthena.Forms
             if (cmbLots.SelectedItem is Lot selectedLot)
             {
                 _lotActif = selectedLot;
-                RafraichirAffichageDiagramme();
-                // Vide le panneau de détail car la sélection de tâche n'est plus pertinente
+                RafraichirDiagrammeEtStatistiques();
                 _tacheDetailForm.ChargerTache(null, true);
                 lblTacheSelectionnee.Text = "Aucune sélection";
             }
@@ -285,51 +265,54 @@ namespace PlanAthena.Forms
 
         private void btnGererLots_Click(object sender, EventArgs e)
         {
-            // On passe maintenant les deux services requis
             using (var form = new LotForm(_lotService, _tacheService)) { form.ShowDialog(this); }
-
-            var idLotActif = _lotActif?.LotId;
-            PeuplerComboBoxLots();
-            if (idLotActif != null)
-            {
-                var itemToReselect = cmbLots.Items.Cast<Lot>().FirstOrDefault(l => l.LotId == idLotActif);
-                if (itemToReselect != null) cmbLots.SelectedItem = itemToReselect;
-            }
-            RafraichirAffichageDiagramme();
+            RafraichirVueComplete();
         }
 
         private void btnGererBlocs_Click(object sender, EventArgs e)
         {
             using (var form = new BlocForm(_blocService, _tacheService)) { form.ShowDialog(this); }
-            _tacheDetailForm.MettreAJourListesDeroulantes();
-            RafraichirAffichageDiagramme();
+            RafraichirVueComplete();
         }
 
-        private void txtRecherche_TextChanged(object sender, EventArgs e) => RafraichirAffichageDiagramme();
+        /// <summary>
+        /// Orchestre la génération automatique et la simplification des dépendances pour l'ensemble du projet.
+        /// </summary>
+        private void btnMappingAuto_Click(object sender, EventArgs e)
+        {
+            var result = MessageBox.Show("Cette action va générer les dépendances logiques entre les tâches en se basant sur les métiers, puis simplifier le graphe pour en retirer les liens redondants.\n\nLes dépendances existantes seront enrichies, pas écrasées. Voulez-vous continuer ?",
+                "Mapping Automatique des Dépendances", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result != DialogResult.Yes) return;
+
+            try
+            {
+                Cursor.Current = Cursors.WaitCursor;
+                var tachesActuelles = _tacheService.ObtenirToutesLesTaches();
+
+                // Appel de la nouvelle méthode d'orchestration
+                _dependanceBuilder.AppliquerEtSimplifierDependances(tachesActuelles);
+
+                // Rafraîchissement de la vue pour montrer le résultat
+                RafraichirDiagrammeEtStatistiques();
+
+                MessageBox.Show("Le mapping automatique des dépendances a été appliqué et simplifié avec succès.", "Opération terminée", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Une erreur est survenue lors du mapping automatique :\n{ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor.Current = Cursors.Default;
+            }
+        }
+
+        private void txtRecherche_TextChanged(object sender, EventArgs e) => RafraichirDiagrammeEtStatistiques();
         private void btnZoomAjuster_Click(object sender, EventArgs e) => _pertControl.ZoomToutAjuster();
         private void btnPan_Click(object sender, EventArgs e) => _pertControl.TogglePan(btnPan.Checked);
         private void btnSauvegarderImage_Click(object sender, EventArgs e) => _pertControl.SauvegarderImage();
         private void btnImprimer_Click(object sender, EventArgs e) => _pertControl.ImprimerDiagramme();
-        private void btnMappingAuto_Click(object sender, EventArgs e)
-        {
-            var result = MessageBox.Show("Cette action va (re)construire les dépendances logiques pour TOUT le projet.\n\nVoulez-vous continuer ?",
-                "Initialiser les dépendances", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (result != DialogResult.Yes) return;
-            try
-            {
-                var tachesActuelles = _tacheService.ObtenirToutesLesTaches();
-                _dependanceBuilder.ConstruireDependancesLogiques(tachesActuelles);
-                _tacheService.ChargerTaches(tachesActuelles);
-                ChargerDonneesProjet();
-                RafraichirAffichageDiagramme();
-                MessageBox.Show("Dépendances initialisées avec succès.", "Opération terminée", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Erreur lors de l'initialisation des dépendances :\n{ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
         private void btnImportExcelFieldwire_Click(object sender, EventArgs e) => MessageBox.Show("L'import Excel Fieldwire/Dalux n'est pas encore implémenté.", "Fonctionnalité en développement", MessageBoxButtons.OK, MessageBoxIcon.Information);
         private void btnImporter_Click(object sender, EventArgs e) => MessageBox.Show("L'import/export CSV est temporairement désactivé et sera ré-implémenté dans une version future.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
         private void btnExporter_Click(object sender, EventArgs e) => MessageBox.Show("L'import/export CSV est temporairement désactivé et sera ré-implémenté dans une version future.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);

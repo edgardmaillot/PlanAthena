@@ -1,0 +1,62 @@
+@startuml
+title Diagramme de Séquence : Construction du Modèle CP-SAT
+
+participant "caller: ProcessChantierUseCase" as Caller
+participant "constructeur:\nIConstructeurProblemeOrTools" as Constructeur
+participant "tacheBuilder:\nTacheModelBuilder" as TacheBuilder
+participant "coutBuilder:\nCoutModelBuilder" as CoutBuilder
+participant "model:\nCpModel" as Model
+
+Caller -> Constructeur : ConstruireModele(probleme, objectif)
+activate Constructeur
+
+Constructeur -> Model : new CpModel()
+Constructeur -> TacheBuilder : new TacheModelBuilder()
+Constructeur -> CoutBuilder : new CoutModelBuilder()
+
+group Construction des Tâches, Ressources et Précédences
+    Constructeur -> TacheBuilder : Construire(model, probleme)
+    activate TacheBuilder
+    
+    TacheBuilder -> TacheBuilder : CreerVariablesDeDecision(...)
+    note right: Crée les IntervalVar pour chaque tâche\net les BoolVar pour chaque assignation possible.
+    
+    TacheBuilder -> TacheBuilder : AjouterContraintesAssignationUnique(...)
+    note right: Impose qu'une tâche soit assignée\nà un et un seul ouvrier.
+    
+    TacheBuilder -> TacheBuilder : AjouterContraintesRessources(...)
+    note right: Impose qu'un ouvrier ne peut pas\nfaire deux tâches en même temps (NoOverlap).
+    
+    TacheBuilder -> TacheBuilder : AjouterContraintesDePrecedence(...)
+    note right: Impose qu'une tâche ne commence pas\navant la fin de ses dépendances.
+
+    TacheBuilder --> Constructeur : (intervals, assignables, makespan)
+    deactivate TacheBuilder
+end
+
+group Construction du Modèle de Coût
+    Constructeur -> CoutBuilder : Construire(model, probleme, intervals, assignables, makespan)
+    activate CoutBuilder
+
+    CoutBuilder -> CoutBuilder : CalculerCoutsOuvriers(...)
+    note right: Crée des variables pour suivre\nles jours de travail de chaque ouvrier\net calcule le coût RH associé.
+
+    CoutBuilder -> CoutBuilder : ConstruireCoutsIndirects(...)
+    note right: Calcule les coûts fixes journaliers\nbasé sur la durée totale du chantier (makespan).
+    
+    CoutBuilder --> Constructeur : (coutTotal, coutRh, coutIndirect)
+    deactivate CoutBuilder
+end
+
+alt objectif == "DELAI"
+    Constructeur -> Model : Minimize(makespan)
+else objectif == "COUT"
+    Constructeur -> Model : Minimize(coutTotal)
+end
+
+Constructeur -> Constructeur : new ModeleCpSat(...)
+note right: Assemble toutes les variables\ncréées dans un DTO de retour.
+Constructeur --> Caller : modeleCpSat
+deactivate Constructeur
+
+@enduml

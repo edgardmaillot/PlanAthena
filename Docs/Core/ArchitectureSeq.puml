@@ -1,0 +1,52 @@
+@startuml
+title Diagramme de Séquence Macro : Processus de Planification d'un Chantier
+
+actor "Client de la DLL" as Client
+participant PlanAthenaCoreFacade as Facade
+participant ProcessChantierUseCase as UseCase
+participant ChantierValidationService as Validator
+participant ConstructeurProblemeOrTools as Builder
+participant "Solveur CP-SAT" as Solver
+participant SolutionInterpreterService as Interpreter
+
+Client -> Facade : ProcessChantierAsync(inputDto)
+activate Facade
+
+Facade -> UseCase : ExecuteAsync(inputDto)
+activate UseCase
+
+UseCase -> Validator : ValiderChantierCompletAsync(...)
+activate Validator
+Validator --> UseCase : (Validation OK)
+deactivate Validator
+
+UseCase -> Builder : ConstruireModele()
+activate Builder
+
+Builder -> Solver : **Création des variables et contraintes**
+activate Solver
+note right: C'est ici que le modèle\nmathématique est construit
+Solver --> Builder : (Modèle prêt)
+deactivate Solver
+
+Builder --> UseCase : (Modèle CpModel)
+deactivate Builder
+
+UseCase -> Solver : **Solve(model)**
+activate Solver
+note right: Recherche d'une solution optimale
+Solver --> UseCase : (Solution trouvée / Statut)
+deactivate Solver
+
+UseCase -> Interpreter : InterpreterSolution(solution, statut)
+activate Interpreter
+Interpreter --> UseCase : processResult
+deactivate Interpreter
+
+UseCase --> Facade : processResult
+deactivate UseCase
+
+Facade --> Client : processResult
+deactivate Facade
+
+@enduml

@@ -1,0 +1,43 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam linetype ortho
+skinparam wrapWidth 250
+skinparam package { 
+  borderColor #555555
+  borderThickness 2 
+}
+skinparam class { 
+  borderColor #007ACC
+  backgroundColor #DDEEFF
+  arrowColor #005588
+}
+
+title Diagramme de Classe Actuel - Logique de Dépendances
+
+package "Services & Utilitaires" {
+    class DependanceBuilder {
+        + ConstruireDependancesLogiques(List<Tache>)
+        --
+        - CreerEtLierJalonsDeSynchro(List<Tache>)
+        - SimplifierDependancesTransitives(List<Tache>)
+    }
+
+    class TopologieDependanceService {
+        + AppliquerDependancesInterMetiers(List<Tache>)
+        --
+        - ObtenirTousLesPrerequisTransitives(...)
+        - EstTeteDeChaine(...)
+        - TrouverFinsDeChaine(...)
+    }
+
+    class MetierService {
+        + GetPrerequisForMetier(string): IReadOnlyList<string>
+    }
+}
+
+' --- Relations Actuelles ---
+DependanceBuilder --> TopologieDependanceService : "utilise"
+TopologieDependanceService --> MetierService : "utilise"
+
+@enduml

@@ -1,0 +1,42 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam linetype ortho
+
+title Diagramme de Classe : Interprétation de la Solution
+
+package "Infrastructure.Services" {
+    class SolutionInterpreterService implements ISolutionInterpreterService {
+        + InterpreterLaSolution(solver, modele, probleme): IReadOnlyList<AffectationDto>
+    }
+}
+
+package "Google.OrTools.Sat" <<Librairie Externe>> {
+    class CpSolver {
+        + BooleanValue(var): bool
+        + Value(var): long
+    }
+}
+
+package "Application.InternalDto" {
+    class ModeleCpSat
+    class ProblemeOptimisation
+}
+
+package "Facade.Dto.Output" {
+    class AffectationDto {
+      + TacheId: string
+      + OuvrierId: string
+      + DateDebut: DateTime
+      + DureeHeures: double
+      ' ...
+    }
+}
+
+' --- Relations ---
+SolutionInterpreterService ..> CpSolver : "<<reads from>>"
+SolutionInterpreterService ..> ModeleCpSat : "<<reads from>>"
+SolutionInterpreterService ..> ProblemeOptimisation : "<<reads from>>"
+SolutionInterpreterService ..> AffectationDto : "<<creates>>"
+
+@enduml

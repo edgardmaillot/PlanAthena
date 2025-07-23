@@ -3,15 +3,14 @@
 using PlanAthena.Data;
 using System.Collections.Generic;
 using System.Linq;
-using System.Diagnostics;
 using System;
-using PlanAthena.Services.Business;
 
 namespace PlanAthena.Services.Processing
 {
     /// <summary>
     /// Service responsable de la préparation technique des données pour le solveur.
     /// Gère le découpage des tâches longues pour parallélisation et la création des jalons techniques pour la convergence.
+    /// Ce service ne produit aucun log, il se contente de transformer les données.
     /// </summary>
     public class PreparationSolveurService
     {
@@ -20,26 +19,17 @@ namespace PlanAthena.Services.Processing
         private const string JALON_TECHNIQUE_PREFIX = "JT_";
         private const string DECOUPAGE_SUFFIX = "_P";
 
-        // Constructeur vide car les méthodes de traitement sont statiques ou n'ont pas de dépendances d'état.
         public PreparationSolveurService() { }
 
         public List<Tache> PreparerPourSolveur(IReadOnlyList<Tache> tachesDuProjet)
         {
-            if (tachesDuProjet == null || tachesDuProjet.Count == 0)
+            if (tachesDuProjet == null || !tachesDuProjet.Any())
                 return new List<Tache>();
 
-            LogTaches("État initial avant préparation :", tachesDuProjet);
-
             var tachesDeTravail = tachesDuProjet.Select(CopierTache).ToList();
-
             var (tachesDecoupees, tableDecoupage) = DecouperTachesLongues(tachesDeTravail);
-            LogTaches("État après découpage des tâches longues :", tachesDecoupees, tableDecoupage);
-
             var tachesAvecJalons = CreerJalonsTechniques(tachesDecoupees, tableDecoupage);
-            LogTaches("État après création des jalons techniques :", tachesAvecJalons, tableDecoupage);
-
             var tachesFinales = MettreAJourDependances(tachesAvecJalons, tableDecoupage);
-            LogTaches("État final prêt pour le solveur :", tachesFinales);
 
             return tachesFinales;
         }
@@ -51,7 +41,7 @@ namespace PlanAthena.Services.Processing
 
             foreach (var tache in taches)
             {
-                if (tache.Type == TypeActivite.JalonUtilisateur || tache.HeuresHommeEstimees <= HEURE_LIMITE_DECOUPAGE)
+                if (tache.EstJalon || tache.HeuresHommeEstimees <= HEURE_LIMITE_DECOUPAGE)
                 {
                     tachesResultat.Add(tache);
                 }
@@ -81,7 +71,11 @@ namespace PlanAthena.Services.Processing
                 sousTache.TacheNom = $"{tacheOriginale.TacheNom} (Partie {compteur})";
                 sousTache.HeuresHommeEstimees = heuresPourCeBloc;
                 sousTache.Type = TypeActivite.Tache;
+
+                // --- CORRECTION DU BUG ---
+                // On s'assure que les dépendances de la tâche originale sont bien reportées sur chaque sous-tâche.
                 sousTache.Dependencies = tacheOriginale.Dependencies;
+                // -------------------------
 
                 sousTaches.Add(sousTache);
                 heuresRestantes -= heuresPourCeBloc;
@@ -135,7 +129,7 @@ namespace PlanAthena.Services.Processing
                 {
                     if (tableDecoupage.TryGetValue(depId, out var nouvellesRefs))
                     {
-                        nouvellesDeps.Add(nouvellesRefs[^1]); // ^1 est l'équivalent de .Last() mais plus performant
+                        nouvellesDeps.Add(nouvellesRefs[^1]);
                     }
                     else
                     {
@@ -161,26 +155,6 @@ namespace PlanAthena.Services.Processing
                 BlocId = source.BlocId,
                 Type = source.Type
             };
-        }
-
-        [Conditional("DEBUG")]
-        private static void LogTaches(string titre, IReadOnlyList<Tache> taches, Dictionary<string, List<string>>? tableDecoupage = null)
-        {
-            Debug.WriteLine($"\n--- {titre} ({taches.Count} éléments) ---");
-            foreach (var tache in taches.OrderBy(t => t.TacheId))
-            {
-                Debug.WriteLine($"  - ID: {tache.TacheId,-40} | Nom: {tache.TacheNom,-50} | Type: {tache.Type,-15} | Durée: {tache.HeuresHommeEstimees,2}h | Dépend de: [{tache.Dependencies}]");
-            }
-
-            if (tableDecoupage != null && tableDecoupage.Count > 0)
-            {
-                Debug.WriteLine("\n  --- Table de Découpage Actuelle ---");
-                foreach (var kvp in tableDecoupage.OrderBy(k => k.Key))
-                {
-                    Debug.WriteLine($"    - Origine: {kvp.Key,-40} -> Mappe vers: [{string.Join(", ", kvp.Value)}]");
-                }
-            }
-            Debug.WriteLine("--- Fin de la section ---\n");
         }
     }
 }

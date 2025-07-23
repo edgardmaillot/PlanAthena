@@ -1,0 +1,79 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam linetype ortho
+skinparam ranksep 60
+skinparam nodesep 90
+
+title Diagramme de Classe : Construction du Modèle de Résolution
+
+package "Infrastructure.Services.OrTools" {
+    class ConstructeurProblemeOrTools implements IConstructeurProblemeOrTools {
+        + ConstruireModele(probleme, objectif): ModeleCpSat
+    }
+
+    class TacheModelBuilder {
+        + Construire(model, probleme): (intervals, assignables, makespan)
+        -- private --
+        - CreerVariablesDeDecision(...)
+        - AjouterContraintesAssignationUnique(...)
+        - AjouterContraintesRessources(...)
+        - AjouterContraintesDePrecedence(...)
+    }
+    note right of TacheModelBuilder
+      Construit les variables de temps,
+      d'assignation et de ressources.
+      Gère les contraintes de non-chevauchement
+      et de dépendances.
+    end note
+
+    class CoutModelBuilder {
+        + Construire(model, probleme, ...): (coutTotal, coutRh, coutIndirect)
+        -- private --
+        - CalculerCoutsOuvriers(...)
+        - ConstruireCoutsIndirects(...)
+        - PreparerCachesTemporels(...)
+    }
+    note right of CoutModelBuilder
+      Construit les variables de coût.
+      Définit l'objectif économique
+      du modèle (coût RH, coût indirect).
+    end note
+}
+
+package "Application.InternalDto" {
+    class ProblemeOptimisation {
+      + Chantier
+      + EchelleTemps
+      + Configuration
+    }
+    class ModeleCpSat {
+      + Model: CpModel
+      + TachesIntervals: Dictionary<...>
+      + TachesAssignables: Dictionary<...>
+      + Makespan: IntVar
+      + CoutTotal: IntVar
+      ' ...
+    }
+}
+
+package "Google.OrTools.Sat" <<Librairie Externe>> {
+    class CpModel
+    class IntVar
+    class BoolVar
+    class IntervalVar
+}
+
+' --- Relations ---
+ConstructeurProblemeOrTools ..> TacheModelBuilder : "<<uses>>"
+ConstructeurProblemeOrTools ..> CoutModelBuilder : "<<uses>>"
+
+ConstructeurProblemeOrTools ..> ProblemeOptimisation : "<<reads>>"
+ConstructeurProblemeOrTools ..> ModeleCpSat : "<<creates>>"
+
+TacheModelBuilder ..> ProblemeOptimisation : "<<reads>>"
+TacheModelBuilder ..> CpModel : "<<modifies>>"
+CoutModelBuilder ..> ProblemeOptimisation : "<<reads>>"
+CoutModelBuilder ..> CpModel : "<<modifies>>"
+
+@enduml

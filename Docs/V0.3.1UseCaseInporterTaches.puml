@@ -1,0 +1,53 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam wrapWidth 200
+skinparam participantPadding 5
+skinparam sequenceMessageAlign center
+skinparam sequenceArrowColor #1E8449
+skinparam sequenceLifeLineBorderColor #239B56
+skinparam sequenceParticipantBackgroundColor #E8F8F5
+
+title Use Case 3 : Import de tâches depuis un CSV (Vision Cible)
+
+actor User
+participant TacheForm
+participant ProjetService
+participant LotService
+participant BlocService
+participant TacheService
+participant DependanceBuilder
+
+User -> TacheForm : Clique "Importer Tâches CSV" et choisit un fichier
+activate TacheForm
+
+TacheForm -> ProjetService : **ImporterTachesDepuisCsv(filePath)**
+activate ProjetService
+
+ProjetService -> ProjetService : Lit et parse le fichier CSV
+
+group Étape 1 : Découverte et Création des Lots & Blocs
+    loop pour chaque ligne du CSV
+        ProjetService -> LotService : GetOrCreateLot(lotInfo)
+        ProjetService -> BlocService : GetOrCreateBloc(blocInfo)
+    end
+end
+
+group Étape 2 : Création des Tâches
+    ProjetService -> TacheService : **RemplacerToutesLesTaches(nouvellesTaches)**
+    note right: Le service de tâches est mis à jour en une seule fois\navec la liste complète des tâches du CSV.
+end
+
+group Étape 3 : Nettoyage et Validation Globale
+    ProjetService -> DependanceBuilder : **ConstruireDependancesLogiques(toutesLesTaches)**
+    note right: Une seule passe de nettoyage est faite\nsur l'ensemble du nouveau projet pour garantir\nla cohérence du graphe.
+end
+
+ProjetService --> TacheForm : retourne un résumé de l'import
+deactivate ProjetService
+
+TacheForm -> TacheForm : **RafraichirVueComplete()**
+note right: Rafraîchissement complet de l'interface\npour afficher le nouveau projet.
+
+deactivate TacheForm
+@enduml

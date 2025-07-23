@@ -1,0 +1,64 @@
+@startuml
+title Diagramme de Séquence : Validation et Création du Modèle de Domaine (Corrigé)
+
+participant ProcessChantierUseCase as UseCase
+participant "validator: IValidator<...>" as FluentValidator
+participant "mapper: IChantierSetupInputMapper" as Mapper
+participant "calendrier: ICalendrierService" as CalendrierSvc
+participant "validator: IChantierValidationService" as DomainValidator
+participant "graph: DependencyGraph" as DepGraph
+
+activate UseCase
+UseCase -> FluentValidator : ValidateAsync(inputDto)
+activate FluentValidator
+' Note: FluentValidator effectue de nombreuses vérifications internes sur les DTOs
+FluentValidator --> UseCase : validationResult
+deactivate FluentValidator
+
+alt validationResult is NOT valid
+    note right: Validation DTO échouée
+    UseCase -->: return (null, messages)
+    deactivate UseCase
+end
+
+UseCase -> Mapper : MapToDomainAsync(inputDto)
+activate Mapper
+Mapper -> CalendrierSvc : CreerCalendrierOuvreChantier(...)
+activate CalendrierSvc
+CalendrierSvc --> Mapper : calendrierOuvre
+deactivate CalendrierSvc
+note right of Mapper : Mappe DTOs vers Entités Domaine\nInjecte Métier/Ouvriers virtuels pour les jalons
+Mapper --> UseCase : (chantier, mappingMessages)
+deactivate Mapper
+
+alt chantier is null
+    note right: Erreur de mapping
+    UseCase -->: return (null, messages)
+    deactivate UseCase
+end
+
+UseCase -> DomainValidator : ValiderChantierCompletAsync(inputDto, chantier)
+activate DomainValidator
+loop pour chaque BlocTravail du chantier
+    DomainValidator -> DepGraph : new(tachesDuBloc)
+    activate DepGraph
+    DepGraph --> DomainValidator : graph
+    deactivate DepGraph
+
+    DomainValidator -> DepGraph : DetectCycles()
+    activate DepGraph
+    DepGraph --> DomainValidator : cycles
+    deactivate DepGraph
+end
+DomainValidator --> UseCase : cycleMessages
+deactivate DomainValidator
+
+alt Des erreurs de cycle ont été trouvées
+    note right: Cycles de dépendances détectés
+    UseCase -->: return (null, messages)
+    deactivate UseCase
+end
+
+UseCase --> : return (chantier, allMessages)
+deactivate UseCase
+@enduml

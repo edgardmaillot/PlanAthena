@@ -10,6 +10,7 @@ using PlanAthena.Core.Domain.ValueObjects;
 using PlanAthena.Core.Facade.Dto.Enums;
 using PlanAthena.Core.Facade.Dto.Input;
 using PlanAthena.Core.Facade.Dto.Output;
+using System.Diagnostics;
 
 namespace PlanAthena.Core.Application.UseCases
 {
@@ -49,10 +50,12 @@ namespace PlanAthena.Core.Application.UseCases
 
         public async Task<ProcessChantierResultDto> ExecuteAsync(ChantierSetupInputDto inputDto)
         {
+            Debug.WriteLine($"[DEBUG_TRACE] 1. Entrée dans ProcessChantierUseCase.ExecuteAsync avec {inputDto.Taches.Count} tâches.");
             var (chantier, validationMessages) = await ValiderEtCreerChantierAsync(inputDto);
 
             if (chantier == null)
             {
+                Debug.WriteLine("[DEBUG_TRACE] 5. Échec de la validation, retour anticipé.");
                 return new ProcessChantierResultDto
                 {
                     ChantierId = inputDto.ChantierId,
@@ -60,7 +63,7 @@ namespace PlanAthena.Core.Application.UseCases
                     Messages = validationMessages
                 };
             }
-
+            Debug.WriteLine("[DEBUG_TRACE] 5. Validation et création du chantier réussies. Passage à l'analyse/optimisation.");
             // Aiguillage basé sur la présence de la configuration d'optimisation
             if (inputDto.OptimizationConfig == null)
             {
@@ -73,22 +76,31 @@ namespace PlanAthena.Core.Application.UseCases
         private async Task<(Chantier? chantier, IReadOnlyList<MessageValidationDto> messages)> ValiderEtCreerChantierAsync(ChantierSetupInputDto inputDto)
         {
             var allMessages = new List<MessageValidationDto>();
-
+            System.Diagnostics.Debug.WriteLine($"[DEBUG_TRACE] Validation Chantier Usecase");
             var fluentValidationResult = await _fluentValidator.ValidateAsync(inputDto);
             if (!fluentValidationResult.IsValid)
             {
+                Debug.WriteLine("[DEBUG_TRACE] 2a. Échec de la validation FluentValidation.");
                 allMessages.AddRange(fluentValidationResult.Errors.Select(e => new MessageValidationDto { Type = TypeMessageValidation.Erreur, CodeMessage = e.ErrorCode ?? "ERR_VALIDATION", Message = e.ErrorMessage, ProprieteConcernee = e.PropertyName }));
                 return (null, allMessages);
             }
-
+            Debug.WriteLine("[DEBUG_TRACE] 2a. Validation FluentValidation OK.");
             var (chantier, mappingMessages) = await _inputMapper.MapToDomainAsync(inputDto);
             allMessages.AddRange(mappingMessages);
-            if (chantier == null) return (null, allMessages);
-
+            if (chantier == null)
+            {
+                Debug.WriteLine("[DEBUG_TRACE] 3. Échec du mapping du DTO vers le domaine.");
+                return (null, allMessages);
+            }
+            Debug.WriteLine("[DEBUG_TRACE] 3. Mapping du DTO vers le domaine OK.");
             var cycleMessages = await _chantierValidationService.ValiderChantierCompletAsync(inputDto, chantier);
             allMessages.AddRange(cycleMessages);
 
-            if (allMessages.Any(m => m.Type == TypeMessageValidation.Erreur)) return (null, allMessages);
+            if (allMessages.Any(m => m.Type == TypeMessageValidation.Erreur))
+            {
+                Debug.WriteLine("[DEBUG_TRACE] 4a. Des erreurs ont été détectées durant les validations.");
+                return (null, allMessages);
+            }
 
             return (chantier, allMessages);
         }

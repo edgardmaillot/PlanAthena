@@ -1,0 +1,71 @@
+@startuml
+' skinparam linetype ortho
+title Diagramme de Séquence "Zoom" : TacheModelBuilder.Construire
+
+participant "constructeur: Constructeur..." as Constructeur
+participant "tacheBuilder: TacheModelBuilder" as Builder
+participant "model: CpModel" as Model
+
+Constructeur -> Builder : Construire(model, probleme)
+activate Builder
+
+Builder -> Builder : CreerPontTemporel(probleme.EchelleTemps)
+activate Builder
+note right: Calcule un tableau de mapping\n[index_slot] -> heure_absolue_depuis_début
+deactivate Builder
+
+group Création des variables de décision
+    loop pour chaque Tache dans chantier.ObtenirToutesLesTaches()
+        
+        alt tache.Type == TypeActivite.Tache
+            note over Builder: **Tâche normale (modélisée en slots)**
+            Builder -> Model : NewIntVar(start, end, size, ...)
+            activate Model
+            Model --> Builder : intervalVar
+            deactivate Model
+            note right of Model: Durée = HeuresHommeEstimees
+        else tache.Type != TypeActivite.Tache
+            note over Builder: **Jalon (modélisé en heures absolues puis mappé)**
+            Builder -> Model : NewIntVar(startAbsolu)
+            note right: Crée un début en HEURES absolues
+
+            Builder -> Model : AddElement(startSlot, mapPontTemporel, startAbsolu)
+            note right: Contraint le 'startSlot' à correspondre\nà la bonne heure absolue
+
+            Builder -> Model : NewIntervalVar(startSlot, 1, ...)
+            activate Model
+            Model --> Builder : intervalVar
+            deactivate Model
+            note right of Model: Durée = 1 slot symbolique
+        end
+
+        loop pour chaque Ouvrier compétent
+            Builder -> Model : NewBoolVar(estAssignable)
+        end
+    end
+end group
+
+group Ajout des contraintes
+    Builder -> Builder : AjouterContraintesAssignationUnique(...)
+    activate Builder
+    note right: Pour chaque tâche, ajoute une contrainte\n`model.AddExactlyOne(candidats)`
+    deactivate Builder
+
+    Builder -> Builder : AjouterContraintesRessources(...)
+    activate Builder
+    note right: Pour chaque ouvrier, ajoute une contrainte\n`model.AddNoOverlap(intervallesOptionnels)`
+    deactivate Builder
+    
+    Builder -> Builder : AjouterContraintesDePrecedence(...)
+    activate Builder
+    note right: Pour chaque dépendance, ajoute une contrainte\n`tache.Start >= dependance.End`
+    deactivate Builder
+end
+
+Builder -> Model : NewIntVar(makespan)
+Builder -> Model : AddMaxEquality(makespan, all_task_ends)
+
+Builder --> Constructeur : (intervals, assignables, makespan)
+deactivate Builder
+
+@enduml

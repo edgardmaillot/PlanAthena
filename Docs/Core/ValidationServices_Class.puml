@@ -1,0 +1,42 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam linetype ortho
+skinparam ranksep 50
+skinparam nodesep 70
+
+title Diagramme de Classe - CalendrierService
+
+package "Infrastructure.Services" {
+    class CalendrierService implements ICalendrierService {
+        + CreerCalendrierOuvreChantier(dto, ...): CalendrierOuvreChantier
+        + CreerEchelleTempsOuvree(calendrier, ...): EchelleTempsOuvree
+        -- private --
+        - GenererSlotsPourPlage(...)
+    }
+}
+
+package "Application.Interfaces" {
+    interface ICalendrierService
+}
+
+package "Domain.ValueObjects" {
+    class CalendrierOuvreChantier
+    class EchelleTempsOuvree {
+        + Slots: IReadOnlyList<SlotTemporel>
+        + IndexLookup: FrozenDictionary<LocalDateTime, int>
+    }
+    class SlotTemporel
+}
+
+package "Facade.Dto.Input" {
+    class CalendrierTravailDefinitionDto
+}
+
+' --- Relations ---
+CalendrierService ..> CalendrierTravailDefinitionDto : "utilise en entrée"
+CalendrierService ..> CalendrierOuvreChantier : "crée"
+CalendrierService ..> EchelleTempsOuvree : "crée"
+EchelleTempsOuvree "1" *-- "0..*" SlotTemporel : "contient"
+
+@enduml

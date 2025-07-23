@@ -4,6 +4,7 @@ using Microsoft.Msagl.Layout.Layered;
 using PlanAthena.Controls.Config;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
+using PlanAthena.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -28,6 +29,7 @@ namespace PlanAthena.Controls
         private MetierService _metierService;
         private LotService _lotService;
         private BlocService _blocService;
+        private DependanceBuilder _dependanceBuilder;
 
         private List<Tache> _taches = new List<Tache>();
 
@@ -54,12 +56,13 @@ namespace PlanAthena.Controls
             this.Controls.Add(_viewer);
         }
 
-        public void Initialize(MetierService metierService, LotService lotService, BlocService blocService, PertDiagramSettings settings)
+        public void Initialize(MetierService metierService, LotService lotService, BlocService blocService, DependanceBuilder dependanceBuilder, PertDiagramSettings settings)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
             _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
             _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
+            _dependanceBuilder = dependanceBuilder ?? throw new ArgumentNullException(nameof(dependanceBuilder)); // AJOUT
             _nodeBuilder = new PertNodeBuilder(settings, _metierService);
 
             ConfigurerViewer();
@@ -244,15 +247,27 @@ namespace PlanAthena.Controls
         private void AjouterDependances(List<Tache> tachesAffichees)
         {
             var idsAffiches = new HashSet<string>(tachesAffichees.Select(t => t.TacheId));
-            foreach (var tache in tachesAffichees.Where(t => !string.IsNullOrEmpty(t.Dependencies)))
+
+            // Pour chaque tâche que nous allons dessiner...
+            foreach (var tacheCourante in tachesAffichees)
             {
-                var dependances = tache.Dependencies.Split(',').Select(d => d.Trim()).Where(d => !string.IsNullOrEmpty(d) && idsAffiches.Contains(d));
-                foreach (var dependanceId in dependances)
+                // 1. Lire la VRAIE liste de dépendances, directement depuis l'objet.
+                var dependancesReelles = (tacheCourante.Dependencies ?? "")
+                    .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(d => d.Trim());
+
+                // 2. Pour chaque dépendance réelle...
+                foreach (var idPredecesseur in dependancesReelles)
                 {
-                    var edge = _graph.AddEdge(dependanceId, tache.TacheId);
-                    edge.Attr.Color = _settings.EdgeDefaultColor;
-                    edge.Attr.LineWidth = _settings.EdgeDefaultWidth;
-                    edge.Attr.ArrowheadAtTarget = _settings.EdgeArrowStyle;
+                    // 3. Si le prédécesseur est aussi affiché à l'écran...
+                    if (idsAffiches.Contains(idPredecesseur))
+                    {
+                        // 4. ...alors on trace un trait.
+                        var edge = _graph.AddEdge(idPredecesseur, tacheCourante.TacheId);
+                        edge.Attr.Color = _settings.EdgeDefaultColor;
+                        edge.Attr.LineWidth = _settings.EdgeDefaultWidth;
+                        edge.Attr.ArrowheadAtTarget = _settings.EdgeArrowStyle;
+                    }
                 }
             }
         }

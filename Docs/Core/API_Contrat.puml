@@ -1,0 +1,94 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam linetype ortho
+skinparam ranksep 60
+skinparam nodesep 60
+
+title Diagramme de Contrat de Service API - PlanAthena.core
+
+package "Entrée de la DLL" {
+    class "PlanAthenaCoreFacade" as Facade {
+        + ProcessChantierAsync(input): Task<output>
+    }
+}
+
+package "Contrat d'Entrée (Input DTOs)" {
+    class ChantierSetupInputDto {
+      + ChantierId: string
+      + OptimizationConfig: OptimizationConfigDto?
+      ' ...
+    }
+    
+    ChantierSetupInputDto *-- "1..*" BlocTravailDto
+    ChantierSetupInputDto *-- "1..*" TacheDto
+    ChantierSetupInputDto *-- "1..*" LotTravauxDto
+    ChantierSetupInputDto *-- "1..*" OuvrierDto
+    ChantierSetupInputDto *-- "1..*" MetierDto
+    ChantierSetupInputDto *-- "1" CalendrierTravailDefinitionDto
+    ChantierSetupInputDto *-- "0..1" ConfigurationChefChantierDto
+    
+    class TacheDto {
+      + Dependencies: IReadOnlyList<string>
+    }
+    class OuvrierDto {
+      + Competences: IReadOnlyList<CompetenceDto>
+    }
+    class MetierDto
+    class LotTravauxDto
+    class BlocTravailDto
+    class CalendrierTravailDefinitionDto
+    class CompetenceDto
+    class ConfigurationChefChantierDto
+    class OptimizationConfigDto
+}
+
+package "Contrat de Sortie (Output DTOs)" {
+    class ProcessChantierResultDto {
+        + Etat: EtatTraitementInput
+        + Messages: IReadOnlyList<MessageValidationDto>
+        + AnalyseStatiqueResultat: AnalyseRessourcesResultatDto?
+        + OptimisationResultat: PlanningOptimizationResultDto?
+        + AnalysePostOptimisationResultat: PlanningAnalysisReportDto?
+    }
+    
+    ProcessChantierResultDto *-- "0..1" AnalyseRessourcesResultatDto
+    ProcessChantierResultDto *-- "0..1" PlanningOptimizationResultDto
+    ProcessChantierResultDto *-- "0..1" PlanningAnalysisReportDto
+    
+    class PlanningOptimizationResultDto {
+        + Status: OptimizationStatus
+        + Affectations: IReadOnlyList<AffectationDto>
+        ' ...
+    }
+    PlanningOptimizationResultDto *-- "0..*" AffectationDto
+    
+    class PlanningAnalysisReportDto {
+        + KpisGlobaux: GlobalKpiDto
+        + KpisParOuvrier: IReadOnlyList<WorkerKpiDto>
+    }
+    
+    class MessageValidationDto
+    class AnalyseRessourcesResultatDto
+    class AffectationDto
+    class GlobalKpiDto
+    class WorkerKpiDto
+}
+
+package "Types Partagés (Enums)" {
+    enum FlexibiliteDate
+    enum NiveauExpertise
+    enum TypeActivite
+    enum EtatTraitementInput
+    enum TypeMessageValidation
+    enum OptimizationStatus
+}
+
+' --- Relations de Contrat ---
+Facade ..> ChantierSetupInputDto : "<<accepte>>"
+Facade ..> ProcessChantierResultDto : "<<retourne>>"
+
+ChantierSetupInputDto ..> Enums
+ProcessChantierResultDto ..> Enums
+
+@enduml
