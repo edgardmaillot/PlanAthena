@@ -1,141 +1,91 @@
 @startuml
-    ' --- Configuration ---
-skinparam componentStyle uml2
-' -- Paramètres de séquence corrigés --
 skinparam sequenceArrowColor #005588
 skinparam sequenceLifeLineBorderColor #007ACC
 skinparam sequenceParticipantBackgroundColor #DDEEFF
 
-title Flux de Traitement des Dépendances (Version Mise à Jour - Post Corrections)
-    participant UI as "Interface Utilisateur"
-    participant DB as "DependanceBuilder"
-    participant MS as "MetierService"
-    participant QG as "QuikGraph"
+title Service de Suggestions - Flux Principal (Version Simplifiée)
 
-    Note over UI,QG: Phase 1: Orchestration Principale
-    UI->>DB: AppliquerEtSimplifierDependances(taches)
-    DB->>DB: Réinitialiser _jalonSyncCounter = 1
-    DB->>DB: Identifier blocs distincts
-    
-    loop Pour chaque bloc
-        Note over DB: Phase 2: Traitement Isolé par Bloc (Règle 1)
-        DB->>DB: TraiterBloc(blocId, taches, nouveauxJalons)
-        DB->>DB: Extraire tachesDuBloc (isolation stricte)
-        DB->>DB: Créer tacheMap et graphe bidirectionnel
-        
-        Note over DB: Étape 2.1: Construction Graphe Initial (Règle 2 - Primauté Manuel)
-        loop Pour chaque tâche du bloc
-            DB->>DB: Parser Dependencies existantes
-            DB->>DB: Ajouter arêtes manuelles au graphe
-        end
-        
-        Note over DB: Étape 2.2: Génération Dépendances Métier (Règles 2 & 3)
-        DB->>DB: Identifier metiersPresentsDansBloc
-        loop Pour chaque tâche non-jalon avec métier
-            Note over DB: CORRECTION 1: Gestion des Exclusions
-            DB->>DB: Parser ExclusionsDependances de la tâche
-            DB->>MS: GetPrerequisForMetier(tache.MetierId)
-            MS-->>DB: Liste prérequis directs
-            DB->>DB: ObtenirPrerequisFinaux(metierId, metiersPresents)
-            Note over DB: Règle 3: Arrêt dès métier trouvé dans bloc
-            
-            loop Pour chaque prérequis final
-                DB->>DB: Vérifier si prérequis déjà couvert par manuel
-                alt Prérequis non couvert
-                    DB->>DB: TrouverFinsDeChaineDansGraphe(metierId)
-                    loop Pour chaque fin de chaîne
-                        Note over DB: CORRECTION 2: Vérification Exclusions
-                        alt finDeChaineId NOT IN exclusions
-                            DB->>DB: Ajouter arête (finDeChaine -> tache)
-                        else
-                            Note over DB: Respecter exclusion utilisateur
-                            DB->>DB: Ignorer cette dépendance (Règle 2)
-                        end
-                    end
-                end
-            end
-        end
-        
-        Note over DB: Étape 2.3: Réduction Transitive (Règle 4)
-        alt Graphe est DAG
-            DB->>QG: TransitiveReductionAlgorithm.Compute()
-            QG-->>DB: Graphe réduit (sans redondances)
-            DB->>DB: Reconstruire graphe avec arêtes minimales
-        end
-        
-        Note over DB: Étape 2.4: Factorisation par Jalons (Règle 5)
-        DB->>DB: Identifier groupes à factoriser (tâches avec prédécesseurs identiques)
-        loop Pour chaque groupe candidat
-            Note over DB: CORRECTION 3: Logique EstFactorisationNecessaire améliorée
-            DB->>DB: EstFactorisationNecessaire(predecesseurs, tacheMap)
-            Note over DB: Heuristique: jalons existants + proportion
-            alt Factorisation nécessaire
-                DB->>DB: Créer nouveau jalon J_Sync_{blocId}_{counter}
-                DB->>DB: Connecter prédécesseurs -> jalon
-                DB->>DB: Recâbler successeurs -> jalon
-                DB->>DB: Incrémenter _jalonSyncCounter
-            else
-                Note over DB: Préserver structure existante
-            end
-        end
-        
-        Note over DB: Étape 2.5: Mise à Jour Modèles depuis Graphe Final
-        loop Pour chaque tâche du bloc
-            DB->>DB: tache.Dependencies = string.Join(graphe.InEdges)
-        end
-        loop Pour chaque nouveau jalon du bloc
-            DB->>DB: jalon.Dependencies = string.Join(graphe.InEdges)
-        end
-    end
-    
-    DB->>DB: Ajouter nouveauxJalons à la liste globale
-    DB-->>UI: Traitement terminé
+participant UI as "TacheDetailForm"
+participant DB as "DependanceBuilder"
+participant MS as "MetierService"
+participant TS as "TacheService"
 
-    Note over UI,QG: Flux Alternatif: Suggestions UI (ObtenirEtatDependancesPourTache)
-    UI->>DB: ObtenirEtatDependancesPourTache(tache, contexte)
-    DB->>DB: Créer tacheMap et graphe depuis contexte
-    DB->>DB: Construire graphe depuis Dependencies existantes
-    
-    Note over DB: Analyse des Besoins vs Satisfaction
+Note over UI,TS: Cas d'Usage: Création/Modification de Tâche
+
+UI->>UI: Utilisateur ouvre formulaire tâche
+UI->>DB: ObtenirDependancesPourTache(tache, contexteTaches)
+activate DB
+
+Note over DB: Phase 1: Filtrage Anti-Cycles
+DB->>DB: FiltrerTachesEligibles(tache, contexteTaches)
+DB->>DB: Exclure tâche elle-même
+alt Tâche a un métier
     DB->>MS: GetTransitivePrerequisites(tache.MetierId)
-    MS-->>DB: Tous prérequis transitifs requis
-    DB->>DB: TrouverMetiersSatisfaitsParGraphe(tacheId, graph)
-    DB->>DB: Calculer metiersASuggerer = requis - satisfaits
-    
-    Note over DB: Construction des États d'Affichage
-    DB->>DB: Parser Dependencies et ExclusionsDependances
-    loop Pour chaque dépendance/exclusion existante
-        alt Dans Dependencies
-            DB->>DB: Créer DependanceAffichage(Etat.Stricte)
-        else Dans ExclusionsDependances
-            DB->>DB: Créer DependanceAffichage(Etat.Exclue)
-        end
-    end
-    
-    loop Pour chaque métier à suggérer
-        DB->>DB: TrouverFinsDeChaineDansGraphe(metierId)
-        loop Pour chaque nouvelle suggestion
-            DB->>DB: Créer DependanceAffichage(Etat.Suggeree, EstHeritee=true)
-        end
-    end
-    
-    DB->>DB: Trier par TacheNom
-    DB-->>UI: Liste DependanceAffichage complète
+    MS-->>DB: Prérequis transitifs
+    DB->>DB: IdentifierMetiersFuturs(tache.MetierId)
+    Note over DB: Exclure métiers qui dépendent du métier actuel
+    DB->>DB: Filtrer selon métiers futurs
+end
+DB->>DB: → tachesEligibles (même bloc, anti-cycles)
 
-    Note over UI,QG: Validation Globale (ConstruireDependancesLogiques)
-    UI->>DB: ConstruireDependancesLogiques(taches)
-    DB->>DB: Créer graphe global depuis toutes Dependencies
-    loop Pour chaque dépendance
-        alt Tâche prédécesseur introuvable
-            Note over DB: Tolérer (éviter cascade d'erreurs)
-        else Prédécesseur dans bloc différent
-            DB-->>UI: ValidationResult.Error("Violation Règle 1")
-        end
+Note over DB: Phase 2: Identification Suggestions
+DB->>DB: IdentifierSuggestions(tache, tachesEligibles)
+alt Tâche a un métier
+    DB->>MS: GetPrerequisForMetier(tache.MetierId)
+    MS-->>DB: Prérequis directs
+    DB->>DB: Identifier métiers présents dans bloc
+    
+    alt Prérequis directs présents
+        DB->>DB: Utiliser prérequis directs
+    else Aucun prérequis direct
+        Note over DB: Règle 3: Remontée ciblée
+        DB->>DB: ObtenirPrerequisFinaux(metierId, metiersPresents)
     end
-    alt Graphe contient cycles
-        DB-->>UI: ValidationResult.Error("Dépendance circulaire")
+    
+    loop Pour chaque métier prérequis
+        DB->>DB: TrouverFinsDeChaine(metierPrerequis, tachesEligibles)
+        Note over DB: Tâches sans successeur même métier
+        Note over DB: Si successeurs jalons → suggérer jalons
+        DB->>DB: Ajouter fins de chaîne aux suggestions
+    end
+end
+
+Note over DB: Phase 3: Classification
+DB->>DB: ParseDependances(tache.Dependencies)
+DB->>DB: ParseDependances(tache.ExclusionsDependances)
+DB->>DB: ClassifierDependances(eligibles, strictes, excluses, suggestions)
+
+loop Pour chaque tâche éligible
+    alt Dans Dependencies
+        DB->>DB: Créer DependanceAffichage(Etat.Stricte, EstHeritee=false)
+    else Dans ExclusionsDependances
+        DB->>DB: Créer DependanceAffichage(Etat.Exclue, EstHeritee=true)
+    else Dans suggestions
+        DB->>DB: Créer DependanceAffichage(Etat.Suggeree, EstHeritee=true)
     else
-        DB-->>UI: ValidationResult.Success()
+        DB->>DB: Créer DependanceAffichage(Etat.Neutre, EstHeritee=false)
     end
+end
+
+DB->>DB: Trier par TacheNom
+DB-->>UI: List<DependanceAffichage>
+deactivate DB
+
+Note over UI: Affichage avec États Visuels
+UI->>UI: Afficher liste avec couleurs/coches
+Note over UI: Stricte: noir + coché
+Note over UI: Exclue: rouge + décoché  
+Note over UI: Suggérée: bleu + coché
+Note over UI: Neutre: normal + décoché
+
+Note over UI,TS: Sauvegarde des Modifications
+User->>UI: Modifie coches et sauvegarde
+UI->>UI: SauvegarderModifications()
+Note over UI: Coché → Dependencies
+Note over UI: Décoché (si suggérée) → ExclusionsDependances
+UI->>TS: ModifierTache(tache)
+activate TS
+TS->>TS: Persister Dependencies et ExclusionsDependances
+deactivate TS
 
 @enduml

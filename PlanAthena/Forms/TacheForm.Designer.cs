@@ -17,6 +17,7 @@ namespace PlanAthena.Forms
 
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(TacheForm));
             toolStripPrincipal = new ToolStrip();
             btnZoomAjuster = new ToolStripButton();
             toolStripSeparatorDiagramme = new ToolStripSeparator();
@@ -52,6 +53,7 @@ namespace PlanAthena.Forms
             btnGererLots = new Button();
             cmbLots = new ComboBox();
             lblLotActif = new Label();
+            pictureBox1 = new PictureBox();
             toolStripPrincipal.SuspendLayout();
             statusStripPrincipal.SuspendLayout();
             groupBoxActions.SuspendLayout();
@@ -71,7 +73,9 @@ namespace PlanAthena.Forms
             splitContainerDetails.Panel1.SuspendLayout();
             splitContainerDetails.Panel2.SuspendLayout();
             splitContainerDetails.SuspendLayout();
+            panelPlans.SuspendLayout();
             groupBoxGestionLots.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
             // 
             // toolStripPrincipal
@@ -370,6 +374,7 @@ namespace PlanAthena.Forms
             // panelPlans
             // 
             panelPlans.BorderStyle = BorderStyle.FixedSingle;
+            panelPlans.Controls.Add(pictureBox1);
             panelPlans.Dock = DockStyle.Fill;
             panelPlans.Location = new Point(0, 0);
             panelPlans.Name = "panelPlans";
@@ -427,6 +432,17 @@ namespace PlanAthena.Forms
             lblLotActif.TabIndex = 0;
             lblLotActif.Text = "Lot Actif :";
             // 
+            // pictureBox1
+            // 
+            pictureBox1.Dock = DockStyle.Fill;
+            pictureBox1.Image = (Image)resources.GetObject("pictureBox1.Image");
+            pictureBox1.Location = new Point(0, 0);
+            pictureBox1.Name = "pictureBox1";
+            pictureBox1.Size = new Size(398, 149);
+            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+            pictureBox1.TabIndex = 0;
+            pictureBox1.TabStop = false;
+            // 
             // TacheForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -464,8 +480,10 @@ namespace PlanAthena.Forms
             splitContainerDetails.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainerDetails).EndInit();
             splitContainerDetails.ResumeLayout(false);
+            panelPlans.ResumeLayout(false);
             groupBoxGestionLots.ResumeLayout(false);
             groupBoxGestionLots.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             ResumeLayout(false);
             PerformLayout();
 
@@ -508,5 +526,6 @@ namespace PlanAthena.Forms
         private System.Windows.Forms.Button btnGererLots;
         private System.Windows.Forms.ComboBox cmbLots;
         private System.Windows.Forms.Label lblLotActif;
+        private PictureBox pictureBox1;
     }
 }

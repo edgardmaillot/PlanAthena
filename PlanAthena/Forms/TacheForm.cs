@@ -3,11 +3,6 @@ using PlanAthena.Controls.Config;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
 
 namespace PlanAthena.Forms
 {
@@ -276,36 +271,15 @@ namespace PlanAthena.Forms
         }
 
         /// <summary>
-        /// Orchestre la génération automatique et la simplification des dépendances pour l'ensemble du projet.
+        /// FONCTIONNALITÉ DÉSACTIVÉE - HORS PÉRIMÈTRE
+        /// Le mapping automatique sera implémenté dans une itération future.
+        /// Pour cette phase, nous nous concentrons uniquement sur le service de suggestions.
         /// </summary>
         private void btnMappingAuto_Click(object sender, EventArgs e)
         {
-            var result = MessageBox.Show("Cette action va générer les dépendances logiques entre les tâches en se basant sur les métiers, puis simplifier le graphe pour en retirer les liens redondants.\n\nLes dépendances existantes seront enrichies, pas écrasées. Voulez-vous continuer ?",
-                "Mapping Automatique des Dépendances", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (result != DialogResult.Yes) return;
-
-            try
-            {
-                Cursor.Current = Cursors.WaitCursor;
-                var tachesActuelles = _tacheService.ObtenirToutesLesTaches();
-
-                // Appel de la nouvelle méthode d'orchestration
-                _dependanceBuilder.AppliquerEtSimplifierDependances(tachesActuelles);
-
-                // Rafraîchissement de la vue pour montrer le résultat
-                RafraichirDiagrammeEtStatistiques();
-
-                MessageBox.Show("Le mapping automatique des dépendances a été appliqué et simplifié avec succès.", "Opération terminée", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Une erreur est survenue lors du mapping automatique :\n{ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                Cursor.Current = Cursors.Default;
-            }
+            MessageBox.Show("Le mapping automatique des dépendances sera implémenté dans une version future.\n\n" +
+                           "Pour l'instant, utilisez les suggestions intelligentes dans le formulaire de détail des tâches.",
+                           "Fonctionnalité en développement", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void txtRecherche_TextChanged(object sender, EventArgs e) => RafraichirDiagrammeEtStatistiques();

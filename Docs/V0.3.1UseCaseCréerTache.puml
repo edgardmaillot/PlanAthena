@@ -1,69 +1,110 @@
 @startuml
-' --- Configuration ---
 skinparam componentStyle uml2
-skinparam wrapWidth 200
-skinparam participantPadding 5
-skinparam sequenceMessageAlign center
 skinparam sequenceArrowColor #005588
 skinparam sequenceLifeLineBorderColor #007ACC
 skinparam sequenceParticipantBackgroundColor #DDEEFF
 
-title Séquence de cas d'usage 1 : Création d'une nouvelle tâche
+title Cas d'Usage: Création/Modification de Tâche (Service Suggestions)
 
 actor User
 participant TacheForm
-participant "TacheDetailForm\n(en Popup)" as Popup
+participant TacheDetailForm as "TacheDetailForm\n(Popup)"
 participant DependanceBuilder
 participant TacheService
 
-group Initialisation de la popup
-    User -> TacheForm : Clique sur un bouton Métier
-    activate TacheForm
+Note over User,TacheService: Scénario 1: Création de Nouvelle Tâche
 
-    TacheForm -> Popup ** : new TacheDetailForm(...)
-    TacheForm -> Popup : Crée un objet `Tache` pré-rempli\n(avec LotId, MetierId)
-    TacheForm -> Popup : ChargerTache(tache, modeCreation=true)
-    TacheForm -> Popup : ShowDialog()
-    activate Popup
-    deactivate TacheForm
-end
+User -> TacheForm : Clique bouton métier (ex: Plaquist)
+activate TacheForm
 
-group Affichage des dépendances
-    Popup -> DependanceBuilder : ObtenirEtatDependancesPourTache(tache, toutesLesTaches)
-    activate DependanceBuilder
-    
-    note right: **Règle stricte de filtrage**
-    Builder -> Builder : Filtre les tâches candidates pour ne garder\nque celles du **même bloc** que la tâche en cours.
-    Builder -> Builder : Filtre à nouveau pour exclure les métiers "descendants".
-    
-    Builder --> Popup : retourne [ListeDependancePourUI] (filtrée)
-    deactivate DependanceBuilder
-    
-    Popup -> Popup : Affiche la liste des dépendances possibles
-end
+TacheForm -> TacheDetailForm ** : new TacheDetailForm()
+TacheForm -> TacheDetailForm : ChargerTache(nouvelleTache, modeCreation=true)
+TacheForm -> TacheDetailForm : ShowDialog()
+activate TacheDetailForm
+deactivate TacheForm
 
-group Sauvegarde
-    User -> Popup : Remplit les détails et coche une dépendance (ex: T001)
-    User -> Popup : Clique sur "Sauvegarder"
-    
-    Popup -> Popup : **SauvegarderModifications()**
-    Popup -> TacheService : **AjouterTache(_tache)**
+group Chargement Suggestions Intelligentes
+    TacheDetailForm -> TacheDetailForm : ChargerListeDependances()
+    TacheDetailForm -> TacheService : ObtenirTachesParBloc(tache.BlocId)
     activate TacheService
+    TacheService -->> TacheDetailForm : contexteTaches
     deactivate TacheService
     
-    Popup -> DependanceBuilder : **ConstruireDependancesLogiques(toutesLesTaches)**
+    TacheDetailForm -> DependanceBuilder : ObtenirDependancesPourTache(tache, contexteTaches)
     activate DependanceBuilder
+    
+    Note over DependanceBuilder: Service Focus: Suggestions uniquement
+    DependanceBuilder -> DependanceBuilder : FiltrerTachesEligibles()
+    Note over DependanceBuilder: Anti-cycles + même bloc
+    DependanceBuilder -> DependanceBuilder : IdentifierSuggestions()
+    Note over DependanceBuilder: Fins de chaîne métiers prérequis
+    DependanceBuilder -> DependanceBuilder : ClassifierDependances()
+    Note over DependanceBuilder: Stricte/Exclue/Suggérée/Neutre
+    
+    DependanceBuilder -->> TacheDetailForm : List<DependanceAffichage>
     deactivate DependanceBuilder
-
-    Popup -> Popup : met DialogResult = OK et se ferme
+    
+    TacheDetailForm -> TacheDetailForm : Afficher avec états visuels
+    Note over TacheDetailForm: Suggestions précochées en bleu
 end
 
-group Rafraîchissement
-    Popup --> TacheForm : retourne DialogResult.OK
-    deactivate Popup
-    activate TacheForm
-
-    TacheForm -> TacheForm : **RafraichirDiagrammeEtStatistiques()**
-    deactivate TacheForm
+group Sauvegarde Utilisateur
+    User -> TacheDetailForm : Modifie nom, coche/décoche dépendances
+    User -> TacheDetailForm : Clique "Sauvegarder"
+    
+    TacheDetailForm -> TacheDetailForm : SauvegarderModifications()
+    Note over TacheDetailForm: Coché → Dependencies
+    Note over TacheDetailForm: Décoché (si suggérée) → ExclusionsDependances
+    
+    TacheDetailForm -> TacheService : AjouterTache(tache)
+    activate TacheService
+    TacheService -> TacheService : Valider et persister
+    deactivate TacheService
+    
+    TacheDetailForm -> TacheDetailForm : DialogResult = OK
 end
+
+TacheDetailForm -->> TacheForm : Retour OK
+deactivate TacheDetailForm
+activate TacheForm
+
+TacheForm -> TacheForm : RafraichirDiagrammeEtStatistiques()
+deactivate TacheForm
+
+Note over User,TacheService: Scénario 2: Modification de Tâche Existante
+
+User -> TacheForm : Double-clic sur tâche dans diagramme
+activate TacheForm
+
+TacheForm -> TacheService : ObtenirTacheParId(tacheId)
+activate TacheService
+TacheService -->> TacheForm : tacheExistante
+deactivate TacheService
+
+TacheForm -> TacheDetailForm ** : new TacheDetailForm()
+TacheForm -> TacheDetailForm : ChargerTache(tacheExistante, modeCreation=false)
+TacheForm -> TacheDetailForm : ShowDialog()
+activate TacheDetailForm
+deactivate TacheForm
+
+Note over TacheDetailForm: Même logique que création
+Note over TacheDetailForm: + Dependencies/ExclusionsDependances existantes
+
+group Modifications et Sauvegarde
+    User -> TacheDetailForm : Modifie dépendances existantes
+    User -> TacheDetailForm : Clique "Sauvegarder"
+    
+    TacheDetailForm -> TacheService : ModifierTache(tache)
+    activate TacheService
+    TacheService -> TacheService : Mettre à jour Dependencies/ExclusionsDependances
+    deactivate TacheService
+end
+
+TacheDetailForm -->> TacheForm : Retour OK
+deactivate TacheDetailForm
+activate TacheForm
+
+TacheForm -> TacheForm : RafraichirDiagrammeEtStatistiques()
+deactivate TacheForm
+
 @enduml

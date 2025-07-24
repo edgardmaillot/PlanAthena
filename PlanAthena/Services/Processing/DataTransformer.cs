@@ -2,9 +2,6 @@ using PlanAthena.Core.Facade.Dto.Input;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 // Ajout pour éviter d'écrire les noms complets partout dans la méthode de mapping
 using CoreEnums = PlanAthena.Core.Facade.Dto.Enums;
 

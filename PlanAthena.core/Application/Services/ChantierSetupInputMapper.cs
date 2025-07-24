@@ -5,7 +5,6 @@ using PlanAthena.Core.Domain.ValueObjects;
 using PlanAthena.Core.Facade.Dto.Enums;
 using PlanAthena.Core.Facade.Dto.Input;
 using PlanAthena.Core.Facade.Dto.Output;
-using System.Linq;
 
 namespace PlanAthena.Core.Application.Services
 {

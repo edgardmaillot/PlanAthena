@@ -16,7 +16,7 @@ namespace PlanAthena.Data
 
         public string LotId { get; set; } = "";
         public string BlocId { get; set; } = "";
-                
+
         public override string ToString()
         {
             return $"{TacheId} - {TacheNom} ({HeuresHommeEstimees}h)";

@@ -1,12 +1,7 @@
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Utilities;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
 
 namespace PlanAthena.Forms
 {
@@ -21,12 +16,28 @@ namespace PlanAthena.Forms
         private bool _modeCreation;
         private bool _suppressEvents = false;
         private List<Bloc> _blocsDisponibles;
+        private ToolTip _tooltip;
 
         public event EventHandler TacheSauvegardee;
 
         public TacheDetailForm(TacheService tacheService, MetierService metierService, LotService lotService, BlocService blocService, DependanceBuilder dependanceBuilder)
         {
             InitializeComponent();
+
+            // FORCER la configuration de la CheckedListBox
+            chkListDependances.DrawMode = DrawMode.OwnerDrawFixed;
+            chkListDependances.ItemHeight = 20;
+
+            // S'assurer que l'événement est connecté
+            chkListDependances.DrawItem -= chkListDependances_DrawItem;
+            chkListDependances.DrawItem += chkListDependances_DrawItem;
+
+            // NOUVEAU : Configuration des infobulles
+            _tooltip = new ToolTip();
+            _tooltip.InitialDelay = 500;
+            _tooltip.ReshowDelay = 100;
+            chkListDependances.MouseMove += chkListDependances_MouseMove;
+
             _tacheService = tacheService;
             _metierService = metierService;
             _lotService = lotService;
@@ -99,7 +110,16 @@ namespace PlanAthena.Forms
             finally
             {
                 _suppressEvents = false;
-                ChargerListeDependances();
+
+                // En mode création, déclencher l'événement de changement de bloc pour initialiser correctement
+                if (_modeCreation && cmbBlocNom.SelectedItem != null)
+                {
+                    cmbBlocNom_SelectedIndexChanged(cmbBlocNom, EventArgs.Empty);
+                }
+                else
+                {
+                    ChargerListeDependances();
+                }
             }
         }
 
@@ -113,20 +133,45 @@ namespace PlanAthena.Forms
         /// </summary>
         private void ChargerListeDependances()
         {
-            chkListDependances.Items.Clear();
-            if (_tache == null || string.IsNullOrEmpty(_tache.BlocId)) return;
-
-            // Pré-filtrage : tâches du même bloc uniquement (Règle 1)
-            var tachesDuMemeBloc = _tacheService.ObtenirTachesParBloc(_tache.BlocId);
-
-            // Délégation complète de la logique au DependanceBuilder
-            var etatsDependances = _dependanceBuilder.PeuplerListeDependance(_tache, tachesDuMemeBloc);
-
-            foreach (var etat in etatsDependances)
+            try
             {
-                // Logique de cochage selon l'état
-                bool estCochee = etat.Etat == EtatDependance.Stricte || etat.Etat == EtatDependance.Suggeree;
-                chkListDependances.Items.Add(etat, estCochee);
+
+                // FORCER la reconnexion de l'événement
+                chkListDependances.DrawItem -= chkListDependances_DrawItem; // Supprimer s'il existe
+                chkListDependances.DrawItem += chkListDependances_DrawItem; // Ajouter
+
+                chkListDependances.Items.Clear();
+
+                if (_tache == null || string.IsNullOrEmpty(_tache.BlocId))
+                {
+                    // DEBUG : Afficher pourquoi la liste est vide
+                    if (_tache == null)
+                        System.Diagnostics.Debug.WriteLine("ChargerListeDependances: _tache est null");
+                    else if (string.IsNullOrEmpty(_tache.BlocId))
+                        System.Diagnostics.Debug.WriteLine($"ChargerListeDependances: BlocId vide pour tâche {_tache.TacheId}");
+                    return;
+                }
+
+                // Pré-filtrage : tâches du même bloc uniquement (Règle 1)
+                var tachesDuMemeBloc = _tacheService.ObtenirTachesParBloc(_tache.BlocId);
+
+                // Délégation complète de la logique au DependanceBuilder
+                var etatsDependances = _dependanceBuilder.ObtenirDependancesPourTache(_tache, tachesDuMemeBloc);
+
+                foreach (var etat in etatsDependances)
+                {
+                    // Logique de cochage selon l'état
+                    bool estCochee = etat.Etat == EtatDependance.Stricte || etat.Etat == EtatDependance.Suggeree;
+                    chkListDependances.Items.Add(etat, estCochee);
+                }
+
+                // FORCER le redessin
+                chkListDependances.Invalidate();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erreur lors du chargement des dépendances : {ex.Message}",
+                    "Avertissement", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -195,15 +240,6 @@ namespace PlanAthena.Forms
                 if (_modeCreation) _tacheService.AjouterTache(_tache);
                 else _tacheService.ModifierTache(_tache);
 
-                // Étape de validation globale, cruciale après chaque modification.
-                var toutesLesTaches = _tacheService.ObtenirToutesLesTaches();
-                var validationResult = _dependanceBuilder.ConstruireDependancesLogiques(toutesLesTaches);
-
-                if (!validationResult.EstValide)
-                {
-                    MessageBox.Show(validationResult.MessageErreur, "Validation échouée", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    // Idéalement, on pourrait annuler la transaction ici, mais pour l'instant on prévient l'utilisateur.
-                }
 
                 TacheSauvegardee?.Invoke(this, EventArgs.Empty);
                 if (this.Modal) { this.DialogResult = DialogResult.OK; this.Close(); }
@@ -312,9 +348,44 @@ namespace PlanAthena.Forms
             _tache.Dependencies = string.Join(",", dependancesStricts.Distinct());
             _tache.ExclusionsDependances = string.Join(",", exclusions.Distinct());
         }
+        private void chkListDependances_MouseMove(object sender, MouseEventArgs e)
+        {
+            var index = chkListDependances.IndexFromPoint(e.Location);
 
+            if (index >= 0 && index < chkListDependances.Items.Count)
+            {
+                var item = (DependanceAffichage)chkListDependances.Items[index];
+                var tache = item.TachePredecesseur;
+
+                string tooltipText = $"ID: {tache.TacheId}\n" +
+                                   $"Nom: {tache.TacheNom}\n" +
+                                   $"Métier: {(string.IsNullOrEmpty(tache.MetierId) ? "Aucun" : tache.MetierId)}\n" +
+                                   $"Durée: {tache.HeuresHommeEstimees}h\n" +
+                                   $"État: {GetEtatDescription(item.Etat)}";
+
+                _tooltip.SetToolTip(chkListDependances, tooltipText);
+            }
+            else
+            {
+                _tooltip.SetToolTip(chkListDependances, "");
+            }
+        }
+
+        private string GetEtatDescription(EtatDependance etat)
+        {
+            return etat switch
+            {
+                EtatDependance.Suggeree => "Suggérée par les règles métier",
+                EtatDependance.Exclue => "Exclue par l'utilisateur",
+                EtatDependance.Stricte => "Définie manuellement",
+                EtatDependance.Neutre => "Aucune relation particulière",
+                _ => "Inconnu"
+            };
+        }
         private void chkListDependances_DrawItem(object sender, DrawItemEventArgs e)
         {
+            // TEST: Vérifier si la méthode est appelée avec MessageBox
+            MessageBox.Show($"DrawItem appelée pour index {e.Index}", "DEBUG");
             if (e.Index < 0) return;
             var item = (DependanceAffichage)chkListDependances.Items[e.Index];
             e.DrawBackground();
@@ -325,7 +396,7 @@ namespace PlanAthena.Forms
             switch (item.Etat)
             {
                 case EtatDependance.Exclue:
-                    textColor = Color.Gray;
+                    textColor = Color.Red;
                     font = new Font(e.Font, FontStyle.Strikeout);
                     break;
                 case EtatDependance.Suggeree:

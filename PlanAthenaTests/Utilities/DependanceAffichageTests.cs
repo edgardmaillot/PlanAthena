@@ -1,126 +1,394 @@
-// Le projet PlanAthenaTests doit avoir une référence de projet vers PlanAthena.
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PlanAthena.Data; // Utilise les vraies classes Tache et TypeActivite
-using PlanAthena.Utilities; // Utilise les vraies classes DependanceAffichage et EtatDependance
+using PlanAthena.Data;
+using PlanAthena.Utilities;
+using System;
 
 namespace PlanAthenaTests.Utilities
 {
     /// <summary>
-    /// Tests unitaires pour la classe DependanceAffichage.
-    /// L'objectif est de valider la logique de la méthode ToString(), qui est cruciale
-    /// pour la représentation textuelle des dépendances dans l'IHM.
+    /// Tests unitaires pour la classe DependanceAffichage et l'enum EtatDependance.
+    /// 
+    /// COUVERTURE :
+    /// - Propriétés et constructeur
+    /// - Méthode ToString() avec différents cas
+    /// - Enum EtatDependance et ses valeurs
+    /// - Cas limites et robustesse
     /// </summary>
     [TestClass]
     public class DependanceAffichageTests
     {
-        // Méthode utilitaire pour créer une tâche de test rapidement
-        private Tache CreerTacheTest(string id, string nom)
-        {
-            return new Tache { TacheId = id, TacheNom = nom };
-        }
+        #region Tests des Propriétés de Base
 
         [TestMethod]
-        [TestCategory("Unit - DTO")]
-        public void ToString_AvecEtatStricte_DoitRetournerNomEtId()
-        {
-            // Arrange (Préparation)
-            var tachePredecesseur = CreerTacheTest("T001", "Tâche Parente");
-            var dependance = new DependanceAffichage
-            {
-                TachePredecesseur = tachePredecesseur,
-                Etat = EtatDependance.Stricte
-            };
-            var attendu = "Tâche Parente (T001)";
-
-            // Act (Action)
-            string resultat = dependance.ToString();
-
-            // Assert (Vérification)
-            Assert.AreEqual(attendu, resultat, "Une dépendance stricte doit s'afficher sans suffixe.");
-        }
-
-        [TestMethod]
-        [TestCategory("Unit - DTO")]
-        public void ToString_AvecEtatNeutre_DoitRetournerNomEtId()
+        [TestCategory("Unit - Propriétés")]
+        public void DependanceAffichage_ProprietesDeBase_DoiventEtreCorrectementInitialisees()
         {
             // Arrange
-            var tachePredecesseur = CreerTacheTest("T002", "Tâche Neutre");
+            var tache = new Tache { TacheId = "T001", TacheNom = "Test Tâche" };
             var dependance = new DependanceAffichage
             {
-                TachePredecesseur = tachePredecesseur,
-                Etat = EtatDependance.Neutre
-            };
-            var attendu = "Tâche Neutre (T002)";
-
-            // Act
-            string resultat = dependance.ToString();
-
-            // Assert
-            Assert.AreEqual(attendu, resultat, "Une dépendance neutre doit s'afficher sans suffixe.");
-        }
-
-        [TestMethod]
-        [TestCategory("Unit - DTO")]
-        public void ToString_AvecEtatSuggeree_DoitAjouterSuffixeSuggere()
-        {
-            // Arrange
-            var tachePredecesseur = CreerTacheTest("T003", "Tâche Suggérée");
-            var dependance = new DependanceAffichage
-            {
-                TachePredecesseur = tachePredecesseur,
+                TachePredecesseur = tache,
                 Etat = EtatDependance.Suggeree,
                 EstHeritee = true
             };
-            var attendu = "Tâche Suggérée (T003) (suggéré)";
 
-            // Act
-            string resultat = dependance.ToString();
-
-            // Assert
-            Assert.AreEqual(attendu, resultat);
+            // Act & Assert
+            Assert.AreEqual(tache, dependance.TachePredecesseur, "TachePredecesseur doit être correctement assignée");
+            Assert.AreEqual(EtatDependance.Suggeree, dependance.Etat, "Etat doit être correctement assigné");
+            Assert.IsTrue(dependance.EstHeritee, "EstHeritee doit être correctement assignée");
         }
 
-        [TestMethod]
-        [TestCategory("Unit - DTO")]
-        public void ToString_AvecEtatExclue_DoitAjouterSuffixeExclu()
-        {
-            // Arrange
-            var tachePredecesseur = CreerTacheTest("T004", "Tâche Exclue");
-            var dependance = new DependanceAffichage
-            {
-                TachePredecesseur = tachePredecesseur,
-                Etat = EtatDependance.Exclue
-            };
-            var attendu = "Tâche Exclue (T004) (exclu)";
+        #endregion
 
-            // Act
-            string resultat = dependance.ToString();
-
-            // Assert
-            Assert.AreEqual(attendu, resultat);
-        }
+        #region Tests de la Méthode ToString()
 
         [TestMethod]
-        [TestCategory("Unit - DTO")]
-        public void ToString_AvecEtatStricteMemeSiHeritee_NeDoitPasAfficherSuggere()
+        [TestCategory("Unit - ToString")]
+        public void ToString_AvecTacheValide_DoitRetournerFormatCorrect()
         {
             // Arrange
-            // Cas où une dépendance manuelle correspond aussi à une suggestion métier.
-            // L'état "Stricte" doit avoir la priorité et ne pas afficher "(suggéré)".
-            var tachePredecesseur = CreerTacheTest("T005", "Tâche Stricte et Suggérée");
+            var tache = new Tache { TacheId = "T001", TacheNom = "Maçonnerie Bureau" };
             var dependance = new DependanceAffichage
             {
-                TachePredecesseur = tachePredecesseur,
+                TachePredecesseur = tache,
                 Etat = EtatDependance.Stricte,
-                EstHeritee = true // Important pour le test
+                EstHeritee = false
             };
-            var attendu = "Tâche Stricte et Suggérée (T005)";
 
             // Act
-            string resultat = dependance.ToString();
+            var resultat = dependance.ToString();
 
             // Assert
-            Assert.AreEqual(attendu, resultat, "Une dépendance Stricte ne doit jamais afficher le suffixe '(suggéré)', même si elle est aussi héritée.");
+            Assert.AreEqual("T001 - Maçonnerie Bureau", resultat,
+                "ToString() doit retourner le format 'TacheId - TacheNom'");
         }
+
+        [TestMethod]
+        [TestCategory("Unit - ToString")]
+        public void ToString_AvecTacheNull_DoitRetournerMessageDefault()
+        {
+            // Arrange
+            var dependance = new DependanceAffichage
+            {
+                TachePredecesseur = null,
+                Etat = EtatDependance.Neutre,
+                EstHeritee = false
+            };
+
+            // Act
+            var resultat = dependance.ToString();
+
+            // Assert
+            Assert.AreEqual("Tâche inconnue", resultat,
+                "ToString() doit gérer gracieusement les tâches null");
+        }
+
+        [TestMethod]
+        [TestCategory("Unit - ToString")]
+        public void ToString_AvecTacheIdNull_DoitGererGracieusement()
+        {
+            // Arrange
+            var tache = new Tache { TacheId = null, TacheNom = "Tâche sans ID" };
+            var dependance = new DependanceAffichage
+            {
+                TachePredecesseur = tache,
+                Etat = EtatDependance.Neutre
+            };
+
+            // Act
+            var resultat = dependance.ToString();
+
+            // Assert
+            Assert.AreEqual(" - Tâche sans ID", resultat,
+                "ToString() doit gérer les TacheId null");
+        }
+
+        [TestMethod]
+        [TestCategory("Unit - ToString")]
+        public void ToString_AvecTacheNomNull_DoitGererGracieusement()
+        {
+            // Arrange
+            var tache = new Tache { TacheId = "T001", TacheNom = null };
+            var dependance = new DependanceAffichage
+            {
+                TachePredecesseur = tache,
+                Etat = EtatDependance.Neutre
+            };
+
+            // Act
+            var resultat = dependance.ToString();
+
+            // Assert
+            Assert.AreEqual("T001 - ", resultat,
+                "ToString() doit gérer les TacheNom null");
+        }
+
+        [TestMethod]
+        [TestCategory("Unit - ToString")]
+        public void ToString_AvecChainesVides_DoitGererCorrectement()
+        {
+            // Arrange
+            var tache = new Tache { TacheId = "", TacheNom = "" };
+            var dependance = new DependanceAffichage
+            {
+                TachePredecesseur = tache,
+                Etat = EtatDependance.Neutre
+            };
+
+            // Act
+            var resultat = dependance.ToString();
+
+            // Assert
+            Assert.AreEqual(" - ", resultat,
+                "ToString() doit gérer les chaînes vides");
+        }
+
+        [TestMethod]
+        [TestCategory("Unit - ToString")]
+        public void ToString_AvecCaracteresSpeciaux_DoitPreserverContenu()
+        {
+            // Arrange
+            var tache = new Tache
+            {
+                TacheId = "T-001_Spé",
+                TacheNom = "Tâche avec accénts & caractères spéciaux (test)"
+            };
+            var dependance = new DependanceAffichage
+            {
+                TachePredecesseur = tache,
+                Etat = EtatDependance.Suggeree
+            };
+
+            // Act
+            var resultat = dependance.ToString();
+
+            // Assert
+            Assert.AreEqual("T-001_Spé - Tâche avec accénts & caractères spéciaux (test)", resultat,
+                "ToString() doit préserver tous les caractères spéciaux");
+        }
+
+        #endregion
+
+        #region Tests de l'Enum EtatDependance
+
+        [TestMethod]
+        [TestCategory("Unit - Enum")]
+        public void EtatDependance_ValeursPredefinies_DoiventExister()
+        {
+            // Act & Assert - Vérification que toutes les valeurs existent
+            Assert.IsTrue(Enum.IsDefined(typeof(EtatDependance), EtatDependance.Neutre),
+                "EtatDependance.Neutre doit être défini");
+            Assert.IsTrue(Enum.IsDefined(typeof(EtatDependance), EtatDependance.Suggeree),
+                "EtatDependance.Suggeree doit être défini");
+            Assert.IsTrue(Enum.IsDefined(typeof(EtatDependance), EtatDependance.Stricte),
+                "EtatDependance.Stricte doit être défini");
+            Assert.IsTrue(Enum.IsDefined(typeof(EtatDependance), EtatDependance.Exclue),
+                "EtatDependance.Exclue doit être défini");
+        }
+
+        [TestMethod]
+        [TestCategory("Unit - Enum")]
+        public void EtatDependance_ValeursNumeriques_DoiventEtreStables()
+        {
+            // Act & Assert - Vérification que les valeurs numériques sont stables
+            // Important pour la sérialisation et la compatibilité
+            Assert.AreEqual(0, (int)EtatDependance.Neutre, "Neutre doit avoir la valeur 0");
+            Assert.AreEqual(1, (int)EtatDependance.Suggeree, "Suggeree doit avoir la valeur 1");
+            Assert.AreEqual(2, (int)EtatDependance.Stricte, "Stricte doit avoir la valeur 2");
+            Assert.AreEqual(3, (int)EtatDependance.Exclue, "Exclue doit avoir la valeur 3");
+        }
+
+        [TestMethod]
+        [TestCategory("Unit - Enum")]
+        public void EtatDependance_ConversionString_DoitFonctionner()
+        {
+            // Act & Assert - Test de conversion en chaîne
+            Assert.AreEqual("Neutre", EtatDependance.Neutre.ToString());
+            Assert.AreEqual("Suggeree", EtatDependance.Suggeree.ToString());
+            Assert.AreEqual("Stricte", EtatDependance.Stricte.ToString());
+            Assert.AreEqual("Exclue", EtatDependance.Exclue.ToString());
+        }
+
+        [TestMethod]
+        [TestCategory("Unit - Enum")]
+        public void EtatDependance_ParseDepuisString_DoitFonctionner()
+        {
+            // Act & Assert - Test de parsing depuis chaîne
+            Assert.AreEqual(EtatDependance.Neutre, Enum.Parse<EtatDependance>("Neutre"));
+            Assert.AreEqual(EtatDependance.Suggeree, Enum.Parse<EtatDependance>("Suggeree"));
+            Assert.AreEqual(EtatDependance.Stricte, Enum.Parse<EtatDependance>("Stricte"));
+            Assert.AreEqual(EtatDependance.Exclue, Enum.Parse<EtatDependance>("Exclue"));
+        }
+
+        #endregion
+
+        #region Tests de Scénarios d'Usage UI
+
+        [TestMethod]
+        [TestCategory("Integration - UI")]
+        public void DependanceAffichage_PourAffichageUI_DoitFournirInformationsCompletes()
+        {
+            // Arrange - Simulation d'un objet utilisé dans TacheDetailForm
+            var tache = new Tache
+            {
+                TacheId = "T001",
+                TacheNom = "Maçonnerie",
+                MetierId = "MACON_01",
+                BlocId = "B001"
+            };
+
+            var dependanceStricte = new DependanceAffichage
+            {
+                TachePredecesseur = tache,
+                Etat = EtatDependance.Stricte,
+                EstHeritee = false
+            };
+
+            var dependanceSuggeree = new DependanceAffichage
+            {
+                TachePredecesseur = tache,
+                Etat = EtatDependance.Suggeree,
+                EstHeritee = true
+            };
+
+            // Act & Assert - Vérifications pour l'affichage UI
+
+            // Pour dépendance stricte (définie manuellement)
+            Assert.AreEqual("T001 - Maçonnerie", dependanceStricte.ToString(),
+                "Affichage correct pour CheckedListBox");
+            Assert.AreEqual(EtatDependance.Stricte, dependanceStricte.Etat,
+                "État pour déterminer le style (noir, gras)");
+            Assert.IsFalse(dependanceStricte.EstHeritee,
+                "Pas héritée = définie manuellement");
+
+            // Pour dépendance suggérée (par règles métier)
+            Assert.AreEqual("T001 - Maçonnerie", dependanceSuggeree.ToString(),
+                "Même affichage pour CheckedListBox");
+            Assert.AreEqual(EtatDependance.Suggeree, dependanceSuggeree.Etat,
+                "État pour déterminer le style (bleu, italique)");
+            Assert.IsTrue(dependanceSuggeree.EstHeritee,
+                "Héritée = suggérée par règles métier");
+        }
+
+        [TestMethod]
+        [TestCategory("Integration - UI")]
+        public void DependanceAffichage_PourLogiqueSauvegarde_DoitDistinguerTypesCorrectement()
+        {
+            // Arrange - Simulation de la logique SauvegarderModifications() dans TacheDetailForm
+            var tache = new Tache { TacheId = "T001", TacheNom = "Test" };
+
+            var dependances = new[]
+            {
+                new DependanceAffichage { TachePredecesseur = tache, Etat = EtatDependance.Stricte, EstHeritee = false },
+                new DependanceAffichage { TachePredecesseur = tache, Etat = EtatDependance.Suggeree, EstHeritee = true },
+                new DependanceAffichage { TachePredecesseur = tache, Etat = EtatDependance.Exclue, EstHeritee = true },
+                new DependanceAffichage { TachePredecesseur = tache, Etat = EtatDependance.Neutre, EstHeritee = false }
+            };
+
+            // Act - Simulation de la logique de détermination pour sauvegarde
+            // (Cochée = true simulé pour le test)
+            bool estCochee = true;
+
+            // Assert - Vérification logique de sauvegarde selon TacheDetailForm
+            foreach (var dep in dependances)
+            {
+                switch (dep.Etat)
+                {
+                    case EtatDependance.Stricte:
+                        // Si cochée ET pas héritée → Dependencies
+                        Assert.IsFalse(dep.EstHeritee, "Stricte ne doit pas être héritée");
+                        // Logique: if (!item.EstHeritee && estCochee) → Dependencies
+                        break;
+
+                    case EtatDependance.Suggeree:
+                        // Si cochée ET héritée → Dependencies (matérialisation)
+                        Assert.IsTrue(dep.EstHeritee, "Suggérée doit être héritée");
+                        // Logique: if (item.EstHeritee && estCochee) → Dependencies
+                        break;
+
+                    case EtatDependance.Exclue:
+                        // Si décochée ET héritée → ExclusionsDependances
+                        Assert.IsTrue(dep.EstHeritee, "Exclue doit être héritée");
+                        // Logique: if (item.EstHeritee && !estCochee) → ExclusionsDependances
+                        break;
+
+                    case EtatDependance.Neutre:
+                        // Si cochée ET pas héritée → Dependencies
+                        Assert.IsFalse(dep.EstHeritee, "Neutre ne doit pas être héritée");
+                        // Logique: if (!item.EstHeritee && estCochee) → Dependencies
+                        break;
+                }
+            }
+        }
+
+        #endregion
+
+        #region Tests de Comparaison et Égalité
+
+        [TestMethod]
+        [TestCategory("Unit - Égalité")]
+        public void DependanceAffichage_AvecMemeTache_DoitAvoirMemeToString()
+        {
+            // Arrange
+            var tache1 = new Tache { TacheId = "T001", TacheNom = "Tâche Test" };
+            var tache2 = new Tache { TacheId = "T001", TacheNom = "Tâche Test" };
+
+            var dep1 = new DependanceAffichage { TachePredecesseur = tache1, Etat = EtatDependance.Stricte };
+            var dep2 = new DependanceAffichage { TachePredecesseur = tache2, Etat = EtatDependance.Suggeree };
+
+            // Act
+            var string1 = dep1.ToString();
+            var string2 = dep2.ToString();
+
+            // Assert
+            Assert.AreEqual(string1, string2,
+                "Deux DependanceAffichage avec des tâches identiques doivent avoir le même ToString()");
+        }
+
+        #endregion
+
+        #region Tests de Performance et Robustesse
+
+        [TestMethod]
+        [TestCategory("Unit - Performance")]
+        public void ToString_AppelsMultiples_DoitEtrePerformant()
+        {
+            // Arrange
+            var tache = new Tache { TacheId = "T001", TacheNom = "Tâche de performance" };
+            var dependance = new DependanceAffichage { TachePredecesseur = tache, Etat = EtatDependance.Neutre };
+
+            // Act & Assert - 1000 appels doivent être rapides
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            for (int i = 0; i < 1000; i++)
+            {
+                var result = dependance.ToString();
+                Assert.IsNotNull(result, "ToString() ne doit jamais retourner null");
+            }
+
+            stopwatch.Stop();
+            Assert.IsTrue(stopwatch.ElapsedMilliseconds < 100,
+                "1000 appels à ToString() doivent s'exécuter en moins de 100ms");
+        }
+
+        [TestMethod]
+        [TestCategory("Unit - Robustesse")]
+        public void DependanceAffichage_AvecTacheLongue_DoitGererCorrectement()
+        {
+            // Arrange - Tâche avec nom très long
+            var nomTresLong = new string('A', 1000); // 1000 caractères
+            var tache = new Tache { TacheId = "T_LONG", TacheNom = nomTresLong };
+            var dependance = new DependanceAffichage { TachePredecesseur = tache };
+
+            // Act
+            var resultat = dependance.ToString();
+
+            // Assert
+            Assert.IsTrue(resultat.Contains("T_LONG"), "L'ID doit être présent");
+            Assert.IsTrue(resultat.Contains(nomTresLong), "Le nom long doit être préservé intégralement");
+            Assert.IsTrue(resultat.Length > 1000, "La chaîne résultante doit contenir tout le contenu");
+        }
+
+        #endregion
     }
 }

@@ -7,8 +7,6 @@ using PlanAthena.core.Application.InternalDto;
 using PlanAthena.Core.Domain;
 using PlanAthena.Core.Domain.ValueObjects;
 using PlanAthena.Core.Facade.Dto.Enums;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PlanAthena.Core.Infrastructure.Services.OrTools
 {

@@ -7,9 +7,6 @@ using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.Processing;
 using PlanAthena.Utilities;
-using System;
-using System.Linq;
-using System.Windows.Forms;
 
 namespace PlanAthena.Forms
 {
@@ -462,7 +459,7 @@ namespace PlanAthena.Forms
             rtbLog.ScrollToCaret();
         }
 
-        
+
         private void AfficherResultatDansLog(PlanAthena.Core.Facade.Dto.Output.ProcessChantierResultDto resultat)
         {
             if (resultat == null) { Log("Le résultat retourné par la façade est null."); return; }

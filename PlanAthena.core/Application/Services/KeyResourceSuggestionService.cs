@@ -2,7 +2,7 @@
 using PlanAthena.Core.Application.Interfaces;
 using PlanAthena.Core.Domain;
 using PlanAthena.Core.Domain.ValueObjects;
-using PlanAthena.Core.Facade.Dto.Enums; 
+using PlanAthena.Core.Facade.Dto.Enums;
 
 namespace PlanAthena.Core.Application.Services
 {

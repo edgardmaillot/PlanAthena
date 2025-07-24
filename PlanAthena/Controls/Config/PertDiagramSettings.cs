@@ -1,6 +1,5 @@
 using Microsoft.Msagl.Core.Layout;
 using Microsoft.Msagl.Drawing;
-using System.Drawing;
 using MsaglColor = Microsoft.Msagl.Drawing.Color; // Alias pour éviter les conflits
 using SystemColor = System.Drawing.Color;        // Alias pour la clarté
 
@@ -39,7 +38,7 @@ namespace PlanAthena.Controls.Config
         public double ClusterFontSize { get; set; } = 12;
         public MsaglColor ClusterFontColor { get; set; } = MsaglColor.DarkBlue;
         public double ClusterPadding { get; set; } = 20;
-        public string ClusterLabelFormat { get; set; } = "📦 {0}\n({1} tâches - {2}h)";
+        public string ClusterLabelFormat { get; set; } = "{0} - ({1} tâches - {2}h)";
 
         #endregion
 

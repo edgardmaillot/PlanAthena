@@ -1,7 +1,7 @@
 // PlanAthena.Core.Application.Validation.InputDtoValidators.cs
 using FluentValidation;
+using PlanAthena.Core.Facade.Dto.Enums;
 using PlanAthena.Core.Facade.Dto.Input;
-using PlanAthena.Core.Facade.Dto.Enums; 
 
 namespace PlanAthena.Core.Application.Validation
 {
@@ -69,7 +69,7 @@ namespace PlanAthena.Core.Application.Validation
     }
 
     // --- Validateurs pour DTOs Imbriqués ---
-    
+
     public class CalendrierTravailDefinitionDtoValidator : AbstractValidator<CalendrierTravailDefinitionDto>
     {
         public CalendrierTravailDefinitionDtoValidator()

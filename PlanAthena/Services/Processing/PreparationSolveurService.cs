@@ -1,9 +1,6 @@
 // Fichier: Services/Processing/PreparationSolveurService.cs
 
 using PlanAthena.Data;
-using System.Collections.Generic;
-using System.Linq;
-using System;
 
 namespace PlanAthena.Services.Processing
 {

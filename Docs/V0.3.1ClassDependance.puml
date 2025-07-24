@@ -5,28 +5,24 @@ skinparam class {
   backgroundColor #DDEEFF
   arrowColor #005588
 }
-title DependanceBuilder - Architecture des Classes (Refactoring Focus)
+title DependanceBuilder - Architecture Classes (Service Suggestions Focus)
 
 ' ================================================
-' ===        CLASSE PRINCIPALE À REFACTORER     ===
+' ===        CLASSE PRINCIPALE (SIMPLIFIÉE)     ===
 ' ================================================
-class DependanceBuilder <<CERVEAU>> {
+class DependanceBuilder <<SERVICE SUGGESTIONS>> {
   -MetierService _metierService
-  -int _jalonSyncCounter
-  __Méthodes Publiques__
-  +AppliquerEtSimplifierDependances(List<Tache> taches) : void
-  +ObtenirEtatDependancesPourTache(Tache tache, List<Tache> contexte) : List<DependanceAffichage>
-  +ConstruireDependancesLogiques(List<Tache> taches) : ValidationResult
+  __Méthode Publique Principale__
+  +ObtenirDependancesPourTache(Tache tache, List<Tache> contexteTaches) : List<DependanceAffichage>
   __Méthodes Privées (≤30 lignes chacune)__
-  -TraiterBloc(string blocId, List<Tache> taches, List<Tache> nouveauxJalons) : void
-  -GenererDependancesMetier(BidirectionalGraph graph, List<Tache> tachesDuBloc) : void
-  -AppliquerReductionTransitive(BidirectionalGraph graph) : BidirectionalGraph
-  -FactoriserAvecJalons(BidirectionalGraph graph, Dictionary<string,Tache> tacheMap, List<Tache> nouveauxJalons) : void
-  -MettreAJourModelesDepuisGraphe(BidirectionalGraph graph, List<Tache> taches) : void
-  -EstFactorisationNecessaire(List<string> predecesseurs, Dictionary<string,Tache> tacheMap) : bool
+  -FiltrerTachesEligibles(Tache tache, List<Tache> contexteTaches) : List<Tache>
+  -IdentifierMetiersFuturs(string metierReference) : HashSet<string>
+  -IdentifierSuggestions(Tache tache, List<Tache> tachesEligibles) : HashSet<string>
+  -ConstruireGrapheDepuisContexte(List<Tache> taches) : BidirectionalGraph<string,Edge<string>>
   -ObtenirPrerequisFinaux(string metierId, HashSet<string> metiersPresents) : HashSet<string>
-  -TrouverFinsDeChaineDansGraphe(string metierId, Dictionary<string,Tache> tacheMap, BidirectionalGraph graph) : IEnumerable<string>
-  -TrouverMetiersSatisfaitsParGraphe(string tacheId, BidirectionalGraph graph, Dictionary<string,Tache> tacheMap) : HashSet<string>
+  -TrouverFinsDeChaine(string metierId, List<Tache> taches) : IEnumerable<string>
+  -ParseDependances(string dependancesStr) : HashSet<string>
+  -ClassifierDependances(List<Tache> eligibles, HashSet<string> strictes, HashSet<string> excluses, HashSet<string> suggestions) : List<DependanceAffichage>
 }
 
 ' ================================================
@@ -37,13 +33,6 @@ class DependanceAffichage <<DTO>> {
   +EtatDependance Etat  
   +bool EstHeritee
   +ToString() : string
-}
-
-class ValidationResult <<DTO>> {
-  +bool EstValide
-  +string MessageErreur
-  +{static} Success() : ValidationResult
-  +{static} Error(string message) : ValidationResult
 }
 
 enum EtatDependance {
@@ -59,7 +48,12 @@ enum EtatDependance {
 class MetierService <<EXISTANT>> {
   +GetPrerequisForMetier(string metierId) : IReadOnlyList<string>
   +GetTransitivePrerequisites(string metierId) : HashSet<string>
-  +GetMetierById(string metierId) : Metier
+  +GetAllMetiers() : IReadOnlyList<Metier>
+}
+
+class TacheService <<EXISTANT>> {
+  +ModifierTache(Tache tacheModifiee) : void
+  +ObtenirTachesParBloc(string blocId) : List<Tache>
 }
 
 class Tache <<EXISTANT>> {
@@ -86,46 +80,50 @@ class "QuikGraph.BidirectionalGraph" as BidirectionalGraph <<LIBRARY>> {
   +AddEdge(Edge<string> edge) : bool  
   +InEdges(string vertex) : IEnumerable<Edge<string>>
   +OutEdges(string vertex) : IEnumerable<Edge<string>>
-  +IsDirectedAcyclicGraph() : bool
 }
 
-class "QuikGraph.Algorithms.TransitiveReductionAlgorithm" as TransitiveReductionAlgorithm <<LIBRARY>> {
-  +Compute() : void
-  +TransitiveReduction : IBidirectionalGraph<string,Edge<string>>
+' ================================================
+' ===              UI INTERFACE                 ===
+' ================================================
+class TacheDetailForm <<UI>> {
+  +ChargerListeDependances() : void
+  -SauvegarderModifications() : void
 }
 
 ' ================================================
 ' ===                RELATIONS                   ===
 ' ================================================
-DependanceBuilder --> MetierService : utilise
-DependanceBuilder --> BidirectionalGraph : manipule  
-DependanceBuilder --> TransitiveReductionAlgorithm : utilise
+TacheDetailForm --> DependanceBuilder : utilise
+DependanceBuilder --> MetierService : consulte prérequis
+DependanceBuilder --> BidirectionalGraph : construit graphe temporaire
 DependanceBuilder ..> DependanceAffichage : produit
-DependanceBuilder ..> ValidationResult : retourne
+TacheDetailForm --> TacheService : ModifierTache()
 
 DependanceAffichage --> Tache : référence
 DependanceAffichage --> EtatDependance : utilise
-
 Tache --> TypeActivite : utilise
 
-note right of DependanceBuilder::TraiterBloc
-  <b>Règle 1:</b> Isolation stricte par bloc
-  Ne traite que les tâches du bloc donné
+note right of DependanceBuilder::FiltrerTachesEligibles
+  <b>Anti-Cycles:</b> Exclut métiers "futurs"
+  Même bloc uniquement (Règle 1)
 end note
 
-note right of DependanceBuilder::GenererDependancesMetier  
-  <b>Règles 2 & 3:</b> Primauté manuel + Suggestion ciblée
-  Respecte exclusions et arrête dès métier trouvé
+note right of DependanceBuilder::IdentifierSuggestions  
+  <b>Règle 3:</b> Suggestion ciblée
+  Fins de chaîne des prérequis
 end note
 
-note right of DependanceBuilder::FactoriserAvecJalons
-  <b>Règle 5:</b> Anti-croisements multiples
-  Crée jalons uniquement si nécessaire
+note right of DependanceBuilder::TrouverFinsDeChaine
+  <b>Jalons:</b> Points de connexion optimaux
+  Tâches sans successeur même métier
 end note
 
-note right of TransitiveReductionAlgorithm
-  <b>Règle 4:</b> Anti-redondance
-  Supprime liens transitifs automatiquement
+note right of TacheDetailForm
+  <b>États d'affichage:</b>
+  Stricte (noir, coché)
+  Exclue (rouge, décoché)  
+  Suggérée (bleu, coché)
+  Neutre (normal, décoché)
 end note
 
 @enduml

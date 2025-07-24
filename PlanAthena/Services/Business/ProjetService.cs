@@ -1,9 +1,5 @@
 using PlanAthena.Data;
 using PlanAthena.Services.DataAccess;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -368,7 +364,7 @@ namespace PlanAthena.Services.Business
         public string MessageErreur { get; set; } = "";
         public int MetiersImportes { get; set; }
         public int OuvriersImportes { get; set; }
-        public int TachesImportees { get; set; } 
+        public int TachesImportees { get; set; }
         public int TotalImporte => MetiersImportes + OuvriersImportes + TachesImportees;
     }
 

@@ -8,8 +8,6 @@ using PlanAthena.Core.Domain;
 using PlanAthena.Core.Domain.ValueObjects;
 using PlanAthena.Core.Facade.Dto.Enums;
 using PlanAthena.Core.Infrastructure.Services.OrTools;
-using System.Collections.Generic; // Ajout pour Dictionary
-using System.Linq; // Ajout pour Enumerable
 
 namespace PlanAthena.core.Tests.Infrastructure.OrTools;
 
@@ -105,7 +103,8 @@ public class CoutModelBuilderTests
         // Création d'une échelle de temps valide pour le test
         var dateDeTravail = new LocalDateTime(2028, 1, 1, 8, 0);
         var slots = Enumerable.Range(0, 8)
-            .Select(i => {
+            .Select(i =>
+            {
                 var debutSlot = dateDeTravail.PlusHours(i);
                 var finSlot = debutSlot.PlusHours(1);
                 return new SlotTemporel(i, debutSlot, finSlot);
