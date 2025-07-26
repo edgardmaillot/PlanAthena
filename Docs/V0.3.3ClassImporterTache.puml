@@ -1,0 +1,135 @@
+@startuml
+!theme plain
+skinparam class {
+  borderColor #1E8449
+  backgroundColor #E8F8F5
+  arrowColor #239B56
+}
+
+title Architecture Mapping Automatique (v0.3.3)
+
+' ================================================
+' ===              CORE COMMUN                  ===
+' ================================================
+class DependanceCore <<SHARED UTILITIES>> {
+  -MetierService _metierService
+  __Méthodes Réutilisables__
+  +ConstruireGrapheBloc(List<Tache> taches) : BidirectionalGraph<string,Edge<string>>
+  +CalculerTousLesSuccesseurs(graphe, taches) : Dictionary<string,HashSet<string>>
+  +FiltrerCandidatsValides(tache, taches, successeurs) : List<Tache>
+  +TrouverMeilleuresTachesPourSuggestion(tachesDuMetier, taches) : List<Tache>
+  +TrouverFinsDeChaineDuMetier(tachesDuMetier) : List<Tache>
+  +RemonterChainePrerequis(metierId, metiersPresents) : HashSet<string>
+  +ParseDependances(string dependancesStr) : HashSet<string>
+  +ValiderCohérenceGraphe(graphe) : ValidationResult
+}
+
+' ================================================
+' ===          SERVICES SPÉCIALISÉS             ===
+' ================================================
+class DependanceBuilder <<UI SUGGESTIONS>> {
+  -DependanceCore _core
+  __Focus: Interface Utilisateur__
+  +ObtenirDependancesPourTache(tache, contexteTaches) : List<DependanceAffichage>
+  -AppliquerSuggestionsMetier(tache, candidats) : HashSet<string>
+  -ClassifierDependances(candidats, strictes, excluses, suggestions) : List<DependanceAffichage>
+}
+
+class MappingAutoService <<BATCH PROCESSING>> {
+  -DependanceCore _core
+  -MetierService _metierService
+  __Focus: Traitement par Lots__
+  +ConstruireDependancesLogiques(List<Tache> toutesLesTaches) : MappingResult
+  +PlacerJalonsDeSynchronisation(List<Tache> taches) : List<Tache>
+  +ValiderCohérenceGlobale(List<Tache> taches) : ValidationGlobale
+  __Méthodes Privées__
+  -AppliquerMappingMétierSurTâche(Tache tache, List<Tache> contexte) : List<string>
+  -IdentifierPointsDeSynchronisation(List<Tache> taches) : List<PositionJalon>
+  -OptimiserCheminsCritiques(graphe) : OptimisationResult
+  -GénérerRapportMapping(résultats) : RapportMapping
+}
+
+' ================================================
+' ===              CLASSES DTO                  ===
+' ================================================
+class MappingResult <<DTO>> {
+  +int NbDépendancesCréées
+  +int NbJalonsPlacés  
+  +List<ConflitRésolu> ConflitsRésolus
+  +List<string> AvertissementsMapping
+  +TimeSpan DuréeTraitement
+  +RapportMapping Rapport
+}
+
+class ValidationGlobale <<DTO>> {
+  +bool EstValide
+  +List<ErreurValidation> Erreurs
+  +List<AvertissementValidation> Avertissements
+  +StatistiquesGraphe Statistiques
+}
+
+class PositionJalon <<DTO>> {
+  +string BlocId
+  +List<string> TachesPrédécesseurs
+  +List<string> TachesSuccesseurs
+  +TypeJalon Type
+  +int PrioritéPlacement
+}
+
+' ================================================
+' ===          SERVICES EXISTANTS               ===
+' ================================================
+class MetierService <<EXISTANT>> {
+  +GetPrerequisForMetier(string metierId) : IReadOnlyList<string>
+  +GetAllMetiers() : IReadOnlyList<Metier>
+}
+
+class TacheService <<EXISTANT>> {
+  +CreerTachesBrutes(List<Tache> taches) : void
+  +PersisterDependancesFinales(List<Tache> taches) : void
+  +ObtenirTachesParBloc(string blocId) : List<Tache>
+}
+
+' ================================================
+' ===              RELATIONS                     ===
+' ================================================
+DependanceBuilder --> DependanceCore : utilise
+MappingAutoService --> DependanceCore : utilise
+DependanceCore --> MetierService : consulte
+
+MappingAutoService ..> MappingResult : produit
+MappingAutoService ..> ValidationGlobale : produit
+MappingAutoService ..> PositionJalon : utilise
+
+TacheService --> MappingAutoService : appelle pour import
+
+note right of DependanceCore
+  <b>Responsabilité:</b> Logique commune
+  de manipulation des graphes de 
+  dépendances et algorithmes métier
+  
+  <b>Réutilisé par:</b> DependanceBuilder
+  (suggestions UI) et MappingAutoService
+  (mapping automatique par lots)
+end note
+
+note right of MappingAutoService
+  <b>Responsabilité:</b> Mapping automatique
+  par lots lors d'imports CSV
+  
+  <b>Optimisations:</b>
+  • Placement intelligent des jalons
+  • Résolution automatique des conflits
+  • Validation globale de cohérence
+  • Génération de rapports détaillés
+end note
+
+note right of DependanceBuilder
+  <b>Responsabilité:</b> Suggestions
+  interactives pour l'utilisateur
+  
+  <b>Focus:</b> Interface temps réel
+  avec classification visuelle des états
+end note
+
+@enduml

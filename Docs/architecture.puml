@@ -1,16 +1,19 @@
 @startuml
-' --- Configuration pour une meilleure visibilité ---
+' --- Configuration FORCÉE pour layout vertical ---
+!define DIRECTION top to bottom direction
 top to bottom direction
-skinparam componentStyle uml2
-skinparam linetype polyline
-skinparam ranksep 80
-skinparam nodesep 80
-
+skinparam minClassWidth 120
+skinparam maxMessageSize 200
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam ranksep 60
+skinparam nodesep 40
 
 skinparam package {
   borderColor #555555
   borderThickness 2
   fontColor #333333
+  backgroundColor #F8F9FA
 }
 skinparam class {
   borderColor #007ACC
@@ -18,104 +21,246 @@ skinparam class {
   arrowColor #005588
   shadowing false
 }
-title Architecture Générale de l'Application (v0.2.2)
+title Architecture Générale de l'Application (v0.3.3 - Layout Vertical)
 
 ' ================================================
-' ===              COUCHE UI (Forms)           ===
+' ===         NIVEAU 1 : COUCHE UI             ===
 ' ================================================
-package "Couche UI (Forms)" {
-  class MainForm
-  class TacheForm
-  class LotForm <<(N,orchid) NOUVEAU>>
-  class BlocForm <<(N,orchid) NOUVEAU>>
+package "🖥️ COUCHE UI (Présentation)" as UI {
+  class MainForm {
+    +AfficherProjets()
+    +GérerNavigation()
+  }
+  class TacheForm {
+    +AfficherDiagramme()
+    +GérerImports()
+  }
+  class TacheDetailForm {
+    +ChargerDépendances()
+    +GérerSuggestions()
+  }
+  class LotForm {
+    +GérerLots()
+  }
+  class BlocForm {
+    +GérerBlocs()
+  }
 }
 
 ' ================================================
-' ===      COUCHE SERVICE (Logique Métier)     ===
+' ===      NIVEAU 2 : COUCHE ORCHESTRATION     ===
 ' ================================================
-package "Couche Service (Logique Métier)" {
-  ' --- Les orchestrateurs de haut niveau ---
-  class ProjetService
-  class PlanificationService
+package "🎯 COUCHE ORCHESTRATION (Services Métier)" as ORCHESTRATION {
+  class ProjetService {
+    +ImporterTachesCSV()
+    +SauvegarderProjet()
+    +ChargerProjet()
+  }
+  class PlanificationService {
+    +ExecuterPlanification()
+    +OptimiserRessources()
+  }
+}
+
+' ================================================
+' ===      NIVEAU 3 : COUCHE SERVICES          ===
+' ================================================
+package "⚙️ COUCHE SERVICES (Données)" as SERVICES {
+  class TacheService {
+    +CreerTache()
+    +ModifierTache()
+    +ObtenirTaches()
+  }
+  class LotService {
+    +GérerLots()
+  }
+  class BlocService {
+    +GérerBlocs()
+  }
+  class MetierService {
+    +ObtenirPrérequis()
+  }
+  class OuvrierService {
+    +GérerOuvriers()
+  }
+  class ImportService {
+    +ProcessImportFile()
+    +ParseFormat()
+  }
+}
+
+' ================================================
+' ===    NIVEAU 4 : COUCHE TRAITEMENT          ===
+' ================================================
+package "🔧 COUCHE TRAITEMENT (Algorithmes)" as PROCESSING {
+  class DependanceCore {
+    +ConstruireGraphe()
+    +CalculerSuccesseurs()
+    +FiltrerCandidats()
+  }
   
-  ' --- Les gardiens des données de base ---
-  class TacheService
-  class OuvrierService
-  class MetierService
-  class LotService <<(N,orchid) NOUVEAU>>
-  class BlocService <<(N,orchid) NOUVEAU>>
+  class DependanceBuilder {
+    +ObtenirSuggestions()
+    +ClassifierÉtats()
+  }
+  
+  class MappingAutoService {
+    +MappingAutomatique()
+    +PlacerJalons()
+    +ValiderCohérence()
+  }
+  
+  class PreparationSolveurService {
+    +PréparerDonnées()
+  }
+  
+  class DataTransformer {
+    +TransformerDonnées()
+  }
 }
 
 ' ================================================
-' ===  SERVICES DE TRAITEMENT / PROCESSING     ===
+' ===       NIVEAU 5 : COUCHE DONNÉES          ===
 ' ================================================
-package "Services de Traitement / Processing" {
-    class PreparationSolveurService
-    class DataTransformer
-    class DependanceBuilder
+package "📊 COUCHE DONNÉES (Modèles)" as DATA {
+  class Tache {
+    +TacheId : string
+    +Dependencies : string
+    +ExclusionsDependances : string
+  }
+  
+  class Lot {
+    +LotId : string
+    +Nom : string
+  }
+  
+  class Bloc {
+    +BlocId : string
+    +CapaciteMax : int
+  }
+  
+  class Metier {
+    +MetierId : string
+    +PrerequisIds : string
+  }
+  
+  class Ouvrier {
+    +OuvrierId : string
+    +Specialites : string
+  }
+  
+  ' --- DTOs ---
+  class ProjetData <<DTO>>
+  class ImportResult <<DTO>>
+  class MappingResult <<DTO>>
+  class DependanceAffichage <<DTO>>
 }
 
 ' ================================================
-' ===    MODÈLES DU DOMAINE (Les données)      ===
+' ===    NIVEAU 6 : COUCHE INFRASTRUCTURE      ===
 ' ================================================
-package "Modèles de Données" {
-    class ProjetData <<DTO>>
-    class Tache <<MODIFIÉ>>
-    class Ouvrier
-    class Metier
-    class Lot <<(N,orchid) NOUVEAU>>
-    class Bloc <<(N,orchid) NOUVEAU>>
+package "🏗️ INFRASTRUCTURE (Externe)" as INFRA {
+  class JsonSerializer <<library>>
+  class FileSystem <<library>>
+  class QuikGraph <<library>>
 }
 
 ' ================================================
-' === COUCHE INFRASTRUCTURE (Accès externe)    ===
+' ===         RELATIONS VERTICALES             ===
 ' ================================================
-package "Infrastructure" {
-  class "System.Text.Json" as JsonSerializer <<library>>
-  class "System.IO" as FileSystem <<library>>
-}
+
+' Niveau 1 → Niveau 2
+UI -down-> ORCHESTRATION
+
+' Niveau 2 → Niveau 3  
+ORCHESTRATION -down-> SERVICES
+
+' Niveau 3 → Niveau 4
+SERVICES -down-> PROCESSING
+
+' Niveau 4 → Niveau 5
+PROCESSING -down-> DATA
+
+' Niveau 5 → Niveau 6
+DATA -down-> INFRA
 
 ' ================================================
-' ===            RELATIONS / FLUX              ===
+' ===       RELATIONS DÉTAILLÉES               ===
 ' ================================================
-' --- L'UI utilise les services ---
-MainForm --> ProjetService
-MainForm --> PlanificationService
-TacheForm --> LotService
-TacheForm --> BlocService
-LotForm --> LotService
-BlocForm --> BlocService
 
-' --- Le Pipeline de Planification ---
-PlanificationService --> PreparationSolveurService
-PlanificationService --> DataTransformer
-PlanificationService --> TacheService
-PlanificationService --> OuvrierService
-PlanificationService --> MetierService
+' UI vers Orchestration
+MainForm -down-> ProjetService
+TacheForm -down-> ProjetService
+TacheDetailForm -down-> DependanceBuilder
 
-' --- Services de traitement ---
-DataTransformer --> LotService
-DataTransformer --> BlocService
-DependanceBuilder --> LotService
-DependanceBuilder --> BlocService
-PreparationSolveurService --> LotService
-PreparationSolveurService --> BlocService
+' Orchestration vers Services
+ProjetService -down-> ImportService
+ProjetService -down-> TacheService
+ProjetService -down-> LotService
+ProjetService -down-> BlocService
+PlanificationService -down-> TacheService
+PlanificationService -down-> OuvrierService
 
-' --- Orchestrateur ProjetService ---
-ProjetService --> TacheService
-ProjetService --> OuvrierService
-ProjetService --> MetierService
-ProjetService --> LotService
-ProjetService --> BlocService
-ProjetService ..> ProjetData : "crée/lit"
-ProjetService ..> JsonSerializer
-ProjetService ..> FileSystem
+' Services vers Processing
+ImportService -down-> MappingAutoService
+TacheService -down-> DependanceBuilder
+DependanceBuilder -down-> DependanceCore
+MappingAutoService -down-> DependanceCore
 
-' --- Les services gèrent leurs modèles de données ---
-TacheService "1" o-- "*" Tache : "gère"
-OuvrierService "1" o-- "*" Ouvrier : "gère"
-MetierService "1" o-- "*" Metier : "gère"
-LotService "1" o-- "*" Lot : "gère"
-BlocService "1" o-- "*" Bloc : "gère"
+' Processing vers Data
+DependanceCore -down-> Metier
+MappingAutoService -down-> MappingResult
+DependanceBuilder -down-> DependanceAffichage
+
+' Services vers Data
+TacheService -down-> Tache
+LotService -down-> Lot
+BlocService -down-> Bloc
+MetierService -down-> Metier
+OuvrierService -down-> Ouvrier
+
+' Data vers Infrastructure
+ProjetData -down-> JsonSerializer
+ImportResult -down-> FileSystem
+DependanceCore -down-> QuikGraph
+
+' ================================================
+' ===            NOTES EXPLICATIVES            ===
+' ================================================
+note top of UI
+  <b>NIVEAU 1 - PRÉSENTATION</b>
+  Interface utilisateur WinForms
+  Gestion des interactions et affichage
+end note
+
+note top of ORCHESTRATION
+  <b>NIVEAU 2 - ORCHESTRATION</b>
+  Services de haut niveau
+  Coordination des workflows métier
+end note
+
+note top of SERVICES
+  <b>NIVEAU 3 - SERVICES DONNÉES</b>
+  Gestion CRUD des entités métier
+  Logique de validation et persistance
+end note
+
+note top of PROCESSING
+  <b>NIVEAU 4 - ALGORITHMES</b>
+  Services de traitement spécialisés
+  Algorithmes et logique complexe
+end note
+
+note top of DATA
+  <b>NIVEAU 5 - MODÈLES</b>
+  Entités métier et DTOs
+  Structure des données
+end note
+
+note top of INFRA
+  <b>NIVEAU 6 - INFRASTRUCTURE</b>
+  Bibliothèques externes
+  Accès fichiers et sérialisation
+end note
 
 @enduml

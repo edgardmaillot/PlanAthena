@@ -1,0 +1,140 @@
+@startuml
+skinparam componentStyle uml2
+skinparam wrapWidth 200
+skinparam participantPadding 5
+skinparam sequenceMessageAlign center
+skinparam sequenceArrowColor #1E8449
+skinparam sequenceLifeLineBorderColor #239B56
+skinparam sequenceParticipantBackgroundColor #E8F8F5
+
+title Use Case 3 : Import de tâches depuis un CSV (v0.3.3 - ETL Isolé)
+
+actor User
+participant TacheForm
+participant ProjetService
+participant ImportService
+participant MappingAutoService
+participant LotService
+participant BlocService
+participant TacheService
+participant DependanceCore
+
+User -> TacheForm : Clique "Importer Tâches CSV" et choisit un fichier
+activate TacheForm
+
+TacheForm -> ProjetService : **ImporterTachesDepuisCsv(filePath, sourceType)**
+activate ProjetService
+
+group Étape 1 : Extraction et Transformation (ETL)
+    ProjetService -> ImportService : **ProcessImportFile(filePath, sourceType)**
+    activate ImportService
+    
+    alt Source: PlanAthena (Format natif)
+        ImportService -> ImportService : ParsePlanAthenaFormat(filePath)
+        note right: Format CSV simple,\nmapping direct
+    else Source: Dalux (Future)
+        ImportService -> ImportService : ParseDaluxFormat(filePath)
+        note right: Tables de correspondance\nDalux → PlanAthena
+    else Source: FieldWire (Future)
+        ImportService -> ImportService : ParseFieldWireFormat(filePath)
+        note right: ETL complexe avec\ntransformations métier
+    else Source: MS Project (Future)
+        ImportService -> ImportService : ParseMSProjectFormat(filePath)
+        note right: Mapping WBS → Structure\nLots/Blocs
+    end
+    
+    ImportService -> ImportService : **NormaliserVersPlanAthenaFormat()**
+    note right: Sortie standardisée :\nListe<TacheImportée> normalisée
+    
+    ImportService --> ProjetService : **ImportResult** {\n  taches, lots, blocs,\n  erreurs, avertissements\n}
+    deactivate ImportService
+end
+
+group Étape 2 : Validation et Création des Structures
+    alt Erreurs critiques d'import
+        ProjetService --> TacheForm : ErreurImport(détails)
+        note right: Arrêt du processus\nsi données incohérentes
+    else Import réussi
+        loop Pour chaque lot/bloc découvert
+            ProjetService -> LotService : GetOrCreateLot(lotInfo)
+            activate LotService
+            LotService --> ProjetService : lot
+            deactivate LotService
+            
+            ProjetService -> BlocService : GetOrCreateBloc(blocInfo)
+            activate BlocService
+            BlocService --> ProjetService : bloc
+            deactivate BlocService
+        end
+        
+        ProjetService -> TacheService : **CreerTachesBrutes(tachesNormalisées)**
+        activate TacheService
+        note right TacheService: Création sans dépendances\npour validation structurelle
+        TacheService --> ProjetService : tachesCréées
+        deactivate TacheService
+    end
+end
+
+group Étape 3 : Mapping Automatique des Dépendances
+    ProjetService -> MappingAutoService : **ConstruireDependancesLogiques(toutesLesTaches)**
+    activate MappingAutoService
+    
+    MappingAutoService -> DependanceCore : ConstruireGrapheBloc(taches)
+    activate DependanceCore
+    DependanceCore --> MappingAutoService : grapheExistant
+    deactivate DependanceCore
+    
+    MappingAutoService -> DependanceCore : TrouverMeilleuresTachesPourSuggestion(métierPrérequis, taches)
+    activate DependanceCore
+    DependanceCore --> MappingAutoService : suggestionsOptimales
+    deactivate DependanceCore
+    
+    loop Pour chaque tâche sans dépendances
+        MappingAutoService -> MappingAutoService : AppliquerMappingMétier(tâche)
+        note right: Mapping automatique basé sur\nles règles métier + algorithmes optimisés
+    end
+    
+    MappingAutoService -> MappingAutoService : **PlacerJalonsDeSynchronisation()**
+    note right: Placement intelligent des jalons\naux points de connexion inter-métiers
+    
+    MappingAutoService -> MappingAutoService : **ValiderCohérenceGlobale()**
+    note right: Vérification anti-cycles + cohérence\nsur l'ensemble du projet
+    
+    MappingAutoService --> ProjetService : mappingRéalisé + statistiques
+    deactivate MappingAutoService
+end
+
+group Étape 4 : Persistance Finale
+    ProjetService -> TacheService : **PersisterDependancesFinales(tachesAvecDépendances)**
+    activate TacheService
+    TacheService --> ProjetService : confirmationPersistance
+    deactivate TacheService
+end
+
+ProjetService --> TacheForm : **RésultatImportComplet** {\n  nbTâches, nbDépendancesCréées,\n  nbJalonsPlacés, sourceType,\n  erreurs, avertissements\n}
+deactivate ProjetService
+
+TacheForm -> TacheForm : **RafraichirVueComplète()**
+note right: Rafraîchissement complet de l'interface\npour afficher le nouveau projet avec\ndépendances automatiquement mappées
+
+TacheForm -> TacheForm : AfficherRapportImportDétaillé(résultat)
+note right: Rapport détaillé par source :\n• Données transformées\n• Correspondances appliquées\n• Conflits résolus\n• Ajustements recommandés
+
+deactivate TacheForm
+
+note over ImportService
+  <b>ÉVOLUTIVITÉ FUTURE :</b>
+  
+  <b>v0.3.3 :</b> Format PlanAthena natif
+  
+  <b>v0.4.x :</b> + Tables de correspondance Dalux
+  
+  <b>v0.5.x :</b> + ETL FieldWire avec transformations
+  
+  <b>v1.0.x :</b> + Support MS Project, Primavera
+  
+  Chaque source peut avoir sa logique
+  de parsing sans impacter les autres
+end note
+
+@enduml

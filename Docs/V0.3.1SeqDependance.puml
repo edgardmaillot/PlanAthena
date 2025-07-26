@@ -3,7 +3,7 @@ skinparam sequenceArrowColor #005588
 skinparam sequenceLifeLineBorderColor #007ACC
 skinparam sequenceParticipantBackgroundColor #DDEEFF
 
-title Service de Suggestions - Flux Principal (Version Simplifiée)
+title Service de Suggestions - Flux Principal (Version "Graph First" + Exclusions)
 
 participant UI as "TacheDetailForm"
 participant DB as "DependanceBuilder"
@@ -16,46 +16,46 @@ UI->>UI: Utilisateur ouvre formulaire tâche
 UI->>DB: ObtenirDependancesPourTache(tache, contexteTaches)
 activate DB
 
-Note over DB: Phase 1: Filtrage Anti-Cycles
-DB->>DB: FiltrerTachesEligibles(tache, contexteTaches)
-DB->>DB: Exclure tâche elle-même
-alt Tâche a un métier
-    DB->>MS: GetTransitivePrerequisites(tache.MetierId)
-    MS-->>DB: Prérequis transitifs
-    DB->>DB: IdentifierMetiersFuturs(tache.MetierId)
-    Note over DB: Exclure métiers qui dépendent du métier actuel
-    DB->>DB: Filtrer selon métiers futurs
-end
-DB->>DB: → tachesEligibles (même bloc, anti-cycles)
+Note over DB: Phase 1: Construction Graphe + Anti-Cycles
+DB->>DB: ConstruireGrapheBloc(contexteTaches)
+Note over DB: Source de vérité : dépendances réelles
+DB->>DB: CalculerTousLesSuccesseurs(graphe, contexteTaches)
+Note over DB: Parcours en profondeur pour chaque tâche
+DB->>DB: FiltrerCandidatsValides(tache, contexteTaches, successeurs)
+Note over DB: Règle anti-cycle : exclure successeurs de la tâche
+DB->>DB: → candidatsValides (même bloc, anti-cycles garantis)
 
-Note over DB: Phase 2: Identification Suggestions
-DB->>DB: IdentifierSuggestions(tache, tachesEligibles)
+Note over DB: Phase 2: Identification Suggestions + Gestion Exclusions
+DB->>DB: AppliquerSuggestionsMetier(tache, candidatsValides)
 alt Tâche a un métier
     DB->>MS: GetPrerequisForMetier(tache.MetierId)
     MS-->>DB: Prérequis directs
+    DB->>DB: ParseDependances(tache.ExclusionsDependances)
+    Note over DB: Obtenir exclusions utilisateur
     DB->>DB: Identifier métiers présents dans bloc
     
     alt Prérequis directs présents
         DB->>DB: Utiliser prérequis directs
     else Aucun prérequis direct
-        Note over DB: Règle 3: Remontée ciblée
-        DB->>DB: ObtenirPrerequisFinaux(metierId, metiersPresents)
+        Note over DB: Remontée de chaîne
+        DB->>DB: RemonterChainePrerequis(metierId, metiersPresents)
     end
     
     loop Pour chaque métier prérequis
-        DB->>DB: TrouverFinsDeChaine(metierPrerequis, tachesEligibles)
-        Note over DB: Tâches sans successeur même métier
-        Note over DB: Si successeurs jalons → suggérer jalons
-        DB->>DB: Ajouter fins de chaîne aux suggestions
+        DB->>DB: Filtrer tâches exclues du métier prérequis
+        Note over DB: Cas Particulier 2 : Si fin de chaîne exclue → remonter
+        DB->>DB: TrouverMeilleuresTachesPourSuggestion(tachesNonExclues, candidatsValides)
+        Note over DB: Jalons > Fins de chaîne > Toutes tâches métier
+        DB->>DB: Ajouter suggestions (si tâches non exclues)
     end
 end
 
 Note over DB: Phase 3: Classification
 DB->>DB: ParseDependances(tache.Dependencies)
 DB->>DB: ParseDependances(tache.ExclusionsDependances)
-DB->>DB: ClassifierDependances(eligibles, strictes, excluses, suggestions)
+DB->>DB: ClassifierDependances(candidatsValides, strictes, excluses, suggestions)
 
-loop Pour chaque tâche éligible
+loop Pour chaque candidat valide
     alt Dans Dependencies
         DB->>DB: Créer DependanceAffichage(Etat.Stricte, EstHeritee=false)
     else Dans ExclusionsDependances
@@ -71,12 +71,15 @@ DB->>DB: Trier par TacheNom
 DB-->>UI: List<DependanceAffichage>
 deactivate DB
 
-Note over UI: Affichage avec États Visuels
-UI->>UI: Afficher liste avec couleurs/coches
-Note over UI: Stricte: noir + coché
-Note over UI: Exclue: rouge + décoché  
-Note over UI: Suggérée: bleu + coché
-Note over UI: Neutre: normal + décoché
+Note over UI: Affichage avec États Visuels + Icônes
+UI->>UI: Afficher liste avec icônes/coches
+Note over UI: Stricte: ✅ + coché
+Note over UI: Exclue: ❌ + décoché  
+Note over UI: Suggérée: 💡 + coché
+Note over UI: Neutre: ⚪ + décoché
+
+Note over UI: Infobulles sur survol
+UI->>UI: MouseMove → Afficher ID, métier, durée, état
 
 Note over UI,TS: Sauvegarde des Modifications
 User->>UI: Modifie coches et sauvegarde

@@ -5,24 +5,28 @@ skinparam class {
   backgroundColor #DDEEFF
   arrowColor #005588
 }
-title DependanceBuilder - Architecture Classes (Service Suggestions Focus)
+title DependanceBuilder - Architecture Classes (Version "Graph First" + Exclusions)
 
 ' ================================================
-' ===        CLASSE PRINCIPALE (SIMPLIFIÉE)     ===
+' ===        CLASSE PRINCIPALE (REFACTORISÉE)   ===
 ' ================================================
 class DependanceBuilder <<SERVICE SUGGESTIONS>> {
   -MetierService _metierService
   __Méthode Publique Principale__
   +ObtenirDependancesPourTache(Tache tache, List<Tache> contexteTaches) : List<DependanceAffichage>
-  __Méthodes Privées (≤30 lignes chacune)__
-  -FiltrerTachesEligibles(Tache tache, List<Tache> contexteTaches) : List<Tache>
-  -IdentifierMetiersFuturs(string metierReference) : HashSet<string>
-  -IdentifierSuggestions(Tache tache, List<Tache> tachesEligibles) : HashSet<string>
-  -ConstruireGrapheDepuisContexte(List<Tache> taches) : BidirectionalGraph<string,Edge<string>>
-  -ObtenirPrerequisFinaux(string metierId, HashSet<string> metiersPresents) : HashSet<string>
-  -TrouverFinsDeChaine(string metierId, List<Tache> taches) : IEnumerable<string>
+  __Méthodes Privées Architecture "Graph First"__
+  -ConstruireGrapheBloc(List<Tache> taches) : BidirectionalGraph<string,Edge<string>>
+  -CalculerTousLesSuccesseurs(graphe, taches) : Dictionary<string,HashSet<string>>
+  -ExploreerSuccesseurs(graphe, tacheId, successeurs, visite) : void
+  -FiltrerCandidatsValides(tache, contexteTaches, successeurs) : List<Tache>
+  __Méthodes Suggestions Métier + Exclusions__
+  -AppliquerSuggestionsMetier(tache, candidatsValides) : HashSet<string>
+  -TrouverMeilleuresTachesPourSuggestion(tachesDuMetier, toutesLesTaches) : List<Tache>
+  -TrouverFinsDeChaineDuMetier(tachesDuMetier) : List<Tache>
+  -RemonterChainePrerequis(metierId, metiersPresents) : HashSet<string>
+  __Méthodes Utilitaires__
   -ParseDependances(string dependancesStr) : HashSet<string>
-  -ClassifierDependances(List<Tache> eligibles, HashSet<string> strictes, HashSet<string> excluses, HashSet<string> suggestions) : List<DependanceAffichage>
+  -ClassifierDependances(candidats, strictes, excluses, suggestions) : List<DependanceAffichage>
 }
 
 ' ================================================
@@ -86,8 +90,11 @@ class "QuikGraph.BidirectionalGraph" as BidirectionalGraph <<LIBRARY>> {
 ' ===              UI INTERFACE                 ===
 ' ================================================
 class TacheDetailForm <<UI>> {
+  -ToolTip _tooltip
   +ChargerListeDependances() : void
+  +chkListDependances_MouseMove(sender, e) : void
   -SauvegarderModifications() : void
+  -GetEtatDescription(EtatDependance etat) : string
 }
 
 ' ================================================
@@ -103,27 +110,35 @@ DependanceAffichage --> Tache : référence
 DependanceAffichage --> EtatDependance : utilise
 Tache --> TypeActivite : utilise
 
-note right of DependanceBuilder::FiltrerTachesEligibles
-  <b>Anti-Cycles:</b> Exclut métiers "futurs"
-  Même bloc uniquement (Règle 1)
+note right of DependanceBuilder::ConstruireGrapheBloc
+  <b>Source de Vérité:</b> Graphe réel du bloc
+  basé sur Dependencies existantes
 end note
 
-note right of DependanceBuilder::IdentifierSuggestions  
-  <b>Règle 3:</b> Suggestion ciblée
-  Fins de chaîne des prérequis
+note right of DependanceBuilder::FiltrerCandidatsValides
+  <b>Anti-Cycles Robuste:</b> Exclut successeurs
+  de la tâche (règle mathématique infaillible)
 end note
 
-note right of DependanceBuilder::TrouverFinsDeChaine
-  <b>Jalons:</b> Points de connexion optimaux
-  Tâches sans successeur même métier
+note right of DependanceBuilder::AppliquerSuggestionsMetier  
+  <b>Gestion Exclusions:</b> Filtre tâches exclues
+  avant suggestions (Cas Particulier 2)
+end note
+
+note right of DependanceBuilder::TrouverMeilleuresTachesPourSuggestion
+  <b>Priorités:</b> Jalons > Fins de chaîne > Toutes
+  Si fin chaîne exclue → remonte automatiquement
 end note
 
 note right of TacheDetailForm
-  <b>États d'affichage:</b>
-  Stricte (noir, coché)
-  Exclue (rouge, décoché)  
-  Suggérée (bleu, coché)
-  Neutre (normal, décoché)
+  <b>États d'affichage avec icônes:</b>
+  Stricte: ✅ + coché + gras
+  Exclue: ❌ + décoché + barré
+  Suggérée: 💡 + coché + italique
+  Neutre: ⚪ + décoché + normal
+  
+  <b>Infobulles:</b> ID, métier, durée, état
+  sur survol des dépendances
 end note
 
 @enduml

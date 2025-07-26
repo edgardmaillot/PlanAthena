@@ -32,12 +32,23 @@ namespace PlanAthena.Controls
         private PrintDocument _printDocument;
         public Tache TacheSelectionnee { get; private set; }
 
+        // Timer pour surveiller le zoom
+        private System.Windows.Forms.Timer _zoomMonitorTimer;
+        private double _lastKnownZoom = 1.0;
+
         #endregion
 
         #region Événements Publics
 
         public event EventHandler<TacheSelectedEventArgs> TacheSelected;
         public event EventHandler<TacheSelectedEventArgs> TacheDoubleClicked;
+        public event EventHandler<ZoomChangedEventArgs> ZoomChanged;
+
+        #endregion
+
+        #region Propriétés Publiques
+
+        public double ZoomFacteur => _viewer?.ZoomF ?? 1.0;
 
         #endregion
 
@@ -56,7 +67,7 @@ namespace PlanAthena.Controls
             _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
             _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
             _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
-            _dependanceBuilder = dependanceBuilder ?? throw new ArgumentNullException(nameof(dependanceBuilder)); // AJOUT
+            _dependanceBuilder = dependanceBuilder ?? throw new ArgumentNullException(nameof(dependanceBuilder));
             _nodeBuilder = new PertNodeBuilder(settings, _metierService);
 
             ConfigurerViewer();
@@ -75,8 +86,55 @@ namespace PlanAthena.Controls
             _viewer.ToolBarIsVisible = false;
             _viewer.ZoomF = _settings.DefaultZoom;
             _viewer.OutsideAreaBrush = new SolidBrush(_settings.OutsideAreaColor);
+
+            // Démarrer le monitoring du zoom
+            InitialiserMonitoringZoom();
+
             var tooltip = new ToolTip();
             tooltip.SetToolTip(_viewer, "Clic sur objet = Sélection | Clic sur fond = Déplacement vue | Double-clic = Éditer");
+        }
+
+        private void InitialiserMonitoringZoom()
+        {
+            _zoomMonitorTimer = new System.Windows.Forms.Timer();
+            _zoomMonitorTimer.Interval = 100; // Vérifier toutes les 100ms
+            _zoomMonitorTimer.Tick += ZoomMonitorTimer_Tick;
+            _zoomMonitorTimer.Start();
+
+            _lastKnownZoom = _viewer.ZoomF;
+        }
+
+        private void ZoomMonitorTimer_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                if (_viewer == null) return;
+
+                var currentZoom = _viewer.ZoomF;
+
+                // Si le zoom a changé de plus de 0.01 (1%)
+                if (Math.Abs(currentZoom - _lastKnownZoom) > 0.01)
+                {
+                    _lastKnownZoom = currentZoom;
+                    ZoomChanged?.Invoke(this, new ZoomChangedEventArgs(currentZoom));
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur lors du monitoring du zoom: {ex.Message}");
+            }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _zoomMonitorTimer?.Stop();
+                _zoomMonitorTimer?.Dispose();
+                _zoomMonitorTimer = null;
+                _printDocument?.Dispose();
+            }
+            base.Dispose(disposing);
         }
 
         #endregion
@@ -97,7 +155,13 @@ namespace PlanAthena.Controls
 
         public void SauvegarderImage()
         {
-            if (_viewer.Graph == null) return;
+            if (_viewer?.Graph == null)
+            {
+                MessageBox.Show("Aucun diagramme à sauvegarder.", "Information",
+                              MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             try
             {
                 MethodInfo mi = typeof(GViewer).GetMethod("SaveImageClick", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -111,27 +175,47 @@ namespace PlanAthena.Controls
 
         public void ImprimerDiagramme()
         {
-            if (_viewer.Graph == null) return;
-            if (_printDocument == null)
+            if (_viewer?.Graph == null)
             {
-                _printDocument = new PrintDocument();
-                _printDocument.DefaultPageSettings.Landscape = true;
-                _printDocument.PrintPage += (sender, e) =>
-                {
-                    var bmp = new Bitmap(e.PageBounds.Width, e.PageBounds.Height);
-                    var renderer = new GraphRenderer(_viewer.Graph);
-                    renderer.Render(bmp);
-                    e.Graphics.DrawImage(bmp, e.PageBounds);
-                    bmp.Dispose();
-                };
+                MessageBox.Show("Aucun diagramme à imprimer.", "Information",
+                              MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
             }
-            using (var printDialog = new PrintDialog { Document = _printDocument })
+
+            try
             {
-                if (printDialog.ShowDialog() == DialogResult.OK)
+                if (_printDocument == null)
                 {
-                    try { _printDocument.Print(); }
-                    catch (Exception ex) { MessageBox.Show($"Erreur d'impression:\n{ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+                    _printDocument = new PrintDocument();
+                    _printDocument.DefaultPageSettings.Landscape = true;
+                    _printDocument.PrintPage += (sender, e) =>
+                    {
+                        try
+                        {
+                            var bmp = new Bitmap(e.PageBounds.Width, e.PageBounds.Height);
+                            var renderer = new GraphRenderer(_viewer.Graph);
+                            renderer.Render(bmp);
+                            e.Graphics.DrawImage(bmp, e.PageBounds);
+                            bmp.Dispose();
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Erreur lors du rendu: {ex.Message}");
+                        }
+                    };
                 }
+
+                using (var printDialog = new PrintDialog { Document = _printDocument })
+                {
+                    if (printDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        _printDocument.Print();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erreur lors de l'impression:\n{ex.Message}", "Erreur d'impression", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -139,21 +223,27 @@ namespace PlanAthena.Controls
         {
             try
             {
-                if (_viewer.Graph == null) return;
+                if (_viewer?.Graph == null) return;
+
                 var bounds = _viewer.Graph.BoundingBox;
                 var clientSize = _viewer.ClientSize;
-                if (bounds.Width > 0 && bounds.Height > 0 && clientSize.Width > 0 && clientSize.Height > 0)
+
+                if (bounds.Width <= 0 || bounds.Height <= 0 || clientSize.Width <= 0 || clientSize.Height <= 0)
                 {
-                    double margin = 80;
-                    var scaleX = (clientSize.Width - margin) / bounds.Width;
-                    var scaleY = (clientSize.Height - margin) / bounds.Height;
-                    var scale = Math.Min(scaleX, scaleY);
-                    _viewer.ZoomF = Math.Max(0.3, Math.Min(scale, 2.0));
+                    return;
                 }
-                else { _viewer.ZoomF = _settings.DefaultZoom; }
+
+                var newZoom = 1.0;
+
+                _viewer.ZoomF = newZoom;
                 _viewer.Invalidate();
+
+                System.Diagnostics.Debug.WriteLine($"Zoom ajusté: {newZoom:F2} ({newZoom * 100:F0}%)");
             }
-            catch { /* Gérer l'exception si nécessaire */ }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur lors de l'ajustement du zoom: {ex.Message}");
+            }
         }
 
         #endregion
@@ -162,25 +252,35 @@ namespace PlanAthena.Controls
 
         private void GenererDiagramme(string filtreRecherche)
         {
-            if (_nodeBuilder == null) return;
-            _graph = new Graph("DiagrammePERT");
-            ConfigurerLayoutOptimal(_graph);
-            var tachesAffichees = FiltrerTaches(_taches, filtreRecherche);
-            if (!tachesAffichees.Any())
+            try
             {
-                CreerNoeudInformation("Aucune tâche à afficher pour ce lot");
-            }
-            else
-            {
-                var tachesParBloc = tachesAffichees.GroupBy(t => t.BlocId);
-                foreach (var blocGroup in tachesParBloc)
+                if (_nodeBuilder == null) return;
+
+                _graph = new Graph("DiagrammePERT");
+                ConfigurerLayoutOptimal(_graph);
+                var tachesAffichees = FiltrerTaches(_taches, filtreRecherche);
+
+                if (!tachesAffichees.Any())
                 {
-                    CreerClusterPourBloc(blocGroup.Key, blocGroup.ToList());
+                    CreerNoeudInformation("Aucune tâche à afficher pour ce lot");
                 }
-                AjouterDependances(tachesAffichees);
+                else
+                {
+                    var tachesParBloc = tachesAffichees.GroupBy(t => t.BlocId);
+                    foreach (var blocGroup in tachesParBloc)
+                    {
+                        CreerClusterPourBloc(blocGroup.Key, blocGroup.ToList());
+                    }
+                    AjouterDependances(tachesAffichees);
+                }
+
+                // MSAGL calcule automatiquement le zoom optimal
+                _viewer.Graph = _graph;
             }
-            _viewer.Graph = _graph;
-            this.BeginInvoke(new Action(() => { try { ZoomToutAjuster(); } catch { } }));
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erreur lors de la génération du diagramme: {ex.Message}");
+            }
         }
 
         private List<Tache> FiltrerTaches(List<Tache> taches, string filtre)
@@ -242,21 +342,16 @@ namespace PlanAthena.Controls
         {
             var idsAffiches = new HashSet<string>(tachesAffichees.Select(t => t.TacheId));
 
-            // Pour chaque tâche que nous allons dessiner...
             foreach (var tacheCourante in tachesAffichees)
             {
-                // 1. Lire la VRAIE liste de dépendances, directement depuis l'objet.
                 var dependancesReelles = (tacheCourante.Dependencies ?? "")
                     .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(d => d.Trim());
 
-                // 2. Pour chaque dépendance réelle...
                 foreach (var idPredecesseur in dependancesReelles)
                 {
-                    // 3. Si le prédécesseur est aussi affiché à l'écran...
                     if (idsAffiches.Contains(idPredecesseur))
                     {
-                        // 4. ...alors on trace un trait.
                         var edge = _graph.AddEdge(idPredecesseur, tacheCourante.TacheId);
                         edge.Attr.Color = _settings.EdgeDefaultColor;
                         edge.Attr.LineWidth = _settings.EdgeDefaultWidth;
@@ -290,7 +385,7 @@ namespace PlanAthena.Controls
             }
         }
 
-        private void Viewer_MouseMove(object sender, MouseEventArgs e) { /* Géré par MSAGL */ }
+        private void Viewer_MouseMove(object sender, MouseEventArgs e) { }
 
         private void Viewer_MouseUp(object sender, MouseEventArgs e)
         {
@@ -352,5 +447,14 @@ namespace PlanAthena.Controls
     {
         public Tache Tache { get; }
         public TacheSelectedEventArgs(Tache tache) { Tache = tache; }
+    }
+
+    public class ZoomChangedEventArgs : EventArgs
+    {
+        public double ZoomFactor { get; }
+        public ZoomChangedEventArgs(double zoomFactor)
+        {
+            ZoomFactor = zoomFactor;
+        }
     }
 }

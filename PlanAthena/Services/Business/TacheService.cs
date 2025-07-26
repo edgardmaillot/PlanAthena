@@ -223,27 +223,6 @@ namespace PlanAthena.Services.Business
 
         #region Import/Export (Non fonctionnel après refonte - à traiter dans une phase ultérieure)
 
-        /// <summary>
-        /// Importe les tâches depuis un fichier CSV.
-        /// ATTENTION: Cette méthode n'est plus fonctionnelle et doit être ré-implémentée.
-        /// </summary>
-        public int ImporterDepuisCsv(string filePath, bool remplacerExistantes = true)
-        {
-            // La logique de cette méthode doit être entièrement revue pour gérer la création
-            // implicite des lots et blocs, comme discuté dans notre conception.
-            throw new NotImplementedException("L'import CSV doit être ré-implémenté pour gérer la nouvelle structure de Lots/Blocs.");
-        }
-
-        /// <summary>
-        /// Exporte les tâches vers un fichier CSV.
-        /// ATTENTION: Cette méthode n'est plus fonctionnelle et doit être ré-implémentée.
-        /// </summary>
-        public void ExporterVersCsv(string filePath)
-        {
-            // La logique de cette méthode doit être entièrement revue pour enrichir les données
-            // de tâches avec les informations de lots et blocs avant l'export.
-            throw new NotImplementedException("L'export CSV doit être ré-implémenté pour gérer la nouvelle structure de Lots/Blocs.");
-        }
 
         /// <summary>
         /// Charge les tâches depuis une liste (utilisé par ProjetService)

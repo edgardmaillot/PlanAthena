@@ -59,28 +59,8 @@ namespace PlanAthenaTests.Utilities
             var resultat = dependance.ToString();
 
             // Assert
-            Assert.AreEqual("T001 - Maçonnerie Bureau", resultat,
-                "ToString() doit retourner le format 'TacheId - TacheNom'");
-        }
-
-        [TestMethod]
-        [TestCategory("Unit - ToString")]
-        public void ToString_AvecTacheNull_DoitRetournerMessageDefault()
-        {
-            // Arrange
-            var dependance = new DependanceAffichage
-            {
-                TachePredecesseur = null,
-                Etat = EtatDependance.Neutre,
-                EstHeritee = false
-            };
-
-            // Act
-            var resultat = dependance.ToString();
-
-            // Assert
-            Assert.AreEqual("Tâche inconnue", resultat,
-                "ToString() doit gérer gracieusement les tâches null");
+            Assert.AreEqual("✅ Maçonnerie Bureau", resultat,
+                "ToString() doit retourner le format 'Icône TacheNom' pour état Stricte");
         }
 
         [TestMethod]
@@ -99,8 +79,8 @@ namespace PlanAthenaTests.Utilities
             var resultat = dependance.ToString();
 
             // Assert
-            Assert.AreEqual(" - Tâche sans ID", resultat,
-                "ToString() doit gérer les TacheId null");
+            Assert.AreEqual("⚪ Tâche sans ID", resultat,
+                "ToString() doit afficher l'icône neutre + nom même sans TacheId");
         }
 
         [TestMethod]
@@ -119,8 +99,8 @@ namespace PlanAthenaTests.Utilities
             var resultat = dependance.ToString();
 
             // Assert
-            Assert.AreEqual("T001 - ", resultat,
-                "ToString() doit gérer les TacheNom null");
+            Assert.AreEqual("⚪ ", resultat,
+                "ToString() doit afficher l'icône même avec TacheNom null");
         }
 
         [TestMethod]
@@ -139,8 +119,8 @@ namespace PlanAthenaTests.Utilities
             var resultat = dependance.ToString();
 
             // Assert
-            Assert.AreEqual(" - ", resultat,
-                "ToString() doit gérer les chaînes vides");
+            Assert.AreEqual("⚪ ", resultat,
+                "ToString() doit afficher l'icône neutre même avec nom vide");
         }
 
         [TestMethod]
@@ -163,8 +143,29 @@ namespace PlanAthenaTests.Utilities
             var resultat = dependance.ToString();
 
             // Assert
-            Assert.AreEqual("T-001_Spé - Tâche avec accénts & caractères spéciaux (test)", resultat,
-                "ToString() doit préserver tous les caractères spéciaux");
+            Assert.AreEqual("💡 Tâche avec accénts & caractères spéciaux (test)", resultat,
+                "ToString() doit préserver tous les caractères spéciaux avec icône suggestion");
+        }
+        [TestMethod]
+        [TestCategory("Unit - ToString")]
+        public void ToString_PourTousLesEtats_DoitAfficherBonneIcone()
+        {
+            // Arrange
+            var tache = new Tache { TacheId = "T001", TacheNom = "Test" };
+
+            var dependances = new[]
+            {
+        new DependanceAffichage { TachePredecesseur = tache, Etat = EtatDependance.Neutre },
+        new DependanceAffichage { TachePredecesseur = tache, Etat = EtatDependance.Suggeree },
+        new DependanceAffichage { TachePredecesseur = tache, Etat = EtatDependance.Stricte },
+        new DependanceAffichage { TachePredecesseur = tache, Etat = EtatDependance.Exclue }
+    };
+
+            // Act & Assert
+            Assert.AreEqual("⚪ Test", dependances[0].ToString(), "Neutre doit avoir l'icône ⚪");
+            Assert.AreEqual("💡 Test", dependances[1].ToString(), "Suggérée doit avoir l'icône 💡");
+            Assert.AreEqual("✅ Test", dependances[2].ToString(), "Stricte doit avoir l'icône ✅");
+            Assert.AreEqual("❌ Test", dependances[3].ToString(), "Exclue doit avoir l'icône ❌");
         }
 
         #endregion
@@ -254,22 +255,21 @@ namespace PlanAthenaTests.Utilities
             // Act & Assert - Vérifications pour l'affichage UI
 
             // Pour dépendance stricte (définie manuellement)
-            Assert.AreEqual("T001 - Maçonnerie", dependanceStricte.ToString(),
-                "Affichage correct pour CheckedListBox");
+            Assert.AreEqual("✅ Maçonnerie", dependanceStricte.ToString(),
+                "Affichage avec icône ✅ pour CheckedListBox");
             Assert.AreEqual(EtatDependance.Stricte, dependanceStricte.Etat,
                 "État pour déterminer le style (noir, gras)");
             Assert.IsFalse(dependanceStricte.EstHeritee,
                 "Pas héritée = définie manuellement");
 
             // Pour dépendance suggérée (par règles métier)
-            Assert.AreEqual("T001 - Maçonnerie", dependanceSuggeree.ToString(),
-                "Même affichage pour CheckedListBox");
+            Assert.AreEqual("💡 Maçonnerie", dependanceSuggeree.ToString(),
+                "Affichage avec icône 💡 pour CheckedListBox");
             Assert.AreEqual(EtatDependance.Suggeree, dependanceSuggeree.Etat,
                 "État pour déterminer le style (bleu, italique)");
             Assert.IsTrue(dependanceSuggeree.EstHeritee,
                 "Héritée = suggérée par règles métier");
         }
-
         [TestMethod]
         [TestCategory("Integration - UI")]
         public void DependanceAffichage_PourLogiqueSauvegarde_DoitDistinguerTypesCorrectement()
@@ -327,14 +327,14 @@ namespace PlanAthenaTests.Utilities
 
         [TestMethod]
         [TestCategory("Unit - Égalité")]
-        public void DependanceAffichage_AvecMemeTache_DoitAvoirMemeToString()
+        public void DependanceAffichage_AvecMemeTache_DoitAvoirMemeNom()
         {
             // Arrange
             var tache1 = new Tache { TacheId = "T001", TacheNom = "Tâche Test" };
             var tache2 = new Tache { TacheId = "T001", TacheNom = "Tâche Test" };
 
             var dep1 = new DependanceAffichage { TachePredecesseur = tache1, Etat = EtatDependance.Stricte };
-            var dep2 = new DependanceAffichage { TachePredecesseur = tache2, Etat = EtatDependance.Suggeree };
+            var dep2 = new DependanceAffichage { TachePredecesseur = tache2, Etat = EtatDependance.Stricte };
 
             // Act
             var string1 = dep1.ToString();
@@ -342,7 +342,12 @@ namespace PlanAthenaTests.Utilities
 
             // Assert
             Assert.AreEqual(string1, string2,
-                "Deux DependanceAffichage avec des tâches identiques doivent avoir le même ToString()");
+                "Deux DependanceAffichage avec des tâches identiques ET même état doivent avoir le même ToString()");
+
+            // Test avec états différents
+            var dep3 = new DependanceAffichage { TachePredecesseur = tache1, Etat = EtatDependance.Suggeree };
+            Assert.AreNotEqual(dep1.ToString(), dep3.ToString(),
+                "Même tâche mais états différents doivent avoir des ToString() différents");
         }
 
         #endregion
@@ -378,15 +383,21 @@ namespace PlanAthenaTests.Utilities
             // Arrange - Tâche avec nom très long
             var nomTresLong = new string('A', 1000); // 1000 caractères
             var tache = new Tache { TacheId = "T_LONG", TacheNom = nomTresLong };
-            var dependance = new DependanceAffichage { TachePredecesseur = tache };
+            var dependance = new DependanceAffichage
+            {
+                TachePredecesseur = tache,
+                Etat = EtatDependance.Neutre
+            };
 
             // Act
             var resultat = dependance.ToString();
 
             // Assert
-            Assert.IsTrue(resultat.Contains("T_LONG"), "L'ID doit être présent");
+            Assert.IsTrue(resultat.StartsWith("⚪ "), "Doit commencer par l'icône neutre");
             Assert.IsTrue(resultat.Contains(nomTresLong), "Le nom long doit être préservé intégralement");
             Assert.IsTrue(resultat.Length > 1000, "La chaîne résultante doit contenir tout le contenu");
+
+            // Note: L'ID n'est plus affiché dans le nouveau format, donc on ne le teste plus
         }
 
         #endregion
