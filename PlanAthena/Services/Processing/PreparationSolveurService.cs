@@ -11,6 +11,7 @@ namespace PlanAthena.Services.Processing
     /// </summary>
     public class PreparationSolveurService
     {
+        //Codé en dur pour le POC, à remplacer par une configuration externe dans la version finale.
         private const int HEURE_LIMITE_DECOUPAGE = 8;
         private const int MAX_HEURES_PAR_SOUS_TACHE = 7;
         private const string JALON_TECHNIQUE_PREFIX = "JT_";
@@ -18,17 +19,50 @@ namespace PlanAthena.Services.Processing
 
         public PreparationSolveurService() { }
 
-        public List<Tache> PreparerPourSolveur(IReadOnlyList<Tache> tachesDuProjet)
+        /// <summary>
+        /// Prépare les tâches pour le solveur et retourne le résultat complet avec la table de mappage
+        /// </summary>
+        /// <param name="tachesDuProjet">Liste des tâches originales du projet</param>
+        /// <returns>Résultat contenant les tâches préparées et la table de mappage parent/enfant</returns>
+        public PreparationResult PreparerPourSolveur(IReadOnlyList<Tache> tachesDuProjet)
         {
             if (tachesDuProjet == null || !tachesDuProjet.Any())
-                return new List<Tache>();
+                return new PreparationResult();
 
             var tachesDeTravail = tachesDuProjet.Select(CopierTache).ToList();
             var (tachesDecoupees, tableDecoupage) = DecouperTachesLongues(tachesDeTravail);
             var tachesAvecJalons = CreerJalonsTechniques(tachesDecoupees, tableDecoupage);
             var tachesFinales = MettreAJourDependances(tachesAvecJalons, tableDecoupage);
 
-            return tachesFinales;
+            // Création de la table de mappage inversée
+            var parentIdParSousTacheId = ConstruireTableMappageInversee(tableDecoupage);
+
+            return new PreparationResult
+            {
+                TachesPreparees = tachesFinales,
+                ParentIdParSousTacheId = parentIdParSousTacheId
+            };
+        }
+
+        /// <summary>
+        /// Construit la table de mappage inversée : ID sous-tâche -> ID tâche mère
+        /// </summary>
+        private static Dictionary<string, string> ConstruireTableMappageInversee(Dictionary<string, List<string>> tableDecoupage)
+        {
+            var mappageInverse = new Dictionary<string, string>();
+
+            foreach (var kvp in tableDecoupage)
+            {
+                var parentId = kvp.Key;
+                var sousTaskIds = kvp.Value;
+
+                foreach (var sousTacheId in sousTaskIds)
+                {
+                    mappageInverse[sousTacheId] = parentId;
+                }
+            }
+
+            return mappageInverse;
         }
 
         private static (List<Tache> TachesDecoupees, Dictionary<string, List<string>> TableDecoupage) DecouperTachesLongues(IReadOnlyList<Tache> taches)

@@ -14,7 +14,11 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
             var tacheBuilder = new TacheModelBuilder();
             var coutBuilder = new CoutModelBuilder();
 
-            var (tachesIntervals, tachesAssignables, makespan) = tacheBuilder.Construire(model, probleme);
+            // *** MODIFICATION: Récupération des métadonnées en plus des éléments existants ***
+            // Le TacheModelBuilder retourne maintenant 6 éléments au lieu de 3.
+            // Les 3 nouveaux sont les métadonnées nécessaires pour corriger l'affichage des jalons
+            var (tachesIntervals, tachesAssignables, makespan, dureesOriginales, typesActivites, nomsActivites) =
+                tacheBuilder.Construire(model, probleme);
 
             // --- CORRECTION : Récupération correcte du tuple de coûts ---
             var (coutTotal, coutRh, coutIndirect) = coutBuilder.Construire(model, probleme, tachesIntervals, tachesAssignables, makespan);
@@ -38,7 +42,14 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
                 Makespan = makespan,
                 CoutTotal = coutTotal,
                 CoutRh = coutRh,
-                CoutIndirect = coutIndirect
+                CoutIndirect = coutIndirect,
+
+                // *** AJOUT: Transmission des métadonnées vers le modèle ***
+                // Ces métadonnées permettront au SolutionInterpreterService 
+                // de corriger les durées des jalons lors de l'export Gantt
+                DureesOriginalesHeures = dureesOriginales,
+                TypesActivites = typesActivites,
+                NomsActivites = nomsActivites
             };
         }
     }

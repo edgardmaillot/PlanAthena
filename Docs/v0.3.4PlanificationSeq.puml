@@ -1,0 +1,54 @@
+@startuml
+skinparam componentStyle uml2
+skinparam wrapWidth 250
+skinparam participantPadding 5
+skinparam sequenceMessageAlign center
+skinparam sequenceArrowColor #1E8449
+skinparam sequenceLifeLineBorderColor #239B56
+skinparam sequenceParticipantBackgroundColor #E8F8F5
+title Cas d'Usage : Lancer la Planification avec Consolidation
+actor User
+participant "MainForm" as UI
+participant "PlanificationService" as PlanSvc
+participant "PreparationSolveurService" as PrepSvc
+participant "DataTransformer" as Transfo
+participant "PlanAthenaCoreFacade\n(Le Solveur)" as Solver
+participant "<b>ResultatConsolidationService</b>\n(Nouveau composant)" as ConsolSvc
+User -> UI : Clique "Lancer la planification"
+activate UI
+UI -> PlanSvc : LancerPlanificationAsync(configurationUI)
+activate PlanSvc
+group Étape 1 : Préparation des données
+PlanSvc -> PrepSvc : PreparerPourSolveur(tachesBrutes)
+activate PrepSvc
+PrepSvc --> PlanSvc : PreparationResult {\n TachesPreparees,\n ParentIdParSousTacheId\n}
+deactivate PrepSvc
+note right of PlanSvc: <b>NOTE CLÉ :</b> Le service récupère et\nconserve la table de mappage\n'ParentIdParSousTacheId' pour plus tard.
+
+PlanSvc -> Transfo : **TransformToChantierSetupDto**(\n  ..., TachesPreparees, ...\n)
+activate Transfo
+Transfo --> PlanSvc : chantierSetupDto
+deactivate Transfo
+end
+group Étape 2 : Appel du Solveur
+PlanSvc -> Solver : ProcessChantierAsync(chantierSetupDto)
+activate Solver
+note right of Solver: Le solveur travaille sur les\nsous-tâches (_P1, _P2...)\nsans connaître leur parent.
+Solver --> PlanSvc : resultatBrut (ProcessChantierResultDto)
+deactivate Solver
+end
+group Étape 3 : Consolidation du Résultat (NOUVELLE classe à ajouter)
+PlanSvc -> ConsolSvc : ConsoliderPourGantt(\n resultatBrut,\n ParentIdParSousTacheId,\n nomProjet\n)
+activate ConsolSvc
+note right of ConsolSvc: Ce service utilise la table de mappage\npour regrouper les affectations des\nsous-tâches sous leur tâche mère.
+ConsolSvc --> PlanSvc : ConsolidatedGanttDto
+deactivate ConsolSvc
+end
+PlanSvc --> UI : resultatComplet {\n resultatBrut (pour le Log),\n ganttConsolide (pour l'Export)\n}
+deactivate PlanSvc
+UI -> UI : Stocke resultatBrut et ganttConsolide
+UI -> UI : AfficherResultatDansLog(resultatBrut)
+note right of UI: Le log continue d'afficher\nle détail des sous-tâches\npour une analyse fine.
+UI -> UI : Active le bouton "Export Gantt"
+deactivate UI
+@enduml

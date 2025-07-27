@@ -1,4 +1,5 @@
 using PlanAthena.Core.Facade.Dto.Output;
+using PlanAthena.Services.Processing;
 using System.Text;
 
 namespace PlanAthena.Services.DataAccess
@@ -8,7 +9,7 @@ namespace PlanAthena.Services.DataAccess
     /// </summary>
     public class GanttExportService
     {
-        #region Export CSV (existant)
+        #region Export CSV (existant - conservé pour compatibilité)
 
         /// <summary>
         /// Exporte les résultats de planification vers un fichier CSV compatible GanttProject
@@ -29,10 +30,356 @@ namespace PlanAthena.Services.DataAccess
 
         #endregion
 
-        #region Export XML (nouveau)
+        #region Export XML (nouveau - version consolidée)
 
         /// <summary>
-        /// Exporte vers un fichier .gan XML natif GanttProject
+        /// Exporte le Gantt consolidé vers un fichier .gan XML natif GanttProject
+        /// </summary>
+        public void ExporterVersGanttProjectXml(ConsolidatedGanttDto ganttConsolide, string filePath, ConfigurationExportGantt config)
+        {
+            if (ganttConsolide?.TachesRacines == null || !ganttConsolide.TachesRacines.Any())
+            {
+                throw new ArgumentException("Aucune tâche consolidée à exporter. Veuillez d'abord lancer une planification avec consolidation.");
+            }
+
+            var ganttXml = GenererXmlGanttProjectConsolide(ganttConsolide, config);
+            File.WriteAllText(filePath, ganttXml, Encoding.UTF8);
+        }
+
+        /// <summary>
+        /// Génère le contenu XML pour GanttProject à partir du Gantt consolidé
+        /// </summary>
+        public string GenererXmlGanttProjectConsolide(ConsolidatedGanttDto ganttConsolide, ConfigurationExportGantt config)
+        {
+            var nomProjet = config.NomProjet ?? ganttConsolide.NomProjet ?? "Planning PlanAthena";
+            var cultureInvariante = System.Globalization.CultureInfo.InvariantCulture;
+
+            var xml = GenererEnteteXmlConsolide(nomProjet, ganttConsolide, cultureInvariante);
+            xml += GenererTachesXmlConsolide(ganttConsolide.TachesRacines, cultureInvariante);
+            xml += GenererRessourcesXmlConsolide(ganttConsolide.TachesRacines, cultureInvariante);
+            xml += GenererAllocationsXmlConsolide(ganttConsolide.TachesRacines, cultureInvariante);
+            xml += GenererPiedXml();
+
+            return xml;
+        }
+
+        #endregion
+
+        #region Méthodes privées XML consolidé
+
+        private string GenererEnteteXmlConsolide(string nomProjet, ConsolidatedGanttDto ganttConsolide, IFormatProvider culture)
+        {
+            var premiereTache = ganttConsolide.TachesRacines.FirstOrDefault();
+            var dateVue = premiereTache?.StartDate.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd");
+
+            return $@"<?xml version=""1.0"" encoding=""UTF-8""?>
+<project name=""{System.Security.SecurityElement.Escape(nomProjet)}"" company="""" webLink="""" view-date=""{dateVue}"" view-index=""0"" gantt-divider-location=""350"" resource-divider-location=""300"" version=""3.2.3247"" locale=""fr_FR"">
+    <description><![CDATA[Planning consolidé généré par PlanAthena le {DateTime.Now:dd/MM/yyyy à HH:mm}
+    
+Configuration:
+- Export hiérarchique avec regroupement des sous-tâches
+- Planning basé sur les heures précises
+- Conversion automatique heures → durée GanttProject
+- {ganttConsolide.TachesRacines.Count} tâche(s) principale(s)
+- {ganttConsolide.TachesRacines.Sum(t => t.Children.Count)} sous-tâche(s) au total]]></description>
+    <view zooming-state=""default:3"" id=""gantt-chart"">
+        <field id=""tpd3"" name=""Nom"" width=""250"" order=""0""/>
+        <field id=""tpd4"" name=""Date de début"" width=""100"" order=""1""/>
+        <field id=""tpd5"" name=""Date de fin"" width=""100"" order=""2""/>
+        <field id=""tpd6"" name=""Durée"" width=""60"" order=""3""/>
+        <field id=""tpd7"" name=""Avancement"" width=""60"" order=""4""/>
+        <field id=""tpd8"" name=""Assigné à"" width=""150"" order=""5""/>
+        <option id=""filter.completedTasks"" value=""false""/>
+        <option id=""color.recent""><![CDATA[#00cc00 #ff0000 #ffff00 #cc00cc #0000cc]]></option>
+    </view>
+    <view id=""resource-table"">
+        <field id=""0"" name=""Nom"" width=""210"" order=""0""/>
+        <field id=""1"" name=""Rôle par défaut"" width=""86"" order=""1""/>
+    </view>
+    <calendars>
+        <day-types>
+            <day-type id=""0""/>
+            <day-type id=""1""/>
+            <calendar id=""1"" name=""default"">
+                <default-week id=""1"" name=""default"" sun=""1"" mon=""0"" tue=""0"" wed=""0"" thu=""0"" fri=""0"" sat=""1""/>
+                <only-show-weekends value=""false""/>
+                <overriden-day-types/>
+                <days/>
+            </calendar>
+        </day-types>
+    </calendars>
+    <tasks empty-milestones=""true"">
+        <taskproperties>
+            <taskproperty id=""tpd0"" name=""type"" type=""default"" valuetype=""icon""/>
+            <taskproperty id=""tpd1"" name=""priority"" type=""default"" valuetype=""icon""/>
+            <taskproperty id=""tpd2"" name=""info"" type=""default"" valuetype=""icon""/>
+            <taskproperty id=""tpd3"" name=""name"" type=""default"" valuetype=""text""/>
+            <taskproperty id=""tpd4"" name=""begindate"" type=""default"" valuetype=""date""/>
+            <taskproperty id=""tpd5"" name=""enddate"" type=""default"" valuetype=""date""/>
+            <taskproperty id=""tpd6"" name=""duration"" type=""default"" valuetype=""int""/>
+            <taskproperty id=""tpd7"" name=""completion"" type=""default"" valuetype=""int""/>
+            <taskproperty id=""tpd8"" name=""coordinator"" type=""default"" valuetype=""text""/>
+            <taskproperty id=""tpd9"" name=""predecessorsr"" type=""default"" valuetype=""text""/>
+        </taskproperties>";
+        }
+
+        private string GenererTachesXmlConsolide(List<GanttTaskItem> tachesRacines, IFormatProvider culture)
+        {
+            var xml = "";
+            int compteurId = 1;
+
+            foreach (var tache in tachesRacines.OrderBy(t => t.StartDate))
+            {
+                xml += GenererTacheXmlRecursive(tache, ref compteurId, culture);
+            }
+
+            xml += @"
+    </tasks>";
+            return xml;
+        }
+
+        private string GenererTacheXmlRecursive(GanttTaskItem tache, ref int compteurId, IFormatProvider culture, int niveau = 0)
+        {
+            var idTache = compteurId++;
+            var xml = "";
+
+            // CORRECTION TEMPORAIRE : Conversion heures → jours + allocation correcte
+            var dateDebut = tache.StartDate.ToString("yyyy-MM-dd");
+            var dureeGantt = "1"; // Toujours 1 jour pour GanttProject
+
+            // Déterminer la couleur selon le type de tâche
+            var couleur = tache.EstTacheMere ? "#0066cc" : "#00cc00";
+
+            // Construire les notes avec avertissement temporaire
+            var notes = ConstruireNotesDetaillees(tache, culture);
+
+            xml += $@"
+        <task id=""{idTache}"" name=""{System.Security.SecurityElement.Escape(tache.Name)}"" color=""{couleur}"" meeting=""false"" start=""{dateDebut}"" duration=""{dureeGantt}"" complete=""0"" thirdDate=""{dateDebut}"" thirdDate-constraint=""0"" expand=""true"">";
+
+            if (!string.IsNullOrEmpty(notes))
+            {
+                xml += $@"
+            <notes><![CDATA[{System.Security.SecurityElement.Escape(notes)}]]></notes>";
+            }
+
+            // CORRECTION : Les dépendances seront ajoutées à l'étape 2
+            // PAS DE DÉPENDANCES ICI pour l'instant
+
+            // HIÉRARCHIE : Si c'est une tâche mère avec des enfants, les générer récursivement
+            if (tache.Children.Any())
+            {
+                foreach (var enfant in tache.Children.OrderBy(e => e.StartDate))
+                {
+                    xml += GenererTacheXmlRecursive(enfant, ref compteurId, culture, niveau + 1);
+                }
+            }
+
+            xml += @"
+        </task>";
+
+            return xml;
+        }
+
+        private string ConstruireNotesDetaillees(GanttTaskItem tache, IFormatProvider culture)
+        {
+            var notes = new StringBuilder();
+
+            // AVERTISSEMENT TEMPORAIRE sur les approximations
+            notes.AppendLine("⚠️ EXPORT TEMPORAIRE - Approximations GanttProject");
+            notes.AppendLine($"🕐 Durée réelle: {tache.DurationHours.ToString("F1", culture)}h");
+            notes.AppendLine($"📅 Début précis: {tache.StartDate:dd/MM/yyyy HH:mm}");
+            notes.AppendLine($"🏁 Fin précise: {tache.EndDate:dd/MM/yyyy HH:mm}");
+
+            if (!string.IsNullOrEmpty(tache.AssignedResourceName))
+            {
+                var heuresParJour = 8.0;
+                var occupation = Math.Min(100.0, (tache.DurationHours / heuresParJour) * 100);
+                notes.AppendLine($"👷 Assigné à: {tache.AssignedResourceName} ({occupation:F1}% jour)");
+            }
+
+            if (!string.IsNullOrEmpty(tache.BlocId))
+            {
+                notes.AppendLine($"🏗️ Bloc: {tache.BlocId}");
+            }
+
+            if (!string.IsNullOrEmpty(tache.LotId))
+            {
+                notes.AppendLine($"📦 Lot: {tache.LotId}");
+            }
+
+            if (tache.EstTacheMere)
+            {
+                notes.AppendLine($"📋 Tâche conteneur ({tache.Children.Count} sous-tâche(s))");
+
+                if (tache.Children.Any())
+                {
+                    notes.AppendLine("\nDétail des parties:");
+                    foreach (var enfant in tache.Children.OrderBy(e => e.StartDate))
+                    {
+                        notes.AppendLine($"  • {enfant.Name}: {enfant.StartDate:dd/MM HH:mm} ({enfant.DurationHours.ToString("F1", culture)}h)");
+                    }
+                }
+            }
+
+            if (tache.Dependencies.Any())
+            {
+                notes.AppendLine($"\n🔗 Dépend de: {string.Join(", ", tache.Dependencies)}");
+            }
+
+            // TODO: Remplacer par timeline native quand priorité urgente résolue
+            notes.AppendLine("\n📌 Dates précises disponibles dans PlanAthena");
+
+            return notes.ToString().Trim();
+        }
+
+        private string GenererRessourcesXmlConsolide(List<GanttTaskItem> tachesRacines, IFormatProvider culture)
+        {
+            var xml = @"
+    <resources>";
+
+            // Extraire toutes les ressources de toutes les tâches (y compris les enfants)
+            var toutesLesRessources = new HashSet<string>();
+            CollecterRessources(tachesRacines, toutesLesRessources);
+
+            var ressources = toutesLesRessources.Where(r => !string.IsNullOrEmpty(r)).ToList();
+
+            for (int i = 0; i < ressources.Count; i++)
+            {
+                var nomRessource = ressources[i];
+
+                // Calculer la charge totale de cette ressource
+                var chargeTotal = CalculerChargeTotaleRessource(tachesRacines, nomRessource);
+
+                xml += $@"
+        <resource id=""{i + 1}"" name=""{System.Security.SecurityElement.Escape(nomRessource)}"" function=""Default:0"" contacts="""" phone="""">
+            <notes><![CDATA[Charge totale: {chargeTotal.ToString("F1", culture)}h]]></notes>
+        </resource>";
+            }
+
+            xml += @"
+    </resources>";
+            return xml;
+        }
+
+        private void CollecterRessources(List<GanttTaskItem> taches, HashSet<string> ressources)
+        {
+            foreach (var tache in taches)
+            {
+                if (!string.IsNullOrEmpty(tache.AssignedResourceName))
+                {
+                    // Séparer les ressources multiples et filtrer les ouvriers virtuels
+                    var ressourcesTache = tache.AssignedResourceName.Split(',').Select(r => r.Trim());
+                    foreach (var ressource in ressourcesTache)
+                    {
+                        // Filtrer les ouvriers virtuels/jalons
+                        if (!ressource.Contains("Jalon") && !ressource.Contains("Ouvrier Virtuel") && !ressource.Contains("Convergence technique"))
+                        {
+                            ressources.Add(ressource);
+                        }
+                    }
+                }
+
+                if (tache.Children.Any())
+                {
+                    CollecterRessources(tache.Children, ressources);
+                }
+            }
+        }
+
+        private double CalculerChargeTotaleRessource(List<GanttTaskItem> tachesRacines, string nomRessource)
+        {
+            double chargeTotal = 0;
+            CalculerChargeRecursive(tachesRacines, nomRessource, ref chargeTotal);
+            return chargeTotal;
+        }
+
+        private void CalculerChargeRecursive(List<GanttTaskItem> taches, string nomRessource, ref double chargeTotal)
+        {
+            foreach (var tache in taches)
+            {
+                // Pour les tâches feuilles, ajouter la charge si la ressource correspond
+                if (!tache.EstTacheMere && !string.IsNullOrEmpty(tache.AssignedResourceName))
+                {
+                    if (tache.AssignedResourceName.Contains(nomRessource))
+                    {
+                        chargeTotal += tache.DurationHours;
+                    }
+                }
+
+                // Parcourir récursivement les enfants
+                if (tache.Children.Any())
+                {
+                    CalculerChargeRecursive(tache.Children, nomRessource, ref chargeTotal);
+                }
+            }
+        }
+
+        private string GenererAllocationsXmlConsolide(List<GanttTaskItem> tachesRacines, IFormatProvider culture)
+        {
+            var xml = @"
+    <allocations>";
+
+            // Extraire les ressources uniques
+            var toutesLesRessources = new HashSet<string>();
+            CollecterRessources(tachesRacines, toutesLesRessources);
+            var ressources = toutesLesRessources.Where(r => !string.IsNullOrEmpty(r)).ToList();
+
+            int compteurIdTache = 1;
+            GenererAllocationsRecursive(tachesRacines, ressources, ref compteurIdTache, ref xml, culture);
+
+            xml += @"
+    </allocations>";
+            return xml;
+        }
+
+        private void GenererAllocationsRecursive(List<GanttTaskItem> taches, List<string> ressources, ref int compteurIdTache, ref string xml, IFormatProvider culture)
+        {
+            foreach (var tache in taches.OrderBy(t => t.StartDate))
+            {
+                var idTache = compteurIdTache++;
+
+                // Générer les allocations pour cette tâche
+                if (!string.IsNullOrEmpty(tache.AssignedResourceName))
+                {
+                    var ressourcesTache = tache.AssignedResourceName.Split(',').Select(r => r.Trim()).Where(r => !string.IsNullOrEmpty(r));
+
+                    foreach (var ressource in ressourcesTache)
+                    {
+                        var idRessource = ressources.IndexOf(ressource) + 1;
+                        if (idRessource > 0)
+                        {
+                            // Pour les tâches mères, répartir la charge
+                            var pourcentageCharge = tache.EstTacheMere ? 50.0 : 100.0;
+
+                            xml += $@"
+        <allocation task-id=""{idTache}"" resource-id=""{idRessource}"" function=""Default:0"" responsible=""true"" load=""{pourcentageCharge.ToString("F1", culture)}""/>";
+                        }
+                    }
+                }
+
+                // Traiter récursivement les enfants
+                if (tache.Children.Any())
+                {
+                    GenererAllocationsRecursive(tache.Children, ressources, ref compteurIdTache, ref xml, culture);
+                }
+            }
+        }
+
+        private string GenererPiedXml()
+        {
+            return @"
+    <vacations/>
+    <previous/>
+    <roles roleset-name=""Default""/>
+</project>";
+        }
+
+        #endregion
+
+        #region Export XML (ancienne version - conservée pour compatibilité)
+
+        /// <summary>
+        /// Exporte vers un fichier .gan XML natif GanttProject (ancienne version)
         /// </summary>
         public void ExporterVersGanttProjectXml(ProcessChantierResultDto resultat, string filePath, ConfigurationExportGantt config)
         {
@@ -48,7 +395,7 @@ namespace PlanAthena.Services.DataAccess
         }
 
         /// <summary>
-        /// Génère le contenu XML pour GanttProject
+        /// Génère le contenu XML pour GanttProject (ancienne version)
         /// </summary>
         public string GenererXmlGanttProject(IEnumerable<AffectationDto> affectations, ConfigurationExportGantt config)
         {
@@ -116,7 +463,7 @@ namespace PlanAthena.Services.DataAccess
 
         #endregion
 
-        #region Méthodes privées XML
+        #region Méthodes privées XML (ancienne version)
 
         private string GenererEnteteXml(string nomProjet, IEnumerable<TacheGroupee> taches, double heuresParJour, IFormatProvider culture)
         {
@@ -264,15 +611,6 @@ Détail des affectations:";
             xml += @"
     </allocations>";
             return xml;
-        }
-
-        private string GenererPiedXml()
-        {
-            return @"
-    <vacations/>
-    <previous/>
-    <roles roleset-name=""Default""/>
-</project>";
         }
 
         #endregion

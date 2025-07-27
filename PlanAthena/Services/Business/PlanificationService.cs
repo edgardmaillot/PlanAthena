@@ -4,6 +4,7 @@ using PlanAthena.Core.Facade;
 using PlanAthena.Core.Facade.Dto.Output;
 using PlanAthena.Data;
 using PlanAthena.Services.DataAccess;
+using PlanAthena.Forms;
 using PlanAthena.Services.Processing;
 
 namespace PlanAthena.Services.Business
@@ -19,6 +20,7 @@ namespace PlanAthena.Services.Business
         private readonly PlanAthenaCoreFacade _facade;
         private readonly DataTransformer _dataTransformer;
         private readonly PreparationSolveurService _preparationSolveurService;
+        private readonly ResultatConsolidationService _consolidationService;
 
         private IReadOnlyList<Ouvrier> _ouvriers = new List<Ouvrier>();
         private IReadOnlyList<Tache> _taches = new List<Tache>();
@@ -27,11 +29,13 @@ namespace PlanAthena.Services.Business
         public PlanificationService(
             PlanAthenaCoreFacade facade,
             DataTransformer dataTransformer,
-            PreparationSolveurService preparationSolveurService)
+            PreparationSolveurService preparationSolveurService,
+            ResultatConsolidationService consolidationService)
         {
             _facade = facade ?? throw new ArgumentNullException(nameof(facade));
             _dataTransformer = dataTransformer ?? throw new ArgumentNullException(nameof(dataTransformer));
             _preparationSolveurService = preparationSolveurService ?? throw new ArgumentNullException(nameof(preparationSolveurService));
+            _consolidationService = consolidationService ?? throw new ArgumentNullException(nameof(consolidationService));
         }
 
         public void ChargerDonnees(IReadOnlyList<Ouvrier> ouvriers, IReadOnlyList<Tache> taches, IReadOnlyList<Metier> metiers)
@@ -46,7 +50,10 @@ namespace PlanAthena.Services.Business
             return _ouvriers.Any() && _metiers.Any() && _taches.Any();
         }
 
-        public async Task<ProcessChantierResultDto> LancerPlanificationAsync(ConfigurationUI configuration)
+        /// <summary>
+        /// Lance la planification et retourne le résultat complet (brut + consolidé)
+        /// </summary>
+        public async Task<PlanificationResultDto> LancerPlanificationAsync(ConfigurationUI configuration)
         {
             if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));
@@ -56,17 +63,34 @@ namespace PlanAthena.Services.Business
 
             try
             {
-                var tachesPourSolveur = _preparationSolveurService.PreparerPourSolveur(_taches);
+                // Étape 1 : Préparation des données avec récupération de la table de mappage
+                var preparationResult = _preparationSolveurService.PreparerPourSolveur(_taches);
 
+                // Étape 2 : Transformation pour le solveur
                 var inputDto = _dataTransformer.TransformToChantierSetupDto(
                     _ouvriers.ToList(),
-                    tachesPourSolveur,
+                    preparationResult.TachesPreparees, // Utiliser les tâches préparées
                     _metiers.ToList(),
                     configuration
                 );
 
-                var resultat = await _facade.ProcessChantierAsync(inputDto);
-                return resultat;
+                // Étape 3 : Appel du solveur
+                var resultatBrut = await _facade.ProcessChantierAsync(inputDto);
+
+                // Étape 4 : Consolidation pour l'export Gantt
+                var ganttConsolide = _consolidationService.ConsoliderPourGantt(
+                    resultatBrut,
+                    preparationResult.ParentIdParSousTacheId,
+                    _taches,
+                    "Planning PlanAthena"
+                );
+
+                // Retourner le résultat complet
+                return new PlanificationResultDto
+                {
+                    ResultatBrut = resultatBrut,
+                    GanttConsolide = ganttConsolide
+                };
             }
             catch (Exception ex)
             {
@@ -84,7 +108,8 @@ namespace PlanAthena.Services.Business
 
             try
             {
-                var tachesPourSolveur = _preparationSolveurService.PreparerPourSolveur(_taches);
+                var preparationResult = _preparationSolveurService.PreparerPourSolveur(_taches);
+                var tachesPourSolveur = preparationResult.TachesPreparees;
 
                 // Calcul plus fiable des statistiques :
                 // 1. Tâches découpées : on compte les tâches originales qui satisfont la condition.
@@ -127,7 +152,8 @@ namespace PlanAthena.Services.Business
                 return new List<Tache>();
             try
             {
-                return _preparationSolveurService.PreparerPourSolveur(_taches);
+                var preparationResult = _preparationSolveurService.PreparerPourSolveur(_taches);
+                return preparationResult.TachesPreparees;
             }
             catch (Exception)
             {

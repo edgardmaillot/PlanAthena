@@ -23,14 +23,37 @@ namespace PlanAthena.Core.Facade.Dto.Output
     }
 
     // Ce sous-DTO est ajouté au même fichier pour la simplicité
-    public record AffectationDto
+    public class AffectationDto
     {
-        public required string TacheId { get; init; }
-        public required string TacheNom { get; init; }
-        public required string OuvrierId { get; init; }
-        public required string OuvrierNom { get; init; }
-        public required string BlocId { get; init; }
-        public required DateTime DateDebut { get; init; }
-        public required long DureeHeures { get; init; }
+        // *** VOS PROPRIÉTÉS EXISTANTES (ne pas toucher) ***
+        public string TacheId { get; set; }
+        public string TacheNom { get; set; }
+        public string OuvrierId { get; set; }
+        public string OuvrierNom { get; set; }
+        public string BlocId { get; set; }
+        public DateTime DateDebut { get; set; }
+        public double DureeHeures { get; set; }
+
+        // *** AJOUT: 3 nouvelles propriétés pour corriger l'export Gantt ***
+
+        /// <summary>
+        /// Type d'activité (Tache, JalonUtilisateur, JalonTechnique).
+        /// Permet de distinguer le travail réel des points de repère temporels.
+        /// </summary>
+        public TypeActivite TypeActivite { get; set; }
+
+        /// <summary>
+        /// Indique si cette affectation représente un jalon (true) ou une tâche de travail (false).
+        /// Propriété calculée pour faciliter l'affichage et les exports.
+        /// </summary>
+        public bool EstJalon => TypeActivite != TypeActivite.Tache;
+
+        /// <summary>
+        /// Durée originale en heures telle que définie par l'utilisateur.
+        /// Pour les jalons: conserve la vraie durée d'attente (72h, 24h, etc.)
+        /// Pour les tâches: généralement identique à DureeHeures
+        /// Utilisé principalement pour l'export Gantt précis.
+        /// </summary>
+        public double? DureeOriginaleHeures { get; set; }
     }
 }

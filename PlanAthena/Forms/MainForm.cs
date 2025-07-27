@@ -26,6 +26,7 @@ namespace PlanAthena.Forms
 
         private InformationsProjet _projetActuel;
         private PlanAthena.Core.Facade.Dto.Output.ProcessChantierResultDto _dernierResultatPlanification;
+        private ConsolidatedGanttDto _dernierGanttConsolide;
 
         public MainForm()
         {
@@ -71,7 +72,7 @@ namespace PlanAthena.Forms
 
             serviceCollection.AddScoped<PreparationSolveurService>();
             serviceCollection.AddScoped<DependanceBuilder>();
-
+            serviceCollection.AddScoped<ResultatConsolidationService>();
             return serviceCollection.BuildServiceProvider();
         }
 
@@ -279,10 +280,16 @@ namespace PlanAthena.Forms
                     _metierService.GetAllMetiers().ToList()
                 );
 
-                var resultatDto = await _planificationService.LancerPlanificationAsync(configuration);
+                // MODIFIÉ : Appel de la nouvelle méthode qui retourne les deux résultats
+                var resultatComplet = await _planificationService.LancerPlanificationAsync(configuration);
 
-                _dernierResultatPlanification = resultatDto;
-                AfficherResultatDansLog(resultatDto);
+                // MODIFIÉ : Stocker les deux résultats séparément
+                _dernierResultatPlanification = resultatComplet.ResultatBrut;
+                _dernierGanttConsolide = resultatComplet.GanttConsolide;
+
+                // Le log continue d'utiliser le résultat brut pour l'analyse détaillée
+                AfficherResultatDansLog(_dernierResultatPlanification);
+
                 VerifierDisponibiliteExportGantt();
                 Log("PLANIFICATION TERMINÉE.");
             }
@@ -299,7 +306,10 @@ namespace PlanAthena.Forms
 
         private void VerifierDisponibiliteExportGantt()
         {
-            bool peutExporter = _dernierResultatPlanification?.OptimisationResultat?.Affectations?.Any() == true;
+            // MODIFIÉ : Vérifier les deux conditions pour l'export
+            bool peutExporter = _dernierResultatPlanification?.OptimisationResultat?.Affectations?.Any() == true
+                               && _dernierGanttConsolide?.TachesRacines?.Any() == true;
+
             if (btnExportGantt.InvokeRequired)
             {
                 btnExportGantt.Invoke(new Action(() => btnExportGantt.Enabled = peutExporter));
@@ -308,17 +318,19 @@ namespace PlanAthena.Forms
             {
                 btnExportGantt.Enabled = peutExporter;
             }
+
             if (peutExporter)
             {
-                Log("📊 Export GanttProject disponible");
+                Log($"📊 Export GanttProject disponible ({_dernierGanttConsolide.TachesRacines.Count} tâches consolidées)");
             }
         }
 
         private void btnExportGantt_Click(object sender, EventArgs e)
         {
-            if (_dernierResultatPlanification?.OptimisationResultat?.Affectations?.Any() != true)
+            // MODIFIÉ : Vérifier le Gantt consolidé au lieu du résultat brut
+            if (_dernierGanttConsolide?.TachesRacines?.Any() != true)
             {
-                MessageBox.Show("Aucun planning à exporter. Veuillez d'abord lancer une planification.", "Export impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Aucun planning consolidé à exporter. Veuillez d'abord lancer une planification.", "Export impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -328,7 +340,10 @@ namespace PlanAthena.Forms
                 try
                 {
                     var config = _configBuilder.ConstruireConfigExportGantt(_projetActuel?.NomProjet ?? "Planning", (double)numHeuresTravail.Value, chkListJoursOuvres.CheckedItems.Cast<DayOfWeek>());
-                    _ganttExportService.ExporterVersGanttProjectXml(_dernierResultatPlanification, sfd.FileName, config);
+
+                    // MODIFIÉ : Passer le Gantt consolidé au lieu du résultat brut
+                    _ganttExportService.ExporterVersGanttProjectXml(_dernierGanttConsolide, sfd.FileName, config);
+
                     Log($"📊 Export GanttProject réussi : {sfd.FileName}");
                     MessageBox.Show($"Export GanttProject terminé avec succès !\n\nFichier : {sfd.FileName}", "Export réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }

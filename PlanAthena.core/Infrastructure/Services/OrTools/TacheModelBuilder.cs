@@ -15,10 +15,22 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
         private Dictionary<TacheId, IntVar> _jalonStartAbsolu = new();
         private Dictionary<TacheId, IntVar> _jalonEndAbsolu = new();
 
+        // *** AJOUT: Collections pour préserver les métadonnées des tâches ***
+        // Ces dictionnaires permettent de conserver les informations originales
+        // des tâches pendant la construction du modèle OR-Tools, pour pouvoir
+        // les utiliser plus tard lors de l'interprétation de la solution
+        private Dictionary<TacheId, double> _dureesOriginales = new();
+        private Dictionary<TacheId, TypeActivite> _typesActivites = new();
+        private Dictionary<TacheId, string> _nomsActivites = new();
+
+        // *** MODIFICATION: Signature de retour étendue pour inclure les métadonnées ***
         public (
             Dictionary<TacheId, IntervalVar> TachesIntervals,
             Dictionary<(TacheId, OuvrierId), BoolVar> TachesAssignables,
-            IntVar Makespan
+            IntVar Makespan,
+            Dictionary<TacheId, double> DureesOriginales,     // NOUVEAU: Durées pour export Gantt
+            Dictionary<TacheId, TypeActivite> TypesActivites, // NOUVEAU: Types pour distinction tâche/jalon
+            Dictionary<TacheId, string> NomsActivites         // NOUVEAU: Noms pour affichage
         ) Construire(CpModel model, ProblemeOptimisation probleme)
         {
             var chantier = probleme.Chantier;
@@ -27,6 +39,11 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
 
             _jalonStartAbsolu.Clear();
             _jalonEndAbsolu.Clear();
+
+            // *** AJOUT: Nettoyage des collections de métadonnées ***
+            _dureesOriginales.Clear();
+            _typesActivites.Clear();
+            _nomsActivites.Clear();
 
             var mapSlotToHeureAbsolue = CreerPontTemporel(probleme.EchelleTemps);
 
@@ -48,7 +65,9 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
                 model.Add(makespan == 0);
             }
 
-            return (tachesIntervals, tachesAssignables, makespan);
+            // *** MODIFICATION: Retour des métadonnées en plus des éléments existants ***
+            return (tachesIntervals, tachesAssignables, makespan,
+                    _dureesOriginales, _typesActivites, _nomsActivites);
         }
 
         private long[] CreerPontTemporel(EchelleTempsOuvree echelleTemps)
@@ -70,17 +89,6 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
             // Toute autre estimation (séquentielle, parallèle) peut être trop restrictive
             // à cause des contraintes de calendrier (jours non ouvrés, contrainte NoSplitOverDays).
             return probleme.EchelleTemps.NombreTotalSlots;
-
-
-            /*  L'ancien calcul plus contraignant retournait trop souvent des chantiers infaisables
-                var chantier = probleme.Chantier;
-                var totalHeuresHommeReelles = chantier.ObtenirToutesLesTaches().Where(t => t.Type == TypeActivite.Tache).Sum(t => (long)t.HeuresHommeEstimees.Value);
-                var nombreOuvriers = chantier.Ouvriers.Values.Count(o => !o.Id.Value.StartsWith("VIRTUAL"));
-                var estimationSequentielle = totalHeuresHommeReelles;
-                var estimationParallele = nombreOuvriers > 0 ? totalHeuresHommeReelles / nombreOuvriers : totalHeuresHommeReelles;
-                var horizonComplet = probleme.EchelleTemps.NombreTotalSlots;
-                return Math.Min(estimationSequentielle, horizonComplet);
-            */
         }
 
         private void CreerVariablesDeDecision(
@@ -109,6 +117,13 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
 
             foreach (var tache in chantier.ObtenirToutesLesTaches())
             {
+                // *** AJOUT: Enregistrement systématique des métadonnées de la tâche ***
+                // Peu importe le type (Tache ou Jalon), on conserve les infos originales
+                // qui proviennent directement de votre entité de domaine Tache
+                _dureesOriginales[tache.Id] = tache.HeuresHommeEstimees.Value;
+                _typesActivites[tache.Id] = tache.Type;
+                _nomsActivites[tache.Id] = tache.Nom;
+
                 if (tache.Type == TypeActivite.Tache)
                 {
                     var dureeEnSlots = (long)tache.HeuresHommeEstimees.Value;

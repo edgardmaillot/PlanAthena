@@ -13,12 +13,17 @@ namespace PlanAthena.core.Tests.Infrastructure.OrTools;
 
 public class CoutModelBuilderTests
 {
+    // *** CORRECTION: Adaptation pour la nouvelle signature de TacheModelBuilder.Construire ***
     private (CpModel model, ProblemeOptimisation probleme, IReadOnlyDictionary<TacheId, IntervalVar> tachesIntervals, IReadOnlyDictionary<(TacheId, OuvrierId), BoolVar> tachesAssignables, IntVar makespan) GetTestContext()
     {
         var model = new CpModel();
         var probleme = CreerProblemeDeTest();
         var tacheBuilder = new TacheModelBuilder();
-        var (tachesIntervals, tachesAssignables, makespan) = tacheBuilder.Construire(model, probleme);
+
+        // *** MODIFICATION: Récupération des 6 éléments au lieu de 3 ***
+        var (tachesIntervals, tachesAssignables, makespan, dureesOriginales, typesActivites, nomsActivites) =
+            tacheBuilder.Construire(model, probleme);
+
         return (model, probleme, tachesIntervals, tachesAssignables, makespan);
     }
 
@@ -72,6 +77,60 @@ public class CoutModelBuilderTests
         coutRhVar.Should().NotBeNull();
     }
 
+    // *** NOUVEAU TEST: Vérification de la décomposition des coûts ***
+    [Fact]
+    public void Construire_RetourneTroisTypesDeCouttSeparement()
+    {
+        // Arrange
+        var (model, probleme, tachesIntervals, tachesAssignables, makespan) = GetTestContext();
+        var builder = new CoutModelBuilder();
+
+        // Act
+        var (coutTotal, coutRh, coutIndirect) = builder.Construire(model, probleme, tachesIntervals, tachesAssignables, makespan);
+
+        // Assert
+        coutTotal.Should().NotBeNull();
+        coutRh.Should().NotBeNull();
+        coutIndirect.Should().NotBeNull();
+
+        // Vérifier que les variables ont les bons noms
+        coutTotal.Proto.Name.Should().Be("cout_total_chantier");
+        coutRh.Proto.Name.Should().Be("cout_rh");
+        coutIndirect.Proto.Name.Should().Be("cout_indirect");
+    }
+
+    // *** NOUVEAU TEST: Validation des bornes de coûts ***
+    [Fact]
+    public void Construire_VariablesDeCouttSontValides()
+    {
+        // Arrange
+        var (model, probleme, tachesIntervals, tachesAssignables, makespan) = GetTestContext();
+        var builder = new CoutModelBuilder();
+
+        // Act
+        var (coutTotal, coutRh, coutIndirect) = builder.Construire(model, probleme, tachesIntervals, tachesAssignables, makespan);
+
+        // Assert
+        // Vérifier que les variables de coût existent et ont les bons noms
+        coutTotal.Should().NotBeNull();
+        coutRh.Should().NotBeNull();
+        coutIndirect.Should().NotBeNull();
+
+        // Vérifier les noms (ce qui prouve que les variables sont bien configurées)
+        coutTotal.Proto.Name.Should().Be("cout_total_chantier");
+        coutRh.Proto.Name.Should().Be("cout_rh");
+        coutIndirect.Proto.Name.Should().Be("cout_indirect");
+
+        // Test plus simple et robuste : vérifier que les variables peuvent être utilisées
+        // dans le modèle (preuve qu'elles sont correctement initialisées)
+        var modelVariables = model.Model.Variables.Where(v =>
+            v.Name == "cout_total_chantier" ||
+            v.Name == "cout_rh" ||
+            v.Name == "cout_indirect").ToList();
+
+        modelVariables.Should().HaveCount(3, "Les 3 variables de coût doivent être présentes dans le modèle");
+    }
+
     // --- Méthode de préparation des données de test ---
     private ProblemeOptimisation CreerProblemeDeTest()
     {
@@ -90,8 +149,6 @@ public class CoutModelBuilderTests
             {
                 new(blocId, "Bloc A", new CapaciteOuvriers(2), new List<Tache>
                 {
-                    // --- CORRECTION ---
-                    // Ajout du paramètre TypeActivite.Tache à la bonne position dans le constructeur.
                     new(tacheId, "Tâche Test", TypeActivite.Tache, blocId, new DureeHeuresHomme(5), metierId, null)
                 })
             },

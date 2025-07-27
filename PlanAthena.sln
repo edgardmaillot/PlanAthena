@@ -23,6 +23,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Éléments de solution", "�
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlanAthenaTests", "PlanAthenaTests\PlanAthenaTests.csproj", "{32FFC84A-B2F4-40C3-9FAA-0B520A83F991}"
+	ProjectSection(ProjectDependencies) = postProject
+		{FF1EA249-A910-4ADA-B63D-ABDA0D4F7A27} = {FF1EA249-A910-4ADA-B63D-ABDA0D4F7A27}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

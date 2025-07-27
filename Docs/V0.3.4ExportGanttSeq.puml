@@ -1,0 +1,32 @@
+@startuml
+skinparam componentStyle uml2
+skinparam wrapWidth 250
+skinparam participantPadding 5
+skinparam sequenceMessageAlign center
+skinparam sequenceArrowColor #0E6655
+skinparam sequenceLifeLineBorderColor #117A65
+skinparam sequenceParticipantBackgroundColor #E8F6F3
+title Cas d'Usage : Exporter le Gantt Consolidé
+actor User
+participant "MainForm" as UI
+participant "GanttExportService" as ExportSvc
+User -> UI : Clique "Exporter vers GanttProject"
+activate UI
+UI -> UI : Ouvre la boîte de dialogue "Enregistrer sous"
+UI -> ExportSvc : ExporterVersGanttProjectXml(\n ganttConsolide, filePath, config\n)
+activate ExportSvc
+note left of ExportSvc
+<b>LOGIQUE SIMPLIFIÉE :</b>
+Le service n'a plus besoin de deviner
+les liens. Il parcourt la structure
+hiérarchique du ConsolidatedGanttDto.
+end note
+ExportSvc -> ExportSvc : Écrit les Tâches Mères (Résumé)
+note right: <task name="Prépa chantier" ...>
+ExportSvc -> ExportSvc : Écrit les Tâches Enfants (Affectations)
+note right of ExportSvc: Pour chaque tâche mère, il écrit\nles sous-tâches en respectant\nla hiérarchie du format GanttProject.\nIl utilise les dates et heures précises.\n\n<task name="Prépa chantier (Partie 1)"\n start="2025-07-28T08:00:00"\n duration="7" duration-unit="hour" ...>
+ExportSvc --> UI : Succès ou Échec
+deactivate ExportSvc
+UI -> User : Affiche message de confirmation
+deactivate UI
+@enduml
