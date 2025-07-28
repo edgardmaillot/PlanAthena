@@ -30,8 +30,8 @@ namespace PlanAthena.Forms
         {
             splitContainer1 = new SplitContainer();
             groupBox3 = new GroupBox();
-            btnGenerateAndTest = new Button();
             btnExportGantt = new Button();
+            btnGenerateAndTest = new Button();
             numCoutIndirect = new NumericUpDown();
             label11 = new Label();
             numPenaliteChangement = new NumericUpDown();
@@ -92,7 +92,7 @@ namespace PlanAthena.Forms
             // 
             splitContainer1.Panel2.Controls.Add(rtbLog);
             splitContainer1.Size = new Size(784, 711);
-            splitContainer1.SplitterDistance = 352;
+            splitContainer1.SplitterDistance = 303;
             splitContainer1.TabIndex = 4;
             // 
             // groupBox3
@@ -121,6 +121,18 @@ namespace PlanAthena.Forms
             groupBox3.TabStop = false;
             groupBox3.Text = "Configuration et Planification";
             // 
+            // btnExportGantt
+            // 
+            btnExportGantt.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnExportGantt.Enabled = false;
+            btnExportGantt.Location = new Point(589, 107);
+            btnExportGantt.Name = "btnExportGantt";
+            btnExportGantt.Size = new Size(186, 23);
+            btnExportGantt.TabIndex = 15;
+            btnExportGantt.Text = "📊 Export GanttProject";
+            btnExportGantt.UseVisualStyleBackColor = true;
+            btnExportGantt.Click += btnExportGantt_Click;
+            // 
             // btnGenerateAndTest
             // 
             btnGenerateAndTest.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
@@ -131,18 +143,6 @@ namespace PlanAthena.Forms
             btnGenerateAndTest.Text = "🚀 LANCER LA PLANIFICATION";
             btnGenerateAndTest.UseVisualStyleBackColor = true;
             btnGenerateAndTest.Click += btnGenerateAndTest_Click;
-            // 
-            // btnExportGantt
-            // 
-            btnExportGantt.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnExportGantt.Location = new Point(589, 107);
-            btnExportGantt.Name = "btnExportGantt";
-            btnExportGantt.Size = new Size(186, 23);
-            btnExportGantt.TabIndex = 15;
-            btnExportGantt.Text = "📊 Export GanttProject";
-            btnExportGantt.UseVisualStyleBackColor = true;
-            btnExportGantt.Enabled = false;
-            btnExportGantt.Click += btnExportGantt_Click;
             // 
             // numCoutIndirect
             // 
@@ -298,7 +298,7 @@ namespace PlanAthena.Forms
             lblMapping.ForeColor = Color.Blue;
             lblMapping.Location = new Point(400, 130);
             lblMapping.Name = "lblMapping";
-            lblMapping.Size = new Size(159, 15);
+            lblMapping.Size = new Size(182, 15);
             lblMapping.TabIndex = 12;
             lblMapping.Text = "Mapping: 89% (139/156 tâches)";
             // 
@@ -309,7 +309,7 @@ namespace PlanAthena.Forms
             lblResume.ForeColor = Color.DarkGreen;
             lblResume.Location = new Point(23, 130);
             lblResume.Name = "lblResume";
-            lblResume.Size = new Size(251, 15);
+            lblResume.Size = new Size(253, 15);
             lblResume.TabIndex = 11;
             lblResume.Text = "Résumé: 25 ouvriers, 12 métiers, 156 tâches";
             // 
@@ -355,7 +355,6 @@ namespace PlanAthena.Forms
             txtDescription.ScrollBars = ScrollBars.Vertical;
             txtDescription.Size = new Size(607, 23);
             txtDescription.TabIndex = 6;
-            txtDescription.Text = "";
             // 
             // label4
             // 
@@ -371,7 +370,7 @@ namespace PlanAthena.Forms
             lblDateCreation.AutoSize = true;
             lblDateCreation.Location = new Point(500, 47);
             lblDateCreation.Name = "lblDateCreation";
-            lblDateCreation.Size = new Size(93, 15);
+            lblDateCreation.Size = new Size(89, 15);
             lblDateCreation.TabIndex = 4;
             lblDateCreation.Text = "Créé le: __/__/__";
             // 
@@ -387,7 +386,7 @@ namespace PlanAthena.Forms
             labelAuteur.AutoSize = true;
             labelAuteur.Location = new Point(220, 47);
             labelAuteur.Name = "labelAuteur";
-            labelAuteur.Size = new Size(44, 15);
+            labelAuteur.Size = new Size(46, 15);
             labelAuteur.TabIndex = 2;
             labelAuteur.Text = "Auteur:";
             // 
@@ -413,7 +412,7 @@ namespace PlanAthena.Forms
             rtbLog.Location = new Point(0, 0);
             rtbLog.Name = "rtbLog";
             rtbLog.ReadOnly = true;
-            rtbLog.Size = new Size(784, 355);
+            rtbLog.Size = new Size(784, 404);
             rtbLog.TabIndex = 0;
             rtbLog.Text = "Bienvenue sur PlanAthena. Créez un nouveau projet ou chargez un projet existant.";
             // 
