@@ -13,15 +13,19 @@ namespace PlanAthena.core.Tests.Infrastructure.OrTools;
 
 public class CoutModelBuilderTests
 {
-    // *** CORRECTION: Adaptation pour la nouvelle signature de TacheModelBuilder.Construire ***
+    // Méthode utilitaire pour obtenir un contexte de test avec un modèle CP-SAT partiellement construit.
+    // Elle s'adapte à la nouvelle signature de retour de TacheModelBuilder.Construire,
+    // en ignorant les éléments non pertinents pour les tests de CoutModelBuilder.
     private (CpModel model, ProblemeOptimisation probleme, IReadOnlyDictionary<TacheId, IntervalVar> tachesIntervals, IReadOnlyDictionary<(TacheId, OuvrierId), BoolVar> tachesAssignables, IntVar makespan) GetTestContext()
     {
         var model = new CpModel();
         var probleme = CreerProblemeDeTest();
         var tacheBuilder = new TacheModelBuilder();
 
-        // *** MODIFICATION: Récupération des 6 éléments au lieu de 3 ***
-        var (tachesIntervals, tachesAssignables, makespan, dureesOriginales, typesActivites, nomsActivites) =
+        // Récupération des 10 éléments de retour de TacheModelBuilder.Construire.
+        // Les 4 derniers éléments (_lotStarts, _lotEnds, _priorityGroupStarts, _priorityGroupEnds)
+        // sont ignorés avec les _ car ils ne sont pas utilisés directement par CoutModelBuilder.
+        var (tachesIntervals, tachesAssignables, makespan, dureesOriginales, typesActivites, nomsActivites, _, _, _, _) =
             tacheBuilder.Construire(model, probleme);
 
         return (model, probleme, tachesIntervals, tachesAssignables, makespan);
@@ -77,7 +81,7 @@ public class CoutModelBuilderTests
         coutRhVar.Should().NotBeNull();
     }
 
-    // *** NOUVEAU TEST: Vérification de la décomposition des coûts ***
+    // NOUVEAU TEST: Vérification de la décomposition des coûts
     [Fact]
     public void Construire_RetourneTroisTypesDeCouttSeparement()
     {
@@ -99,7 +103,7 @@ public class CoutModelBuilderTests
         coutIndirect.Proto.Name.Should().Be("cout_indirect");
     }
 
-    // *** NOUVEAU TEST: Validation des bornes de coûts ***
+    // NOUVEAU TEST: Validation des bornes de coûts
     [Fact]
     public void Construire_VariablesDeCouttSontValides()
     {
@@ -152,7 +156,7 @@ public class CoutModelBuilderTests
                     new(tacheId, "Tâche Test", TypeActivite.Tache, blocId, new DureeHeuresHomme(5), metierId, null)
                 })
             },
-            new List<LotTravaux>()
+            new List<LotTravaux>() // Aucun lot pour ce test, car CoutModelBuilder n'utilise pas les lots directement
         );
 
         chantier.AppliquerConfigurationOptimisation(new ConfigurationOptimisation(7, 30.0m, 0));

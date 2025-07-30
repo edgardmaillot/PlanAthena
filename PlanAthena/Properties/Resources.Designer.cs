@@ -59,5 +59,25 @@ namespace PlanAthena.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Capture_d_écran_2025_07_29_160101 {
+            get {
+                object obj = ResourceManager.GetObject("Capture d\'écran 2025-07-29 160101", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap office_layout_example_1 {
+            get {
+                object obj = ResourceManager.GetObject("office-layout-example-1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }

@@ -211,11 +211,12 @@ namespace PlanAthena.Services.DataAccess
         }
 
         /// <summary>
-        /// Importe les données normalisées - VERSION SIMPLE QUI MARCHE
+        /// Importe les données normalisées - VERSION CORRIGÉE pour la nouvelle API BlocService
         /// </summary>
         private (int nbTaches, int nbBlocs, List<string> warnings) ImporterDonnees(List<Dictionary<string, string>> donnees, string lotIdCible)
         {
             var warnings = new List<string>();
+            var mappingBlocIds = new Dictionary<string, string>(); // Ancien ID CSV -> Nouvel ID généré
 
             // DEBUG : Vérifier ce qu'on reçoit
             System.Diagnostics.Debug.WriteLine($"ImporterDonnees - {donnees.Count} lignes reçues");
@@ -228,52 +229,65 @@ namespace PlanAthena.Services.DataAccess
                 lot = new Lot
                 {
                     LotId = lotIdCible,
-                    Nom = premiereLigne["LotNom"], // ACCÈS DIRECT
+                    Nom = premiereLigne["LotNom"],
                     Priorite = int.TryParse(premiereLigne["LotPriorite"], out int prio) ? prio : 1
                 };
                 _lotService.AjouterLot(lot);
                 System.Diagnostics.Debug.WriteLine($"Lot créé : {lot.LotId} - {lot.Nom}");
             }
 
-            // 2. Créer les blocs avec IDs ORIGINAUX
+            // 2. Créer les blocs avec génération automatique d'IDs
             var blocsUniques = donnees.GroupBy(d => d["BlocId"]).Where(g => !string.IsNullOrEmpty(g.Key)).ToList();
             System.Diagnostics.Debug.WriteLine($"Blocs uniques trouvés : {blocsUniques.Count}");
 
             foreach (var groupe in blocsUniques)
             {
                 var ligne = groupe.First();
-                var blocId = ligne["BlocId"];
+                var ancienBlocId = ligne["BlocId"]; // ID du CSV
+                var nomBloc = ligne["BlocNom"];
 
-                System.Diagnostics.Debug.WriteLine($"Traitement bloc : {blocId}");
+                System.Diagnostics.Debug.WriteLine($"Traitement bloc CSV : {ancienBlocId} -> {nomBloc}");
 
-                var bloc = new Bloc
+                // Vérifier si un bloc avec ce nom existe déjà
+                var blocExistant = _blocService.ObtenirTousLesBlocs()
+                    .FirstOrDefault(b => b.Nom == nomBloc && b.BlocId.StartsWith($"{lotIdCible}_"));
+
+                if (blocExistant != null)
                 {
-                    BlocId = blocId, // GARDER L'ID ORIGINAL
-                    Nom = ligne["BlocNom"],
-                    CapaciteMaxOuvriers = int.TryParse(ligne["BlocCapaciteMaxOuvriers"], out int cap) ? cap : 6
-                };
-
-                if (_blocService.ObtenirBlocParId(bloc.BlocId) == null)
-                {
-                    _blocService.AjouterBloc(bloc);
-                    System.Diagnostics.Debug.WriteLine($"Bloc créé : {bloc.BlocId} - {bloc.Nom}");
+                    // Réutiliser le bloc existant
+                    mappingBlocIds[ancienBlocId] = blocExistant.BlocId;
+                    System.Diagnostics.Debug.WriteLine($"Bloc réutilisé : {ancienBlocId} -> {blocExistant.BlocId}");
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"Bloc existe déjà : {bloc.BlocId}");
+                    // Créer un nouveau bloc avec ID généré automatiquement
+                    var nouveauBlocId = _blocService.GenerateNewBlocId(lotIdCible);
+                    var bloc = new Bloc
+                    {
+                        BlocId = nouveauBlocId,
+                        Nom = nomBloc,
+                        CapaciteMaxOuvriers = int.TryParse(ligne["BlocCapaciteMaxOuvriers"], out int cap) ? cap : 6
+                    };
+
+                    _blocService.SaveBloc(bloc); // Utiliser la nouvelle méthode SaveBloc
+                    mappingBlocIds[ancienBlocId] = nouveauBlocId;
+                    System.Diagnostics.Debug.WriteLine($"Bloc créé : {ancienBlocId} -> {nouveauBlocId} ({nomBloc})");
                 }
             }
 
-            // 3. Créer les tâches - LAISSER TacheService GÉNÉRER LES IDs
+            // 3. Créer les tâches avec remapping des BlocIds
             var nbTachesCreees = 0;
             foreach (var ligne in donnees)
             {
+                var ancienBlocId = ligne["BlocId"];
+                var nouveauBlocId = mappingBlocIds.ContainsKey(ancienBlocId) ? mappingBlocIds[ancienBlocId] : ancienBlocId;
+
                 var tache = new Tache
                 {
                     // PAS D'ID - TacheService va le générer automatiquement
                     TacheNom = ligne["TacheNom"],
                     LotId = lotIdCible,
-                    BlocId = ligne["BlocId"], // ACCÈS DIRECT
+                    BlocId = nouveauBlocId, // Utiliser l'ID remappé
                     HeuresHommeEstimees = int.TryParse(ligne["HeuresHommeEstimees"], out int heures) ? heures : 8,
                     MetierId = ligne["MetierId"],
                     Type = ligne["EstJalon"] == "True" ? TypeActivite.JalonUtilisateur : TypeActivite.Tache
@@ -282,7 +296,7 @@ namespace PlanAthena.Services.DataAccess
 
                 _tacheService.AjouterTache(tache); // TacheService génère l'ID automatiquement
                 nbTachesCreees++;
-                System.Diagnostics.Debug.WriteLine($"Tâche créée : {tache.TacheId} - {tache.TacheNom}");
+                System.Diagnostics.Debug.WriteLine($"Tâche créée : {tache.TacheId} - {tache.TacheNom} (Bloc: {nouveauBlocId})");
             }
 
             System.Diagnostics.Debug.WriteLine($"RÉSULTAT : {nbTachesCreees} tâches, {blocsUniques.Count} blocs");

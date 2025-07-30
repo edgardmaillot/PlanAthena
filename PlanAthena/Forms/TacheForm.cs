@@ -62,6 +62,7 @@ namespace PlanAthena.Forms
                 // Événements existants
                 _pertControl.TacheSelected += PertControl_TacheSelected;
                 _pertControl.TacheDoubleClicked += PertControl_TacheDoubleClicked;
+                _pertControl.BlocDoubleClicked += PertControl_BlocDoubleClicked;
 
                 // NOUVEAU : Abonnement à l'événement de changement de zoom
                 _pertControl.ZoomChanged += PertControl_ZoomChanged;
@@ -351,6 +352,59 @@ namespace PlanAthena.Forms
 
         #endregion
 
+        #region Gestion des Blocs
+
+        /// <summary>
+        /// Méthode privée unifiée pour ouvrir le BlocForm en mode création ou édition.
+        /// </summary>
+        /// <param name="blocIdToEdit">ID du bloc à éditer (null pour création)</param>
+        /// <param name="lotPourCreation">Lot pour la création d'un nouveau bloc (null pour édition)</param>
+        private void OuvrirGestionBlocs(string blocIdToEdit = null, Lot lotPourCreation = null)
+        {
+            try
+            {
+                using (var form = new BlocForm(_blocService, _tacheService, blocIdToEdit, lotPourCreation))
+                {
+                    if (form.ShowDialog(this) == DialogResult.OK)
+                    {
+                        RafraichirVueComplete();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erreur lors de l'ouverture de la gestion des blocs :\n{ex.Message}",
+                              "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Gestionnaire pour le bouton d'ajout de bloc.
+        /// Initie la création d'un nouveau bloc pour le lot actif.
+        /// </summary>
+        private void btnAjouterBloc_Click(object sender, EventArgs e)
+        {
+            if (_lotActif == null)
+            {
+                MessageBox.Show("Veuillez d'abord sélectionner un lot actif avant de créer un bloc.",
+                              "Lot requis", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            OuvrirGestionBlocs(null, _lotActif);
+        }
+
+        /// <summary>
+        /// Gestionnaire d'événement pour le double-clic sur un bloc dans le diagramme PERT.
+        /// Ouvre l'édition du bloc sélectionné.
+        /// </summary>
+        private void PertControl_BlocDoubleClicked(object sender, PlanAthena.Controls.BlocSelectedEventArgs e)
+        {
+            OuvrirGestionBlocs(e.BlocId, _lotActif);
+        }
+
+        #endregion
+
         #region Événements et Logique d'Affichage
 
         private void PertControl_TacheSelected(object sender, TacheSelectedEventArgs e)
@@ -406,23 +460,6 @@ namespace PlanAthena.Forms
             catch (Exception ex)
             {
                 MessageBox.Show($"Erreur lors de l'ouverture de la gestion des lots :\n{ex.Message}",
-                              "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void btnGererBlocs_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                using (var form = new BlocForm(_blocService, _tacheService))
-                {
-                    form.ShowDialog(this);
-                }
-                RafraichirVueComplete();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Erreur lors de l'ouverture de la gestion des blocs :\n{ex.Message}",
                               "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }

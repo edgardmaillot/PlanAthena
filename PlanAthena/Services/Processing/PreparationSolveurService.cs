@@ -124,7 +124,7 @@ namespace PlanAthena.Services.Processing
                 string idJalon = $"{JALON_TECHNIQUE_PREFIX}{originalId}";
                 var sousTachesIds = tableDecoupage[originalId];
                 var tacheRef = taches.First(t => t.TacheId == sousTachesIds[0]);
-
+                
                 var jalon = new Tache
                 {
                     TacheId = idJalon,

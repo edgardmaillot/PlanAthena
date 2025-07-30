@@ -17,6 +17,7 @@ namespace PlanAthena.Forms
 
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(TacheForm));
             toolStripPrincipal = new ToolStrip();
             btnZoomAjuster = new ToolStripButton();
@@ -42,18 +43,19 @@ namespace PlanAthena.Forms
             panelOutilsMetiers = new Panel();
             panelOutilsMetiersDynamiques = new Panel();
             panelOutilsStatiques = new Panel();
-            btnGererBlocs = new Button();
+            btnAjouterBloc = new Button();
             splitContainerInterne = new SplitContainer();
             panelDiagrammeCentral = new Panel();
             panelGestionDetails = new Panel();
             splitContainerDetails = new SplitContainer();
             panelPlans = new Panel();
+            pictureBox1 = new PictureBox();
             panelDetailsTache = new Panel();
             groupBoxGestionLots = new GroupBox();
             btnGererLots = new Button();
             cmbLots = new ComboBox();
             lblLotActif = new Label();
-            pictureBox1 = new PictureBox();
+            toolTipBloc = new ToolTip(components);
             toolStripPrincipal.SuspendLayout();
             statusStripPrincipal.SuspendLayout();
             groupBoxActions.SuspendLayout();
@@ -74,8 +76,8 @@ namespace PlanAthena.Forms
             splitContainerDetails.Panel2.SuspendLayout();
             splitContainerDetails.SuspendLayout();
             panelPlans.SuspendLayout();
-            groupBoxGestionLots.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
+            groupBoxGestionLots.SuspendLayout();
             SuspendLayout();
             // 
             // toolStripPrincipal
@@ -293,29 +295,33 @@ namespace PlanAthena.Forms
             // 
             panelOutilsMetiersDynamiques.AutoScroll = true;
             panelOutilsMetiersDynamiques.Dock = DockStyle.Fill;
-            panelOutilsMetiersDynamiques.Location = new Point(0, 45);
+            panelOutilsMetiersDynamiques.Location = new Point(0, 88);
             panelOutilsMetiersDynamiques.Name = "panelOutilsMetiersDynamiques";
-            panelOutilsMetiersDynamiques.Size = new Size(198, 432);
+            panelOutilsMetiersDynamiques.Size = new Size(198, 389);
             panelOutilsMetiersDynamiques.TabIndex = 1;
             // 
             // panelOutilsStatiques
             // 
-            panelOutilsStatiques.Controls.Add(btnGererBlocs);
+            panelOutilsStatiques.Controls.Add(btnAjouterBloc);
             panelOutilsStatiques.Dock = DockStyle.Top;
             panelOutilsStatiques.Location = new Point(0, 0);
             panelOutilsStatiques.Name = "panelOutilsStatiques";
-            panelOutilsStatiques.Size = new Size(198, 45);
+            panelOutilsStatiques.Size = new Size(198, 88);
             panelOutilsStatiques.TabIndex = 0;
             // 
-            // btnGererBlocs
+            // btnAjouterBloc
             // 
-            btnGererBlocs.Location = new Point(11, 12);
-            btnGererBlocs.Name = "btnGererBlocs";
-            btnGererBlocs.Size = new Size(178, 23);
-            btnGererBlocs.TabIndex = 0;
-            btnGererBlocs.Text = "Gérer les Blocs";
-            btnGererBlocs.UseVisualStyleBackColor = true;
-            btnGererBlocs.Click += btnGererBlocs_Click;
+            btnAjouterBloc.ForeColor = SystemColors.ButtonHighlight;
+            btnAjouterBloc.Image = (Image)resources.GetObject("btnAjouterBloc.Image");
+            btnAjouterBloc.Location = new Point(35, 8);
+            btnAjouterBloc.Name = "btnAjouterBloc";
+            btnAjouterBloc.Size = new Size(129, 77);
+            btnAjouterBloc.TabIndex = 0;
+            btnAjouterBloc.Text = "Ajouter un Bloc";
+            btnAjouterBloc.TextAlign = ContentAlignment.TopCenter;
+            toolTipBloc.SetToolTip(btnAjouterBloc, "Créer un nouveau bloc");
+            btnAjouterBloc.UseVisualStyleBackColor = true;
+            btnAjouterBloc.Click += btnAjouterBloc_Click;
             // 
             // splitContainerInterne
             // 
@@ -381,6 +387,17 @@ namespace PlanAthena.Forms
             panelPlans.Size = new Size(400, 151);
             panelPlans.TabIndex = 0;
             // 
+            // pictureBox1
+            // 
+            pictureBox1.Dock = DockStyle.Fill;
+            pictureBox1.Image = Properties.Resources.office_layout_example_1;
+            pictureBox1.Location = new Point(0, 0);
+            pictureBox1.Name = "pictureBox1";
+            pictureBox1.Size = new Size(398, 149);
+            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+            pictureBox1.TabIndex = 0;
+            pictureBox1.TabStop = false;
+            // 
             // panelDetailsTache
             // 
             panelDetailsTache.BorderStyle = BorderStyle.FixedSingle;
@@ -432,17 +449,6 @@ namespace PlanAthena.Forms
             lblLotActif.TabIndex = 0;
             lblLotActif.Text = "Lot Actif :";
             // 
-            // pictureBox1
-            // 
-            pictureBox1.Dock = DockStyle.Fill;
-            pictureBox1.Image = (Image)resources.GetObject("pictureBox1.Image");
-            pictureBox1.Location = new Point(0, 0);
-            pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(398, 149);
-            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
-            pictureBox1.TabIndex = 0;
-            pictureBox1.TabStop = false;
-            // 
             // TacheForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -481,9 +487,9 @@ namespace PlanAthena.Forms
             ((System.ComponentModel.ISupportInitialize)splitContainerDetails).EndInit();
             splitContainerDetails.ResumeLayout(false);
             panelPlans.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             groupBoxGestionLots.ResumeLayout(false);
             groupBoxGestionLots.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             ResumeLayout(false);
             PerformLayout();
 
@@ -515,7 +521,7 @@ namespace PlanAthena.Forms
         private System.Windows.Forms.Panel panelOutilsMetiers;
         private System.Windows.Forms.Panel panelOutilsMetiersDynamiques;
         private System.Windows.Forms.Panel panelOutilsStatiques;
-        private System.Windows.Forms.Button btnGererBlocs;
+        private System.Windows.Forms.Button btnAjouterBloc;
         private System.Windows.Forms.SplitContainer splitContainerInterne;
         private System.Windows.Forms.Panel panelDiagrammeCentral;
         private System.Windows.Forms.Panel panelGestionDetails;
@@ -527,5 +533,6 @@ namespace PlanAthena.Forms
         private System.Windows.Forms.ComboBox cmbLots;
         private System.Windows.Forms.Label lblLotActif;
         private PictureBox pictureBox1;
+        private ToolTip toolTipBloc;
     }
 }

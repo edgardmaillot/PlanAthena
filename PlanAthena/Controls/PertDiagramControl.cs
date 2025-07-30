@@ -11,6 +11,19 @@ using DrawingNode = Microsoft.Msagl.Drawing.Node;
 
 namespace PlanAthena.Controls
 {
+    /// <summary>
+    /// Arguments d'événement pour la sélection d'un bloc via double-clic.
+    /// </summary>
+    public class BlocSelectedEventArgs : EventArgs
+    {
+        public string BlocId { get; }
+
+        public BlocSelectedEventArgs(string blocId)
+        {
+            BlocId = blocId;
+        }
+    }
+
     public partial class PertDiagramControl : UserControl
     {
         #region Champs et Dépendances
@@ -42,6 +55,7 @@ namespace PlanAthena.Controls
 
         public event EventHandler<TacheSelectedEventArgs> TacheSelected;
         public event EventHandler<TacheSelectedEventArgs> TacheDoubleClicked;
+        public event EventHandler<BlocSelectedEventArgs> BlocDoubleClicked;
         public event EventHandler<ZoomChangedEventArgs> ZoomChanged;
 
         #endregion
@@ -316,11 +330,17 @@ namespace PlanAthena.Controls
             };
         }
 
+        /// <summary>
+        /// Crée un cluster pour un bloc et s'assure que tous les blocs sont représentés même sans tâches.
+        /// Cela garantit que tous les blocs sont cliquables sur le diagramme.
+        /// </summary>
+        /// <param name="blocId">ID du bloc</param>
+        /// <param name="tachesDuBloc">Liste des tâches du bloc (peut être vide)</param>
         private void CreerClusterPourBloc(string blocId, List<Tache> tachesDuBloc)
         {
-            if (!tachesDuBloc.Any()) return;
             var bloc = _blocService.ObtenirBlocParId(blocId);
             if (bloc == null) return;
+
             var cluster = new Subgraph(blocId)
             {
                 LabelText = string.Format(_settings.ClusterLabelFormat, bloc.Nom, tachesDuBloc.Count, tachesDuBloc.Sum(t => t.HeuresHommeEstimees))
@@ -330,11 +350,27 @@ namespace PlanAthena.Controls
             cluster.Attr.LineWidth = _settings.ClusterLineWidth;
             cluster.Label.FontColor = _settings.ClusterFontColor;
             cluster.Label.FontSize = (int)_settings.ClusterFontSize;
-            foreach (var tache in tachesDuBloc.OrderBy(t => t.TacheId))
+
+            if (tachesDuBloc.Any())
             {
-                var node = _nodeBuilder.BuildNodeFromTache(tache, _graph);
-                cluster.AddNode(node);
+                foreach (var tache in tachesDuBloc.OrderBy(t => t.TacheId))
+                {
+                    var node = _nodeBuilder.BuildNodeFromTache(tache, _graph);
+                    cluster.AddNode(node);
+                }
             }
+            else
+            {
+                // Créer un nœud vide pour les blocs sans tâches afin qu'ils restent cliquables
+                var emptyNode = _graph.AddNode($"{blocId}_empty");
+                emptyNode.LabelText = "Aucune tâche";
+                emptyNode.Attr.FillColor = Microsoft.Msagl.Drawing.Color.LightGray;
+                emptyNode.Attr.Shape = Shape.Box;
+                emptyNode.Label.FontSize = 10;
+                emptyNode.Label.FontColor = Microsoft.Msagl.Drawing.Color.DarkGray;
+                cluster.AddNode(emptyNode);
+            }
+
             _graph.RootSubgraph.AddSubgraph(cluster);
         }
 
@@ -406,12 +442,26 @@ namespace PlanAthena.Controls
             }
         }
 
+        /// <summary>
+        /// Gère le double-clic sur les objets du diagramme.
+        /// Conserve la logique existante pour les tâches et ajoute la gestion des blocs.
+        /// </summary>
         private void Viewer_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             var objectUnderMouse = _viewer.ObjectUnderMouseCursor;
+
+            // Double-clic sur une tâche (logique existante)
             if (objectUnderMouse?.DrawingObject is DrawingNode node && node.UserData is Tache tache)
             {
                 TacheDoubleClicked?.Invoke(this, new TacheSelectedEventArgs(tache));
+                return;
+            }
+
+            // Double-clic sur un cluster de bloc (nouvelle fonctionnalité)
+            if (objectUnderMouse?.DrawingObject is Subgraph subgraph)
+            {
+                BlocDoubleClicked?.Invoke(this, new BlocSelectedEventArgs(subgraph.Id));
+                return;
             }
         }
 

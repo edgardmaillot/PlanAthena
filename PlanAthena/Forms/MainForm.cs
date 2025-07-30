@@ -50,29 +50,37 @@ namespace PlanAthena.Forms
         private ServiceProvider ConfigureServices()
         {
             var serviceCollection = new ServiceCollection();
-
             serviceCollection.AddApplicationServices();
             serviceCollection.AddInfrastructureServices();
             serviceCollection.AddScoped<PlanAthena.Core.Application.Interfaces.IConstructeurProblemeOrTools, PlanAthena.Core.Infrastructure.Services.OrTools.ConstructeurProblemeOrTools>();
             serviceCollection.AddScoped<PlanAthenaCoreFacade>();
 
+            // Services de base (ordre important pour les dépendances)
             serviceCollection.AddSingleton<MetierService>();
             serviceCollection.AddSingleton<OuvrierService>();
             serviceCollection.AddSingleton<TacheService>();
-            serviceCollection.AddSingleton<ProjetService>();
             serviceCollection.AddSingleton<LotService>();
+
+            // Factory pour TacheService pour éviter la dépendance circulaire
+            serviceCollection.AddSingleton<Func<TacheService>>(provider => () => provider.GetRequiredService<TacheService>());
+
+            // BlocService avec factory pour TacheService
             serviceCollection.AddSingleton<BlocService>();
 
+            // IdGeneratorService après BlocService
+            serviceCollection.AddSingleton<IdGeneratorService>();
+
+            serviceCollection.AddSingleton<ProjetService>();
             serviceCollection.AddScoped<CsvDataService>();
             serviceCollection.AddScoped<ExcelReader>();
             serviceCollection.AddScoped<DataTransformer>();
             serviceCollection.AddScoped<PlanificationService>();
             serviceCollection.AddScoped<GanttExportService>();
             serviceCollection.AddScoped<ConfigurationBuilder>();
-
             serviceCollection.AddScoped<PreparationSolveurService>();
             serviceCollection.AddScoped<DependanceBuilder>();
             serviceCollection.AddScoped<ResultatConsolidationService>();
+
             return serviceCollection.BuildServiceProvider();
         }
 

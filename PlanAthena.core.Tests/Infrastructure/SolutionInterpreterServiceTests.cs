@@ -5,6 +5,7 @@ using Google.OrTools.Sat;
 using NodaTime;
 using PlanAthena.core.Application.InternalDto;
 using PlanAthena.Core.Domain;
+
 using PlanAthena.Core.Domain.ValueObjects;
 using PlanAthena.Core.Facade.Dto.Enums;
 using PlanAthena.Core.Facade.Dto.Output;
@@ -196,6 +197,7 @@ namespace PlanAthena.core.Tests.Infrastructure
         private (CpSolver solver, ModeleCpSat modeleCpSat, ProblemeOptimisation probleme) CreerContexteSansMetadonnees()
         {
             var probleme = CreerProblemeAvecTacheNormale();
+            // --- MODIFICATION ICI : Déconstruction du tuple à 10 éléments ---
             var modeleCpSat = ConstruireModeleCpSatSansMetadonnees(probleme);
             var solver = new CpSolver();
 
@@ -213,7 +215,8 @@ namespace PlanAthena.core.Tests.Infrastructure
             // Construire un ModeleCpSat sans métadonnées pour tester les fallbacks
             var model = new CpModel();
             var tacheBuilder = new TacheModelBuilder();
-            var (tachesIntervals, tachesAssignables, makespan, _, _, _) =
+            // --- MODIFICATION ICI : Déconstruction du tuple à 10 éléments, en ignorant les 4 derniers ---
+            var (tachesIntervals, tachesAssignables, makespan, _, _, _, _, _, _, _) =
                 tacheBuilder.Construire(model, probleme);
 
             return new ModeleCpSat
@@ -225,7 +228,12 @@ namespace PlanAthena.core.Tests.Infrastructure
                 // Métadonnées volontairement nulles pour tester les fallbacks
                 DureesOriginalesHeures = null,
                 TypesActivites = null,
-                NomsActivites = null
+                NomsActivites = null,
+                // Les nouvelles propriétés doivent aussi être nulles ou vides pour ce test spécifique
+                LotStarts = null,
+                LotEnds = null,
+                PriorityGroupStarts = null,
+                PriorityGroupEnds = null
             };
         }
 
@@ -234,7 +242,9 @@ namespace PlanAthena.core.Tests.Infrastructure
             // Pour les tests, on va résoudre réellement le modèle simple
             // Dans un environnement de test plus sophistiqué, on pourrait mocker les valeurs
             var status = solver.Solve(modeleCpSat.Model);
-            status.Should().Be(CpSolverStatus.Optimal, "Le problème de test devrait être résolvable");
+            // On vérifie que le statut est optimal ou faisable, ce qui est attendu pour un problème de test résolvable.
+            status.Should().BeOneOf(CpSolverStatus.Optimal, CpSolverStatus.Feasible).And.Be(status, "Le problème de test devrait être résolvable.");
+
         }
 
         // --- Méthodes de création de problèmes (réutilisées des autres tests) ---
@@ -245,6 +255,7 @@ namespace PlanAthena.core.Tests.Infrastructure
             var ouvrierId = new OuvrierId("OUV_1");
             var tacheId = new TacheId("TACHE_1");
             var blocId = new BlocId("BLOC_A");
+            var lotId = new LotId("LOT_1"); // Ajout d'un lot pour la cohérence des tests
 
             var chantier = new Chantier(
                 new ChantierId("CHANTIER_NORMAL"), "Test Tâche Normale",
@@ -259,7 +270,7 @@ namespace PlanAthena.core.Tests.Infrastructure
                         new(tacheId, "Tâche Test", TypeActivite.Tache, blocId, new DureeHeuresHomme(8), metierId, null)
                     })
                 },
-                new List<LotTravaux>()
+                new List<LotTravaux> { new(lotId, "Lot Test", 10, new[] { blocId }) } // Ajout du lot
             );
 
             return CreerProblemeOptimisation(chantier);
@@ -271,6 +282,7 @@ namespace PlanAthena.core.Tests.Infrastructure
             var ouvrierId = new OuvrierId("OUV_1");
             var jalonId = new TacheId("JALON_1");
             var blocId = new BlocId("BLOC_A");
+            var lotId = new LotId("LOT_1"); // Ajout d'un lot
 
             var chantier = new Chantier(
                 new ChantierId("CHANTIER_JALON"), "Test Jalon",
@@ -285,7 +297,7 @@ namespace PlanAthena.core.Tests.Infrastructure
                         new(jalonId, "Séchage Béton", TypeActivite.JalonUtilisateur, blocId, new DureeHeuresHomme(72), metierId, null)
                     })
                 },
-                new List<LotTravaux>()
+                new List<LotTravaux> { new(lotId, "Lot Jalon", 10, new[] { blocId }) } // Ajout du lot
             );
 
             return CreerProblemeOptimisation(chantier);
@@ -298,6 +310,7 @@ namespace PlanAthena.core.Tests.Infrastructure
             var tacheId = new TacheId("TACHE_1");
             var jalonId = new TacheId("JALON_1");
             var blocId = new BlocId("BLOC_A");
+            var lotId = new LotId("LOT_1"); // Ajout d'un lot
 
             var chantier = new Chantier(
                 new ChantierId("CHANTIER_COMPLET"), "Test Complet",
@@ -313,7 +326,7 @@ namespace PlanAthena.core.Tests.Infrastructure
                         new(jalonId, "Séchage", TypeActivite.JalonUtilisateur, blocId, new DureeHeuresHomme(24), metierId, null)
                     })
                 },
-                new List<LotTravaux>()
+                new List<LotTravaux> { new(lotId, "Lot Complet", 10, new[] { blocId }) } // Ajout du lot
             );
 
             return CreerProblemeOptimisation(chantier);

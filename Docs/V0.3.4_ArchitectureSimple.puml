@@ -1,0 +1,120 @@
+@startuml
+' --- Configuration FORCÉE pour layout vertical ---
+!define DIRECTION top to bottom direction
+
+top to bottom direction
+skinparam minClassWidth 180
+skinparam maxMessageSize 200
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam ranksep 80
+skinparam nodesep 60
+
+skinparam package {
+  borderColor #555555
+  borderThickness 2
+  fontColor #333333
+  backgroundColor #F8F9FA
+}
+skinparam class {
+  borderColor #007ACC
+  backgroundColor #DDEEFF
+  arrowColor #005588
+  shadowing false
+}
+title Architecture Générale de PlanAthena (Simplifiée en Couches)
+
+' ================================================
+' === COUCHE 1 : PRÉSENTATION (UI)             ===
+' ================================================
+package "🖥️ Couche 1: Présentation (UI)" as PresentationLayer {
+  class "Interface Utilisateur (WinForms)" as UI_Forms
+  note top of UI_Forms
+    Toutes les Forms et Controls (TacheForm, MainForm, PertDiagramControl...)
+    Gère l'affichage et les interactions utilisateur
+  end note
+}
+
+' ================================================
+' === COUCHE 2 : APPLICATION (Orchestration)   ===
+' ================================================
+package "🎯 Couche 2: Application (Orchestration)" as ApplicationLayer {
+  class "Gestion Projet & Planification" as App_Orchestration
+  note top of App_Orchestration
+    (ProjetService, PlanificationService, ImportOrchestrationService)
+    Coordonne les workflows de haut niveau
+  end note
+}
+
+' ================================================
+' === COUCHE 3 : SERVICES DU DOMAINE           ===
+' ================================================
+package "⚙️ Couche 3: Services du Domaine" as DomainServicesLayer {
+  class "Gestion Données Maîtresses" as Domain_DataManagement
+  note top of Domain_DataManagement
+    (TacheService, OuvrierService, MetierService, LotService, BlocService)
+    Logique métier fondamentale et CRUD sur les entités
+  end note
+}
+
+' ================================================
+' === COUCHE 4 : UTILITAIRES D'APPLICATION     ===
+' ================================================
+package "🔧 Couche 4: Utilitaires d'Application" as AppUtilitiesLayer {
+  class "Préparation & Traitement Données" as App_DataProcessing
+  note top of App_DataProcessing
+    (DataTransformer, PreparationSolveurService, ResultatConsolidationService, DependanceBuilder, ConfigurationBuilder)
+    Services de support pour la transformation et le calcul de données
+  end note
+}
+
+' ================================================
+' === COUCHE 5 : INFRASTRUCTURE                ===
+' ================================================
+package "🏗️ Couche 5: Infrastructure" as InfrastructureLayer {
+  class "Accès Fichiers & Export" as Infra_DataAccess
+  note top of Infra_DataAccess
+    (CsvDataService, ExcelReader, GanttExportService, IdGeneratorService, ImportService)
+    Gestion des fichiers, I/O et intégrations externes
+  end note
+}
+
+' ================================================
+' === DÉPENDANCE EXTERNE : PlanAthena.Core     ===
+' ================================================
+package "🌍 Dépendance Externe" as ExternalLayer {
+  class "PlanAthena.Core (Solveur Externe)" as External_Solver
+  note top of External_Solver
+    Bibliothèque externe pour l'optimisation
+  end note
+}
+
+' ================================================
+' === RELATIONS ENTRE LES COUCHES              ===
+' ================================================
+
+PresentationLayer -down-> ApplicationLayer : Appels des actions utilisateur
+
+ApplicationLayer -down-> DomainServicesLayer : Orchestre les opérations métier
+ApplicationLayer -down-> AppUtilitiesLayer : Prépare les données
+ApplicationLayer -down-> InfrastructureLayer : Gère la persistance et l'export
+
+DomainServicesLayer -down-> AppUtilitiesLayer : Utilise des helpers de traitement (ex: DependanceBuilder)
+
+AppUtilitiesLayer -down-> DomainServicesLayer : Accède aux données du domaine (via services)
+AppUtilitiesLayer -down-> InfrastructureLayer : Pour les opérations techniques (ex: génération ID)
+AppUtilitiesLayer --> External_Solver : Envoie les données au solveur
+
+InfrastructureLayer -down-> DomainServicesLayer : Popule les services du domaine (ex: ImportService)
+
+' Relations des couches inférieures entre elles ou vers des dépendances
+DomainServicesLayer --> External_Solver : (Moins fréquent, mais possible si un service du domaine interagit directement)
+
+' Relations vers les bibliothèques externes (implicites dans Infra_DataAccess)
+' On pourrait ajouter:
+' Infra_DataAccess --> CsvHelper
+' Infra_DataAccess --> QuikGraph
+' Infra_DataAccess --> Microsoft.Msagl
+' Infra_DataAccess --> System.Text.Json
+
+@enduml

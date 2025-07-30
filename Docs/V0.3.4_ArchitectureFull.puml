@@ -1,0 +1,521 @@
+@startuml
+' --- Configuration FORCÉE pour layout vertical ---
+!define DIRECTION top to bottom direction
+top to bottom direction
+skinparam minClassWidth 120
+skinparam maxMessageSize 200
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam ranksep 60
+skinparam nodesep 40
+
+skinparam package {
+  borderColor #555555
+  borderThickness 2
+  fontColor #333333
+  backgroundColor #F8F9FA
+}
+skinparam class {
+  borderColor #007ACC
+  backgroundColor #DDEEFF
+  arrowColor #005588
+  shadowing false
+}
+title Architecture Générale de l'Application (v0.3.4 - Updated)
+
+' ================================================
+' ===         NIVEAU 1 : UI                  ===
+' ================================================
+package "🖥️ UI (User Interface)" as UI {
+  namespace Forms {
+    class MainForm
+    class TacheForm
+    class TacheDetailForm
+    class LotForm
+    class BlocForm
+    class OuvrierForm
+    class MetierForm
+    class CompetenceDialog
+    class NouveauProjetDialog
+    class ImportCsvGroupeDialog
+    class SelectionMetierDialog
+  }
+  namespace Controls {
+    class PertDiagramControl
+  }
+  namespace Controls.Config {
+    class PertDiagramSettings
+    class PertNodeBuilder
+  }
+}
+
+' ================================================
+' ===      NIVEAU 2 : APPLICATION            ===
+' ================================================
+package "🎯 Application (Orchestration & Workflows)" as APPLICATION {
+  namespace Services.Business {
+    class ProjetService {
+      +SauvegarderProjet()
+      +ChargerProjet()
+      +ValiderDonneesAvantPlanification()
+      +CreerNouveauProjet()
+      +ObtenirResumeProjet()
+    }
+    class PlanificationService {
+      +ChargerDonnees()
+      +LancerPlanificationAsync()
+      +ObtenirStatistiquesTraitement()
+    }
+  }
+  ' This class is in the root PlanAthena namespace, but semantically belongs here.
+  class ImportOrchestrationService {
+    +ImporterTachesDepuisCsv()
+  }
+}
+
+' ================================================
+' ===      NIVEAU 3 : DOMAIN SERVICES        ===
+' ================================================
+package "⚙️ Domain Services (Core Business Logic)" as DOMAIN_SERVICES {
+  namespace Services.Business {
+    class TacheService {
+      +AjouterTache()
+      +ModifierTache()
+      +SupprimerTache()
+      +ObtenirTachesParLot()
+      +ChargerTaches()
+      +ObtenirStatistiques()
+    }
+    class LotService {
+      +AjouterLot()
+      +ModifierLot()
+      +ObtenirTousLesLots()
+      +SupprimerLot()
+      +RemplacerTousLesLots()
+    }
+    class BlocService {
+      +AjouterBloc()
+      +ModifierBloc()
+      +ObtenirTousLesBlocs()
+      +SupprimerBloc()
+      +RemplacerTousLesBlocs()
+    }
+    class MetierService {
+      +AjouterMetier()
+      +ModifierMetier()
+      +SupprimerMetier()
+      +GetPrerequisForMetier()
+      +ObtenirMetiersTriesParDependance()
+      +GetDisplayColorForMetier()
+      +RemplacerTousLesMetiers()
+    }
+    class OuvrierService {
+      +AjouterOuvrier()
+      +ModifierOuvrier()
+      +SupprimerOuvrier()
+      +SupprimerCompetence()
+      +ObtenirTousLesOuvriers()
+      +ChargerOuvriers()
+      +ObtenirStatistiques()
+    }
+  }
+}
+
+' ================================================
+' ===    NIVEAU 4 : APPLICATION UTILITIES    ===
+' ================================================
+package "🔧 Application Utilities (Data Processing & Helpers)" as APP_UTILITIES {
+  namespace Services.Processing {
+    class DataTransformer {
+      +TransformToChantierSetupDto()
+    }
+    class PreparationSolveurService {
+      +PreparerPourSolveur()
+    }
+    class ResultatConsolidationService {
+      +ConsoliderPourGantt()
+    }
+  }
+  namespace Utilities {
+    class DependanceBuilder {
+      +ObtenirDependancesPourTache()
+      -ConstruireGrapheBloc()
+      -FiltrerCandidatsValides()
+      -AppliquerSuggestionsMetier()
+    }
+    class ConfigurationBuilder {
+      +ConstruireDepuisUI()
+      +ConstruireConfigExportGantt()
+    }
+  }
+}
+
+' ================================================
+' ===       NIVEAU 5 : INFRASTRUCTURE        ===
+' ================================================
+package "🏗️ Infrastructure (Data Access & Generic Utilities)" as INFRASTRUCTURE {
+  namespace Services.DataAccess {
+    class CsvDataService {
+      +ImportCsv()
+      +ExportCsv()
+      +ValidateCsvStructure()
+    }
+    class ExcelReader {
+      +ImportExcel()
+      +ImportSapOuvriers()
+      +ImportFieldwireTaches()
+    }
+    class GanttExportService {
+      +ExporterVersGanttProjectXml()
+      +GenererXmlGanttProjectConsolide()
+    }
+    class IdGeneratorService {
+      +GenererProchainLotId()
+      +GenererProchainBlocId()
+      +GenererProchainTacheId()
+      +ValiderFormatTacheId()
+    }
+    class ImportService {
+      +ImporterTachesCSV()
+      -ViderLot()
+      -ImporterDonnees()
+    }
+    class CsvImportException
+    class CsvExportException
+    class ExcelImportException
+  }
+}
+
+' ================================================
+' ===    NIVEAU 6 : DOMAIN MODELS & DTOs     ===
+' ================================================
+package "📊 Domain Models (Entities & DTOs)" as DOMAIN_MODELS {
+  namespace Data {
+    class Bloc
+    class Lot
+    class Metier
+    class Ouvrier
+    class Tache
+    class ProjetData
+    enum TypeActivite
+  }
+  namespace Services.DataAccess {
+    class ConfigurationUI
+    class ImportResult
+    class ValidationResult
+    class ConfigurationIds
+    class TacheImportee
+    class ConfigurationExportGantt
+    class TacheGroupee
+    class TacheGantt
+    class RessourceGantt
+  }
+  namespace Services.Processing {
+    class ConsolidatedGanttDto
+    class GanttTaskItem
+    class PreparationResult
+  }
+  namespace Services.Business {
+    class PlanificationResultDto
+    class OuvrierInfo
+    class StatistiquesOuvriers
+    class StatistiquesTaches
+    class StatistiquesMappingMetiers
+    class InformationsProjet
+    class ValidationProjet
+    class ResumeImport
+    class ResumeProjet
+    class StatistiquesSimplifiees
+    class OldTacheFormat
+    class OldProjetDataFormat
+    class PlanificationException
+    class ProjetException
+  }
+  namespace Utilities {
+    class DependanceAffichage
+    enum EtatDependance
+  }
+  namespace Controls {
+    class TacheSelectedEventArgs
+    class ZoomChangedEventArgs
+  }
+}
+
+' ================================================
+' ===    NIVEAU 7 : EXTERNAL DEPENDENCIES    ===
+' ================================================
+package "🌍 External Dependencies" as EXTERNAL {
+  namespace PlanAthena.Core.Facade {
+    class PlanAthenaCoreFacade
+  }
+  namespace PlanAthena.Core.Facade.Dto.Input {
+    class ChantierSetupInputDto
+    class TacheDto
+    class OuvrierDto
+    class BlocTravailDto
+    class LotTravauxDto
+    class MetierDto
+    class CalendrierTravailDefinitionDto
+    class OptimizationConfigDto
+    class CompetenceDto
+  }
+  namespace PlanAthena.Core.Facade.Dto.Output {
+    class ProcessChantierResultDto
+    class OptimisationResultDto
+    class AffectationDto
+    class AnalyseStatiqueResultatDto
+    class AnalysePostOptimisationResultatDto
+    class KpisGlobauxDto
+    class KpisParOuvrierDto
+  }
+  namespace PlanAthena.Core.Facade.Dto.Enums {
+    enum NiveauExpertise
+    enum TypeActivite
+  }
+  class QuikGraph <<Library>>
+  class CsvHelper <<Library>>
+  class Microsoft.Msagl <<Library>>
+  class System.Text.Json <<Library>>
+}
+
+' ================================================
+' ===         RELATIONS VERTICALES             ===
+' ================================================
+
+UI -down-> APPLICATION
+APPLICATION -down-> DOMAIN_SERVICES
+DOMAIN_SERVICES -down-> APP_UTILITIES
+APP_UTILITIES -down-> INFRASTRUCTURE
+INFRASTRUCTURE -down-> DOMAIN_MODELS
+DOMAIN_MODELS -down-> EXTERNAL
+
+' ================================================
+' ===       RELATIONS DÉTAILLÉES               ===
+' ================================================
+
+' UI -> APPLICATION
+Forms.MainForm --> APPLICATION.Services.Business.ProjetService
+Forms.MainForm --> APPLICATION.Services.Business.PlanificationService
+Forms.MainForm --> APPLICATION.ImportOrchestrationService
+
+Forms.TacheForm --> APPLICATION.ImportOrchestrationService
+
+' UI -> DOMAIN SERVICES (for direct access/management)
+Forms.MainForm --> DOMAIN_SERVICES.Services.Business.MetierService
+Forms.MainForm --> DOMAIN_SERVICES.Services.Business.OuvrierService
+Forms.MainForm --> DOMAIN_SERVICES.Services.Business.TacheService
+Forms.MainForm --> DOMAIN_SERVICES.Services.Business.LotService
+Forms.MainForm --> DOMAIN_SERVICES.Services.Business.BlocService
+
+Forms.TacheForm --> DOMAIN_SERVICES.Services.Business.TacheService
+Forms.TacheForm --> DOMAIN_SERVICES.Services.Business.MetierService
+Forms.TacheForm --> DOMAIN_SERVICES.Services.Business.LotService
+Forms.TacheForm --> DOMAIN_SERVICES.Services.Business.BlocService
+
+Forms.TacheDetailForm --> DOMAIN_SERVICES.Services.Business.TacheService
+Forms.TacheDetailForm --> DOMAIN_SERVICES.Services.Business.MetierService
+Forms.TacheDetailForm --> DOMAIN_SERVICES.Services.Business.LotService
+Forms.TacheDetailForm --> DOMAIN_SERVICES.Services.Business.BlocService
+
+Forms.LotForm --> DOMAIN_SERVICES.Services.Business.LotService
+Forms.LotForm --> DOMAIN_SERVICES.Services.Business.TacheService
+
+Forms.BlocForm --> DOMAIN_SERVICES.Services.Business.BlocService
+Forms.BlocForm --> DOMAIN_SERVICES.Services.Business.TacheService
+
+Forms.OuvrierForm --> DOMAIN_SERVICES.Services.Business.OuvrierService
+Forms.OuvrierForm --> DOMAIN_SERVICES.Services.Business.MetierService
+
+Forms.MetierForm --> DOMAIN_SERVICES.Services.Business.MetierService
+
+' UI -> APP UTILITIES
+Forms.TacheForm --> APP_UTILITIES.Utilities.DependanceBuilder
+Forms.TacheForm --> APP_UTILITIES.Utilities.ConfigurationBuilder
+Forms.TacheDetailForm --> APP_UTILITIES.Utilities.DependanceBuilder
+Forms.MainForm --> APP_UTILITIES.Utilities.ConfigurationBuilder
+
+Controls.PertDiagramControl --> APP_UTILITIES.Utilities.DependanceBuilder
+
+' UI -> DOMAIN MODELS
+Forms.CompetenceDialog --> DOMAIN_MODELS.Data.Metier
+Forms.CompetenceDialog --> DOMAIN_MODELS.Data.Ouvrier
+Forms.SelectionMetierDialog --> DOMAIN_MODELS.Data.Metier
+Forms.MainForm --> DOMAIN_MODELS.Services.Business.InformationsProjet
+Forms.TacheForm --> DOMAIN_MODELS.Data.Lot
+Forms.TacheDetailForm --> DOMAIN_MODELS.Data.Tache
+Forms.TacheDetailForm --> DOMAIN_MODELS.Utilities.DependanceAffichage
+Controls.PertDiagramControl --> DOMAIN_MODELS.Data.Tache
+Controls.PertDiagramControl --> DOMAIN_MODELS.Controls.TacheSelectedEventArgs
+
+' APPLICATION -> DOMAIN SERVICES
+APPLICATION.Services.Business.ProjetService --> DOMAIN_SERVICES.Services.Business.OuvrierService
+APPLICATION.Services.Business.ProjetService --> DOMAIN_SERVICES.Services.Business.TacheService
+APPLICATION.Services.Business.ProjetService --> DOMAIN_SERVICES.Services.Business.MetierService
+APPLICATION.Services.Business.ProjetService --> DOMAIN_SERVICES.Services.Business.LotService
+APPLICATION.Services.Business.ProjetService --> DOMAIN_SERVICES.Services.Business.BlocService
+
+APPLICATION.Services.Business.PlanificationService --> DOMAIN_SERVICES.Services.Business.OuvrierService
+APPLICATION.Services.Business.PlanificationService --> DOMAIN_SERVICES.Services.Business.TacheService
+APPLICATION.Services.Business.PlanificationService --> DOMAIN_SERVICES.Services.Business.MetierService
+
+' APPLICATION -> APP UTILITIES
+APPLICATION.Services.Business.PlanificationService --> APP_UTILITIES.Services.Processing.DataTransformer
+APPLICATION.Services.Business.PlanificationService --> APP_UTILITIES.Services.Processing.PreparationSolveurService
+APPLICATION.Services.Business.PlanificationService --> APP_UTILITIES.Services.Processing.ResultatConsolidationService
+APPLICATION.ImportOrchestrationService --> INFRASTRUCTURE.Services.DataAccess.ImportService
+
+' DOMAIN SERVICES -> INFRASTRUCTURE (for data interaction)
+DOMAIN_SERVICES.Services.Business.OuvrierService --> INFRASTRUCTURE.Services.DataAccess.CsvDataService
+DOMAIN_SERVICES.Services.Business.OuvrierService --> INFRASTRUCTURE.Services.DataAccess.ExcelReader
+
+DOMAIN_SERVICES.Services.Business.TacheService --> INFRASTRUCTURE.Services.DataAccess.CsvDataService
+DOMAIN_SERVICES.Services.Business.TacheService --> INFRASTRUCTURE.Services.DataAccess.ExcelReader
+DOMAIN_SERVICES.Services.Business.TacheService --> INFRASTRUCTURE.Services.DataAccess.IdGeneratorService
+
+APPLICATION.Services.Business.ProjetService --> INFRASTRUCTURE.Services.DataAccess.CsvDataService
+
+' DOMAIN SERVICES -> DOMAIN MODELS
+DOMAIN_SERVICES.Services.Business.TacheService --> DOMAIN_MODELS.Data.Tache
+DOMAIN_SERVICES.Services.Business.LotService --> DOMAIN_MODELS.Data.Lot
+DOMAIN_SERVICES.Services.Business.BlocService --> DOMAIN_MODELS.Data.Bloc
+DOMAIN_SERVICES.Services.Business.MetierService --> DOMAIN_MODELS.Data.Metier
+DOMAIN_SERVICES.Services.Business.OuvrierService --> DOMAIN_MODELS.Data.Ouvrier
+DOMAIN_SERVICES.Services.Business.OuvrierService --> DOMAIN_MODELS.Services.Business.OuvrierInfo
+DOMAIN_SERVICES.Services.Business.OuvrierService --> DOMAIN_MODELS.Services.Business.StatistiquesOuvriers
+DOMAIN_SERVICES.Services.Business.TacheService --> DOMAIN_MODELS.Services.Business.StatistiquesTaches
+DOMAIN_SERVICES.Services.Business.TacheService --> DOMAIN_MODELS.Services.Business.StatistiquesMappingMetiers
+APPLICATION.Services.Business.ProjetService --> DOMAIN_MODELS.Services.Business.InformationsProjet
+APPLICATION.Services.Business.ProjetService --> DOMAIN_MODELS.Services.Business.ValidationProjet
+APPLICATION.Services.Business.ProjetService --> DOMAIN_MODELS.Services.Business.ResumeImport
+APPLICATION.Services.Business.ProjetService --> DOMAIN_MODELS.Services.Business.ResumeProjet
+APPLICATION.Services.Business.ProjetService --> DOMAIN_MODELS.Services.Business.OldTacheFormat
+APPLICATION.Services.Business.ProjetService --> DOMAIN_MODELS.Services.Business.OldProjetDataFormat
+APPLICATION.Services.Business.PlanificationService --> DOMAIN_MODELS.Services.Business.PlanificationResultDto
+APPLICATION.Services.Business.PlanificationService --> DOMAIN_MODELS.Services.Business.StatistiquesSimplifiees
+
+
+' APP UTILITIES -> DOMAIN SERVICES
+APP_UTILITIES.Utilities.DependanceBuilder --> DOMAIN_SERVICES.Services.Business.MetierService
+APP_UTILITIES.Utilities.DependanceBuilder --> DOMAIN_SERVICES.Services.Business.TacheService
+APP_UTILITIES.Services.Processing.DataTransformer --> DOMAIN_SERVICES.Services.Business.LotService
+APP_UTILITIES.Services.Processing.DataTransformer --> DOMAIN_SERVICES.Services.Business.BlocService
+
+' APP UTILITIES -> INFRASTRUCTURE
+APP_UTILITIES.Utilities.ConfigurationBuilder --> DOMAIN_MODELS.Services.DataAccess.ConfigurationUI
+APP_UTILITIES.Utilities.ConfigurationBuilder --> DOMAIN_MODELS.Services.DataAccess.ConfigurationExportGantt
+
+' APP UTILITIES -> DOMAIN MODELS
+APP_UTILITIES.Services.Processing.DataTransformer --> DOMAIN_MODELS.Data.Tache
+APP_UTILITIES.Services.Processing.DataTransformer --> DOMAIN_MODELS.Data.Ouvrier
+APP_UTILITIES.Services.Processing.DataTransformer --> DOMAIN_MODELS.Data.Metier
+APP_UTILITIES.Services.Processing.DataTransformer --> DOMAIN_MODELS.Data.Bloc
+APP_UTILITIES.Services.Processing.DataTransformer --> DOMAIN_MODELS.Data.Lot
+APP_UTILITIES.Services.Processing.PreparationSolveurService --> DOMAIN_MODELS.Data.Tache
+APP_UTILITIES.Services.Processing.PreparationSolveurService --> DOMAIN_MODELS.Services.Processing.PreparationResult
+APP_UTILITIES.Services.Processing.ResultatConsolidationService --> DOMAIN_MODELS.Data.Tache
+APP_UTILITIES.Services.Processing.ResultatConsolidationService --> DOMAIN_MODELS.Services.Processing.ConsolidatedGanttDto
+
+APP_UTILITIES.Utilities.DependanceBuilder --> DOMAIN_MODELS.Data.Tache
+APP_UTILITIES.Utilities.DependanceBuilder --> DOMAIN_MODELS.Utilities.DependanceAffichage
+
+' INFRASTRUCTURE -> DOMAIN SERVICES
+INFRASTRUCTURE.Services.DataAccess.ImportService --> DOMAIN_SERVICES.Services.Business.TacheService
+INFRASTRUCTURE.Services.DataAccess.ImportService --> DOMAIN_SERVICES.Services.Business.LotService
+INFRASTRUCTURE.Services.DataAccess.ImportService --> DOMAIN_SERVICES.Services.Business.BlocService
+INFRASTRUCTURE.Services.DataAccess.ImportService --> DOMAIN_SERVICES.Services.Business.MetierService
+
+' INFRASTRUCTURE -> DOMAIN MODELS
+INFRASTRUCTURE.Services.DataAccess.GanttExportService --> DOMAIN_MODELS.Services.Processing.ConsolidatedGanttDto
+INFRASTRUCTURE.Services.DataAccess.GanttExportService --> DOMAIN_MODELS.Services.DataAccess.ConfigurationExportGantt
+INFRASTRUCTURE.Services.DataAccess.IdGeneratorService --> DOMAIN_MODELS.Data.Lot
+INFRASTRUCTURE.Services.DataAccess.IdGeneratorService --> DOMAIN_MODELS.Data.Bloc
+INFRASTRUCTURE.Services.DataAccess.IdGeneratorService --> DOMAIN_MODELS.Data.Tache
+INFRASTRUCTURE.Services.DataAccess.IdGeneratorService --> DOMAIN_MODELS.Services.DataAccess.ConfigurationIds
+INFRASTRUCTURE.Services.DataAccess.ImportService --> DOMAIN_MODELS.Services.DataAccess.ImportResult
+INFRASTRUCTURE.Services.DataAccess.ImportService --> DOMAIN_MODELS.Data.Tache
+INFRASTRUCTURE.Services.DataAccess.ImportService --> DOMAIN_MODELS.Data.Lot
+INFRASTRUCTURE.Services.DataAccess.ImportService --> DOMAIN_MODELS.Data.Bloc
+
+' DOMAIN MODELS -> EXTERNAL
+DOMAIN_MODELS.Data.Ouvrier --> EXTERNAL.PlanAthena.Core.Facade.Dto.Enums.NiveauExpertise
+DOMAIN_MODELS.Data.Tache --> EXTERNAL.PlanAthena.Core.Facade.Dto.Enums.TypeActivite
+DOMAIN_MODELS.Services.Business.PlanificationResultDto --> EXTERNAL.PlanAthena.Core.Facade.Dto.Output.ProcessChantierResultDto
+DOMAIN_MODELS.Services.Business.PlanificationResultDto --> DOMAIN_MODELS.Services.Processing.ConsolidatedGanttDto
+
+' APP UTILITIES -> EXTERNAL
+APP_UTILITIES.Services.Processing.DataTransformer --> EXTERNAL.PlanAthena.Core.Facade.Dto.Input.ChantierSetupInputDto
+APP_UTILITIES.Services.Processing.DataTransformer --> EXTERNAL.PlanAthena.Core.Facade.Dto.Enums.TypeActivite
+APP_UTILITIES.Services.Processing.ResultatConsolidationService --> EXTERNAL.PlanAthena.Core.Facade.Dto.Output.ProcessChantierResultDto
+APP_UTILITIES.Utilities.DependanceBuilder --> EXTERNAL.QuikGraph
+
+' INFRASTRUCTURE -> EXTERNAL
+INFRASTRUCTURE.Services.DataAccess.GanttExportService --> EXTERNAL.PlanAthena.Core.Facade.Dto.Output.ProcessChantierResultDto
+INFRASTRUCTURE.Services.DataAccess.GanttExportService --> EXTERNAL.Microsoft.Msagl
+
+' APPLICATION -> EXTERNAL
+APPLICATION.Services.Business.PlanificationService --> EXTERNAL.PlanAthena.Core.Facade.PlanAthenaCoreFacade
+
+' Direct references (e.g., in `Program.cs` or `ServiceProvider` setup)
+' For brevity, the `ServiceProvider` injection mechanism is implied rather than explicitly drawn for every class,
+' but the dependency flow from higher layers to lower layers is shown.
+
+' External Libraries Used Implicitly/Explicitly (connections to the classes that use them)
+EXTERNAL.QuikGraph .down.|> APP_UTILITIES.Utilities.DependanceBuilder
+EXTERNAL.QuikGraph .down.|> DOMAIN_SERVICES.Services.Business.MetierService 
+' Also used here for topological sort
+EXTERNAL.CsvHelper .down.|> INFRASTRUCTURE.Services.DataAccess.CsvDataService
+EXTERNAL.Microsoft.Msagl .down.|> UI.Controls.PertDiagramControl
+EXTERNAL.System.Text.Json .down.|> APPLICATION.Services.Business.ProjetService
+
+' ================================================
+' ===            NOTES EXPLICATIVES            ===
+' ================================================
+note top of UI
+  <b>UI (User Interface)</b>
+  WinForms & Custom Controls for Presentation.
+  Handles user interaction and displays data.
+end note
+
+note top of APPLICATION
+  <b>Application (Orchestration & Workflows)</b>
+  High-level services that coordinate complex
+  business processes and cross-domain logic.
+  Manages application state and main workflows.
+end note
+
+note top of DOMAIN_SERVICES
+  <b>Domain Services (Core Business Logic)</b>
+  Encapsulates core business rules and logic.
+  Manages CRUD operations and validations for
+  specific domain entities.
+end note
+
+note top of APP_UTILITIES
+  <b>Application Utilities (Data Processing & Helpers)</b>
+  Specialized services for data transformation,
+  preparation, calculations, and specific logic
+  that supports the application layer without
+  being core business rules or data access.
+end note
+
+note top of INFRASTRUCTURE
+  <b>Infrastructure (Data Access & Generic Utilities)</b>
+  Handles persistence, file I/O, external system
+  integrations, and generic utility services.
+  Responsible for low-level data operations.
+end note
+
+note top of DOMAIN_MODELS
+  <b>Domain Models (Entities & DTOs)</b>
+  Core business entities, value objects,
+  and data transfer objects (DTOs) used
+  across different layers for data exchange.
+end note
+
+note top of EXTERNAL
+  <b>External Dependencies</b>
+  Third-party libraries or separate core systems
+  that the application consumes.
+end note
+
+@enduml

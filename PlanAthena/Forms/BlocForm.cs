@@ -6,202 +6,170 @@ namespace PlanAthena.Forms
     public partial class BlocForm : System.Windows.Forms.Form
     {
         private readonly BlocService _blocService;
-        private readonly TacheService _tacheService; // Ajout pour la validation de suppression
+        private readonly TacheService _tacheService;
         private Bloc _blocSelectionne = null;
-        private bool _isEditing = false;
+        private readonly string _blocIdToEditOnInit;
+        private readonly Lot _lotActifPourCreation;
         private readonly ToolTip _toolTip = new ToolTip();
 
-        public BlocForm(BlocService blocService, TacheService tacheService)
+        /// <summary>
+        /// Constructeur pour l'édition d'un bloc existant ou la création d'un nouveau bloc.
+        /// </summary>
+        /// <param name="blocService">Service de gestion des blocs</param>
+        /// <param name="tacheService">Service de gestion des tâches</param>
+        /// <param name="blocIdToEdit">ID du bloc à éditer (null pour création)</param>
+        /// <param name="lotActifPourCreation">Lot actif pour la création d'un nouveau bloc (null pour édition)</param>
+        public BlocForm(BlocService blocService, TacheService tacheService, string blocIdToEdit = null, Lot lotActifPourCreation = null)
         {
             InitializeComponent();
             _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
-            _tacheService = tacheService ?? throw new ArgumentNullException(nameof(tacheService)); // Ajout
+            _tacheService = tacheService ?? throw new ArgumentNullException(nameof(tacheService));
+            _blocIdToEditOnInit = blocIdToEdit;
+            _lotActifPourCreation = lotActifPourCreation;
         }
 
         private void BlocForm_Load(object sender, EventArgs e)
         {
-            SetEditingMode(false);
-            RafraichirAffichageComplet();
+            SetEditingMode(true);
+
+            if (!string.IsNullOrEmpty(_blocIdToEditOnInit))
+            {
+                var blocExistant = _blocService.ObtenirBlocParId(_blocIdToEditOnInit);
+                if (blocExistant != null)
+                {
+                    _blocSelectionne = blocExistant;
+                    AfficherDetailsBloc(_blocSelectionne);
+                }
+            }
+            else if (_lotActifPourCreation != null)
+            {
+                var nouveauBlocId = _blocService.GenerateNewBlocId(_lotActifPourCreation.LotId);
+                _blocSelectionne = new Bloc
+                {
+                    BlocId = nouveauBlocId,
+                    Nom = "Nouveau bloc",
+                    CapaciteMaxOuvriers = 1
+                };
+                AfficherDetailsBloc(_blocSelectionne);
+                txtNom.Focus();
+                txtNom.SelectAll();
+            }
+
+            ConfigurerChampsEmplacement();
         }
 
         /// <summary>
-        /// Gère l'état de l'interface (lecture seule ou édition) en activant/désactivant les contrôles.
-        /// C'est la méthode centrale qui pilote l'ergonomie du formulaire.
+        /// Configure les champs d'emplacement avec leur état désactivé et tooltip.
         /// </summary>
+        private void ConfigurerChampsEmplacement()
+        {
+            txtEmplacementX.ReadOnly = true;
+            txtEmplacementX.Enabled = false;
+            txtEmplacementY.ReadOnly = true;
+            txtEmplacementY.Enabled = false;
+
+            _toolTip.SetToolTip(txtEmplacementX, "Fonctionnalité à venir");
+            _toolTip.SetToolTip(txtEmplacementY, "Fonctionnalité à venir");
+        }
+
+        /// <summary>
+        /// Gère l'état de l'interface en mode édition.
+        /// Active/désactive les champs de saisie et boutons selon le contexte.
+        /// </summary>
+        /// <param name="isEditing">Mode édition activé</param>
         private void SetEditingMode(bool isEditing)
         {
-            _isEditing = isEditing;
+            txtNom.ReadOnly = !isEditing;
+            numCapaciteMax.ReadOnly = !isEditing;
+            txtBlocId.ReadOnly = true;
 
-            listViewBlocs.Enabled = !isEditing;
-            groupBoxDetails.Enabled = isEditing;
+            txtEmplacementX.ReadOnly = true;
+            txtEmplacementX.Enabled = false;
+            txtEmplacementY.ReadOnly = true;
+            txtEmplacementY.Enabled = false;
 
-            if (isEditing)
+            btnSauvegarder.Enabled = isEditing;
+            btnAnnulerEdition.Enabled = isEditing;
+
+            bool peutSupprimer = _blocSelectionne != null && !string.IsNullOrEmpty(_blocSelectionne.BlocId) && !IsBlocUtilise(_blocSelectionne.BlocId);
+            btnSupprimer.Enabled = peutSupprimer;
+
+            if (peutSupprimer)
             {
-                txtNom.ReadOnly = false;
-                numCapaciteMax.ReadOnly = false;
-                txtBlocId.ReadOnly = (_blocSelectionne != null && !string.IsNullOrEmpty(_blocSelectionne.BlocId));
+                _toolTip.SetToolTip(btnSupprimer, "Supprimer ce bloc");
+            }
+            else if (_blocSelectionne != null && IsBlocUtilise(_blocSelectionne.BlocId))
+            {
+                _toolTip.SetToolTip(btnSupprimer, "Impossible de supprimer : le bloc est utilisé par des tâches");
             }
             else
             {
-                txtBlocId.ReadOnly = true;
-                txtNom.ReadOnly = true;
-                numCapaciteMax.ReadOnly = true;
-            }
-
-            // Gestion des boutons d'action principaux
-            btnNouveau.Visible = !isEditing;
-            btnSupprimer.Visible = !isEditing;
-            btnModifier.Text = isEditing ? "💾 Sauvegarder" : "✏️ Modifier";
-            btnModifier.Enabled = isEditing || _blocSelectionne != null;
-            btnAnnuler.Visible = isEditing;
-
-            // Logique de suppression sécurisée
-            bool blocPeutEtreSupprime = _blocSelectionne != null && !IsBlocInUse(_blocSelectionne.BlocId);
-            btnSupprimer.Enabled = blocPeutEtreSupprime;
-            if (blocPeutEtreSupprime)
-            {
-                _toolTip.SetToolTip(btnSupprimer, "Supprimer le bloc sélectionné.");
-            }
-            else
-            {
-                _toolTip.SetToolTip(btnSupprimer, "Ce bloc ne peut pas être supprimé car il est utilisé par au moins une tâche.");
+                _toolTip.SetToolTip(btnSupprimer, "Aucun bloc sélectionné");
             }
         }
 
-        private bool IsBlocInUse(string blocId)
+        /// <summary>
+        /// Vérifie si un bloc est utilisé par des tâches.
+        /// </summary>
+        /// <param name="blocId">ID du bloc à vérifier</param>
+        /// <returns>True si le bloc est utilisé</returns>
+        private bool IsBlocUtilise(string blocId)
         {
             if (string.IsNullOrEmpty(blocId)) return false;
             return _tacheService.ObtenirTachesParBloc(blocId).Any();
         }
 
-        #region Gestion des données et affichage
-
-        private void RafraichirAffichageComplet()
-        {
-            var idBlocSelectionne = _blocSelectionne?.BlocId;
-            RafraichirListeBlocs();
-
-            if (idBlocSelectionne != null)
-            {
-                var itemToReselect = listViewBlocs.Items.Cast<ListViewItem>()
-                    .FirstOrDefault(item => (item.Tag as Bloc)?.BlocId == idBlocSelectionne);
-                if (itemToReselect != null)
-                {
-                    itemToReselect.Selected = true;
-                }
-            }
-
-            if (listViewBlocs.SelectedItems.Count == 0)
-            {
-                _blocSelectionne = null;
-                NettoyerDetails();
-            }
-            RafraichirStatut();
-            // S'assurer que l'état des boutons est correct après un rafraîchissement
-            SetEditingMode(_isEditing);
-        }
-
-        private void RafraichirListeBlocs()
-        {
-            listViewBlocs.Items.Clear();
-            var blocs = _blocService.ObtenirTousLesBlocs();
-            foreach (var bloc in blocs.OrderBy(b => b.Nom))
-            {
-                var item = new ListViewItem(new[] { bloc.BlocId, bloc.Nom, bloc.CapaciteMaxOuvriers.ToString() }) { Tag = bloc };
-                listViewBlocs.Items.Add(item);
-            }
-        }
-
-        private void RafraichirStatut()
-        {
-            lblStatut.Text = $"{listViewBlocs.Items.Count} bloc(s)";
-        }
-
+        /// <summary>
+        /// Affiche les détails d'un bloc dans les champs du formulaire.
+        /// </summary>
+        /// <param name="bloc">Bloc à afficher</param>
         private void AfficherDetailsBloc(Bloc bloc)
         {
-            _blocSelectionne = bloc;
             if (bloc == null)
             {
                 NettoyerDetails();
                 return;
             }
+
             txtBlocId.Text = bloc.BlocId;
             txtNom.Text = bloc.Nom;
             numCapaciteMax.Value = bloc.CapaciteMaxOuvriers;
             groupBoxDetails.Text = $"Détails: {bloc.Nom}";
+
+            txtEmplacementX.Text = "";
+            txtEmplacementY.Text = "";
         }
 
+        /// <summary>
+        /// Nettoie tous les champs de détails.
+        /// </summary>
         private void NettoyerDetails()
         {
             txtBlocId.Clear();
             txtNom.Clear();
-            numCapaciteMax.Value = 0;
+            numCapaciteMax.Value = 1;
+            txtEmplacementX.Clear();
+            txtEmplacementY.Clear();
             groupBoxDetails.Text = "Détails du Bloc";
         }
 
-        #endregion
-
-        #region Événements interface
-
-        private void listViewBlocs_SelectedIndexChanged(object sender, EventArgs e)
+        /// <summary>
+        /// Gestionnaire pour le bouton Sauvegarder.
+        /// Sauvegarde le bloc avec les données saisies.
+        /// </summary>
+        private void btnSauvegarder_Click(object sender, EventArgs e)
         {
-            if (_isEditing) return;
-
-            if (listViewBlocs.SelectedItems.Count > 0)
-            {
-                _blocSelectionne = listViewBlocs.SelectedItems[0].Tag as Bloc;
-                AfficherDetailsBloc(_blocSelectionne);
-            }
-            else
-            {
-                _blocSelectionne = null;
-                NettoyerDetails();
-            }
-            SetEditingMode(false);
-        }
-
-        private void btnFermer_Click(object sender, EventArgs e) => this.Close();
-
-        #endregion
-
-        #region Actions CRUD
-
-        private void btnNouveau_Click(object sender, EventArgs e)
-        {
-            listViewBlocs.SelectedItems.Clear();
-            _blocSelectionne = new Bloc { BlocId = "", Nom = "Nouveau bloc" };
-            AfficherDetailsBloc(_blocSelectionne);
-            SetEditingMode(true);
-            txtBlocId.Focus();
-        }
-
-        private void btnModifier_Click(object sender, EventArgs e)
-        {
-            if (!_isEditing)
-            {
-                if (_blocSelectionne == null) return;
-                SetEditingMode(true);
-                txtNom.Focus();
-                txtNom.SelectAll();
-                return;
-            }
-
             try
             {
-                bool isNew = string.IsNullOrEmpty(_blocSelectionne.BlocId);
-                var blocToSave = new Bloc
-                {
-                    BlocId = isNew ? txtBlocId.Text : _blocSelectionne.BlocId,
-                    Nom = txtNom.Text,
-                    CapaciteMaxOuvriers = (int)numCapaciteMax.Value
-                };
+                if (_blocSelectionne == null) return;
 
-                if (isNew) _blocService.AjouterBloc(blocToSave);
-                else _blocService.ModifierBloc(blocToSave);
+                _blocSelectionne.Nom = txtNom.Text;
+                _blocSelectionne.CapaciteMaxOuvriers = (int)numCapaciteMax.Value;
 
-                _blocSelectionne = blocToSave;
-                SetEditingMode(false);
-                RafraichirAffichageComplet();
+                _blocService.SaveBloc(_blocSelectionne);
+
+                this.DialogResult = DialogResult.OK;
+                this.Close();
             }
             catch (Exception ex)
             {
@@ -209,33 +177,37 @@ namespace PlanAthena.Forms
             }
         }
 
-        private void btnAnnuler_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Gestionnaire pour le bouton Annuler l'édition.
+        /// Ferme le formulaire sans sauvegarder.
+        /// </summary>
+        private void btnAnnulerEdition_Click(object sender, EventArgs e)
         {
-            SetEditingMode(false);
-            // Re-sélectionner l'item qui était actif avant l'annulation
-            if (_blocSelectionne != null)
-            {
-                AfficherDetailsBloc(_blocSelectionne);
-            }
-            else
-            {
-                NettoyerDetails();
-            }
+            this.DialogResult = DialogResult.Cancel;
+            this.Close();
         }
 
+        /// <summary>
+        /// Gestionnaire pour le bouton Supprimer.
+        /// Supprime le bloc après confirmation.
+        /// </summary>
         private void btnSupprimer_Click(object sender, EventArgs e)
         {
             if (_blocSelectionne == null) return;
-            var result = MessageBox.Show($"Êtes-vous sûr de vouloir supprimer le bloc '{_blocSelectionne.Nom}' ?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            var result = MessageBox.Show(
+                $"Êtes-vous sûr de vouloir supprimer le bloc '{_blocSelectionne.Nom}' ?",
+                "Confirmation de suppression",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
             if (result == DialogResult.Yes)
             {
                 try
                 {
                     _blocService.SupprimerBloc(_blocSelectionne.BlocId);
-                    _blocSelectionne = null;
-                    NettoyerDetails();
-                    SetEditingMode(false);
-                    RafraichirAffichageComplet();
+                    this.DialogResult = DialogResult.OK;
+                    this.Close();
                 }
                 catch (Exception ex)
                 {
@@ -244,6 +216,13 @@ namespace PlanAthena.Forms
             }
         }
 
-        #endregion
+        /// <summary>
+        /// Gestionnaire pour le bouton Fermer.
+        /// Ferme le formulaire (inchangé).
+        /// </summary>
+        private void btnFermer_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
     }
 }
