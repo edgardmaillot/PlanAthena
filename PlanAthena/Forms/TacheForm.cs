@@ -1,9 +1,14 @@
+// START OF FILE TacheForm.cs
+
 using PlanAthena.Controls;
 using PlanAthena.Controls.Config;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Utilities;
+using System.Drawing; 
+using System.Linq;
+using System.IO;
 
 namespace PlanAthena.Forms
 {
@@ -37,6 +42,7 @@ namespace PlanAthena.Forms
         private readonly PertDiagramControl _pertControl;
         private readonly TacheDetailForm _tacheDetailForm;
         private readonly ToolTip _toolTipMetiers = new ToolTip();
+        private readonly ToolTip _toolTipPlan = new ToolTip();
 
         // CONSTRUCTEUR CORRIGÉ - ProjetService sera injecté plus tard
         public TacheForm(TacheService tacheService, MetierService metierService, DependanceBuilder dependanceBuilder, LotService lotService, BlocService blocService)
@@ -80,7 +86,7 @@ namespace PlanAthena.Forms
             }
         }
 
-        // NOUVEAU : Gestionnaire d'événement pour les changements de zoom
+        // Gestionnaire d'événement pour les changements de zoom
         private void PertControl_ZoomChanged(object sender, ZoomChangedEventArgs e)
         {
             try
@@ -140,9 +146,11 @@ namespace PlanAthena.Forms
                 }
 
                 CreerBoutonsMetiers();
-                _tacheDetailForm?.MettreAJourListesDeroulantes();
+
+                _tacheDetailForm?.MettreAJourListesDeroulantes(_lotActif?.LotId);
                 RafraichirDiagrammeEtStatistiques();
-                _tacheDetailForm?.ChargerTache(null, true);
+                _tacheDetailForm?.ChargerTache(new Tache { LotId = _lotActif?.LotId, HeuresHommeEstimees = 8, Type = TypeActivite.Tache }, true);
+                AfficherPlanLotActif();
             }
             catch (Exception ex)
             {
@@ -227,10 +235,49 @@ namespace PlanAthena.Forms
             {
                 panelOutilsMetiersDynamiques.Controls.Clear();
 
+                int yPos = 10; // Position de départ
+
+
+                Image titleIcon = Properties.Resources.tache;
+
+                // Optionnel: Redimensionner l'icône pour le titre si nécessaire (peut être un peu plus grande que les icônes de bouton)
+                if (titleIcon.Width > 24 || titleIcon.Height > 24)
+                {
+                    titleIcon = new Bitmap(titleIcon, new Size(20, 20)); // Exemple: 20x20 pixels
+                }
+
+                // 2. Créer le Label pour le titre
+                var lblBlocTitle = new Label
+                {
+                    Text = "     Créer une tâche :",
+                    Image = titleIcon,
+                    ImageAlign = ContentAlignment.MiddleLeft, 
+                    AutoSize = true, // Le label s'ajustera à la taille de son contenu (texte + image)
+                    Location = new System.Drawing.Point(11, yPos),
+                    Font = new Font(this.Font.FontFamily, 10, FontStyle.Bold), 
+
+
+                    Padding = new Padding(0, 0, 0, 10)
+                };
+
+                panelOutilsMetiersDynamiques.Controls.Add(lblBlocTitle);
+
+                // 3. Mettre à jour la position de départ pour les boutons de métier
+                yPos += lblBlocTitle.Height + 5; // Hauteur du label + un petit espace
+
+                // --- FIN DE LA NOUVELLE MODIFICATION ---
+
+
                 var metiersTries = _metierService.ObtenirMetiersTriesParDependance()
                     .Where(m => m.MetierId != "JALON" && m.MetierId != "SYNC_0H");
 
-                int yPos = 10;
+                // Charger l'image pour les boutons (si vous voulez quand même les icônes sur les boutons,
+                // sinon vous pouvez supprimer les lignes liées à `btn.Image` plus bas)
+                Image tacheButtonIcon = Properties.Resources.tache;
+                if (tacheButtonIcon.Width > 20 || tacheButtonIcon.Height > 20)
+                {
+                    tacheButtonIcon = new Bitmap(tacheButtonIcon, new Size(16, 16));
+                }
 
                 foreach (var metier in metiersTries)
                 {
@@ -246,6 +293,7 @@ namespace PlanAthena.Forms
                             FlatStyle = FlatStyle.Popup
                         };
 
+                        
                         btn.Click += MetierButton_Click;
 
                         var prerequis = _metierService.GetPrerequisForMetier(metier.MetierId);
@@ -265,7 +313,7 @@ namespace PlanAthena.Forms
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"Erreur lors de la création du bouton pour {metier.Nom}: {ex.Message}");
-                        continue; // Continuer avec les autres métiers
+                        continue;
                     }
                 }
 
@@ -317,6 +365,8 @@ namespace PlanAthena.Forms
                     TacheNom = $"Nouvelle tâche - {metier.Nom}",
                     HeuresHommeEstimees = 8
                 };
+                // MODIFIED: Passer le LotId actif à TacheDetailForm
+                form.MettreAJourListesDeroulantes(_lotActif.LotId);
                 form.ChargerTache(nouvelleTache, true);
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {
@@ -343,6 +393,8 @@ namespace PlanAthena.Forms
                 TacheNom = "Nouveau Jalon d'attente",
                 LotId = _lotActif.LotId
             };
+            // MODIFIED: Passer le LotId actif à TacheDetailForm
+            form.MettreAJourListesDeroulantes(_lotActif.LotId);
             form.ChargerTache(nouveauJalon, true);
             if (form.ShowDialog(this) == DialogResult.OK)
             {
@@ -409,6 +461,8 @@ namespace PlanAthena.Forms
 
         private void PertControl_TacheSelected(object sender, TacheSelectedEventArgs e)
         {
+            // MODIFIED: Charger les blocs du lot de la tâche sélectionnée AVANT de charger la tâche
+            _tacheDetailForm?.MettreAJourListesDeroulantes(e.Tache.LotId);
             _tacheDetailForm.ChargerTache(e.Tache, false);
             lblTacheSelectionnee.Text = $"Sélectionnée: {e.Tache.TacheId} - {e.Tache.TacheNom}";
         }
@@ -419,6 +473,8 @@ namespace PlanAthena.Forms
             if (tacheOriginale != null)
             {
                 using var form = new TacheDetailForm(_tacheService, _metierService, _lotService, _blocService, _dependanceBuilder);
+                // MODIFIED: Charger les blocs du lot de la tâche AVANT de charger la tâche
+                form.MettreAJourListesDeroulantes(tacheOriginale.LotId);
                 form.ChargerTache(tacheOriginale, false);
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {
@@ -435,8 +491,10 @@ namespace PlanAthena.Forms
                 {
                     _lotActif = selectedLot;
                     RafraichirDiagrammeEtStatistiques();
-                    _tacheDetailForm?.ChargerTache(null, true);
+                    _tacheDetailForm?.MettreAJourListesDeroulantes(_lotActif.LotId);
+                    _tacheDetailForm?.ChargerTache(new Tache { LotId = _lotActif.LotId, HeuresHommeEstimees = 8, Type = TypeActivite.Tache }, true);
                     lblTacheSelectionnee.Text = "Aucune sélection";
+                    AfficherPlanLotActif();
                 }
             }
             catch (Exception ex)
@@ -540,6 +598,133 @@ namespace PlanAthena.Forms
                               "Erreur d'impression", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+
+        private void AfficherPlanLotActif()
+        {
+            // Libérer l'image précédente si elle existe pour éviter les fuites de mémoire et les verrous de fichier
+            if (pictureBox1.Image != null)
+            {
+                pictureBox1.Image.Dispose();
+                pictureBox1.Image = null;
+            }
+            pictureBox1.BackColor = SystemColors.Control; // Rétablir le fond par défaut
+            pictureBox1.Visible = true; // S'assurer que le PictureBox est visible
+            _toolTipPlan.SetToolTip(pictureBox1, ""); // Nettoyer le ToolTip précédent
+
+            if (_lotActif == null || string.IsNullOrWhiteSpace(_lotActif.CheminFichierPlan))
+            {
+                // Aucun lot sélectionné ou pas de chemin de plan
+                // Optionnel: Afficher un texte "Aucun plan" si vous préférez
+                // graphics.DrawString("Aucun plan disponible", ...);
+                return;
+            }
+
+            string filePath = _lotActif.CheminFichierPlan;
+
+            if (!File.Exists(filePath))
+            {
+                // Le fichier n'existe plus
+                System.Diagnostics.Debug.WriteLine($"Le fichier plan '{filePath}' n'a pas été trouvé.");
+                // Optionnel: Dessiner un message d'erreur sur le PictureBox
+                // using (Graphics g = pictureBox1.CreateGraphics()) { g.DrawString("Fichier introuvable", ...); }
+                _toolTipPlan.SetToolTip(pictureBox1, $"Fichier plan introuvable: {filePath}");
+                return;
+            }
+
+            string extension = Path.GetExtension(filePath).ToLowerInvariant();
+
+            try
+            {
+                // Support des images (JPG, PNG, BMP, GIF)
+                if (extension == ".jpg" || extension == ".jpeg" || extension == ".png" || extension == ".bmp" || extension == ".gif")
+                {
+                    // Utiliser FromStream pour éviter de verrouiller le fichier sur le disque
+                    using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+                    {
+                        // Créez une copie de l'image en mémoire pour que le FileStream puisse être fermé
+                        Image img = Image.FromStream(stream);
+                        pictureBox1.Image = new Bitmap(img); // Copie l'image en mémoire
+                        img.Dispose(); // Libère l'image originale chargée depuis le stream
+                    }
+                    pictureBox1.SizeMode = PictureBoxSizeMode.Zoom; // Redimensionne l'image pour qu'elle tienne dans le PictureBox sans déformation
+                    _toolTipPlan.SetToolTip(pictureBox1, $"Plan actuel: {filePath}");
+                }
+                // Gestion des PDF (plus complexe, nécessite une bibliothèque tierce pour un affichage intégré)
+                else if (extension == ".pdf")
+                {
+                    // Pour un affichage réel de PDF, vous auriez besoin d'une bibliothèque comme PdfiumViewer
+                    // Ou d'un contrôle WebBrowser pointant vers un viewer JS, etc.
+                    // Pour l'instant, nous allons proposer de l'ouvrir et afficher un message/icône
+                    System.Diagnostics.Debug.WriteLine($"Format PDF non supporté directement pour l'affichage : {filePath}");
+                    MessageBox.Show("Le format PDF n'est pas supporté directement pour l'affichage du plan dans l'interface.\n\n" +
+                                    "Voulez-vous ouvrir le fichier dans l'application par défaut ?",
+                                    "Format non supporté", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+
+                    if (DialogResult.Yes == DialogResult.Yes)
+                    {
+                        try
+                        {
+                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(filePath) { UseShellExecute = true });
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Impossible d'ouvrir le fichier PDF : {ex.Message}", "Erreur d'ouverture", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                    // Vous pouvez afficher une icône PDF générique ici
+                    // pictureBox1.Image = Properties.Resources.pdf_icon; // Si vous avez une telle ressource
+                    _toolTipPlan.SetToolTip(pictureBox1, $"Plan PDF: {filePath} (Cliquez pour ouvrir)");
+                    // Si vous voulez le rendre cliquable pour ouvrir, ajoutez un gestionnaire d'événements :
+                    pictureBox1.Click += PictureBox1_ClickForPdf;
+                }
+                else
+                {
+                    // Format non supporté
+                    System.Diagnostics.Debug.WriteLine($"Format de fichier non supporté pour l'affichage : {filePath}");
+                    // pictureBox1.Image = Properties.Resources.unsupported_file_icon; // Ou une icône d'erreur
+                    _toolTipPlan.SetToolTip(pictureBox1, $"Format de fichier non supporté: {extension}");
+                }
+            }
+            catch (OutOfMemoryException)
+            {
+                // L'image est trop grande ou corrompue et provoque une OutOfMemoryException
+                System.Diagnostics.Debug.WriteLine($"Erreur: Mémoire insuffisante ou fichier corrompu pour le plan : {filePath}");
+                MessageBox.Show($"Erreur: Le fichier plan '{filePath}' est trop grand ou corrompu et ne peut pas être chargé.",
+                                "Erreur de chargement de l'image", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                pictureBox1.Image = null;
+            }
+            catch (Exception ex)
+            {
+                // Toute autre erreur lors du chargement de l'image
+                System.Diagnostics.Debug.WriteLine($"Erreur inattendue lors du chargement du plan '{filePath}': {ex.Message}");
+                MessageBox.Show($"Une erreur inattendue est survenue lors du chargement du plan :\n{ex.Message}",
+                                "Erreur de chargement", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                pictureBox1.Image = null;
+            }
+        }
+
+        // Si vous avez choisi de rendre le PictureBox cliquable pour ouvrir les PDF
+        private void PictureBox1_ClickForPdf(object sender, EventArgs e)
+        {
+            if (_lotActif != null && !string.IsNullOrWhiteSpace(_lotActif.CheminFichierPlan))
+            {
+                string filePath = _lotActif.CheminFichierPlan;
+                if (File.Exists(filePath) && Path.GetExtension(filePath).ToLowerInvariant() == ".pdf")
+                {
+                    try
+                    {
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(filePath) { UseShellExecute = true });
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Impossible d'ouvrir le fichier PDF : {ex.Message}", "Erreur d'ouverture", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+
 
         private void btnImportExcelFieldwire_Click(object sender, EventArgs e) => MessageBox.Show("L'import Excel Fieldwire/Dalux n'est pas encore implémenté.", "Fonctionnalité en développement", MessageBoxButtons.OK, MessageBoxIcon.Information);
 

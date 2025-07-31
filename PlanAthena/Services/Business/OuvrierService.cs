@@ -1,5 +1,8 @@
+// START OF FILE OuvrierService.cs
+
 using PlanAthena.Data;
 using PlanAthena.Services.DataAccess;
+using System.Linq; // Assurez-vous d'avoir ceci
 
 namespace PlanAthena.Services.Business
 {
@@ -8,7 +11,12 @@ namespace PlanAthena.Services.Business
     /// </summary>
     public class OuvrierService
     {
-        private readonly List<Ouvrier> _ouvriers = new List<Ouvrier>();
+        // CHANGEMENT : Utilisation d'un HashSet pour gérer l'unicité des paires (OuvrierId, MetierId)
+        // Un HashSet est optimal pour des vérifications d'unicité rapides.
+        // Nous allons créer un type anonyme ou une classe interne pour la clé.
+        private readonly HashSet<(string OuvrierId, string MetierId)> _ouvrierMetierKeys = new HashSet<(string, string)>();
+        private readonly List<Ouvrier> _ouvriersList = new List<Ouvrier>(); // La liste réelle des objets Ouvrier
+
         private readonly CsvDataService _csvDataService;
         private readonly ExcelReader _excelReader;
 
@@ -21,7 +29,7 @@ namespace PlanAthena.Services.Business
         #region CRUD Operations
 
         /// <summary>
-        /// Ajoute un nouvel ouvrier
+        /// Ajoute un nouvel ouvrier (compétence spécifique pour un ouvrier)
         /// </summary>
         public void AjouterOuvrier(Ouvrier ouvrier)
         {
@@ -29,30 +37,46 @@ namespace PlanAthena.Services.Business
                 throw new ArgumentNullException(nameof(ouvrier));
 
             if (string.IsNullOrWhiteSpace(ouvrier.OuvrierId))
-                throw new ArgumentException("L'ID de l'ouvrier ne peut pas être vide.");
+                throw new ArgumentException("L'ID de l'ouvrier ne peut pas être vide.", nameof(ouvrier.OuvrierId));
 
-            if (_ouvriers.Any(o => o.OuvrierId == ouvrier.OuvrierId && o.MetierId == ouvrier.MetierId))
-                throw new InvalidOperationException($"L'ouvrier {ouvrier.OuvrierId} possède déjà la compétence {ouvrier.MetierId}.");
+            if (string.IsNullOrWhiteSpace(ouvrier.MetierId))
+                throw new ArgumentException("L'ID du métier de l'ouvrier ne peut pas être vide.", nameof(ouvrier.MetierId));
 
-            _ouvriers.Add(ouvrier);
+
+            // Utilisation du HashSet pour une vérification d'unicité rapide
+            var key = (ouvrier.OuvrierId, ouvrier.MetierId);
+            if (_ouvrierMetierKeys.Contains(key))
+            {
+                // Si la combinaison existe déjà, c'est un doublon
+                throw new InvalidOperationException($"L'ouvrier '{ouvrier.OuvrierId}' possède déjà la compétence '{ouvrier.MetierId}'.");
+            }
+
+            _ouvriersList.Add(ouvrier);
+            _ouvrierMetierKeys.Add(key); // Ajoute la clé pour la vérification future
         }
 
         /// <summary>
-        /// Met à jour un ouvrier existant
+        /// Met à jour un ouvrier existant (compétence spécifique)
+        /// NOTE: Si le MetierId ou OuvrierId change, cela équivaut à une suppression/ajout.
+        /// Pour l'instant, cette méthode gère uniquement la mise à jour des AUTRES propriétés.
         /// </summary>
         public void ModifierOuvrier(Ouvrier ouvrierModifie)
         {
             if (ouvrierModifie == null)
                 throw new ArgumentNullException(nameof(ouvrierModifie));
 
-            var ouvrierExistant = _ouvriers.FirstOrDefault(o =>
+            var ouvrierExistant = _ouvriersList.FirstOrDefault(o =>
                 o.OuvrierId == ouvrierModifie.OuvrierId &&
                 o.MetierId == ouvrierModifie.MetierId);
 
             if (ouvrierExistant == null)
-                throw new InvalidOperationException($"Ouvrier {ouvrierModifie.OuvrierId} avec compétence {ouvrierModifie.MetierId} non trouvé.");
+            {
+                // Si l'élément n'existe pas, on pourrait vouloir l'ajouter
+                // Pour l'instant, lançons une exception comme le code original.
+                throw new InvalidOperationException($"Ouvrier '{ouvrierModifie.OuvrierId}' avec compétence '{ouvrierModifie.MetierId}' non trouvé pour modification.");
+            }
 
-            // Mise à jour des propriétés
+            // Mise à jour des propriétés (sauf OuvrierId et MetierId, car ils forment la clé)
             ouvrierExistant.Nom = ouvrierModifie.Nom;
             ouvrierExistant.Prenom = ouvrierModifie.Prenom;
             ouvrierExistant.CoutJournalier = ouvrierModifie.CoutJournalier;
@@ -66,16 +90,17 @@ namespace PlanAthena.Services.Business
         public void SupprimerOuvrier(string ouvrierId)
         {
             if (string.IsNullOrWhiteSpace(ouvrierId))
-                throw new ArgumentException("L'ID de l'ouvrier ne peut pas être vide.");
+                throw new ArgumentException("L'ID de l'ouvrier ne peut pas être vide.", nameof(ouvrierId));
 
-            var competencesASupprimer = _ouvriers.Where(o => o.OuvrierId == ouvrierId).ToList();
+            var competencesASupprimer = _ouvriersList.Where(o => o.OuvrierId == ouvrierId).ToList();
 
             if (!competencesASupprimer.Any())
-                throw new InvalidOperationException($"Ouvrier {ouvrierId} non trouvé.");
+                throw new InvalidOperationException($"Ouvrier '{ouvrierId}' non trouvé.");
 
             foreach (var competence in competencesASupprimer)
             {
-                _ouvriers.Remove(competence);
+                _ouvriersList.Remove(competence);
+                _ouvrierMetierKeys.Remove((competence.OuvrierId, competence.MetierId)); // Retire la clé du HashSet
             }
         }
 
@@ -85,17 +110,18 @@ namespace PlanAthena.Services.Business
         public void SupprimerCompetence(string ouvrierId, string metierId)
         {
             if (string.IsNullOrWhiteSpace(ouvrierId))
-                throw new ArgumentException("L'ID de l'ouvrier ne peut pas être vide.");
+                throw new ArgumentException("L'ID de l'ouvrier ne peut pas être vide.", nameof(ouvrierId));
 
             if (string.IsNullOrWhiteSpace(metierId))
-                throw new ArgumentException("L'ID du métier ne peut pas être vide.");
+                throw new ArgumentException("L'ID du métier ne peut pas être vide.", nameof(metierId));
 
-            var competence = _ouvriers.FirstOrDefault(o => o.OuvrierId == ouvrierId && o.MetierId == metierId);
+            var competence = _ouvriersList.FirstOrDefault(o => o.OuvrierId == ouvrierId && o.MetierId == metierId);
 
             if (competence == null)
-                throw new InvalidOperationException($"Compétence {metierId} pour l'ouvrier {ouvrierId} non trouvée.");
+                throw new InvalidOperationException($"Compétence '{metierId}' pour l'ouvrier '{ouvrierId}' non trouvée.");
 
-            _ouvriers.Remove(competence);
+            _ouvriersList.Remove(competence);
+            _ouvrierMetierKeys.Remove((ouvrierId, metierId)); // Retire la clé du HashSet
         }
 
         #endregion
@@ -103,11 +129,11 @@ namespace PlanAthena.Services.Business
         #region Consultation
 
         /// <summary>
-        /// Obtient tous les ouvriers
+        /// Obtient tous les ouvriers (compétences individuelles)
         /// </summary>
         public List<Ouvrier> ObtenirTousLesOuvriers()
         {
-            return _ouvriers.ToList();
+            return _ouvriersList.ToList();
         }
 
         /// <summary>
@@ -115,7 +141,7 @@ namespace PlanAthena.Services.Business
         /// </summary>
         public List<Ouvrier> ObtenirOuvrierParId(string ouvrierId)
         {
-            return _ouvriers.Where(o => o.OuvrierId == ouvrierId).ToList();
+            return _ouvriersList.Where(o => o.OuvrierId == ouvrierId).ToList();
         }
 
         /// <summary>
@@ -123,12 +149,12 @@ namespace PlanAthena.Services.Business
         /// </summary>
         public List<OuvrierInfo> ObtenirListeOuvriersUniques()
         {
-            return _ouvriers
+            return _ouvriersList
                 .GroupBy(o => o.OuvrierId)
                 .Select(g => new OuvrierInfo
                 {
                     OuvrierId = g.Key,
-                    Nom = g.First().Nom,
+                    Nom = g.First().Nom, // Prend le nom du premier objet trouvé pour cet ouvrierId
                     Prenom = g.First().Prenom,
                     CoutJournalier = g.First().CoutJournalier,
                     NombreCompetences = g.Count()
@@ -143,15 +169,15 @@ namespace PlanAthena.Services.Business
         /// </summary>
         public List<Ouvrier> ObtenirOuvriersParMetier(string metierId)
         {
-            return _ouvriers.Where(o => o.MetierId == metierId).ToList();
+            return _ouvriersList.Where(o => o.MetierId == metierId).ToList();
         }
 
         /// <summary>
-        /// Vérifie si un ouvrier existe
+        /// Vérifie si un ouvrier existe (au moins une compétence pour cet ID)
         /// </summary>
         public bool OuvrierExiste(string ouvrierId)
         {
-            return _ouvriers.Any(o => o.OuvrierId == ouvrierId);
+            return _ouvriersList.Any(o => o.OuvrierId == ouvrierId);
         }
 
         /// <summary>
@@ -159,7 +185,7 @@ namespace PlanAthena.Services.Business
         /// </summary>
         public bool OuvrierACompetence(string ouvrierId, string metierId)
         {
-            return _ouvriers.Any(o => o.OuvrierId == ouvrierId && o.MetierId == metierId);
+            return _ouvrierMetierKeys.Contains((ouvrierId, metierId)); // Utilisation du HashSet
         }
 
         #endregion
@@ -172,14 +198,34 @@ namespace PlanAthena.Services.Business
         public int ImporterDepuisCsv(string filePath, bool remplacerExistants = true)
         {
             var ouvriersImportes = _csvDataService.ImportCsv<Ouvrier>(filePath);
+            int countAdded = 0;
 
             if (remplacerExistants)
             {
-                _ouvriers.Clear();
+                Vider(); // Utilise la méthode Vider qui gère les deux collections
             }
 
-            _ouvriers.AddRange(ouvriersImportes);
-            return ouvriersImportes.Count;
+            foreach (var ouvrier in ouvriersImportes)
+            {
+                try
+                {
+                    // Tente d'ajouter chaque ouvrier. Si c'est un doublon (OuvrierId + MetierId), AjouterOuvrier lancera une exception.
+                    // Pour l'import, on peut choisir d'ignorer les doublons ou de les journaliser. Ici, on ignore silencieusement.
+                    AjouterOuvrier(ouvrier);
+                    countAdded++;
+                }
+                catch (InvalidOperationException ex)
+                {
+                    // Optionnel: Journaliser les doublons ignorés
+                    System.Diagnostics.Debug.WriteLine($"Doublon d'ouvrier ignoré lors de l'import CSV: {ex.Message}");
+                }
+                catch (ArgumentException ex)
+                {
+                    // Optionnel: Journaliser les données invalides
+                    System.Diagnostics.Debug.WriteLine($"Données d'ouvrier invalides ignorées lors de l'import CSV: {ex.Message}");
+                }
+            }
+            return countAdded;
         }
 
         /// <summary>
@@ -192,6 +238,8 @@ namespace PlanAthena.Services.Business
             var donneesExcel = _excelReader.ImportSapOuvriers(filePath);
 
             // Placeholder - à implémenter selon le format SAP réel
+            // Si vous obtenez une liste d'Ouvrier, appliquez la même logique que ImporterDepuisCsv
+            // en appelant AjouterOuvrier pour chaque élément pour assurer l'unicité.
             return 0;
         }
 
@@ -200,18 +248,38 @@ namespace PlanAthena.Services.Business
         /// </summary>
         public void ExporterVersCsv(string filePath)
         {
-            _csvDataService.ExportCsv(_ouvriers, filePath);
+            _csvDataService.ExportCsv(_ouvriersList, filePath);
         }
 
         /// <summary>
-        /// Charge les ouvriers depuis une liste (utilisé par PlanificationService)
+        /// Charge les ouvriers depuis une liste (utilisé par ProjetService)
         /// </summary>
         public void ChargerOuvriers(List<Ouvrier> ouvriers)
         {
-            _ouvriers.Clear();
+            Vider(); // Vide les deux collections avant de recharger
+
             if (ouvriers != null)
             {
-                _ouvriers.AddRange(ouvriers);
+                foreach (var ouvrier in ouvriers)
+                {
+                    try
+                    {
+                        // Utilise AjouterOuvrier pour garantir l'unicité des paires (OuvrierId, MetierId)
+                        // même lors du chargement d'un projet.
+                        AjouterOuvrier(ouvrier);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        // Devrait idéalement ne pas se produire si le fichier JSON est propre,
+                        // mais c'est une sécurité. Journaliser un avertissement.
+                        System.Diagnostics.Debug.WriteLine($"Avertissement: Doublon d'ouvrier détecté et ignoré lors du chargement du projet: {ex.Message}");
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        // Erreur de données si OuvrierId ou MetierId est vide
+                        System.Diagnostics.Debug.WriteLine($"Avertissement: Données d'ouvrier invalides ignorées lors du chargement du projet: {ex.Message}");
+                    }
+                }
             }
         }
 
@@ -224,7 +292,7 @@ namespace PlanAthena.Services.Business
         /// </summary>
         public StatistiquesOuvriers ObtenirStatistiques()
         {
-            if (!_ouvriers.Any())
+            if (!_ouvriersList.Any()) // Utilise _ouvriersList pour les calculs
             {
                 return new StatistiquesOuvriers
                 {
@@ -237,12 +305,12 @@ namespace PlanAthena.Services.Business
                 };
             }
 
-            var ouvriersUniques = _ouvriers.GroupBy(o => o.OuvrierId).ToList();
+            var ouvriersUniques = _ouvriersList.GroupBy(o => o.OuvrierId).ToList();
 
             return new StatistiquesOuvriers
             {
                 NombreOuvriersTotal = ouvriersUniques.Count,
-                NombreCompetencesTotal = _ouvriers.Count,
+                NombreCompetencesTotal = _ouvriersList.Count, // Nombre total d'enregistrements (personne+compétence)
                 CoutJournalierMoyen = ouvriersUniques.Average(g => g.First().CoutJournalier),
                 CoutJournalierMin = ouvriersUniques.Min(g => g.First().CoutJournalier),
                 CoutJournalierMax = ouvriersUniques.Max(g => g.First().CoutJournalier),
@@ -257,7 +325,8 @@ namespace PlanAthena.Services.Business
         /// </summary>
         public void Vider()
         {
-            _ouvriers.Clear();
+            _ouvriersList.Clear();
+            _ouvrierMetierKeys.Clear(); // Très important : vider aussi le HashSet des clés
         }
     }
 

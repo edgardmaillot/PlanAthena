@@ -56,6 +56,7 @@ namespace PlanAthena.Forms
             cmbLots = new ComboBox();
             lblLotActif = new Label();
             toolTipBloc = new ToolTip(components);
+            tache = new PictureBox();
             toolStripPrincipal.SuspendLayout();
             statusStripPrincipal.SuspendLayout();
             groupBoxActions.SuspendLayout();
@@ -65,6 +66,7 @@ namespace PlanAthena.Forms
             splitContainerPrincipal.Panel2.SuspendLayout();
             splitContainerPrincipal.SuspendLayout();
             panelOutilsMetiers.SuspendLayout();
+            panelOutilsMetiersDynamiques.SuspendLayout();
             panelOutilsStatiques.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainerInterne).BeginInit();
             splitContainerInterne.Panel1.SuspendLayout();
@@ -78,6 +80,7 @@ namespace PlanAthena.Forms
             panelPlans.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             groupBoxGestionLots.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)tache).BeginInit();
             SuspendLayout();
             // 
             // toolStripPrincipal
@@ -294,6 +297,7 @@ namespace PlanAthena.Forms
             // panelOutilsMetiersDynamiques
             // 
             panelOutilsMetiersDynamiques.AutoScroll = true;
+            panelOutilsMetiersDynamiques.Controls.Add(tache);
             panelOutilsMetiersDynamiques.Dock = DockStyle.Fill;
             panelOutilsMetiersDynamiques.Location = new Point(0, 88);
             panelOutilsMetiersDynamiques.Name = "panelOutilsMetiersDynamiques";
@@ -390,11 +394,12 @@ namespace PlanAthena.Forms
             // pictureBox1
             // 
             pictureBox1.Dock = DockStyle.Fill;
-            pictureBox1.Image = Properties.Resources.office_layout_example_1;
+            //pictureBox1.Image = Properties.Resources.office_layout_example_1;
             pictureBox1.Location = new Point(0, 0);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(398, 149);
-            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+            //pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+            pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
             pictureBox1.TabIndex = 0;
             pictureBox1.TabStop = false;
             // 
@@ -449,6 +454,18 @@ namespace PlanAthena.Forms
             lblLotActif.TabIndex = 0;
             lblLotActif.Text = "Lot Actif :";
             // 
+            // tache
+            // 
+            tache.BackgroundImage = (Image)resources.GetObject("tache.BackgroundImage");
+            tache.Image = (Image)resources.GetObject("tache.Image");
+            tache.InitialImage = (Image)resources.GetObject("tache.InitialImage");
+            tache.Location = new Point(24, 24);
+            tache.Name = "tache";
+            tache.Size = new Size(30, 30);
+            tache.SizeMode = PictureBoxSizeMode.StretchImage;
+            tache.TabIndex = 0;
+            tache.TabStop = false;
+            // 
             // TacheForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -476,6 +493,7 @@ namespace PlanAthena.Forms
             ((System.ComponentModel.ISupportInitialize)splitContainerPrincipal).EndInit();
             splitContainerPrincipal.ResumeLayout(false);
             panelOutilsMetiers.ResumeLayout(false);
+            panelOutilsMetiersDynamiques.ResumeLayout(false);
             panelOutilsStatiques.ResumeLayout(false);
             splitContainerInterne.Panel1.ResumeLayout(false);
             splitContainerInterne.Panel2.ResumeLayout(false);
@@ -490,6 +508,7 @@ namespace PlanAthena.Forms
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             groupBoxGestionLots.ResumeLayout(false);
             groupBoxGestionLots.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)tache).EndInit();
             ResumeLayout(false);
             PerformLayout();
 
@@ -534,5 +553,6 @@ namespace PlanAthena.Forms
         private System.Windows.Forms.Label lblLotActif;
         private PictureBox pictureBox1;
         private ToolTip toolTipBloc;
+        private PictureBox tache;
     }
 }

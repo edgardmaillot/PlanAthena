@@ -21,7 +21,7 @@ skinparam class {
   arrowColor #005588
   shadowing false
 }
-title Architecture Générale de l'Application (v0.3.3 - Layout Vertical)
+title Architecture Générale de l'Application PlanAthena(v0.3.3)
 
 ' ================================================
 ' ===         NIVEAU 1 : COUCHE UI             ===

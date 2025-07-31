@@ -88,6 +88,19 @@ namespace PlanAthena.Services.Business
             return _blocs.Values.OrderBy(b => b.Nom).ToList();
         }
 
+        public List<Bloc> ObtenirBlocsParLot(string lotId)
+        {
+            if (string.IsNullOrEmpty(lotId))
+            {
+                return new List<Bloc>(); // Retourne une liste vide si aucun lotId n'est fourni
+            }
+            // Assurez-vous que le format de l'ID du bloc correspond à celui de la génération
+            return _blocs.Values
+                         .Where(b => b.BlocId.StartsWith($"{lotId}"))
+                         .OrderBy(b => b.Nom)
+                         .ToList();
+        }
+
         /// <summary>
         /// Supprime un bloc après vérification qu'aucune tâche ne lui est associée.
         /// Utilise une factory pour éviter la dépendance circulaire avec TacheService.

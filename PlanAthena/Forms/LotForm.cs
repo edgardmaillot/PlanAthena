@@ -165,7 +165,7 @@ namespace PlanAthena.Forms
             using var ofd = new OpenFileDialog
             {
                 Title = "Sélectionner le fichier de plan",
-                Filter = "Fichiers PDF (*.pdf)|*.pdf|Tous les fichiers (*.*)|*.*"
+                Filter = "Fichiers de plan|*.pdf;*.jpg;*.jpeg;*.png;*.gif;*.bmp|Fichiers PDF (*.pdf)|*.pdf|Fichiers Image (*.jpg;*.jpeg;*.png;*.gif;*.bmp)|*.jpg;*.jpeg;*.png;*.gif;*.bmp|Tous les fichiers (*.*)|*.*"
             };
             if (ofd.ShowDialog() == DialogResult.OK)
             {

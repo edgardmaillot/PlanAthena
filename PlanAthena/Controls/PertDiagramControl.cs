@@ -72,7 +72,7 @@ namespace PlanAthena.Controls
         {
             InitializeComponent();
             _viewer = new GViewer { Dock = DockStyle.Fill };
-            this.Controls.Add(_viewer);
+            Controls.Add(_viewer);
         }
 
         public void Initialize(MetierService metierService, LotService lotService, BlocService blocService, DependanceBuilder dependanceBuilder, PertDiagramSettings settings)
@@ -164,7 +164,7 @@ namespace PlanAthena.Controls
         public void TogglePan(bool panActif)
         {
             _viewer.PanButtonPressed = panActif;
-            this.Cursor = panActif ? Cursors.Hand : Cursors.Default;
+            Cursor = panActif ? Cursors.Hand : Cursors.Default;
         }
 
         public void SauvegarderImage()
@@ -306,7 +306,7 @@ namespace PlanAthena.Controls
             return taches.Where(t =>
                 t.TacheId.ToLower().Contains(recherche) ||
                 t.TacheNom.ToLower().Contains(recherche) ||
-                (!string.IsNullOrEmpty(t.MetierId) && t.MetierId.ToLower().Contains(recherche)) ||
+                !string.IsNullOrEmpty(t.MetierId) && t.MetierId.ToLower().Contains(recherche) ||
                 matchingLotIds.Contains(t.LotId) ||
                 matchingBlocIds.Contains(t.BlocId)
             ).ToList();

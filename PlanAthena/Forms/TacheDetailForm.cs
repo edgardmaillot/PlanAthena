@@ -1,3 +1,5 @@
+// START OF FILE TacheDetailForm.cs
+
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Utilities;
@@ -44,11 +46,13 @@ namespace PlanAthena.Forms
             _blocService = blocService;
             _dependanceBuilder = dependanceBuilder;
 
-            MettreAJourListesDeroulantes();
-            ChargerTache(null, true);
+            // REMOVED: MettreAJourListesDeroulantes();
+            // REMOVED: ChargerTache(null, true);
+            // Ces appels seront faits par TacheForm une fois que le lot actif sera connu.
         }
 
-        public void MettreAJourListesDeroulantes()
+        // MODIFIED: Ajout du paramètre lotId
+        public void MettreAJourListesDeroulantes(string lotId)
         {
             _suppressEvents = true;
             try
@@ -60,7 +64,8 @@ namespace PlanAthena.Forms
                 cmbMetier.DisplayMember = "Nom";
                 cmbMetier.ValueMember = "MetierId";
 
-                _blocsDisponibles = _blocService.ObtenirTousLesBlocs();
+                // MODIFIED: Utilisation de ObtenirBlocsParLot
+                _blocsDisponibles = _blocService.ObtenirBlocsParLot(lotId);
                 cmbBlocNom.DataSource = null;
                 cmbBlocNom.DataSource = _blocsDisponibles;
                 cmbBlocNom.DisplayMember = "Nom";
@@ -86,7 +91,10 @@ namespace PlanAthena.Forms
                 if (_tache == null)
                 {
                     _tache = new Tache { HeuresHommeEstimees = 8, Type = TypeActivite.Tache };
+                    // Si _blocsDisponibles est vide (par exemple, pas de lot actif), ce bloc ne s'exécutera pas.
+                    // C'est correct, car l'utilisateur devra d'abord créer un bloc ou sélectionner un lot avec des blocs.
                     if (_blocsDisponibles.Any()) _tache.BlocId = _blocsDisponibles.First().BlocId;
+                    else _tache.BlocId = null; // S'assurer qu'il n'y a pas d'ID de bloc résiduel
                 }
 
                 txtTacheId.Visible = false; // On garde l'ID caché
@@ -96,9 +104,16 @@ namespace PlanAthena.Forms
                 numHeuresHomme.Value = _tache.HeuresHommeEstimees;
                 chkEstJalon.Checked = _tache.EstJalon;
 
+                // Assurez-vous que le BlocId de la tâche correspond à un bloc disponible dans la liste filtrée.
+                // Si la tâche chargée appartient à un bloc qui n'est pas dans le lot actif (ce qui ne devrait pas arriver avec une bonne gestion),
+                // ou si le blocId est vide, sélectionnez le premier bloc disponible ou n'en sélectionnez aucun.
                 if (cmbBlocNom.Items.Count > 0)
                 {
                     cmbBlocNom.SelectedValue = _blocsDisponibles.Any(b => b.BlocId == _tache.BlocId) ? _tache.BlocId : _blocsDisponibles.First().BlocId;
+                }
+                else
+                {
+                    cmbBlocNom.SelectedIndex = -1; // Aucune sélection si la liste est vide
                 }
 
                 cmbMetier.SelectedValue = !string.IsNullOrEmpty(_tache.MetierId) ? _tache.MetierId : "";
@@ -112,14 +127,21 @@ namespace PlanAthena.Forms
                 _suppressEvents = false;
 
                 // En mode création, déclencher l'événement de changement de bloc pour initialiser correctement
+                // Ou charger les dépendances si ce n'est pas une création (et donc le blocId est déjà défini)
                 if (_modeCreation && cmbBlocNom.SelectedItem != null)
                 {
+                    // Forcer l'affectation du BlocId de la tâche au premier bloc disponible si c'est une nouvelle tâche et qu'il y a des blocs.
+                    if (_tache.BlocId == null && _blocsDisponibles.Any())
+                    {
+                        _tache.BlocId = _blocsDisponibles.First().BlocId;
+                    }
                     cmbBlocNom_SelectedIndexChanged(cmbBlocNom, EventArgs.Empty);
                 }
-                else
+                else if (!_modeCreation)
                 {
                     ChargerListeDependances();
                 }
+                // Si _modeCreation et pas de bloc sélectionné, ChargerListeDependances ne sera pas appelé, ce qui est correct.
             }
         }
 
@@ -135,7 +157,6 @@ namespace PlanAthena.Forms
         {
             try
             {
-
                 // FORCER la reconnexion de l'événement
                 chkListDependances.DrawItem -= chkListDependances_DrawItem; // Supprimer s'il existe
                 chkListDependances.DrawItem += chkListDependances_DrawItem; // Ajouter
@@ -148,7 +169,7 @@ namespace PlanAthena.Forms
                     if (_tache == null)
                         System.Diagnostics.Debug.WriteLine("ChargerListeDependances: _tache est null");
                     else if (string.IsNullOrEmpty(_tache.BlocId))
-                        System.Diagnostics.Debug.WriteLine($"ChargerListeDependances: BlocId vide pour tâche {_tache.TacheId}");
+                        System.Diagnostics.Debug.WriteLine($"ChargerListeDependances: BlocId vide pour tâche {_tache?.TacheId}");
                     return;
                 }
 
@@ -285,13 +306,14 @@ namespace PlanAthena.Forms
             {
                 MessageBox.Show("Le nom de la tâche est obligatoire.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning); return false;
             }
+            // Vérifie si un bloc est sélectionné (pour une tâche existante ou nouvelle)
+            if (cmbBlocNom.SelectedItem == null || string.IsNullOrEmpty(((Bloc)cmbBlocNom.SelectedItem).BlocId))
+            {
+                MessageBox.Show("Veuillez assigner la tâche à un bloc.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning); return false;
+            }
             if (!_tache.EstJalon && cmbMetier.SelectedValue is string metierId && string.IsNullOrEmpty(metierId))
             {
                 if (MessageBox.Show("Aucun métier n'est assigné à cette tâche. Continuer ?", "Métier non assigné", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No) return false;
-            }
-            if (cmbBlocNom.SelectedItem == null)
-            {
-                MessageBox.Show("Veuillez assigner la tâche à un bloc.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning); return false;
             }
             return true;
         }
@@ -384,8 +406,8 @@ namespace PlanAthena.Forms
         }
         private void chkListDependances_DrawItem(object sender, DrawItemEventArgs e)
         {
-            // TEST: Vérifier si la méthode est appelée avec MessageBox
-            MessageBox.Show($"DrawItem appelée pour index {e.Index}", "DEBUG");
+            // Commenter ou supprimer ce MessageBox après le debug.
+            // MessageBox.Show($"DrawItem appelée pour index {e.Index}", "DEBUG");
             if (e.Index < 0) return;
             var item = (DependanceAffichage)chkListDependances.Items[e.Index];
             e.DrawBackground();

@@ -1,0 +1,229 @@
+@startuml
+' --- Configuration FORCÉE pour layout vertical ---
+!define DIRECTION top to bottom direction
+top to bottom direction
+skinparam minClassWidth 100 ' Réduit la largeur minimale des classes pour compacité
+skinparam maxMessageSize 200
+skinparam packageStyle rectangle
+skinparam linetype ortho ' Lignes orthogonales pour une structure claire
+skinparam ranksep 120 ' Augmenté pour encore plus d'espace entre les couches
+skinparam nodesep 70  ' Augmenté pour encore plus d'espace entre les nœuds
+skinparam arrowThickness 1.5 ' Rendre les flèches un peu plus visibles
+
+skinparam package {
+  borderColor #555555
+  borderThickness 2
+  fontColor #333333
+  backgroundColor #F8F9FA
+}
+skinparam class {
+  borderColor #007ACC
+  backgroundColor #DDEEFF
+  arrowColor #005588
+  shadowing false
+  stereoBorderColor #007ACC
+  stereoFontColor #007ACC
+  backgroundColor <<ValueObject>> #CCEEFF
+  backgroundColor <<library>> #E0E0E0
+  backgroundColor <<from Google.OrTools.Sat>> #FFCCBB
+}
+' Cacher TOUS les membres pour un rendu plus compact et lisible
+hide members 
+title Architecture de la DLL PlanAthena.Core (v0.1 - Solveur CP-SAT) (Optimisée)
+
+' ================================================
+' ===         NIVEAU 1 : FACADE DLL            ===
+' ================================================
+package "🔗 FACADE DLL (PlanAthena.Core.Facade)" as FACADE {
+  class PlanAthenaCoreFacade
+  package "DTOs d'Échange" as ExchangeDTOs {
+    class ChantierSetupInputDto
+    class ProcessChantierResultDto
+    ' Autres DTOs de ce niveau
+    class PlanningOptimizationResultDto
+    class AffectationTacheOuvrierDto
+    class LotTravauxDto
+    class TacheDto
+  }
+}
+
+' ================================================
+' ===    NIVEAU 2 : COUCHE APPLICATION         ===
+' ================================================
+package "🎯 APPLICATION (PlanAthena.Core.Application)" as APPLICATION {
+  package "Use Cases" as UseCases {
+    class ProcessChantierUseCase
+  }
+  package "Services d'Application" as AppServices {
+    interface IChantierSetupInputMapper
+    interface IChantierValidationService
+    interface IInitialFeasibilityAnalysisService
+    interface IKeyResourceSuggestionService
+    interface ICalendrierService
+    interface IConstructeurProblemeOrTools
+    interface ISolutionInterpreterService
+    interface IPlanningAnalysisService
+
+    class ChantierSetupInputMapper
+    class ChantierValidationService
+    class InitialFeasibilityAnalysisService
+    class KeyResourceSuggestionService
+    class CalendrierService
+    class SolutionInterpreterService
+    class PlanningAnalysisService
+  }
+  package "Validation" as Validation {
+    class ChantierSetupInputDtoValidator
+    class TacheDtoValidator
+    class LotTravauxDtoValidator
+    ' ... autres validateurs
+  }
+  package "DTOs Internes" as InternalDTOs {
+    class ProblemeOptimisation
+    class ModeleCpSat
+  }
+}
+
+' ================================================
+' ===        NIVEAU 3 : COUCHE DOMAINE         ===
+' ================================================
+package "📊 DOMAINE (PlanAthena.Core.Domain)" as DOMAIN {
+  class Chantier
+  class LotTravaux
+  class BlocTravail
+  class Tache
+  class Ouvrier
+  class Metier
+  class Competence
+  
+  package "Value Objects" as VOs {
+    class PeriodePlanification <<ValueObject>>
+    class CalendrierOuvreChantier <<ValueObject>>
+    class ConfigurationOptimisation <<ValueObject>>
+    class CoutJournalier <<ValueObject>>
+    class DureeHeuresHomme <<ValueObject>>
+    class CapaciteOuvriers <<ValueObject>>
+    class SlotTemporel <<ValueObject>>
+  }
+  package "Enums" as Enums {
+    enum TypeActivite
+    enum EtatTraitementInput
+    enum OptimizationStatus
+    ' ... autres enums
+  }
+}
+
+' ================================================
+' ===    NIVEAU 4 : INFRASTRUCTURE             ===
+' ================================================
+package "🏗️ INFRASTRUCTURE (PlanAthena.Core.Infrastructure)" as INFRASTRUCTURE {
+  package "Services Or-Tools" as OrToolsServices {
+    class ConstructeurProblemeOrTools
+    class TacheModelBuilder
+    class CoutModelBuilder
+    class SolutionInterpreterService
+    class PlanningAnalysisService
+  }
+  package "Bibliothèques Externes" as ExternalLibs {
+    class OrTools_Core <<from Google.OrTools.Sat>> 
+    class NodaTime_Lib <<library>>
+    class FluentValidation_Lib <<library>>
+  }
+}
+
+
+' ================================================
+' ===         RELATIONS PRINCIPALES            ===
+' Les flèches avec plusieurs tirets (---) forcent une plus grande distance minimale,
+' aidant à étirer le diagramme verticalement et à améliorer la lisibilité.
+' ================================================
+
+FACADE.PlanAthenaCoreFacade ----down----> APPLICATION.UseCases.ProcessChantierUseCase
+
+APPLICATION.UseCases.ProcessChantierUseCase ----down----> APPLICATION.AppServices : utilise interfaces
+APPLICATION.UseCases.ProcessChantierUseCase ----down----> APPLICATION.Validation : déclenche validation
+APPLICATION.UseCases.ProcessChantierUseCase ----down----> APPLICATION.InternalDTOs.ProblemeOptimisation : crée problème
+
+APPLICATION.AppServices ----down----> DOMAIN.Chantier : interagit avec le domaine
+APPLICATION.AppServices ----down----> APPLICATION.InternalDTOs : passe/reçoit DTOs internes
+
+' Implémentations d'interfaces (dépendances inversées, conceptuelles)
+APPLICATION.AppServices.IConstructeurProblemeOrTools <|.. INFRASTRUCTURE.OrToolsServices.ConstructeurProblemeOrTools
+APPLICATION.AppServices.ISolutionInterpreterService <|.. INFRASTRUCTURE.OrToolsServices.SolutionInterpreterService
+APPLICATION.AppServices.IPlanningAnalysisService <|.. INFRASTRUCTURE.OrToolsServices.PlanningAnalysisService
+
+
+INFRASTRUCTURE.OrToolsServices ----down----> APPLICATION.InternalDTOs.ProblemeOptimisation : prend en entrée
+INFRASTRUCTURE.OrToolsServices ----down----> DOMAIN.Chantier : lit le domaine
+INFRASTRUCTURE.OrToolsServices ----down----> INFRASTRUCTURE.ExternalLibs.OrTools_Core : utilise les classes Or-Tools
+
+' ================================================
+' ===       RELATIONS DÉTAILLÉES (Intra-couches ou spécifiques)               ===
+' ================================================
+
+' Flux principal d'entrée/sortie de la Facade
+FACADE.ExchangeDTOs.ChantierSetupInputDto -up-> FACADE.PlanAthenaCoreFacade
+FACADE.PlanAthenaCoreFacade -up-> FACADE.ExchangeDTOs.ProcessChantierResultDto
+
+' Flux de mappage et validation
+APPLICATION.UseCases.ProcessChantierUseCase -right-> APPLICATION.AppServices.ChantierSetupInputMapper
+APPLICATION.UseCases.ProcessChantierUseCase -right-> APPLICATION.Validation.ChantierSetupInputDtoValidator
+
+APPLICATION.AppServices.ChantierSetupInputMapper -down-> DOMAIN.Chantier
+APPLICATION.AppServices.ChantierSetupInputMapper -right-> APPLICATION.AppServices.CalendrierService
+
+' Construction du modèle Or-Tools
+INFRASTRUCTURE.OrToolsServices.ConstructeurProblemeOrTools -right-> INFRASTRUCTURE.OrToolsServices.TacheModelBuilder
+INFRASTRUCTURE.OrToolsServices.ConstructeurProblemeOrTools -right-> INFRASTRUCTURE.OrToolsServices.CoutModelBuilder
+INFRASTRUCTURE.OrToolsServices.ConstructeurProblemeOrTools -down-> APPLICATION.InternalDTOs.ModeleCpSat
+
+' Interprétation et analyse
+INFRASTRUCTURE.OrToolsServices.SolutionInterpreterService -right-> APPLICATION.InternalDTOs.ModeleCpSat
+INFRASTRUCTURE.OrToolsServices.SolutionInterpreterService -right-> DOMAIN.Chantier
+
+INFRASTRUCTURE.OrToolsServices.PlanningAnalysisService -right-> ExternalDTOs.AffectationTacheOuvrierDto
+INFRASTRUCTURE.OrToolsServices.PlanningAnalysisService -right-> DOMAIN.Chantier
+
+' Dépendances des validateurs
+APPLICATION.Validation.ChantierSetupInputDtoValidator -down-> Validation.TacheDtoValidator
+APPLICATION.Validation.ChantierSetupInputDtoValidator -down-> Validation.LotTravauxDtoValidator
+APPLICATION.Validation.ChantierSetupInputDtoValidator -down-> INFRASTRUCTURE.ExternalLibs.FluentValidation_Lib
+
+' Contenu du Domaine (relations classiques)
+DOMAIN.Chantier -down-> DOMAIN.LotTravaux
+DOMAIN.Chantier -down-> DOMAIN.BlocTravail
+DOMAIN.Chantier -down-> DOMAIN.Tache
+DOMAIN.Chantier -down-> DOMAIN.Ouvrier
+DOMAIN.Chantier -down-> DOMAIN.Metier
+DOMAIN.Chantier -down-> DOMAIN.Competence
+DOMAIN.Chantier -down-> DOMAIN.VOs
+DOMAIN.Chantier -down-> DOMAIN.Enums
+
+' ================================================
+' ===            NOTES EXPLICATIVES            ===
+' ================================================
+note top of FACADE
+  <b>COUCHE 1 - FACADE</b>
+  Point d'entrée public de la DLL.
+  Gère les communications front-arrière de la DLL.
+end note
+
+note top of APPLICATION
+  <b>COUCHE 2 - APPLICATION</b>
+  Logique métier orchestrée (Use Cases) et services applicatifs.
+  Contient les règles de validation et les DTOs internes.
+end note
+
+note top of DOMAIN
+  <b>COUCHE 3 - DOMAINE</b>
+  Le cœur métier du système.
+  Entités métier et objets de valeur (Value Objects).
+  Contient les règles métier pures et les invariants.
+end note
+
+note top of INFRASTRUCTURE
+  <b>COUCHE 4 - INFRASTRUCTURE</b>
+  Implémentations concrètes des services externes.
+  Intégration avec les outils tiers (ex: Or-Tools pour l'optimisation).
+end note
+@enduml

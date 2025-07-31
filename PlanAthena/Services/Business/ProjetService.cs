@@ -87,7 +87,7 @@ namespace PlanAthena.Services.Business
                     Lots = _lotService.ObtenirTousLesLots(),
                     Blocs = _blocService.ObtenirTousLesBlocs(),
                     DateSauvegarde = DateTime.Now,
-                    VersionApplication = "0.2.2"
+                    VersionApplication = "0.3.5"
                 };
 
                 var options = new JsonSerializerOptions

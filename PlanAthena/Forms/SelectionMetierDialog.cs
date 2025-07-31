@@ -19,51 +19,70 @@ namespace PlanAthena.Forms
 
         private void InitializeComponent()
         {
-            var lblInfo = new Label
-            {
-                Text = "Sélectionnez un métier à ajouter comme prérequis :",
-                Location = new System.Drawing.Point(12, 15),
-                Size = new System.Drawing.Size(350, 20)
-            };
-
-            listViewMetiers = new ListView
-            {
-                Name = "listViewMetiers",
-                Location = new System.Drawing.Point(12, 40),
-                Size = new System.Drawing.Size(360, 200),
-                View = View.Details,
-                FullRowSelect = true,
-                GridLines = true,
-                MultiSelect = false
-            };
-
-            listViewMetiers.Columns.Add("ID", 100);
-            listViewMetiers.Columns.Add("Nom", 250);
-
-            var btnOK = new Button
-            {
-                Name = "btnOK",
-                Text = "OK",
-                DialogResult = DialogResult.OK,
-                Location = new System.Drawing.Point(217, 255),
-                Size = new System.Drawing.Size(75, 23)
-            };
-
-            var btnAnnuler = new Button
-            {
-                Text = "Annuler",
-                DialogResult = DialogResult.Cancel,
-                Location = new System.Drawing.Point(298, 255),
-                Size = new System.Drawing.Size(75, 23)
-            };
-
-            this.Controls.AddRange(new Control[] { lblInfo, listViewMetiers, btnOK, btnAnnuler });
-            this.Text = "Sélection de Métier";
-            this.Size = new System.Drawing.Size(400, 320);
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.StartPosition = FormStartPosition.CenterParent;
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SelectionMetierDialog));
+            lblInfo = new Label();
+            listViewMetiers = new ListView();
+            btnOK = new Button();
+            btnAnnuler = new Button();
+            pictureBox1 = new PictureBox();
+            ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
+            SuspendLayout();
+            // 
+            // lblInfo
+            // 
+            lblInfo.Location = new Point(21, 0);
+            lblInfo.Name = "lblInfo";
+            lblInfo.Size = new Size(100, 23);
+            lblInfo.TabIndex = 0;
+            // 
+            // listViewMetiers
+            // 
+            listViewMetiers.Location = new Point(0, 0);
+            listViewMetiers.Name = "listViewMetiers";
+            listViewMetiers.Size = new Size(121, 97);
+            listViewMetiers.TabIndex = 1;
+            listViewMetiers.UseCompatibleStateImageBehavior = false;
+            // 
+            // btnOK
+            // 
+            btnOK.Location = new Point(0, 0);
+            btnOK.Name = "btnOK";
+            btnOK.Size = new Size(75, 23);
+            btnOK.TabIndex = 2;
+            // 
+            // btnAnnuler
+            // 
+            btnAnnuler.Location = new Point(0, 0);
+            btnAnnuler.Name = "btnAnnuler";
+            btnAnnuler.Size = new Size(75, 23);
+            btnAnnuler.TabIndex = 3;
+            // 
+            // pictureBox1
+            // 
+            pictureBox1.Image = (Image)resources.GetObject("pictureBox1.Image");
+            pictureBox1.Location = new Point(0, 29);
+            pictureBox1.Name = "pictureBox1";
+            pictureBox1.Size = new Size(58, 50);
+            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+            pictureBox1.TabIndex = 4;
+            pictureBox1.TabStop = false;
+            // 
+            // SelectionMetierDialog
+            // 
+            ClientSize = new Size(384, 281);
+            Controls.Add(pictureBox1);
+            Controls.Add(lblInfo);
+            Controls.Add(listViewMetiers);
+            Controls.Add(btnOK);
+            Controls.Add(btnAnnuler);
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            MaximizeBox = false;
+            MinimizeBox = false;
+            Name = "SelectionMetierDialog";
+            StartPosition = FormStartPosition.CenterParent;
+            Text = "Sélection de Métier";
+            ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
+            ResumeLayout(false);
         }
 
         private void AttacherEvenements()
@@ -103,5 +122,9 @@ namespace PlanAthena.Forms
                 listViewMetiers.Items.Add(item);
             }
         }
+        private Label lblInfo;
+        private Button btnOK;
+        private Button btnAnnuler;
+        private PictureBox pictureBox1;
     }
 }
