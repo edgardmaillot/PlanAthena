@@ -32,11 +32,17 @@ namespace PlanAthena.Services.DataAccess
         }
 
         /// <summary>
-        /// Importe les tâches depuis un fichier CSV
+        /// Importe les tâches depuis un fichier CSV en utilisant une configuration de mappage.
         /// </summary>
-        public ImportResult ImporterTachesCSV(string filePath, string lotIdCible, bool confirmerEcrasement = false)
+        /// <param name="filePath">Chemin complet du fichier CSV.</param>
+        /// <param name="lotIdCible">L'ID du lot dans lequel importer les tâches.</param>
+        /// <param name="mappingConfig">La configuration de mappage des colonnes et paramètres d'import.</param>
+        /// <param name="confirmerEcrasement">Indique si l'écrasement des tâches existantes a déjà été confirmé.</param>
+        /// <returns>Un objet ImportResult détaillant le succès, l'échec ou la demande de confirmation.</returns>
+        public ImportResult ImporterTachesCSV(string filePath, string lotIdCible, ImportMappingConfiguration mappingConfig, bool confirmerEcrasement = false)
         {
             var stopwatch = Stopwatch.StartNew();
+            var allWarnings = new List<string>(); // Liste pour collecter TOUS les avertissements
 
             try
             {
@@ -47,54 +53,93 @@ namespace PlanAthena.Services.DataAccess
                 if (string.IsNullOrWhiteSpace(lotIdCible))
                     return ImportResult.Echec("L'ID du lot cible ne peut pas être vide.");
 
-                // 2. Détection automatique du séparateur et lecture CSV
+                // 2. Détection automatique du séparateur et lecture CSV complète
                 var lignes = File.ReadAllLines(filePath);
-                if (lignes.Length < 2)
-                    return ImportResult.Echec("Le fichier CSV est vide ou ne contient que l'en-tête.");
+                if (lignes.Length < 1) // Au moins une ligne (en-tête ou données)
+                    return ImportResult.Echec("Le fichier CSV est vide.");
 
                 // Détecter le séparateur (TAB ou point-virgule)
-                var premiereLigne = lignes[0];
-                char separateur = premiereLigne.Contains('\t') ? '\t' : ';';
+                var premiereLigneBrute = lignes[0];
+                char separateur = premiereLigneBrute.Contains('\t') ? '\t' : ';';
 
-                var headers = premiereLigne.Split(separateur).Select(h => h.Trim()).ToArray();
+                List<string> headers = new List<string>();
+                List<Dictionary<string, string>> allCsvData = new List<Dictionary<string, string>>(); // TOUTES les données CSV
 
-                // Debug : afficher les colonnes trouvées
-                System.Diagnostics.Debug.WriteLine($"Séparateur détecté : '{(separateur == '\t' ? "TAB" : ";")}'");
-                System.Diagnostics.Debug.WriteLine($"Colonnes trouvées : [{string.Join("], [", headers)}]");
+                int debutDonneesIndex = 0;
+                if (mappingConfig.HasHeaderRecord)
+                {
+                    headers = premiereLigneBrute.Split(separateur).Select(h => h.Trim()).ToList();
+                    debutDonneesIndex = 1;
+                }
+                else
+                {
+                    int maxColumns = premiereLigneBrute.Split(separateur).Length;
+                    for (int i = 0; i < maxColumns; i++)
+                    {
+                        headers.Add($"Colonne {i + 1}");
+                    }
+                }
 
-                // Validation des colonnes requises
-                var colonnesRequises = new[] {
-                    "TacheId", "TacheNom", "HeuresHommeEstimees", "MetierId",
-                    "Dependencies", "ExclusionsDependances", "Type", "EstJalon",
-                    "LotId", "LotNom", "LotPriorite",
-                    "BlocId", "BlocNom", "BlocCapaciteMaxOuvriers"
+                // Vérification que tous les en-têtes mappés existent dans le fichier CSV (ou sont génériques)
+                var requiredMappings = new Dictionary<string, string>
+                {
+                    { nameof(ImportMappingConfiguration.CsvColumn_TacheNom), mappingConfig.CsvColumn_TacheNom },
+                    { nameof(ImportMappingConfiguration.CsvColumn_HeuresHommeEstimees), mappingConfig.CsvColumn_HeuresHommeEstimees },
+                    { nameof(ImportMappingConfiguration.CsvColumn_MetierId), mappingConfig.CsvColumn_MetierId },
+                    { nameof(ImportMappingConfiguration.CsvColumn_BlocId), mappingConfig.CsvColumn_BlocId }
                 };
 
-                // Vérification exacte (sensible à la casse pour être précis)
-                var colonnesManquantes = colonnesRequises.Except(headers).ToList();
-
-                if (colonnesManquantes.Any())
+                foreach (var entry in requiredMappings)
                 {
-                    var messageDebug = $"Séparateur utilisé : {(separateur == '\t' ? "Tabulation" : "Point-virgule")}\n";
-                    messageDebug += $"Colonnes trouvées ({headers.Length}) : {string.Join(", ", headers)}\n";
-                    messageDebug += $"Colonnes manquantes ({colonnesManquantes.Count}) : {string.Join(", ", colonnesManquantes)}";
-                    return ImportResult.Echec(messageDebug);
+                    var mappedColumnName = entry.Value;
+                    if (string.IsNullOrWhiteSpace(mappedColumnName) || !headers.Contains(mappedColumnName))
+                    {
+                        return ImportResult.Echec($"Le mappage pour le champ obligatoire '{GetFriendlyFieldName(entry.Key)}' est manquant ou ne correspond pas à une colonne du fichier CSV. Assurez-vous que la colonne '{mappedColumnName}' existe.");
+                    }
                 }
 
-                var donneesCSV = new List<Dictionary<string, string>>();
-
-                for (int i = 1; i < lignes.Length; i++)
+                for (int i = debutDonneesIndex; i < lignes.Length; i++)
                 {
                     var valeurs = lignes[i].Split(separateur);
-                    var ligne = new Dictionary<string, string>();
+                    var ligneDict = new Dictionary<string, string>();
 
-                    for (int j = 0; j < headers.Length; j++)
+                    for (int j = 0; j < headers.Count; j++)
                     {
                         var valeur = j < valeurs.Length ? valeurs[j].Trim() : "";
-                        ligne[headers[j]] = valeur;
+                        ligneDict[headers[j]] = valeur;
                     }
-                    donneesCSV.Add(ligne);
+                    allCsvData.Add(ligneDict);
                 }
+
+                if (allCsvData.Count == 0)
+                    return ImportResult.Echec("Le fichier CSV ne contient aucune ligne de données exploitable après l'en-tête.");
+
+
+                // NOUVEAU : Pré-analyse des métiers sur TOUTES les lignes avant l'import réel
+                // pour fournir des avertissements complets.
+                if (!string.IsNullOrEmpty(mappingConfig.CsvColumn_MetierId))
+                {
+                    var allExistingMetiers = _metierService.GetAllMetiers().Select(m => m.MetierId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                    var missingMetiersInFullData = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                    foreach (var rowData in allCsvData)
+                    {
+                        string metierInCsv = GetValueOrDefault(rowData, mappingConfig.CsvColumn_MetierId);
+                        if (!string.IsNullOrWhiteSpace(metierInCsv) && !allExistingMetiers.Contains(metierInCsv))
+                        {
+                            missingMetiersInFullData.Add(metierInCsv);
+                        }
+                    }
+
+                    if (missingMetiersInFullData.Any())
+                    {
+                        foreach (var missing in missingMetiersInFullData.OrderBy(m => m))
+                        {
+                            allWarnings.Add($"Le métier '{missing}' (présent dans le CSV) n'existe pas dans PlanAthena. Veuillez le créer manuellement.");
+                        }
+                    }
+                }
+
 
                 // 3. Vérification confirmation si nécessaire
                 if (!confirmerEcrasement)
@@ -124,10 +169,17 @@ namespace PlanAthena.Services.DataAccess
                 // 5. Import des données de manière atomique
                 try
                 {
-                    var (nbTaches, nbBlocs, warnings) = ImporterDonnees(donneesCSV, lotIdCible);
+                    // Importer les tâches une première fois pour générer les IDs PlanAthena et collecter les avertissements.
+                    // Les dépendances sont stockées temporairement sous leur forme brute (nom/ancien ID).
+                    var (nbTaches, nbBlocs, importedTasks, importWarnings) = ImporterDonneesInitial(allCsvData, lotIdCible, mappingConfig);
+                    allWarnings.AddRange(importWarnings); // Ajouter les avertissements de l'import initial
+
+                    // Phase de post-traitement : remapper les dépendances
+                    var remappingWarnings = RemapperDependancesDesTaches(importedTasks);
+                    allWarnings.AddRange(remappingWarnings);
 
                     stopwatch.Stop();
-                    return ImportResult.Succes(nbTaches, 1, nbBlocs, warnings, stopwatch.Elapsed);
+                    return ImportResult.Succes(nbTaches, 1, nbBlocs, allWarnings, stopwatch.Elapsed);
                 }
                 catch (Exception ex)
                 {
@@ -211,187 +263,321 @@ namespace PlanAthena.Services.DataAccess
         }
 
         /// <summary>
-        /// Importe les données normalisées - VERSION CORRIGÉE pour la nouvelle API BlocService
+        /// Importe les données des tâches à partir des données CSV analysées, en utilisant la configuration de mappage.
+        /// Cette méthode effectue l'import initial des tâches et des blocs.
         /// </summary>
-        private (int nbTaches, int nbBlocs, List<string> warnings) ImporterDonnees(List<Dictionary<string, string>> donnees, string lotIdCible)
+        /// <param name="donnees">Liste des dictionnaires représentant chaque ligne CSV avec les en-têtes comme clés.</param>
+        /// <param name="lotIdCible">ID du lot de destination.</param>
+        /// <param name="mappingConfig">Configuration de mappage et paramètres d'import.</param>
+        /// <returns>Un tuple contenant le nombre de tâches créées, le nombre de blocs créés,
+        /// une liste des tâches importées (avec leurs IDs PlanAthena), et une liste d'avertissements.</returns>
+        private (int nbTaches, int nbBlocs, List<Tache> importedTasks, List<string> warnings) ImporterDonneesInitial(
+            List<Dictionary<string, string>> donnees,
+            string lotIdCible,
+            ImportMappingConfiguration mappingConfig)
         {
             var warnings = new List<string>();
-            var mappingBlocIds = new Dictionary<string, string>(); // Ancien ID CSV -> Nouvel ID généré
-
-            // DEBUG : Vérifier ce qu'on reçoit
-            System.Diagnostics.Debug.WriteLine($"ImporterDonnees - {donnees.Count} lignes reçues");
+            var blocsCrees = new HashSet<string>();
+            var blocCsvNameToBlocIdAthena = new Dictionary<string, string>(); // Ancien nom/ID de bloc CSV -> Nouvel ID PlanAthena
+            var importedTasks = new List<Tache>(); // Collecte les tâches nouvellement importées
 
             // 1. Créer/récupérer le lot
-            var premiereLigne = donnees.First();
             var lot = _lotService.ObtenirLotParId(lotIdCible);
             if (lot == null)
             {
                 lot = new Lot
                 {
                     LotId = lotIdCible,
-                    Nom = premiereLigne["LotNom"],
-                    Priorite = int.TryParse(premiereLigne["LotPriorite"], out int prio) ? prio : 1
+                    Nom = $"Lot Importé ({lotIdCible})", // Nom par défaut si non trouvé
+                    Priorite = 1 // Priorité par défaut
                 };
-                _lotService.AjouterLot(lot);
-                System.Diagnostics.Debug.WriteLine($"Lot créé : {lot.LotId} - {lot.Nom}");
-            }
-
-            // 2. Créer les blocs avec génération automatique d'IDs
-            var blocsUniques = donnees.GroupBy(d => d["BlocId"]).Where(g => !string.IsNullOrEmpty(g.Key)).ToList();
-            System.Diagnostics.Debug.WriteLine($"Blocs uniques trouvés : {blocsUniques.Count}");
-
-            foreach (var groupe in blocsUniques)
-            {
-                var ligne = groupe.First();
-                var ancienBlocId = ligne["BlocId"]; // ID du CSV
-                var nomBloc = ligne["BlocNom"];
-
-                System.Diagnostics.Debug.WriteLine($"Traitement bloc CSV : {ancienBlocId} -> {nomBloc}");
-
-                // Vérifier si un bloc avec ce nom existe déjà
-                var blocExistant = _blocService.ObtenirTousLesBlocs()
-                    .FirstOrDefault(b => b.Nom == nomBloc && b.BlocId.StartsWith($"{lotIdCible}_"));
-
-                if (blocExistant != null)
+                try
                 {
-                    // Réutiliser le bloc existant
-                    mappingBlocIds[ancienBlocId] = blocExistant.BlocId;
-                    System.Diagnostics.Debug.WriteLine($"Bloc réutilisé : {ancienBlocId} -> {blocExistant.BlocId}");
+                    _lotService.AjouterLot(lot);
+                    warnings.Add($"Le lot '{lot.Nom}' (ID: {lot.LotId}) a été créé car il n'existait pas.");
                 }
-                else
+                catch (Exception ex)
                 {
-                    // Créer un nouveau bloc avec ID généré automatiquement
-                    var nouveauBlocId = _blocService.GenerateNewBlocId(lotIdCible);
-                    var bloc = new Bloc
-                    {
-                        BlocId = nouveauBlocId,
-                        Nom = nomBloc,
-                        CapaciteMaxOuvriers = int.TryParse(ligne["BlocCapaciteMaxOuvriers"], out int cap) ? cap : 6
-                    };
-
-                    _blocService.SaveBloc(bloc); // Utiliser la nouvelle méthode SaveBloc
-                    mappingBlocIds[ancienBlocId] = nouveauBlocId;
-                    System.Diagnostics.Debug.WriteLine($"Bloc créé : {ancienBlocId} -> {nouveauBlocId} ({nomBloc})");
+                    throw new InvalidOperationException($"Impossible de créer le lot '{lot.Nom}' (ID: {lot.LotId}): {ex.Message}");
                 }
             }
 
-            // 3. Créer les tâches avec remapping des BlocIds
-            var nbTachesCreees = 0;
+
+            // 2. Traiter et créer les blocs
             foreach (var ligne in donnees)
             {
-                var ancienBlocId = ligne["BlocId"];
-                var nouveauBlocId = mappingBlocIds.ContainsKey(ancienBlocId) ? mappingBlocIds[ancienBlocId] : ancienBlocId;
+                string blocNomCsv = GetValueOrDefault(ligne, mappingConfig.CsvColumn_BlocId);
+
+                // Si le nom du bloc est vide, utiliser le nom de bloc par défaut
+                if (string.IsNullOrWhiteSpace(blocNomCsv))
+                {
+                    blocNomCsv = mappingConfig.NomBlocParDefaut;
+                }
+
+                if (!blocCsvNameToBlocIdAthena.ContainsKey(blocNomCsv))
+                {
+                    Bloc blocAthena = _blocService.ObtenirTousLesBlocs()
+                        .FirstOrDefault(b => b.Nom == blocNomCsv && b.BlocId.StartsWith($"{lotIdCible}_"));
+
+                    if (blocAthena == null)
+                    {
+                        // Créer un nouveau bloc si non trouvé
+                        var nouveauBlocId = _idGenerator.GenererProchainBlocId(lotIdCible);
+                        blocAthena = new Bloc
+                        {
+                            BlocId = nouveauBlocId,
+                            Nom = blocNomCsv,
+                            CapaciteMaxOuvriers = mappingConfig.CapaciteMaxOuvriersBlocParDefaut
+                        };
+                        _blocService.SaveBloc(blocAthena);
+                        blocsCrees.Add(blocAthena.BlocId); // Ajout au set de blocs créés
+                        warnings.Add($"Bloc '{blocAthena.Nom}' (ID: {blocAthena.BlocId}) créé pour le lot '{lot.Nom}'.");
+                    }
+                    else
+                    {
+                        // Réutiliser le bloc existant
+                        warnings.Add($"Bloc '{blocAthena.Nom}' (ID: {blocAthena.BlocId}) réutilisé pour le lot '{lot.Nom}'.");
+                    }
+                    blocCsvNameToBlocIdAthena[blocNomCsv] = blocAthena.BlocId;
+                }
+            }
+
+            // 3. Créer les tâches
+            foreach (var ligne in donnees)
+            {
+                var ligneIndexOriginalCsv = donnees.IndexOf(ligne) + (mappingConfig.HasHeaderRecord ? 2 : 1); // Numéro de ligne dans le CSV d'origine
+
+                string tacheNom = GetValueOrDefault(ligne, mappingConfig.CsvColumn_TacheNom);
+                if (string.IsNullOrWhiteSpace(tacheNom))
+                {
+                    warnings.Add($"Ligne {ligneIndexOriginalCsv}: Nom de tâche manquant. La ligne sera ignorée.");
+                    continue; // Ignorer la ligne si le nom de tâche est vide
+                }
+
+                string metierId = GetValueOrDefault(ligne, mappingConfig.CsvColumn_MetierId);
+                if (string.IsNullOrWhiteSpace(metierId))
+                {
+                    warnings.Add($"Ligne {ligneIndexOriginalCsv}: ID Métier manquant pour la tâche '{tacheNom}'. La ligne sera ignorée.");
+                    continue; // Ignorer la ligne si l'ID métier est vide
+                }
+
+                // Bloc ID mapping
+                string blocNomCsvForTache = GetValueOrDefault(ligne, mappingConfig.CsvColumn_BlocId);
+                if (string.IsNullOrWhiteSpace(blocNomCsvForTache))
+                {
+                    blocNomCsvForTache = mappingConfig.NomBlocParDefaut; // Utiliser le nom de bloc par défaut si non spécifié
+                    // L'avertissement est déjà généré dans la phase de création des blocs pour ce cas, ou en amont par l'UI.
+                    // warnings.Add($"Ligne {ligneIndexOriginalCsv}: Champ Bloc ID vide ou non mappé pour la tâche '{tacheNom}'. La tâche sera assignée au bloc par défaut '{mappingConfig.NomBlocParDefaut}'.");
+                }
+
+                string blocIdAthena = blocCsvNameToBlocIdAthena.ContainsKey(blocNomCsvForTache) ? blocCsvNameToBlocIdAthena[blocNomCsvForTache] : null;
+
+                if (string.IsNullOrWhiteSpace(blocIdAthena))
+                {
+                    warnings.Add($"Ligne {ligneIndexOriginalCsv}: Impossible de trouver ou créer un bloc pour la tâche '{tacheNom}'. La ligne sera ignorée.");
+                    continue; // Ignorer la ligne si le bloc ne peut pas être déterminé
+                }
+
+                // Heures Homme Estimées
+                string heuresHommeEstimeesStr = GetValueOrDefault(ligne, mappingConfig.CsvColumn_HeuresHommeEstimees);
+                int heuresHommeEstimees = mappingConfig.HeuresEstimeesParDefaut;
+                if (!int.TryParse(heuresHommeEstimeesStr, out heuresHommeEstimees))
+                {
+                    heuresHommeEstimees = mappingConfig.HeuresEstimeesParDefaut;
+                    if (!string.IsNullOrWhiteSpace(heuresHommeEstimeesStr)) // N'ajouter un warning que si une valeur était présente mais invalide
+                    {
+                        warnings.Add($"Ligne {ligneIndexOriginalCsv}: Heures Homme Estimées '{heuresHommeEstimeesStr}' invalides pour la tâche '{tacheNom}'. Valeur par défaut de {mappingConfig.HeuresEstimeesParDefaut} heures utilisée.");
+                    }
+                }
+
+                // Type d'activité (Jalon ou Tache)
+                string estJalonStr = GetValueOrDefault(ligne, mappingConfig.CsvColumn_EstJalon);
+                TypeActivite typeActivite = TypeActivite.Tache; // Par défaut, c'est une tâche
+                if (!string.IsNullOrWhiteSpace(estJalonStr))
+                {
+                    if (bool.TryParse(estJalonStr, out bool jalon) && jalon)
+                    {
+                        typeActivite = TypeActivite.JalonUtilisateur;
+                    }
+                    else if (estJalonStr.Contains("Jalon", StringComparison.OrdinalIgnoreCase)) // Permettre "Jalon" comme texte
+                    {
+                        typeActivite = TypeActivite.JalonUtilisateur;
+                    }
+                }
+
+                // ID Importé
+                string idImporte = GetValueOrDefault(ligne, mappingConfig.CsvColumn_IdImporte);
+
+                // Dépendances brutes du CSV, elles seront remappées plus tard
+                string rawDependencies = GetValueOrDefault(ligne, mappingConfig.CsvColumn_Dependencies);
+                string rawExclusions = GetValueOrDefault(ligne, mappingConfig.CsvColumn_ExclusionsDependances);
+
 
                 var tache = new Tache
                 {
-                    // PAS D'ID - TacheService va le générer automatiquement
-                    TacheNom = ligne["TacheNom"],
+                    // TacheId sera généré automatiquement par TacheService.AjouterTache()
+                    IdImporte = idImporte,
+                    TacheNom = tacheNom,
                     LotId = lotIdCible,
-                    BlocId = nouveauBlocId, // Utiliser l'ID remappé
-                    HeuresHommeEstimees = int.TryParse(ligne["HeuresHommeEstimees"], out int heures) ? heures : 8,
-                    MetierId = ligne["MetierId"],
-                    Type = ligne["EstJalon"] == "True" ? TypeActivite.JalonUtilisateur : TypeActivite.Tache
-                    // Dependencies sera traité après par DependanceBuilder
+                    BlocId = blocIdAthena,
+                    HeuresHommeEstimees = heuresHommeEstimees,
+                    MetierId = metierId,
+                    Type = typeActivite,
+                    Dependencies = rawDependencies, // Stocker la version brute pour le remappage
+                    ExclusionsDependances = rawExclusions // Stocker la version brute pour le remappage
                 };
 
                 _tacheService.AjouterTache(tache); // TacheService génère l'ID automatiquement
-                nbTachesCreees++;
-                System.Diagnostics.Debug.WriteLine($"Tâche créée : {tache.TacheId} - {tache.TacheNom} (Bloc: {nouveauBlocId})");
+                importedTasks.Add(tache); // Ajouter la tâche à la liste des tâches importées
             }
 
-            System.Diagnostics.Debug.WriteLine($"RÉSULTAT : {nbTachesCreees} tâches, {blocsUniques.Count} blocs");
-            return (nbTachesCreees, blocsUniques.Count, warnings);
+            return (importedTasks.Count, blocsCrees.Count, importedTasks, warnings);
         }
 
         /// <summary>
-        /// Récupère une valeur du dictionnaire de manière sécurisée
+        /// Remappe les dépendances des tâches importées depuis leurs noms/anciens IDs vers les IDs PlanAthena générés.
         /// </summary>
-        private static string GetValueOrDefault(Dictionary<string, string> dict, string key, string defaultValue = "")
+        /// <param name="importedTasks">Liste des tâches qui viennent d'être importées (avec leurs IDs PlanAthena).</param>
+        /// <returns>Liste des avertissements générés pendant le remappage.</returns>
+        private List<string> RemapperDependancesDesTaches(List<Tache> importedTasks)
         {
-            return dict.TryGetValue(key, out string value) ? value : defaultValue;
-        }
+            var warnings = new List<string>();
 
-        /// <summary>
-        /// Applique automatiquement les dépendances suggérées par DependanceBuilder
-        /// </summary>
-        private int AppliquerDependancesAutomatiques(string lotId)
-        {
-            var dependancesAppliquees = 0;
+            // Construire un dictionnaire de mappage des noms de tâches/IDs importés vers les IDs PlanAthena.
+            // On inclut les tâches déjà existantes car une tâche importée pourrait dépendre d'une tâche non écrasée.
+            var allTachesInSystem = _tacheService.ObtenirToutesLesTaches();
 
-            // 1. Récupérer toutes les tâches du lot (plus simple et direct)
-            var tachesDuLot = _tacheService.ObtenirTachesParLot(lotId);
-            if (!tachesDuLot.Any())
+            var nameOrIdToPlanAthenaIdMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var tache in allTachesInSystem)
             {
-                System.Diagnostics.Debug.WriteLine($"Aucune tâche trouvée pour le lot {lotId}");
-                return 0;
+                // Mappage par TacheNom (le plus probable pour les dépendances CSV)
+                if (!string.IsNullOrWhiteSpace(tache.TacheNom))
+                {
+                    // Priorité au premier mapping trouvé si noms dupliqués, ou ajouter un avertissement si noms non uniques sont utilisés comme dépendances
+                    if (!nameOrIdToPlanAthenaIdMap.ContainsKey(tache.TacheNom))
+                    {
+                        nameOrIdToPlanAthenaIdMap[tache.TacheNom] = tache.TacheId;
+                    }
+                }
+                // Mappage par IdImporte (si l'ID original était le préfixe de dépendance)
+                if (!string.IsNullOrWhiteSpace(tache.IdImporte))
+                {
+                    if (!nameOrIdToPlanAthenaIdMap.ContainsKey(tache.IdImporte))
+                    {
+                        nameOrIdToPlanAthenaIdMap[tache.IdImporte] = tache.TacheId;
+                    }
+                }
             }
 
-            // 2. Grouper par bloc
-            var tachesParBloc = tachesDuLot.GroupBy(t => t.BlocId).ToList();
-            System.Diagnostics.Debug.WriteLine($"Trouvé {tachesParBloc.Count} blocs avec tâches dans le lot {lotId}");
-
-            // 3. Pour chaque bloc
-            foreach (var groupeBloc in tachesParBloc)
+            // Itérer sur les tâches importées pour mettre à jour leurs dépendances
+            foreach (var tache in importedTasks)
             {
-                var blocId = groupeBloc.Key;
-                var tachesDuBloc = groupeBloc.ToList();
+                bool tacheModifiee = false;
 
-                System.Diagnostics.Debug.WriteLine($"Traitement bloc {blocId} avec {tachesDuBloc.Count} tâches");
+                // Remapper Dependencies
+                if (!string.IsNullOrWhiteSpace(tache.Dependencies))
+                {
+                    var oldDependencies = tache.Dependencies.Split(',')
+                        .Select(d => d.Trim())
+                        .Where(d => !string.IsNullOrEmpty(d))
+                        .ToList();
 
-                // 4. Trier les tâches par ordre des prérequis métiers
-                var metiersTries = _metierService.ObtenirMetiersTriesParDependance();
-                var tachesTriees = tachesDuBloc
-                    .OrderBy(t => TrouverIndexMetier(t.MetierId, metiersTries))
-                    .ToList();
+                    var newDependencies = new List<string>();
+                    foreach (var oldDep in oldDependencies)
+                    {
+                        if (nameOrIdToPlanAthenaIdMap.TryGetValue(oldDep, out string newId))
+                        {
+                            newDependencies.Add(newId);
+                        }
+                        else
+                        {
+                            // Si la dépendance n'est pas trouvée, elle est soit externe, soit invalide.
+                            // Pour ce POC, nous laissons la dépendance brute, mais signalons.
+                            newDependencies.Add(oldDep); // Garde la dépendance non résolue pour l'analyse par le solveur
+                            warnings.Add($"Dépendance '{oldDep}' pour la tâche '{tache.TacheNom}' (ID: {tache.TacheId}) non trouvée parmi les tâches existantes ou importées. La dépendance pourrait être invalide.");
+                        }
+                    }
+                    var newDependenciesString = string.Join(",", newDependencies.Distinct()); // Utiliser Distinct pour éviter les doublons si même dépendance plusieurs fois
+                    if (newDependenciesString != tache.Dependencies)
+                    {
+                        tache.Dependencies = newDependenciesString;
+                        tacheModifiee = true;
+                    }
+                }
 
+                // Remapper ExclusionsDependances (même logique)
+                if (!string.IsNullOrWhiteSpace(tache.ExclusionsDependances))
+                {
+                    var oldExclusions = tache.ExclusionsDependances.Split(',')
+                        .Select(d => d.Trim())
+                        .Where(d => !string.IsNullOrEmpty(d))
+                        .ToList();
+
+                    var newExclusions = new List<string>();
+                    foreach (var oldExcl in oldExclusions)
+                    {
+                        if (nameOrIdToPlanAthenaIdMap.TryGetValue(oldExcl, out string newId))
+                        {
+                            newExclusions.Add(newId);
+                        }
+                        else
+                        {
+                            newExclusions.Add(oldExcl);
+                            warnings.Add($"Exclusion de dépendance '{oldExcl}' pour la tâche '{tache.TacheNom}' (ID: {tache.TacheId}) non trouvée. L'exclusion pourrait être invalide.");
+                        }
+                    }
+                    var newExclusionsString = string.Join(",", newExclusions.Distinct());
+                    if (newExclusionsString != tache.ExclusionsDependances)
+                    {
+                        tache.ExclusionsDependances = newExclusionsString;
+                        tacheModifiee = true;
+                    }
+                }
+
+                if (tacheModifiee)
+                {
+                    _tacheService.ModifierTache(tache); // Persister les dépendances remappées
+                }
             }
 
-            System.Diagnostics.Debug.WriteLine($"Total dépendances appliquées : {dependancesAppliquees}");
-            return dependancesAppliquees;
+            return warnings;
+        }
+
+
+        /// <summary>
+        /// Récupère une valeur du dictionnaire de manière sécurisée en utilisant le nom de colonne mappé.
+        /// </summary>
+        /// <param name="dict">Le dictionnaire de la ligne CSV.</param>
+        /// <param name="mappedColumnName">Le nom de la colonne CSV après mappage, tel que configuré.</param>
+        /// <param name="defaultValue">Valeur par défaut si la colonne mappée n'existe pas ou est vide.</param>
+        /// <returns>La valeur de la colonne, ou la valeur par défaut.</returns>
+        private static string GetValueOrDefault(Dictionary<string, string> dict, string mappedColumnName, string defaultValue = "")
+        {
+            if (string.IsNullOrWhiteSpace(mappedColumnName))
+                return defaultValue; // Colonne non mappée
+
+            return dict.TryGetValue(mappedColumnName, out string value) ? value : defaultValue;
         }
 
         /// <summary>
-        /// Trouve l'index d'un métier dans la liste triée (pour l'ordre des prérequis)
+        /// Retourne un nom de champ convivial basé sur le nom de la propriété du mapping.
+        /// Utilisé pour les messages d'erreur à l'utilisateur.
         /// </summary>
-        private int TrouverIndexMetier(string metierId, List<Metier> metiersTries)
+        private string GetFriendlyFieldName(string propertyName)
         {
-            if (string.IsNullOrEmpty(metierId))
-                return 999; // Tâches sans métier en dernier
-
-            var index = metiersTries.FindIndex(m => m.MetierId == metierId);
-            return index >= 0 ? index : 998; // Métiers inconnus avant les tâches sans métier
-        }
-
-        /// <summary>
-        /// Détermine le type d'activité avec gestion d'erreur
-        /// </summary>
-        private TypeActivite DeterminerType(Dictionary<string, string> ligne)
-        {
-            var estJalon = GetValueOrDefault(ligne, "EstJalon", "False");
-            if (bool.TryParse(estJalon, out bool jalon) && jalon)
-                return TypeActivite.JalonUtilisateur;
-
-            var type = GetValueOrDefault(ligne, "Type", "");
-            if (!string.IsNullOrEmpty(type) && type.Contains("Jalon"))
-                return TypeActivite.JalonUtilisateur;
-
-            return TypeActivite.Tache;
-        }
-
-        /// <summary>
-        /// Remappe les dépendances
-        /// </summary>
-        private string RemapperDependances(string dependances, Dictionary<string, string> mapping)
-        {
-            if (string.IsNullOrWhiteSpace(dependances))
-                return "";
-
-            var deps = dependances.Split(',')
-                .Select(d => d.Trim())
-                .Where(d => !string.IsNullOrEmpty(d) && mapping.ContainsKey(d))
-                .Select(d => mapping[d]);
-
-            return string.Join(",", deps);
+            return propertyName switch
+            {
+                nameof(ImportMappingConfiguration.CsvColumn_IdImporte) => "ID d'origine",
+                nameof(ImportMappingConfiguration.CsvColumn_TacheNom) => "Nom de la Tâche",
+                nameof(ImportMappingConfiguration.CsvColumn_HeuresHommeEstimees) => "Heures Homme Estimées",
+                nameof(ImportMappingConfiguration.CsvColumn_MetierId) => "ID Métier",
+                nameof(ImportMappingConfiguration.CsvColumn_BlocId) => "ID Bloc",
+                nameof(ImportMappingConfiguration.CsvColumn_Dependencies) => "Dépendances",
+                nameof(ImportMappingConfiguration.CsvColumn_ExclusionsDependances) => "Exclusions de Dépendances",
+                nameof(ImportMappingConfiguration.CsvColumn_EstJalon) => "Est un Jalon",
+                _ => propertyName.Replace("CsvColumn_", "").Replace("Tache", "Tâche ").Replace("HeuresHomme", "Heures ").Replace("Est", "Est "), // Fallback générique
+            };
         }
     }
 }

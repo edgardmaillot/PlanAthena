@@ -6,9 +6,11 @@ using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Utilities;
-using System.Drawing; 
+using System.Drawing;
 using System.Linq;
 using System.IO;
+using System.Windows.Forms; // Ajout pour DialogResult et OpenFileDialog
+using System.Text; // Ajout pour StringBuilder
 
 namespace PlanAthena.Forms
 {
@@ -251,10 +253,10 @@ namespace PlanAthena.Forms
                 {
                     Text = "     Créer une tâche :",
                     Image = titleIcon,
-                    ImageAlign = ContentAlignment.MiddleLeft, 
+                    ImageAlign = ContentAlignment.MiddleLeft,
                     AutoSize = true, // Le label s'ajustera à la taille de son contenu (texte + image)
                     Location = new System.Drawing.Point(11, yPos),
-                    Font = new Font(this.Font.FontFamily, 10, FontStyle.Bold), 
+                    Font = new Font(this.Font.FontFamily, 10, FontStyle.Bold),
 
 
                     Padding = new Padding(0, 0, 0, 10)
@@ -264,8 +266,6 @@ namespace PlanAthena.Forms
 
                 // 3. Mettre à jour la position de départ pour les boutons de métier
                 yPos += lblBlocTitle.Height + 5; // Hauteur du label + un petit espace
-
-                // --- FIN DE LA NOUVELLE MODIFICATION ---
 
 
                 var metiersTries = _metierService.ObtenirMetiersTriesParDependance()
@@ -293,7 +293,7 @@ namespace PlanAthena.Forms
                             FlatStyle = FlatStyle.Popup
                         };
 
-                        
+
                         btn.Click += MetierButton_Click;
 
                         var prerequis = _metierService.GetPrerequisForMetier(metier.MetierId);
@@ -365,7 +365,7 @@ namespace PlanAthena.Forms
                     TacheNom = $"Nouvelle tâche - {metier.Nom}",
                     HeuresHommeEstimees = 8
                 };
-                // MODIFIED: Passer le LotId actif à TacheDetailForm
+                // Passer le LotId actif à TacheDetailForm
                 form.MettreAJourListesDeroulantes(_lotActif.LotId);
                 form.ChargerTache(nouvelleTache, true);
                 if (form.ShowDialog(this) == DialogResult.OK)
@@ -393,7 +393,7 @@ namespace PlanAthena.Forms
                 TacheNom = "Nouveau Jalon d'attente",
                 LotId = _lotActif.LotId
             };
-            // MODIFIED: Passer le LotId actif à TacheDetailForm
+            // Passer le LotId actif à TacheDetailForm
             form.MettreAJourListesDeroulantes(_lotActif.LotId);
             form.ChargerTache(nouveauJalon, true);
             if (form.ShowDialog(this) == DialogResult.OK)
@@ -461,7 +461,7 @@ namespace PlanAthena.Forms
 
         private void PertControl_TacheSelected(object sender, TacheSelectedEventArgs e)
         {
-            // MODIFIED: Charger les blocs du lot de la tâche sélectionnée AVANT de charger la tâche
+            // Charger les blocs du lot de la tâche sélectionnée AVANT de charger la tâche
             _tacheDetailForm?.MettreAJourListesDeroulantes(e.Tache.LotId);
             _tacheDetailForm.ChargerTache(e.Tache, false);
             lblTacheSelectionnee.Text = $"Sélectionnée: {e.Tache.TacheId} - {e.Tache.TacheNom}";
@@ -473,7 +473,7 @@ namespace PlanAthena.Forms
             if (tacheOriginale != null)
             {
                 using var form = new TacheDetailForm(_tacheService, _metierService, _lotService, _blocService, _dependanceBuilder);
-                // MODIFIED: Charger les blocs du lot de la tâche AVANT de charger la tâche
+                // Charger les blocs du lot de la tâche AVANT de charger la tâche
                 form.MettreAJourListesDeroulantes(tacheOriginale.LotId);
                 form.ChargerTache(tacheOriginale, false);
                 if (form.ShowDialog(this) == DialogResult.OK)
@@ -728,6 +728,10 @@ namespace PlanAthena.Forms
 
         private void btnImportExcelFieldwire_Click(object sender, EventArgs e) => MessageBox.Show("L'import Excel Fieldwire/Dalux n'est pas encore implémenté.", "Fonctionnalité en développement", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
+        /// <summary>
+        /// Gère le clic sur le bouton d'import CSV, en lançant le processus de sélection de fichier
+        /// et l'ouverture du formulaire de mappage des tâches.
+        /// </summary>
         private void btnImporter_Click(object sender, EventArgs e)
         {
             try
@@ -752,25 +756,41 @@ namespace PlanAthena.Forms
                 if (openFileDialog.ShowDialog() != DialogResult.OK)
                     return;
 
-                // 3. Première tentative d'import (peut demander confirmation)
-                ExecuterImportCSV(openFileDialog.FileName, false);
+                string filePath = openFileDialog.FileName;
+
+                // 3. Lancer le formulaire de mappage des tâches
+                // Le formulaire de mappage gérera les pré-analyses et affichera les avertissements directement.
+                using (var importForm = new ImportTacheForm(filePath, _lotActif, _metierService))
+                {
+                    if (importForm.ShowDialog(this) == DialogResult.OK)
+                    {
+                        // Si l'utilisateur a confirmé le mappage, procéder à l'import réel
+                        var mappingConfig = importForm.MappingConfiguration;
+                        ExecuterImportCSV(filePath, mappingConfig, false);
+                    }
+                    // Si DialogResult n'est pas OK (ex: Annuler), ne rien faire.
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Erreur lors de l'import: {ex.Message}",
+                MessageBox.Show($"Erreur lors de la préparation de l'import: {ex.Message}",
                               "Erreur d'import", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         /// <summary>
-        /// Execute l'import CSV avec gestion de la confirmation d'écrasement
+        /// Execute l'import CSV avec gestion de la confirmation d'écrasement.
+        /// La liste des warnings est maintenant présentée de manière plus conviviale.
         /// </summary>
-        private void ExecuterImportCSV(string filePath, bool confirmerEcrasement)
+        /// <param name="filePath">Chemin du fichier CSV à importer.</param>
+        /// <param name="mappingConfig">Configuration de mappage des colonnes CSV.</param>
+        /// <param name="confirmerEcrasement">Indique si la confirmation d'écrasement a déjà été donnée.</param>
+        private void ExecuterImportCSV(string filePath, ImportMappingConfiguration mappingConfig, bool confirmerEcrasement)
         {
             try
             {
-                // Appeler le service d'orchestration
-                var resultat = _importOrchestrationService.ImporterTachesDepuisCsv(filePath, _lotActif.LotId, confirmerEcrasement);
+                // Appeler le service d'orchestration avec la configuration de mappage
+                var resultat = _importOrchestrationService.ImporterTachesDepuisCsv(filePath, _lotActif.LotId, mappingConfig, confirmerEcrasement);
 
                 if (resultat.ConfirmationRequise)
                 {
@@ -785,37 +805,40 @@ namespace PlanAthena.Forms
                     if (dialogResult == DialogResult.OK)
                     {
                         // Relancer l'import avec confirmation
-                        ExecuterImportCSV(filePath, true);
+                        ExecuterImportCSV(filePath, mappingConfig, true);
                     }
                     return;
                 }
 
                 if (resultat.EstSucces)
                 {
-                    // Afficher le rapport de succès
-                    var rapport = $"🎉 IMPORT RÉUSSI\n==================\n";
-                    rapport += $"• {resultat.NbTachesImportees} tâche(s) importée(s)\n";
-                    rapport += $"• {resultat.NbLotsTraites} lot(s) traité(s)\n";
-                    rapport += $"• {resultat.NbBlocsTraites} bloc(s) traité(s)\n";
-                    rapport += $"• Durée: {resultat.DureeImport.TotalSeconds:F1}s\n";
+                    // Construire le message de succès
+                    var rapportBuilder = new StringBuilder();
+                    rapportBuilder.AppendLine("🎉 IMPORT RÉUSSI");
+                    rapportBuilder.AppendLine("==================");
+                    rapportBuilder.AppendLine($"• {resultat.NbTachesImportees} tâche(s) importée(s)");
+                    rapportBuilder.AppendLine($"• {resultat.NbLotsTraites} lot(s) traité(s)");
+                    rapportBuilder.AppendLine($"• {resultat.NbBlocsTraites} bloc(s) traité(s)");
+                    rapportBuilder.AppendLine($"• Durée: {resultat.DureeImport.TotalSeconds:F1}s");
 
+                    // Afficher les avertissements dans une fenêtre dédiée si présents
                     if (resultat.Warnings.Any())
                     {
-                        rapport += "\n⚠️ AVERTISSEMENTS:\n";
-                        foreach (var warning in resultat.Warnings)
+                        using (var warningsDialog = new ImportWarningsDialog(resultat.Warnings))
                         {
-                            rapport += $"• {warning}\n";
+                            warningsDialog.ShowDialog(this);
                         }
+                        rapportBuilder.AppendLine("\n⚠️ Des avertissements ont été générés. Voir la fenêtre de détail.");
                     }
 
-                    MessageBox.Show(rapport, "Import réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(rapportBuilder.ToString(), "Import réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     // Rafraîchir l'interface
                     RafraichirVueComplete();
                 }
                 else
                 {
-                    // Afficher l'erreur
+                    // Afficher l'erreur (le message d'erreur sera complet depuis ImportResult.Echec)
                     MessageBox.Show($"Échec de l'import:\n\n{resultat.MessageErreur}",
                                   "Erreur d'import", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }

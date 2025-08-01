@@ -6,6 +6,9 @@ namespace PlanAthena.Data
     public class Tache
     {
         public string TacheId { get; set; } = "";
+        /// IdImporte = ID d'origine de la tâche tel qu'il figurait dans le fichier source importé.
+        /// Cet ID n'est pas utilisé pour la logique interne de PlanAthena mais sert de référence.
+        public string IdImporte { get; set; } = ""; 
         public string TacheNom { get; set; } = "";
         public int HeuresHommeEstimees { get; set; }
         public string MetierId { get; set; } = "";
