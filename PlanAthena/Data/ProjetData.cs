@@ -1,4 +1,5 @@
 using PlanAthena.Services.Business;
+using System.Text.Json.Serialization;
 
 namespace PlanAthena.Data
 {
@@ -14,5 +15,18 @@ namespace PlanAthena.Data
 
         public DateTime DateSauvegarde { get; set; }
         public string VersionApplication { get; set; } = "";
+    }
+
+    // Définition de la classe Metier déplacée ici
+    public class Metier
+    {
+        public string MetierId { get; set; }
+        public string Nom { get; set; }
+        public string PrerequisMetierIds { get; set; }
+        public string CouleurHex { get; set; } = ""; // Couleur au format hexadécimal (#RRGGBB)
+        public string Pictogram { get; set; } = "";
+
+        [JsonConverter(typeof(JsonStringEnumConverter))] // Ajout de cet attribut
+        public ChantierPhase Phases { get; set; } = ChantierPhase.None;
     }
 }

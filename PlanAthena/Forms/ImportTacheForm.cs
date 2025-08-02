@@ -14,7 +14,7 @@ namespace PlanAthena.Forms
     public partial class ImportTacheForm : Form
     {
         private Lot _lotActif;
-        private MetierService _metierService;
+        private ProjetService _projetService;
         private List<string> _csvHeaders = new List<string>();
         private List<Dictionary<string, string>> _csvDataPreview = new List<Dictionary<string, string>>();
         private ImportMappingConfiguration _mappingConfiguration = new ImportMappingConfiguration();
@@ -45,12 +45,12 @@ namespace PlanAthena.Forms
 
         public ImportMappingConfiguration MappingConfiguration => _mappingConfiguration;
 
-        public ImportTacheForm(string filePath, Lot lotActif, MetierService metierService)
+        public ImportTacheForm(string filePath, Lot lotActif, ProjetService projetService)
         {
             InitializeComponent();
             _filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
             _lotActif = lotActif ?? throw new ArgumentNullException(nameof(lotActif));
-            _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
+            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
 
             this.Text = $"Importer des tâches dans le lot '{_lotActif.Nom}'";
             lblSelectedLot.Text = $"Lot cible : {_lotActif.Nom} ({_lotActif.LotId})";
@@ -449,7 +449,7 @@ namespace PlanAthena.Forms
                 return;
             }
 
-            var allExistingMetiers = _metierService.GetAllMetiers().Select(m => m.MetierId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var allExistingMetiers = _projetService.GetAllMetiers().Select(m => m.MetierId).ToHashSet(StringComparer.OrdinalIgnoreCase);
             var missingMetiers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var row in _csvDataPreview)

@@ -1,11 +1,19 @@
+using Microsoft.VisualBasic.ApplicationServices;
 using PlanAthena.Data;
 using PlanAthena.Services.DataAccess;
+using QuikGraph;
+using QuikGraph.Algorithms;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Windows.Documents;
+using System.Windows.Shapes;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace PlanAthena.Services.Business
 {
@@ -15,27 +23,41 @@ namespace PlanAthena.Services.Business
     public class ProjetService
     {
         private readonly OuvrierService _ouvrierService;
-        private readonly TacheService _tacheService;
-        private readonly MetierService _metierService;
+        private readonly Func<TacheService> _tacheServiceFactory;
         private readonly CsvDataService _csvDataService;
         private readonly LotService _lotService;
-        private readonly BlocService _blocService;
+        private readonly Func<BlocService> _blocServiceFactory;
+
+        // Collection interne de métiers, gérée directement par ProjetService
+        private readonly Dictionary<string, Metier> _metiersInternes = new Dictionary<string, Metier>();
+
+        // Champs liés aux couleurs de fallback des métiers, déplacés de MetierService
+        private static readonly Color[] FallbackColors = {
+            Color.LightBlue, Color.LightGreen, Color.LightYellow,
+            Color.LightPink, Color.LightGray, Color.LightCyan,
+            Color.LightSalmon
+        };
+        private int _fallbackColorIndex = 0;
+        private readonly Dictionary<string, Color> _assignedFallbackColors = new Dictionary<string, Color>();
+
 
         public ProjetService(
             OuvrierService ouvrierService,
-            TacheService tacheService,
-            MetierService metierService,
+            Func<TacheService> tacheServiceFactory,
             CsvDataService csvDataService,
             LotService lotService,
-            BlocService blocService)
+            Func<BlocService> blocServiceFactory)
         {
             _ouvrierService = ouvrierService ?? throw new ArgumentNullException(nameof(ouvrierService));
-            _tacheService = tacheService ?? throw new ArgumentNullException(nameof(tacheService));
-            _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
+            _tacheServiceFactory = tacheServiceFactory ?? throw new ArgumentNullException(nameof(tacheServiceFactory));
             _csvDataService = csvDataService ?? throw new ArgumentNullException(nameof(csvDataService));
             _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
-            _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
+            _blocServiceFactory = blocServiceFactory ?? throw new ArgumentNullException(nameof(blocServiceFactory));
         }
+
+        private TacheService _tacheService => _tacheServiceFactory();
+        private BlocService _blocService => _blocServiceFactory();
+
         public bool ValiderDonneesAvantPlanification(out string message)
         {
             var resumeTaches = _tacheService.ObtenirStatistiques();
@@ -52,7 +74,7 @@ namespace PlanAthena.Services.Business
                 return false;
             }
 
-            if (_metierService.GetAllMetiers().Count == 0)
+            if (GetAllMetiers().Count == 0)
             {
                 message = "Aucun métier chargé. Veuillez charger des métiers avant de lancer la planification.";
                 return false;
@@ -61,6 +83,7 @@ namespace PlanAthena.Services.Business
             message = "Validation réussie.";
             return true;
         }
+
         #region Sauvegarde/Chargement Projet
 
         /// <summary>
@@ -81,7 +104,7 @@ namespace PlanAthena.Services.Business
                 var projetData = new ProjetData
                 {
                     InformationsProjet = informationsProjet,
-                    Metiers = _metierService.GetAllMetiers().ToList(),
+                    Metiers = GetAllMetiers().ToList(),
                     Ouvriers = _ouvrierService.ObtenirTousLesOuvriers(),
                     Taches = _tacheService.ObtenirToutesLesTaches(),
                     Lots = _lotService.ObtenirTousLesLots(),
@@ -124,15 +147,7 @@ namespace PlanAthena.Services.Business
                 if (jsonNode == null)
                     throw new ProjetException("Le fichier de projet est invalide ou corrompu.");
 
-                // Détecter si c'est un ancien format (absence de la propriété "Lots")
-                if (jsonNode["Lots"] == null)
-                {
-                    return ChargerAncienProjet(jsonNode);
-                }
-                else
-                {
-                    return ChargerNouveauProjet(jsonNode);
-                }
+                return ChargerNouveauProjet(jsonNode);
             }
             catch (JsonException ex)
             {
@@ -152,7 +167,7 @@ namespace PlanAthena.Services.Business
                 throw new ProjetException("Le fichier de projet est invalide ou corrompu.");
 
             // Charger les données dans l'ordre de dépendance
-            _metierService.RemplacerTousLesMetiers(projetData.Metiers);
+            RemplacerTousLesMetiers(projetData.Metiers);
             _ouvrierService.ChargerOuvriers(projetData.Ouvriers);
             _lotService.RemplacerTousLesLots(projetData.Lots);
             _blocService.RemplacerTousLesBlocs(projetData.Blocs);
@@ -160,63 +175,6 @@ namespace PlanAthena.Services.Business
 
             return projetData.InformationsProjet;
         }
-
-        private InformationsProjet ChargerAncienProjet(JsonNode jsonNode)
-        {
-            // Classe temporaire pour désérialiser l'ancienne structure de tâche
-            // uniquement utilisée pour la migration.
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var oldProjectData = jsonNode.Deserialize<OldProjetDataFormat>(options);
-
-            if (oldProjectData == null)
-                throw new ProjetException("L'ancien format de projet n'a pas pu être lu.");
-
-            // Étape 1: Déduire et créer les lots et blocs uniques
-            var lotsUniques = oldProjectData.Taches
-                .Where(t => !string.IsNullOrEmpty(t.LotId))
-                .GroupBy(t => t.LotId)
-                .Select(g => new Lot
-                {
-                    LotId = g.Key,
-                    Nom = g.First().LotNom,
-                    Priorite = g.First().LotPriorite,
-                    CheminFichierPlan = "" // Information non disponible dans l'ancien format
-                }).ToList();
-
-            var blocsUniques = oldProjectData.Taches
-                .Where(t => !string.IsNullOrEmpty(t.BlocId))
-                .GroupBy(t => t.BlocId)
-                .Select(g => new Bloc
-                {
-                    BlocId = g.Key,
-                    Nom = g.First().BlocNom,
-                    CapaciteMaxOuvriers = g.First().BlocCapaciteMaxOuvriers
-                }).ToList();
-
-            // Étape 2: Créer les nouvelles tâches avec la structure épurée
-            var nouvellesTaches = oldProjectData.Taches.Select(oldTache => new Tache
-            {
-                TacheId = oldTache.TacheId,
-                TacheNom = oldTache.TacheNom,
-                HeuresHommeEstimees = oldTache.HeuresHommeEstimees,
-                MetierId = oldTache.MetierId,
-                Dependencies = oldTache.Dependencies,
-                ExclusionsDependances = oldTache.ExclusionsDependances,
-                Type = oldTache.Type,
-                LotId = oldTache.LotId,
-                BlocId = oldTache.BlocId
-            }).ToList();
-
-            // Étape 3: Charger toutes les données dans les services
-            _metierService.RemplacerTousLesMetiers(oldProjectData.Metiers);
-            _ouvrierService.ChargerOuvriers(oldProjectData.Ouvriers);
-            _lotService.RemplacerTousLesLots(lotsUniques);
-            _blocService.RemplacerTousLesBlocs(blocsUniques);
-            _tacheService.ChargerTaches(nouvellesTaches);
-
-            return oldProjectData.InformationsProjet;
-        }
-
 
         /// <summary>
         /// Valide qu'un fichier de projet est valide
@@ -273,6 +231,227 @@ namespace PlanAthena.Services.Business
 
         #endregion
 
+        #region CRUD Operations - Métiers (déplacé de MetierService)
+
+        /// <summary>
+        /// Ajoute un nouveau métier au projet.
+        /// </summary>
+        public void AjouterMetier(Metier nouveauMetier)
+        {
+            if (nouveauMetier == null)
+                throw new ArgumentNullException(nameof(nouveauMetier));
+            if (string.IsNullOrWhiteSpace(nouveauMetier.MetierId))
+                throw new ArgumentException("L'ID du métier ne peut pas être vide.", nameof(nouveauMetier.MetierId));
+            if (_metiersInternes.ContainsKey(nouveauMetier.MetierId))
+                throw new InvalidOperationException($"Un métier avec l'ID '{nouveauMetier.MetierId}' existe déjà.");
+
+            _metiersInternes.Add(nouveauMetier.MetierId, nouveauMetier);
+        }
+
+        /// <summary>
+        /// Modifie un métier existant.
+        /// </summary>
+        public void ModifierMetier(string metierId, string nouveauNom, string nouveauxPrerequisIds, string couleurHex = null, string pictogram = null, ChantierPhase phases = ChantierPhase.None)
+        {
+            if (!_metiersInternes.TryGetValue(metierId, out var metierAModifier))
+                throw new KeyNotFoundException($"Le métier avec l'ID '{metierId}' n'a pas été trouvé.");
+
+            metierAModifier.Nom = nouveauNom;
+            metierAModifier.PrerequisMetierIds = nouveauxPrerequisIds;
+
+            if (couleurHex != null)
+            {
+                metierAModifier.CouleurHex = couleurHex;
+            }
+            if (pictogram != null)
+            {
+                metierAModifier.Pictogram = pictogram;
+            }
+            if (phases != ChantierPhase.None || (metierAModifier.Phases != ChantierPhase.None && phases == ChantierPhase.None)) // Update only if phases are provided or explicitly set to None
+            {
+                metierAModifier.Phases = phases;
+            }
+        }
+
+        /// <summary>
+        /// Supprime un métier du projet.
+        /// </summary>
+        public void SupprimerMetier(string metierId)
+        {
+            if (!_metiersInternes.Remove(metierId))
+                throw new KeyNotFoundException($"Le métier avec l'ID '{metierId}' n'a pas été trouvé.");
+
+            // Supprimer ce métier des prérequis des autres métiers
+            foreach (var metier in _metiersInternes.Values)
+            {
+                var prerequis = GetPrerequisForMetier(metier.MetierId).ToList();
+                if (prerequis.Remove(metierId))
+                {
+                    metier.PrerequisMetierIds = string.Join(",", prerequis);
+                }
+            }
+        }
+
+        #endregion
+
+        #region Data Loading and Retrieval - Métiers (déplacé de MetierService)
+
+        /// <summary>
+        /// Remplace tous les métiers existants par une nouvelle liste.
+        /// </summary>
+        public void RemplacerTousLesMetiers(IReadOnlyList<Metier> metiers)
+        {
+            _metiersInternes.Clear();
+            if (metiers != null)
+            {
+                foreach (var metier in metiers)
+                {
+                    if (!string.IsNullOrEmpty(metier.MetierId) && !_metiersInternes.ContainsKey(metier.MetierId))
+                    {
+                        _metiersInternes.Add(metier.MetierId, metier);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Retourne tous les métiers du projet.
+        /// </summary>
+        public IReadOnlyList<Metier> GetAllMetiers()
+        {
+            return _metiersInternes.Values.ToList();
+        }
+
+        /// <summary>
+        /// Retourne un métier par son ID.
+        /// </summary>
+        public Metier GetMetierById(string metierId)
+        {
+            _metiersInternes.TryGetValue(metierId, out var metier);
+            return metier;
+        }
+
+        /// <summary>
+        /// Obtient la liste des IDs des métiers prérequis pour un métier donné.
+        /// </summary>
+        public IReadOnlyList<string> GetPrerequisForMetier(string metierId)
+        {
+            if (string.IsNullOrEmpty(metierId)) return Array.Empty<string>();
+
+            if (_metiersInternes.TryGetValue(metierId, out var metier) && !string.IsNullOrEmpty(metier.PrerequisMetierIds))
+            {
+                return metier.PrerequisMetierIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            }
+            return Array.Empty<string>();
+        }
+
+        /// <summary>
+        /// Obtient la liste complète et transitive de tous les prérequis pour un métier donné.
+        /// </summary>
+        public HashSet<string> GetTransitivePrerequisites(string metierId)
+        {
+            var allPrereqs = new HashSet<string>();
+            var toExplore = new Queue<string>(GetPrerequisForMetier(metierId));
+
+            while (toExplore.Count > 0)
+            {
+                var current = toExplore.Dequeue();
+                if (allPrereqs.Add(current)) // Si on l'ajoute (il n'y était pas déjà)
+                {
+                    var parents = GetPrerequisForMetier(current);
+                    foreach (var parent in parents)
+                    {
+                        toExplore.Enqueue(parent);
+                    }
+                }
+            }
+            return allPrereqs;
+        }
+
+        #endregion
+
+        #region Tri Topologique - Métiers (déplacé de MetierService)
+
+        /// <summary>
+        /// Retourne la liste des métiers ordonnée selon leurs dépendances (tri topologique), en utilisant QuikGraph.
+        /// Les métiers sans dépendances apparaissent en premier. Gère la détection de cycles.
+        /// </summary>
+        /// <returns>Une liste ordonnée de métiers.</returns>
+        public List<Metier> ObtenirMetiersTriesParDependance()
+        {
+            var graph = new AdjacencyGraph<string, Edge<string>>();
+            var metiersCollection = _metiersInternes.Values;
+
+            graph.AddVertexRange(metiersCollection.Select(m => m.MetierId));
+
+            foreach (var metier in metiersCollection)
+            {
+                var prerequis = GetPrerequisForMetier(metier.MetierId);
+                foreach (var prerequisId in prerequis)
+                {
+                    if (_metiersInternes.ContainsKey(prerequisId))
+                    {
+                        graph.AddEdge(new Edge<string>(prerequisId, metier.MetierId));
+                    }
+                }
+            }
+
+            try
+            {
+                var sortedIds = graph.TopologicalSort().ToList();
+                return sortedIds.Select(id => _metiersInternes[id]).ToList();
+            }
+            catch (NonAcyclicGraphException)
+            {
+                // Une dépendance circulaire a été détectée entre les métiers.
+                // On retourne une liste non triée pour éviter de planter l'UI.
+                // Un mécanisme de logging ou de notification à l'utilisateur serait idéal ici.
+                return metiersCollection.OrderBy(m => m.Nom).ToList();
+            }
+        }
+
+        #endregion
+
+        #region Couleurs - Métiers (déplacé de MetierService)
+
+        /// <summary>
+        /// Obtient la couleur d'affichage pour un métier.
+        /// Priorité 1: Utilise la couleur personnalisée si elle est valide.
+        /// Priorité 2: Attribue et mémorise une couleur de fallback unique.
+        /// </summary>
+        public Color GetDisplayColorForMetier(string metierId)
+        {
+            if (string.IsNullOrEmpty(metierId))
+            {
+                return Color.MistyRose; // Couleur pour "non assigné"
+            }
+
+            var metier = GetMetierById(metierId);
+
+            // Priorité 1: Couleur personnalisée
+            if (metier != null && !string.IsNullOrEmpty(metier.CouleurHex))
+            {
+                try
+                {
+                    return ColorTranslator.FromHtml(metier.CouleurHex);
+                }
+                catch
+                {
+                    // La couleur est malformée, on passe au fallback
+                }
+            }
+
+            // Priorité 2: Couleur de fallback
+            if (!_assignedFallbackColors.ContainsKey(metierId))
+            {
+                _assignedFallbackColors[metierId] = FallbackColors[_fallbackColorIndex % FallbackColors.Length];
+                _fallbackColorIndex++;
+            }
+            return _assignedFallbackColors[metierId];
+        }
+
+        #endregion
+
         #region Export/Import CSV groupé (Non fonctionnel - à traiter dans une phase ultérieure)
 
         /// <summary>
@@ -301,11 +480,15 @@ namespace PlanAthena.Services.Business
         public InformationsProjet CreerNouveauProjet(string nomProjet, string description = "")
         {
             // Vider toutes les données existantes
-            _metierService.RemplacerTousLesMetiers(new List<Metier>());
+            // Utilise la méthode interne RemplacerTousLesMetiers()
+            RemplacerTousLesMetiers(new List<Metier>());
             _ouvrierService.Vider();
             _tacheService.Vider();
             _lotService.Vider();
             _blocService.Vider();
+
+            // Appel à ChargerMetiersParDefaut pour initialiser les métiers
+            ChargerMetiersParDefaut();
 
             return new InformationsProjet
             {
@@ -324,11 +507,46 @@ namespace PlanAthena.Services.Business
         {
             return new ResumeProjet
             {
-                NombreMetiers = _metierService.GetAllMetiers().Count,
+                // Utilise la méthode interne GetAllMetiers()
+                NombreMetiers = GetAllMetiers().Count,
                 StatistiquesOuvriers = _ouvrierService.ObtenirStatistiques(),
                 StatistiquesTaches = _tacheService.ObtenirStatistiques(),
                 StatistiquesMappingMetiers = _tacheService.ObtenirStatistiquesMappingMetiers()
             };
+        }
+
+        /// <summary>
+        /// Charge les métiers par défaut depuis le fichier de configuration.
+        /// </summary>
+        private void ChargerMetiersParDefaut()
+        {
+            // Ne charger que si aucun métier n'est déjà là (pour les nouveaux projets)
+            if (_metiersInternes.Any()) return;
+
+            try
+            {
+                // Chemin du fichier de configuration à côté de l'exécutable
+                string filePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "DefaultMetiersConfig.json");
+
+                if (!File.Exists(filePath))
+                {
+                    
+                    return;
+                }
+
+                string json = File.ReadAllText(filePath);
+                var defaultMetiers = JsonSerializer.Deserialize<List<Metier>>(json);
+
+                if (defaultMetiers != null)
+                {
+                    RemplacerTousLesMetiers(defaultMetiers);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Gérer l'erreur de chargement des métiers par défaut (log, message d'erreur si critique)
+                Console.WriteLine($"Erreur lors du chargement des métiers par défaut: {ex.Message}");
+            }
         }
 
         #endregion
@@ -390,39 +608,6 @@ namespace PlanAthena.Services.Business
     {
         public ProjetException(string message) : base(message) { }
         public ProjetException(string message, Exception innerException) : base(message, innerException) { }
-    }
-
-
-    #endregion
-
-    #region Classes de support pour la migration
-
-    /// <summary>
-    /// DTO temporaire utilisé uniquement pour la migration d'anciens fichiers projet.
-    /// </summary>
-    internal class OldTacheFormat
-    {
-        public string TacheId { get; set; }
-        public string TacheNom { get; set; }
-        public int HeuresHommeEstimees { get; set; }
-        public string MetierId { get; set; }
-        public string Dependencies { get; set; }
-        public string ExclusionsDependances { get; set; }
-        public TypeActivite Type { get; set; }
-        public string LotId { get; set; }
-        public string LotNom { get; set; }
-        public int LotPriorite { get; set; }
-        public string BlocId { get; set; }
-        public string BlocNom { get; set; }
-        public int BlocCapaciteMaxOuvriers { get; set; }
-    }
-
-    internal class OldProjetDataFormat
-    {
-        public InformationsProjet InformationsProjet { get; set; }
-        public List<Metier> Metiers { get; set; }
-        public List<Ouvrier> Ouvriers { get; set; }
-        public List<OldTacheFormat> Taches { get; set; }
     }
 
     #endregion

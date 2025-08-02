@@ -1,5 +1,8 @@
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
+using System; // Ajouté pour ArgumentNullException, InvalidOperationException
+using System.Collections.Generic; // Ajouté pour HashSet
+using System.Linq; // Ajouté pour Select, Where, ToHashSet
 
 namespace PlanAthena.Services.DataAccess
 {
@@ -191,6 +194,47 @@ namespace PlanAthena.Services.DataAccess
             var prefixeComplet = $"{blocId}_{prefixe}";
             if (string.IsNullOrWhiteSpace(tacheId) || !tacheId.StartsWith(prefixeComplet)) return null;
             if (int.TryParse(tacheId.Substring(prefixeComplet.Length), out int numero)) return numero;
+            return null;
+        }
+
+        #endregion
+
+        #region Génération IDs Métiers
+
+        /// <summary>
+        /// Génère le prochain ID de métier disponible (M001, M002, etc.)
+        /// </summary>
+        public string GenererProchainMetierId(IReadOnlyList<Metier> existingMetiers)
+        {
+            var numerosUtilises = existingMetiers
+                .Select(m => ExtraireNumeroMetier(m.MetierId))
+                .Where(n => n.HasValue)
+                .Select(n => n.Value)
+                .ToHashSet();
+
+            for (int i = 1; i <= 999; i++)
+            {
+                if (!numerosUtilises.Contains(i))
+                {
+                    return $"M{i:D3}"; // Format M001, M002...
+                }
+            }
+            throw new InvalidOperationException("Impossible de générer un nouvel ID de métier. Limite de 999 métiers atteinte.");
+        }
+
+        /// <summary>
+        /// Valide qu'un ID de métier respecte le format M001-M999
+        /// </summary>
+        public bool ValiderFormatMetierId(string metierId)
+        {
+            if (string.IsNullOrWhiteSpace(metierId)) return false;
+            return System.Text.RegularExpressions.Regex.IsMatch(metierId, @"^M\d{3}$");
+        }
+
+        private int? ExtraireNumeroMetier(string metierId)
+        {
+            if (string.IsNullOrWhiteSpace(metierId) || !metierId.StartsWith("M")) return null;
+            if (int.TryParse(metierId.Substring(1), out int numero)) return numero;
             return null;
         }
 

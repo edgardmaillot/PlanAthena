@@ -6,7 +6,7 @@ namespace PlanAthena.Forms
     public partial class OuvrierForm : System.Windows.Forms.Form
     {
         private readonly OuvrierService _ouvrierService;
-        private readonly MetierService _metierService;
+        private readonly ProjetService _projetService; // Remplacé MetierService par ProjetService
         //private readonly CsvDataService _csvDataService;
         //private readonly ExcelReader _excelReader;
 
@@ -16,11 +16,11 @@ namespace PlanAthena.Forms
         private Ouvrier _competenceSelectionnee = null;
         private bool _enModification = false;
 
-        public OuvrierForm(OuvrierService ouvrierService, MetierService metierService)
+        public OuvrierForm(OuvrierService ouvrierService, ProjetService projetService) // Changement ici
         {
             InitializeComponent();
             _ouvrierService = ouvrierService ?? throw new ArgumentNullException(nameof(ouvrierService));
-            _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
+            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService)); // Changement ici
             //_csvDataService = new CsvDataService();
             //_excelReader = new ExcelReader();
         }
@@ -49,7 +49,7 @@ namespace PlanAthena.Forms
         private void ChargerDonnees()
         {
             _ouvriers = _ouvrierService.ObtenirTousLesOuvriers();
-            _metiers = _metierService.GetAllMetiers().ToList();
+            _metiers = _projetService.GetAllMetiers().ToList(); // Changement ici
         }
 
         private void RafraichirAffichage()
@@ -146,7 +146,7 @@ namespace PlanAthena.Forms
 
             foreach (var competence in competencesOuvrier.OrderBy(c => c.MetierId))
             {
-                var metier = _metiers.FirstOrDefault(m => m.MetierId == competence.MetierId);
+                var metier = _projetService.GetMetierById(competence.MetierId); // Changement ici
                 var nomMetier = metier?.Nom ?? "(Métier inconnu)";
 
                 var item = new ListViewItem(new[] {
@@ -392,7 +392,7 @@ namespace PlanAthena.Forms
         {
             if (_competenceSelectionnee == null) return;
 
-            var metier = _metiers.FirstOrDefault(m => m.MetierId == _competenceSelectionnee.MetierId);
+            var metier = _projetService.GetMetierById(_competenceSelectionnee.MetierId); // Changement ici
             if (metier == null)
             {
                 MessageBox.Show("Métier non trouvé.", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -423,7 +423,7 @@ namespace PlanAthena.Forms
         {
             if (_competenceSelectionnee == null) return;
 
-            var metier = _metiers.FirstOrDefault(m => m.MetierId == _competenceSelectionnee.MetierId);
+            var metier = _projetService.GetMetierById(_competenceSelectionnee.MetierId); // Changement ici
             var nomMetier = metier?.Nom ?? _competenceSelectionnee.MetierId;
 
             var result = MessageBox.Show(

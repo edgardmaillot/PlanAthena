@@ -16,7 +16,7 @@ namespace PlanAthena
             TacheService tacheService,
             LotService lotService,
             BlocService blocService,
-            MetierService metierService)
+            ProjetService projetService)
         {
             var idGenerator = new IdGeneratorService(lotService, blocService, tacheService);
 
@@ -24,7 +24,7 @@ namespace PlanAthena
                 tacheService,
                 lotService,
                 blocService,
-                metierService,
+                projetService,
                 idGenerator);
         }
 

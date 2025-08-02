@@ -1,6 +1,7 @@
 using PlanAthena.Data;
-using PlanAthena.Services.Business;
+using PlanAthena.Services.Business; 
 using QuikGraph;
+using QuikGraph.Algorithms; 
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,12 +29,58 @@ namespace PlanAthena.Utilities
     /// </summary>
     public class DependanceBuilder
     {
-        private readonly MetierService _metierService;
+        private readonly ProjetService _projetService; 
 
-        public DependanceBuilder(MetierService metierService)
+        public DependanceBuilder(ProjetService projetService) 
         {
-            _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
+            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
         }
+
+        /// <summary>
+        /// Valide qu'un métier et ses prérequis ne créent pas de dépendance circulaire.
+        /// </summary>
+        /// <param name="metier">Le métier à valider, potentiellement avec des prérequis modifiés.</param>
+        /// <param name="tousLesMetiers">L'ensemble de tous les métiers du projet (y compris le métier en cours de modification, si c'est une modification).</param>
+        /// <exception cref="InvalidOperationException">Lancée si une circularité est détectée.</exception>
+        public void ValiderMetier(Metier metier, IEnumerable<Metier> tousLesMetiers)
+        {
+            if (metier == null) throw new ArgumentNullException(nameof(metier));
+            if (tousLesMetiers == null) throw new ArgumentNullException(nameof(tousLesMetiers));
+
+            var graph = new AdjacencyGraph<string, Edge<string>>();
+            var currentMetiers = tousLesMetiers.ToDictionary(m => m.MetierId, m => m);
+
+            // Mettre à jour le métier en cours de validation dans la collection temporaire
+            currentMetiers[metier.MetierId] = metier; // S'assure que les prérequis modifiés sont utilisés
+
+            graph.AddVertexRange(currentMetiers.Keys);
+
+            foreach (var m in currentMetiers.Values)
+            {
+                var prerequis = ParseDependances(m.PrerequisMetierIds);
+                foreach (var prerequisId in prerequis)
+                {
+                    if (currentMetiers.ContainsKey(prerequisId))
+                    {
+                        // Le prérequis pointe vers le métier.
+                        // Dans un graphe de dépendance, l'arête va du prérequis vers le dépendant.
+                        // Donc, Pre_req_MetierId -> MetierId
+                        graph.AddEdge(new Edge<string>(prerequisId, m.MetierId));
+                    }
+                }
+            }
+
+            try
+            {
+                // Tenter un tri topologique. Si une exception est levée, il y a un cycle.
+                graph.TopologicalSort();
+            }
+            catch (NonAcyclicGraphException)
+            {
+                throw new InvalidOperationException($"Dépendance circulaire détectée pour le métier '{metier.Nom}' (ID: {metier.MetierId}). Veuillez revoir ses prérequis.");
+            }
+        }
+
 
         /// <summary>
         /// Méthode principale du service : génère la liste complète des dépendances
@@ -132,7 +179,7 @@ namespace PlanAthena.Utilities
         /// directement ou indirectement. Ceci permet une détection robuste des cycles.
         /// 
         /// ALGORITHME :
-        /// Parcours en profondeur depuis chaque tâche pour découvrir tous ses descendants.
+        /// Parcours en profondeur depuis chaque tâche pour découvrir tous les descendants.
         /// </summary>
         private Dictionary<string, HashSet<string>> CalculerTousLesSuccesseurs(
             BidirectionalGraph<string, Edge<string>> graphe, List<Tache> taches)
@@ -175,7 +222,7 @@ namespace PlanAthena.Utilities
                 successeurs.Add(successeurId);
 
                 // Exploration récursive des successeurs du successeur
-                ExploreerSuccesseurs(graphe, successeurId, successeurs, visite);
+                ExploreerSuccesseurs(graphe, successeurId, visite, successeurs); // Correction de l'ordre des paramètres pour 'visite' et 'successeurs'
             }
         }
 
@@ -239,8 +286,8 @@ namespace PlanAthena.Utilities
 
             try
             {
-                // Obtenir les prérequis métier
-                var prerequisMetier = _metierService.GetPrerequisForMetier(tache.MetierId);
+                // Obtenir les prérequis métier via ProjetService
+                var prerequisMetier = _projetService.GetPrerequisForMetier(tache.MetierId);
                 if (!prerequisMetier.Any()) return suggestions;
 
                 // Identifier les métiers présents parmi les candidats valides
@@ -381,7 +428,8 @@ namespace PlanAthena.Utilities
 
                 try
                 {
-                    var prerequisDirects = _metierService.GetPrerequisForMetier(metierCourant);
+                    // Changement ici : _projetService.GetPrerequisForMetier
+                    var prerequisDirects = _projetService.GetPrerequisForMetier(metierCourant);
                     foreach (var prerequis in prerequisDirects)
                     {
                         if (metiersPresents.Contains(prerequis))

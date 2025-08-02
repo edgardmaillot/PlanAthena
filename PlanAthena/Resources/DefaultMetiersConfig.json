@@ -1,0 +1,50 @@
+[
+  {
+    "MetierId": "M001",
+    "Nom": "Terrassier",
+    "CouleurHex": "#FFB3BA",
+    "Pictogram": "shovel_fill",
+    "Phases": "GrosOeuvre",
+    "PrerequisMetierIds": ""
+  },
+  {
+    "MetierId": "M002",
+    "Nom": "Maçon",
+    "CouleurHex": "#FFDFBA",
+    "Pictogram": "construction",
+    "Phases": "GrosOeuvre",
+    "PrerequisMetierIds": "M001"
+  },
+  {
+    "MetierId": "M003",
+    "Nom": "Plombier",
+    "CouleurHex": "#BAFFC9",
+    "Pictogram": "plumbing_water",
+    "Phases": "SecondOeuvre,Finition",
+    "PrerequisMetierIds": ""
+  },
+  {
+    "MetierId": "M004",
+    "Nom": "Electricien",
+    "CouleurHex": "#BAE1FF",
+    "Pictogram": "bolt",
+    "Phases": "SecondOeuvre,Finition",
+    "PrerequisMetierIds": "M003"
+  },
+  {
+    "MetierId": "M005",
+    "Nom": "Peintre",
+    "CouleurHex": "#E0BBE4",
+    "Pictogram": "format_paint",
+    "Phases": "Finition",
+    "PrerequisMetierIds": "M004"
+  },
+  {
+    "MetierId": "M006",
+    "Nom": "Charpentier",
+    "CouleurHex": "#A6E3E9",
+    "Pictogram": "roofing",
+    "Phases": "GrosOeuvre",
+    "PrerequisMetierIds": "M002"
+  }
+]

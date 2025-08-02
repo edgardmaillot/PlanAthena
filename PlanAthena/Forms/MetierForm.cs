@@ -1,455 +1,430 @@
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
+using PlanAthena.Utilities;
+using PlanAthena.Controls; // Contient MetierDiagramControl
+using PlanAthena.Controls.Config; // Contient MetierDiagramSettings, MetierNodeBuilder
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace PlanAthena.Forms
 {
     public partial class MetierForm : System.Windows.Forms.Form
     {
-        private readonly MetierService _metierService;
-        private readonly CsvDataService _csvDataService;
-        private Metier _metierSelectionne = null;
+        private readonly ProjetService _projetService;
+        private readonly IdGeneratorService _idGeneratorService;
+        private readonly DependanceBuilder _dependanceBuilder;
+        // Les services LotService et BlocService ne sont plus nécessaires directement ici
+        // car MetierDiagramControl ne les utilise pas pour les métiers.
+        // Ils pourraient être nécessaires si MetierForm gérait des aspects liés aux tâches/blocs,
+        // mais pour la gestion pure des métiers, ils ne le sont pas.
 
-        // Le mode "Modification" est maintenant géré par l'état des contrôles
-        private bool IsEditing => txtMetierId.ReadOnly == false;
+        private Metier _metierEnEdition = null;
+        private bool _hasUnsavedChanges = false;
 
-        public MetierForm(MetierService metierService)
+        private readonly MetierDiagramControl _metierDiagramControl; // Changement ici: nouveau type de contrôle
+
+        private enum MetierFormState
+        {
+            Initial,
+            Editing,
+        }
+
+        // Constructeur mis à jour pour accepter les nouvelles dépendances
+        // Les dépendances LotService et BlocService ne sont plus nécessaires dans MetierForm
+        // si elles ne sont utilisées que par PertDiagramControl (maintenant remplacé).
+        public MetierForm(
+            ProjetService projetService,
+            IdGeneratorService idGeneratorService,
+            DependanceBuilder dependanceBuilder) // Changement ici: suppression de LotService et BlocService
         {
             InitializeComponent();
-            _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
-            _csvDataService = new CsvDataService();
+
+            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
+            _idGeneratorService = idGeneratorService ?? throw new ArgumentNullException(nameof(idGeneratorService));
+            _dependanceBuilder = dependanceBuilder ?? throw new ArgumentNullException(nameof(dependanceBuilder));
+            // _lotService et _blocService sont supprimés du constructeur
+
+            _metierDiagramControl = new MetierDiagramControl(); // Changement ici: nouvelle instance
+            _metierDiagramControl.Dock = DockStyle.Fill;
+            // Changement ici: initialize le nouveau contrôle avec ses propres settings
+            _metierDiagramControl.Initialize(_projetService, _dependanceBuilder, new MetierDiagramSettings());
+            // Changement ici: abonnement à l'événement spécifique aux métiers
+            _metierDiagramControl.MetierSelected += MetierDiagramControl_MetierSelected;
+            panelLeft.Controls.Add(_metierDiagramControl); // Ajouter le contrôle au panel gauche
+
+            // Abonnement aux événements de modification pour _hasUnsavedChanges
+            txtNom.TextChanged += OnDetailChanged;
+            txtPictogram.TextChanged += OnDetailChanged;
+            panelCouleurApercu.Click += OnDetailChanged;
+            // chkListPrerequis.ItemCheck += chkListPrerequis_ItemCheck; // Géré par PopulatePrerequisCheckList pour synchronisation
         }
 
         private void MetierForm_Load(object sender, EventArgs e)
         {
-            RafraichirAffichageComplet();
-            InitialiserInterface();
+            ChargerDiagrammeMetiers();
+            SetUIState(MetierFormState.Initial);
         }
 
-        private void InitialiserInterface()
+        private void SetUIState(MetierFormState state)
         {
-            groupBoxDetails.Enabled = false;
-            btnModifier.Enabled = false;
-            btnSupprimer.Enabled = false;
-        }
-
-        #region Gestion des données et affichage
-
-        private void RafraichirAffichageComplet()
-        {
-            var idMetierSelectionne = _metierSelectionne?.MetierId;
-
-            RafraichirListeMetiers();
-
-            // Essayer de re-sélectionner l'élément
-            if (idMetierSelectionne != null)
+            switch (state)
             {
-                var itemToReselect = listViewMetiers.Items.Cast<ListViewItem>()
-                    .FirstOrDefault(item => (item.Tag as Metier)?.MetierId == idMetierSelectionne);
-                if (itemToReselect != null)
+                case MetierFormState.Initial:
+                    groupBoxDetails.Enabled = false;
+                    NettoyerDetails();
+                    btnNouveau.Enabled = true;
+                    btnSupprimer.Enabled = false;
+                    btnSauvegarder.Visible = false;
+                    btnAnnuler.Visible = false;
+                    _metierDiagramControl.Enabled = true; // Permettre l'interaction avec le diagramme
+                    break;
+                case MetierFormState.Editing:
+                    groupBoxDetails.Enabled = true;
+                    btnNouveau.Enabled = false;
+                    // btnSupprimer.Enabled basé sur si le métier est déjà existant (non-nouveau)
+                    btnSupprimer.Enabled = (_metierEnEdition != null && _projetService.GetMetierById(_metierEnEdition.MetierId) != null);
+                    btnSauvegarder.Visible = true;
+                    btnAnnuler.Visible = true;
+                    _metierDiagramControl.Enabled = true; // Permettre de cliquer sur d'autres nœuds en mode édition
+                    break;
+            }
+        }
+
+        private void ChargerDiagrammeMetiers()
+        {
+            var metiers = _projetService.GetAllMetiers();
+            // Changement ici: Passer directement la liste des objets Metier au nouveau contrôle
+            _metierDiagramControl.ChargerDonnees(metiers.ToList());
+            _metierDiagramControl.ZoomToutAjuster();
+        }
+
+        // Changement ici: Nouveau nom du gestionnaire d'événements et type d'argument
+        private void MetierDiagramControl_MetierSelected(object sender, MetierSelectedEventArgs e)
+        {
+            // Vérifier si le métier sélectionné correspond déjà au métier en édition
+            if (e.SelectedMetier == null || e.SelectedMetier.MetierId == _metierEnEdition?.MetierId)
+            {
+                // Si la même tâche est cliquée à nouveau, ne rien faire si on est déjà en mode édition.
+                // Juste rafraîchir la sélection visuelle si nécessaire.
+                if (_metierEnEdition != null)
                 {
-                    itemToReselect.Selected = true;
+                    _metierDiagramControl.ForceSelection(e.SelectedMetier?.MetierId); // Re-sélectionner visuellement l'élément
+                    return;
                 }
+                // Si aucun métier n'est en édition et que la sélection est null, on ne fait rien
+                if (e.SelectedMetier == null) return;
             }
 
-            // Si plus rien n'est sélectionné, nettoyer les détails
-            if (listViewMetiers.SelectedItems.Count == 0)
+            // Demander confirmation si des modifications non sauvegardées existent sur le métier PRÉCÉDENT
+            
+
+            // Récupérer le métier réel (qui est déjà dans e.SelectedMetier pour MetierDiagramControl)
+            _metierEnEdition = e.SelectedMetier;
+
+            // Si le métier est null (e.g. clic sur le fond du diagramme), désactiver le panneau de détails
+            if (_metierEnEdition == null)
             {
-                _metierSelectionne = null;
                 NettoyerDetails();
+                SetUIState(MetierFormState.Initial);
+                return;
             }
 
-            RafraichirStatut();
+            _hasUnsavedChanges = false;
+            PopulateDetailsPanel(_metierEnEdition);
+            SetUIState(MetierFormState.Editing);
+            // S'assurer que le nœud est mis en évidence même si c'est un nouveau métier qui n'était pas encore dans le graphe
+            _metierDiagramControl.ForceSelection(_metierEnEdition.MetierId);
         }
 
-        private void RafraichirListeMetiers()
+        private void PopulateDetailsPanel(Metier metier)
         {
-            listViewMetiers.Items.Clear();
-            var metiersAffiches = _metierService.GetAllMetiers();
-
-            if (!string.IsNullOrWhiteSpace(txtRecherche.Text))
-            {
-                var recherche = txtRecherche.Text.ToLower();
-                metiersAffiches = metiersAffiches.Where(m =>
-                    m.MetierId.ToLower().Contains(recherche) ||
-                    m.Nom.ToLower().Contains(recherche)).ToList();
-            }
-
-            foreach (var metier in metiersAffiches.OrderBy(m => m.MetierId))
-            {
-                var prerequisCount = _metierService.GetPrerequisForMetier(metier.MetierId).Count;
-                var item = new ListViewItem(new[] { metier.MetierId, metier.Nom, prerequisCount.ToString() })
-                {
-                    Tag = metier
-                };
-
-                // Ajouter un indicateur visuel de couleur dans la liste
-                if (!string.IsNullOrEmpty(metier.CouleurHex))
-                {
-                    try
-                    {
-                        var couleur = ColorTranslator.FromHtml(metier.CouleurHex);
-                        item.BackColor = Color.FromArgb(50, couleur); // Couleur très légère en arrière-plan
-                    }
-                    catch
-                    {
-                        // Ignorer les erreurs de couleur malformée
-                    }
-                }
-
-                listViewMetiers.Items.Add(item);
-            }
-        }
-
-        private void RafraichirStatut()
-        {
-            var total = _metierService.GetAllMetiers().Count;
-            var affiches = listViewMetiers.Items.Count;
-            lblStatut.Text = (affiches == total) ? $"{total} métier(s)" : $"{affiches}/{total} métier(s) affiché(s)";
-        }
-
-        private void AfficherDetailsMetier(Metier metier)
-        {
-            _metierSelectionne = metier;
             if (metier == null)
             {
                 NettoyerDetails();
                 return;
             }
 
-            groupBoxDetails.Enabled = true;
-            txtMetierId.Text = metier.MetierId;
+            lblMetierId.Text = metier.MetierId;
             txtNom.Text = metier.Nom;
-            txtMetierId.ReadOnly = true;
-            txtNom.ReadOnly = true;
+            txtPictogram.Text = metier.Pictogram;
+            panelCouleurApercu.BackColor = _projetService.GetDisplayColorForMetier(metier.MetierId);
 
-            // Afficher la couleur du métier
-            AfficherCouleurMetier(metier.CouleurHex);
+            // Phases
+            DetachPhaseCheckboxesEvents();
+            chkGrosOeuvre.Checked = metier.Phases.HasFlag(ChantierPhase.GrosOeuvre);
+            chkSecondOeuvre.Checked = metier.Phases.HasFlag(ChantierPhase.SecondOeuvre);
+            chkFinition.Checked = metier.Phases.HasFlag(ChantierPhase.Finition);
+            AttachPhaseCheckboxesEvents();
 
-            RafraichirListePrerequis();
-            RafraichirUtilisation();
-        }
-
-        private void AfficherCouleurMetier(string couleurHex)
-        {
-            if (!string.IsNullOrEmpty(couleurHex))
-            {
-                try
-                {
-                    var couleur = ColorTranslator.FromHtml(couleurHex);
-                    panelCouleurApercu.BackColor = couleur;
-                }
-                catch
-                {
-                    // En cas d'erreur, utiliser la couleur par défaut
-                    panelCouleurApercu.BackColor = Color.LightGray;
-                }
-            }
-            else
-            {
-                panelCouleurApercu.BackColor = Color.LightGray;
-            }
+            // Prérequis
+            PopulatePrerequisCheckList();
         }
 
         private void NettoyerDetails()
         {
-            _metierSelectionne = null;
-            groupBoxDetails.Enabled = false;
-            txtMetierId.Clear();
+            _metierEnEdition = null;
+            lblMetierId.Text = "N/A";
             txtNom.Clear();
-            listViewPrerequis.Items.Clear();
-            lblUtilisation.Text = "";
-            panelCouleurApercu.BackColor = Color.LightGray;
+            txtPictogram.Clear();
+            panelCouleurApercu.BackColor = SystemColors.Control;
+
+            DetachPhaseCheckboxesEvents();
+            chkGrosOeuvre.Checked = false;
+            chkSecondOeuvre.Checked = false;
+            chkFinition.Checked = false;
+            AttachPhaseCheckboxesEvents();
+
+            chkListPrerequis.Items.Clear();
         }
 
-        private void RafraichirListePrerequis()
+        private void AttachPhaseCheckboxesEvents()
         {
-            listViewPrerequis.Items.Clear();
-            if (_metierSelectionne == null) return;
+            chkGrosOeuvre.CheckedChanged += OnDetailChanged;
+            chkSecondOeuvre.CheckedChanged += OnDetailChanged;
+            chkFinition.CheckedChanged += OnDetailChanged;
+        }
 
-            var prerequisIds = _metierService.GetPrerequisForMetier(_metierSelectionne.MetierId);
-            foreach (var prerequisId in prerequisIds)
+        private void DetachPhaseCheckboxesEvents()
+        {
+            chkGrosOeuvre.CheckedChanged -= OnDetailChanged;
+            chkSecondOeuvre.CheckedChanged -= OnDetailChanged;
+            chkFinition.CheckedChanged -= OnDetailChanged;
+        }
+
+        private void PopulatePrerequisCheckList()
+        {
+            chkListPrerequis.Items.Clear();
+            if (_metierEnEdition == null) return;
+
+            var allMetiers = _projetService.GetAllMetiers().ToList();
+            var currentPrereqs = _projetService.GetPrerequisForMetier(_metierEnEdition.MetierId).ToHashSet();
+
+            foreach (var metier in allMetiers.OrderBy(m => m.Nom))
             {
-                var prerequisMetier = _metierService.GetMetierById(prerequisId);
-                var nom = prerequisMetier?.Nom ?? "(Métier non trouvé)";
-                var item = new ListViewItem(new[] { prerequisId, nom }) { Tag = prerequisId };
-                listViewPrerequis.Items.Add(item);
+                // Un métier ne peut pas être son propre prérequis.
+                // Vérifier si le métier prérequis ne crée pas de circularité pour le métier en cours d'édition.
+                bool canBePrereq = (metier.MetierId != _metierEnEdition.MetierId);
+
+                if (canBePrereq)
+                {
+                    // Pour éviter de proposer un prérequis qui formerait un cycle avec le métier EN COURS D'EDITION
+                    // On doit simuler l'ajout de ce prérequis pour le métier en édition et valider le graphe.
+                    // Cette validation est coûteuse, elle sera faite à la sauvegarde.
+                    // Ici, on se contente de ne pas proposer le métier lui-même.
+
+                    bool isChecked = currentPrereqs.Contains(metier.MetierId);
+                    chkListPrerequis.Items.Add(metier, isChecked);
+                }
             }
+            chkListPrerequis.DisplayMember = "Nom";
         }
 
-        private void RafraichirUtilisation()
+        private void OnDetailChanged(object sender, EventArgs e)
         {
-            // Cette logique devra être complétée quand les autres services seront accessibles
-            lblUtilisation.Text = "Info d'utilisation non disponible.";
+            _hasUnsavedChanges = true;
         }
 
-        #endregion
-
-        #region Événements interface
-
-        private void listViewMetiers_SelectedIndexChanged(object sender, EventArgs e)
+        private void chkListPrerequis_ItemCheck(object sender, ItemCheckEventArgs e)
         {
-            if (listViewMetiers.SelectedItems.Count > 0)
+            _hasUnsavedChanges = true;
+
+            var metierPredecesseur = (Metier)chkListPrerequis.Items[e.Index];
+            var currentPrereqsList = _projetService.GetPrerequisForMetier(_metierEnEdition.MetierId).ToList();
+
+            if (e.NewValue == CheckState.Checked)
             {
-                var metier = listViewMetiers.SelectedItems[0].Tag as Metier;
-                AfficherDetailsMetier(metier);
-                btnModifier.Enabled = true;
-                btnSupprimer.Enabled = true;
+                if (!currentPrereqsList.Contains(metierPredecesseur.MetierId))
+                {
+                    currentPrereqsList.Add(metierPredecesseur.MetierId);
+                }
             }
             else
             {
-                NettoyerDetails();
-                btnModifier.Enabled = false;
-                btnSupprimer.Enabled = false;
+                currentPrereqsList.Remove(metierPredecesseur.MetierId);
             }
+            _metierEnEdition.PrerequisMetierIds = string.Join(",", currentPrereqsList.Distinct().OrderBy(id => id));
         }
-
-        private void txtRecherche_TextChanged(object sender, EventArgs e)
-        {
-            RafraichirListeMetiers();
-            RafraichirStatut();
-        }
-
-        #endregion
-
-        #region Gestion des couleurs
 
         private void btnChoisirCouleur_Click(object sender, EventArgs e)
         {
-            if (_metierSelectionne == null) return;
+            if (_metierEnEdition == null) return;
 
             using var colorDialog = new ColorDialog();
-
-            // Définir la couleur actuelle si elle existe
-            if (!string.IsNullOrEmpty(_metierSelectionne.CouleurHex))
+            if (!string.IsNullOrEmpty(_metierEnEdition.CouleurHex))
             {
-                try
-                {
-                    colorDialog.Color = ColorTranslator.FromHtml(_metierSelectionne.CouleurHex);
-                }
-                catch
-                {
-                    colorDialog.Color = Color.LightBlue;
-                }
+                try { colorDialog.Color = ColorTranslator.FromHtml(_metierEnEdition.CouleurHex); }
+                catch { colorDialog.Color = Color.LightBlue; }
             }
-            else
-            {
-                colorDialog.Color = Color.LightBlue;
-            }
+            else { colorDialog.Color = Color.LightBlue; }
 
             colorDialog.AllowFullOpen = true;
             colorDialog.FullOpen = true;
 
             if (colorDialog.ShowDialog() == DialogResult.OK)
             {
-                // Convertir la couleur en format hexadécimal
-                var couleurHex = ColorTranslator.ToHtml(colorDialog.Color);
-                _metierSelectionne.CouleurHex = couleurHex;
-
-                // Mettre à jour l'aperçu
+                _metierEnEdition.CouleurHex = ColorTranslator.ToHtml(colorDialog.Color);
                 panelCouleurApercu.BackColor = colorDialog.Color;
-
-                // Si on n'est pas en mode édition, sauvegarder immédiatement
-                if (txtMetierId.ReadOnly && txtNom.ReadOnly)
-                {
-                    try
-                    {
-                        _metierService.ModifierMetier(_metierSelectionne.MetierId, _metierSelectionne.Nom, _metierSelectionne.PrerequisMetierIds, couleurHex);
-                        RafraichirListeMetiers(); // Pour mettre à jour l'indicateur visuel dans la liste
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Erreur lors de la sauvegarde de la couleur: {ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
+                OnDetailChanged(sender, e);
             }
         }
-
-        #endregion
-
-        #region Actions CRUD
 
         private void btnNouveau_Click(object sender, EventArgs e)
         {
-            // On passe en "mode édition" pour un nouvel objet
-            _metierSelectionne = new Metier { MetierId = "NOUVEAU_METIER", Nom = "Nouveau métier", CouleurHex = "" };
+            if (_hasUnsavedChanges)
+            {
+                var result = MessageBox.Show("Des modifications non sauvegardées seront perdues. Continuer ?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                if (result == DialogResult.No) return;
+            }
 
-            AfficherDetailsMetier(_metierSelectionne);
+            _metierEnEdition = new Metier
+            {
+                MetierId = _idGeneratorService.GenererProchainMetierId(_projetService.GetAllMetiers()),
+                Nom = "Nouveau Métier",
+                CouleurHex = "",
+                Pictogram = "",
+                Phases = ChantierPhase.None,
+                PrerequisMetierIds = ""
+            };
+            _hasUnsavedChanges = true;
 
-            txtMetierId.ReadOnly = false;
-            txtNom.ReadOnly = false;
-
-            groupBoxDetails.Text = "Nouveau Métier";
-            txtMetierId.Focus();
-            txtMetierId.SelectAll();
+            PopulateDetailsPanel(_metierEnEdition);
+            SetUIState(MetierFormState.Editing);
+            txtNom.Focus();
+            txtNom.SelectAll();
         }
 
-        private void btnModifier_Click(object sender, EventArgs e)
+        private void btnSauvegarder_Click(object sender, EventArgs e)
         {
-            if (_metierSelectionne == null) return;
+            if (_metierEnEdition == null) return;
 
-            if (txtMetierId.ReadOnly) // Si on n'est pas déjà en mode édition
+            _metierEnEdition.Nom = txtNom.Text;
+            _metierEnEdition.Pictogram = txtPictogram.Text;
+
+            ChantierPhase selectedPhases = ChantierPhase.None;
+            if (chkGrosOeuvre.Checked) selectedPhases |= ChantierPhase.GrosOeuvre;
+            if (chkSecondOeuvre.Checked) selectedPhases |= ChantierPhase.SecondOeuvre;
+            if (chkFinition.Checked) selectedPhases |= ChantierPhase.Finition;
+            _metierEnEdition.Phases = selectedPhases;
+
+            var prereqsFromList = new List<string>();
+            foreach (Metier checkedMetier in chkListPrerequis.CheckedItems)
             {
-                // Activer le mode édition
-                txtNom.ReadOnly = false;
-                groupBoxDetails.Text = $"Modification de {_metierSelectionne.MetierId}";
-                txtNom.Focus();
-                txtNom.SelectAll();
+                prereqsFromList.Add(checkedMetier.MetierId);
             }
-            else // On est déjà en mode édition, on sauvegarde
+            _metierEnEdition.PrerequisMetierIds = string.Join(",", prereqsFromList.Distinct().OrderBy(id => id));
+
+            if (string.IsNullOrWhiteSpace(_metierEnEdition.Nom))
             {
-                try
-                {
-                    var couleurHex = _metierSelectionne.CouleurHex ?? "";
-
-                    if (txtMetierId.Text == "NOUVEAU_METIER" || !_metierService.GetAllMetiers().Any(m => m.MetierId == _metierSelectionne.MetierId)) // C'est un nouveau métier
-                    {
-                        _metierService.AjouterMetier(new Metier
-                        {
-                            MetierId = txtMetierId.Text,
-                            Nom = txtNom.Text,
-                            PrerequisMetierIds = "",
-                            CouleurHex = couleurHex
-                        });
-                    }
-                    else // C'est une modification
-                    {
-                        _metierService.ModifierMetier(_metierSelectionne.MetierId, txtNom.Text, _metierSelectionne.PrerequisMetierIds, couleurHex);
-                    }
-
-                    txtMetierId.ReadOnly = true;
-                    txtNom.ReadOnly = true;
-                    groupBoxDetails.Text = "Détails du Métier";
-
-                    RafraichirAffichageComplet();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message, "Erreur de sauvegarde", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                MessageBox.Show("Le nom du métier ne peut pas être vide.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
             }
+            if (string.IsNullOrWhiteSpace(_metierEnEdition.MetierId))
+            {
+                MessageBox.Show("L'ID du métier ne peut pas être vide.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                var allMetiersForValidation = _projetService.GetAllMetiers().ToList();
+                allMetiersForValidation.RemoveAll(m => m.MetierId == _metierEnEdition.MetierId);
+                allMetiersForValidation.Add(_metierEnEdition);
+
+                _dependanceBuilder.ValiderMetier(_metierEnEdition, allMetiersForValidation);
+
+                bool isNewMetier = (_projetService.GetMetierById(_metierEnEdition.MetierId) == null);
+
+                if (isNewMetier)
+                {
+                    _projetService.AjouterMetier(_metierEnEdition);
+                }
+                else
+                {
+                    _projetService.ModifierMetier(
+                        _metierEnEdition.MetierId,
+                        _metierEnEdition.Nom,
+                        _metierEnEdition.PrerequisMetierIds,
+                        _metierEnEdition.CouleurHex,
+                        _metierEnEdition.Pictogram,
+                        _metierEnEdition.Phases);
+                }
+
+                _hasUnsavedChanges = false;
+                ChargerDiagrammeMetiers();
+                // IMPORTANT: Recharger l'objet métier après sauvegarde pour s'assurer qu'il est à jour
+                // et re-sélectionner visuellement le nœud dans le diagramme.
+                _metierEnEdition = _projetService.GetMetierById(_metierEnEdition.MetierId);
+                PopulateDetailsPanel(_metierEnEdition);
+                _metierDiagramControl.ForceSelection(_metierEnEdition.MetierId); // Force la sélection visuelle
+
+                MessageBox.Show("Métier sauvegardé avec succès.", "Succès", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                SetUIState(MetierFormState.Editing);
+            }
+            catch (InvalidOperationException ex)
+            {
+                MessageBox.Show($"Erreur de validation: {ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erreur lors de la sauvegarde: {ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnAnnuler_Click(object sender, EventArgs e)
+        {
+            if (_hasUnsavedChanges)
+            {
+                var result = MessageBox.Show("Des modifications non sauvegardées seront perdues. Continuer ?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                if (result == DialogResult.No) return;
+            }
+
+            _metierEnEdition = null;
+            _hasUnsavedChanges = false;
+            NettoyerDetails();
+            SetUIState(MetierFormState.Initial);
+            this.Close();
         }
 
         private void btnSupprimer_Click(object sender, EventArgs e)
         {
-            if (_metierSelectionne == null) return;
+            if (_metierEnEdition == null)
+            {
+                MessageBox.Show("Aucun métier sélectionné à supprimer.", "Action impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
-            var result = MessageBox.Show($"Êtes-vous sûr de vouloir supprimer le métier '{_metierSelectionne.Nom}' ?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            // Vérifier si le métier existe réellement dans le service (pas juste un "nouveau" temporaire)
+            if (_projetService.GetMetierById(_metierEnEdition.MetierId) == null)
+            {
+                MessageBox.Show("Ce métier n'existe pas encore dans la base et ne peut pas être supprimé. Annulez si vous souhaitez abandonner la création.", "Action impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var result = MessageBox.Show($"Êtes-vous sûr de vouloir supprimer le métier '{_metierEnEdition.Nom}' ?\n\n" +
+                                         "Cette action est irréversible et peut impacter les ouvriers et tâches y faisant référence.",
+                                         "Confirmation de suppression", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.Yes)
             {
                 try
                 {
-                    _metierService.SupprimerMetier(_metierSelectionne.MetierId);
-                    _metierSelectionne = null;
-                    RafraichirAffichageComplet();
+                    _projetService.SupprimerMetier(_metierEnEdition.MetierId);
+                    _metierEnEdition = null;
+                    _hasUnsavedChanges = false;
+                    ChargerDiagrammeMetiers();
+                    NettoyerDetails();
+                    SetUIState(MetierFormState.Initial);
+                    MessageBox.Show("Métier supprimé avec succès.", "Succès", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Erreur de suppression", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Erreur lors de la suppression: {ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
-        #endregion
-
-        #region Gestion des prérequis
-
-        private void btnAjouterPrerequis_Click(object sender, EventArgs e)
-        {
-            if (_metierSelectionne == null || txtMetierId.ReadOnly == false)
-            {
-                MessageBox.Show("Veuillez d'abord sauvegarder le métier avant d'ajouter des prérequis.", "Action impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            var prerequisActuels = _metierService.GetPrerequisForMetier(_metierSelectionne.MetierId);
-            var metiersDisponibles = _metierService.GetAllMetiers()
-                .Where(m => m.MetierId != _metierSelectionne.MetierId && !prerequisActuels.Contains(m.MetierId))
-                .ToList();
-
-            if (!metiersDisponibles.Any())
-            {
-                MessageBox.Show("Aucun autre métier disponible à ajouter.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            using var dialog = new SelectionMetierDialog(metiersDisponibles);
-            if (dialog.ShowDialog() == DialogResult.OK && dialog.MetierSelectionne != null)
-            {
-                var nouveauxPrerequis = prerequisActuels.ToList();
-                nouveauxPrerequis.Add(dialog.MetierSelectionne.MetierId);
-                _metierService.ModifierMetier(_metierSelectionne.MetierId, _metierSelectionne.Nom, string.Join(",", nouveauxPrerequis), _metierSelectionne.CouleurHex);
-                RafraichirListePrerequis();
-                RafraichirListeMetiers();
-            }
-        }
-
-        private void btnSupprimerPrerequis_Click(object sender, EventArgs e)
-        {
-            if (_metierSelectionne == null || listViewPrerequis.SelectedItems.Count == 0) return;
-
-            var prerequisIdASupprimer = listViewPrerequis.SelectedItems[0].Tag as string;
-            var prerequisActuels = _metierService.GetPrerequisForMetier(_metierSelectionne.MetierId).ToList();
-            if (prerequisActuels.Remove(prerequisIdASupprimer))
-            {
-                _metierService.ModifierMetier(_metierSelectionne.MetierId, _metierSelectionne.Nom, string.Join(",", prerequisActuels), _metierSelectionne.CouleurHex);
-                RafraichirListePrerequis();
-                RafraichirListeMetiers();
-            }
-        }
-
-        #endregion
-
-        #region Import/Export
-
-        private void btnImporter_Click(object sender, EventArgs e)
-        {
-            using var ofd = new OpenFileDialog { Filter = "Fichiers CSV (*.csv)|*.csv", Title = "Importer les métiers" };
-            if (ofd.ShowDialog() == DialogResult.OK)
-            {
-                try
-                {
-                    var metiersImportes = _csvDataService.ImportCsv<Metier>(ofd.FileName);
-                    _metierService.RemplacerTousLesMetiers(metiersImportes);
-                    RafraichirAffichageComplet();
-                    MessageBox.Show($"{metiersImportes.Count} métiers ont été importés et ont remplacé les données existantes.", "Import réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Erreur lors de l'import : {ex.Message}", "Erreur d'import", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-        }
-
-        private void btnExporter_Click(object sender, EventArgs e)
-        {
-            var metiersAExporter = _metierService.GetAllMetiers();
-            if (!metiersAExporter.Any())
-            {
-                MessageBox.Show("Aucun métier à exporter.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            using var sfd = new SaveFileDialog { Filter = "Fichiers CSV (*.csv)|*.csv", Title = "Exporter les métiers", FileName = $"metiers_export_{DateTime.Now:yyyyMMdd_HHmmss}.csv" };
-            if (sfd.ShowDialog() == DialogResult.OK)
-            {
-                try
-                {
-                    _csvDataService.ExportCsv(metiersAExporter, sfd.FileName);
-                    MessageBox.Show($"{metiersAExporter.Count} métiers exportés avec succès.", "Export réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Erreur lors de l'export : {ex.Message}", "Erreur d'export", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-        }
-
-        #endregion
-
-        private void btnFermer_Click(object sender, EventArgs e)
-        {
-            this.Close();
-        }
     }
 }

@@ -1,5 +1,7 @@
 using PlanAthena.Data;
-using System.Linq;
+using System; // Ajouté pour ArgumentNullException, InvalidOperationException, Func
+using System.Collections.Generic; // Ajouté pour Dictionary
+using System.Linq; // Ajouté pour Any, Where
 
 namespace PlanAthena.Services.Business
 {
@@ -15,6 +17,9 @@ namespace PlanAthena.Services.Business
         {
             _tacheServiceFactory = tacheServiceFactory ?? throw new ArgumentNullException(nameof(tacheServiceFactory));
         }
+
+        // Propriété pour accéder à l'instance de TacheService de manière paresseuse
+        private TacheService _tacheService => _tacheServiceFactory();
 
         /// <summary>
         /// Gère la création ou la mise à jour d'un objet Bloc.
@@ -115,9 +120,8 @@ namespace PlanAthena.Services.Business
                 throw new KeyNotFoundException($"Bloc {blocId} non trouvé.");
             }
 
-            // Utilisation de la factory pour éviter la dépendance circulaire
-            var tacheService = _tacheServiceFactory();
-            if (tacheService.ObtenirTachesParBloc(blocId).Any())
+            // Utilisation de la propriété _tacheService
+            if (_tacheService.ObtenirTachesParBloc(blocId).Any())
             {
                 throw new InvalidOperationException($"Impossible de supprimer le bloc '{blocId}' car il est utilisé par une ou plusieurs tâches. Veuillez d'abord supprimer ou réassigner les tâches associées.");
             }

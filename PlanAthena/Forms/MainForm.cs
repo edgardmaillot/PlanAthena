@@ -1,3 +1,4 @@
+//Fichier: MainForm.cs Version 0.3.8
 using Microsoft.Extensions.DependencyInjection;
 using PlanAthena.Core.Application;
 using PlanAthena.Core.Facade;
@@ -7,6 +8,7 @@ using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.Processing;
 using PlanAthena.Utilities;
+using System; // Nécessaire pour DayOfWeek, Action
 
 namespace PlanAthena.Forms
 {
@@ -16,11 +18,9 @@ namespace PlanAthena.Forms
         private readonly PlanificationService _planificationService;
         private readonly OuvrierService _ouvrierService;
         private readonly TacheService _tacheService;
-        private readonly MetierService _metierService;
         private readonly ProjetService _projetService;
         private readonly GanttExportService _ganttExportService;
         private readonly ConfigurationBuilder _configBuilder;
-        // Ajout des services pour les lots et blocs
         private readonly LotService _lotService;
         private readonly BlocService _blocService;
 
@@ -37,7 +37,6 @@ namespace PlanAthena.Forms
             _planificationService = _serviceProvider.GetRequiredService<PlanificationService>();
             _ouvrierService = _serviceProvider.GetRequiredService<OuvrierService>();
             _tacheService = _serviceProvider.GetRequiredService<TacheService>();
-            _metierService = _serviceProvider.GetRequiredService<MetierService>();
             _projetService = _serviceProvider.GetRequiredService<ProjetService>();
             _ganttExportService = _serviceProvider.GetRequiredService<GanttExportService>();
             _configBuilder = _serviceProvider.GetRequiredService<ConfigurationBuilder>();
@@ -47,6 +46,7 @@ namespace PlanAthena.Forms
             InitializeInterface();
             CreerNouveauProjetParDefaut();
         }
+
         private ServiceProvider ConfigureServices()
         {
             var serviceCollection = new ServiceCollection();
@@ -55,31 +55,62 @@ namespace PlanAthena.Forms
             serviceCollection.AddScoped<PlanAthena.Core.Application.Interfaces.IConstructeurProblemeOrTools, PlanAthena.Core.Infrastructure.Services.OrTools.ConstructeurProblemeOrTools>();
             serviceCollection.AddScoped<PlanAthenaCoreFacade>();
 
-            // Services de base (ordre important pour les dépendances)
-            serviceCollection.AddSingleton<MetierService>();
+            // 1. Enregistrement des services "feuilles" ou sans dépendances circulaires directes
+            serviceCollection.AddSingleton<CsvDataService>();
+            serviceCollection.AddSingleton<ExcelReader>();
             serviceCollection.AddSingleton<OuvrierService>();
-            serviceCollection.AddSingleton<TacheService>();
             serviceCollection.AddSingleton<LotService>();
 
-            // Factory pour TacheService pour éviter la dépendance circulaire
+            // 2. Enregistrement des Factories (Func<T>) en premier
+            // Elles sont nécessaires pour briser les cycles lors de l'instanciation des services
             serviceCollection.AddSingleton<Func<TacheService>>(provider => () => provider.GetRequiredService<TacheService>());
+            serviceCollection.AddSingleton<Func<ProjetService>>(provider => () => provider.GetRequiredService<ProjetService>());
+            serviceCollection.AddSingleton<Func<BlocService>>(provider => () => provider.GetRequiredService<BlocService>());
 
-            // BlocService avec factory pour TacheService
-            serviceCollection.AddSingleton<BlocService>();
+            // 3. Enregistrement des services qui consomment ces factories pour briser les cycles
+            // L'ordre peut avoir une importance si un service est utilisé par un autre avant sa résolution complète.
+            // Ici, on va enregistrer BlocService, puis TacheService, puis ProjetService.
 
-            // IdGeneratorService après BlocService
-            serviceCollection.AddSingleton<IdGeneratorService>();
+            serviceCollection.AddSingleton<BlocService>(provider =>
+            {
+                // BlocService a besoin de Func<TacheService>
+                return new BlocService(provider.GetRequiredService<Func<TacheService>>());
+            });
 
-            serviceCollection.AddSingleton<ProjetService>();
-            serviceCollection.AddScoped<CsvDataService>();
-            serviceCollection.AddScoped<ExcelReader>();
+            serviceCollection.AddSingleton<TacheService>(provider =>
+            {
+                // TacheService a besoin de CsvDataService, ExcelReader, Func<ProjetService>, LotService, Func<BlocService>
+                return new TacheService(
+                    provider.GetRequiredService<CsvDataService>(),
+                    provider.GetRequiredService<ExcelReader>(),
+                    provider.GetRequiredService<Func<ProjetService>>(), // Utilise la factory
+                    provider.GetRequiredService<LotService>(),
+                    provider.GetRequiredService<Func<BlocService>>()    // Utilise la factory
+                );
+            });
+
+            serviceCollection.AddSingleton<ProjetService>(provider =>
+            {
+                // ProjetService a besoin de OuvrierService, Func<TacheService>, CsvDataService, LotService, Func<BlocService>
+                return new ProjetService(
+                    provider.GetRequiredService<OuvrierService>(),
+                    provider.GetRequiredService<Func<TacheService>>(), // Utilise la factory
+                    provider.GetRequiredService<CsvDataService>(),
+                    provider.GetRequiredService<LotService>(),
+                    provider.GetRequiredService<Func<BlocService>>()   // Utilise la factory
+                );
+            });
+
+            // 4. Enregistrement des autres Singletons et Scoped
+            serviceCollection.AddSingleton<IdGeneratorService>(); // Dépend de LotService, BlocService, TacheService (maintenant résolvables)
+
             serviceCollection.AddScoped<DataTransformer>();
-            serviceCollection.AddScoped<PlanificationService>();
+            serviceCollection.AddScoped<PreparationSolveurService>();
+            serviceCollection.AddScoped<ResultatConsolidationService>();
+            serviceCollection.AddScoped<PlanificationService>(); // Son constructeur n'a pas de Func<T> ici
             serviceCollection.AddScoped<GanttExportService>();
             serviceCollection.AddScoped<ConfigurationBuilder>();
-            serviceCollection.AddScoped<PreparationSolveurService>();
-            serviceCollection.AddScoped<DependanceBuilder>();
-            serviceCollection.AddScoped<ResultatConsolidationService>();
+            serviceCollection.AddScoped<DependanceBuilder>(); // Dépend de ProjetService (qui est Singleton)
 
             return serviceCollection.BuildServiceProvider();
         }
@@ -104,10 +135,6 @@ namespace PlanAthena.Forms
             dtpDateFin.Value = DateTime.Today.AddMonths(3);
             chkDateDebut.Checked = true;
             chkDateFin.Checked = true;
-
-            //var timerMiseAJour = new System.Windows.Forms.Timer { Interval = 2000 };
-            //timerMiseAJour.Tick += (s, e) => MettreAJourResume();
-            //timerMiseAJour.Start();
 
             Log("Application prête. Créez un nouveau projet ou chargez un projet existant.");
         }
@@ -208,13 +235,17 @@ namespace PlanAthena.Forms
 
         private void OuvrirGestionMetiers_Click(object sender, EventArgs e)
         {
-            using var form = new MetierForm(_metierService);
+            using var form = new MetierForm(
+                _serviceProvider.GetRequiredService<ProjetService>(),
+                _serviceProvider.GetRequiredService<IdGeneratorService>(),
+                _serviceProvider.GetRequiredService<DependanceBuilder>()
+            );
             form.ShowDialog(this);
         }
 
         private void OuvrirGestionOuvriers_Click(object sender, EventArgs e)
         {
-            using var form = new OuvrierForm(_ouvrierService, _metierService);
+            using var form = new OuvrierForm(_ouvrierService, _projetService);
             form.ShowDialog(this);
         }
 
@@ -233,7 +264,7 @@ namespace PlanAthena.Forms
         private void OuvrirGestionTaches_Click(object sender, EventArgs e)
         {
             var dependanceBuilder = _serviceProvider.GetRequiredService<DependanceBuilder>();
-            using var form = new TacheForm(_tacheService, _metierService, dependanceBuilder, _lotService, _blocService);
+            using var form = new TacheForm(_tacheService, _projetService, dependanceBuilder, _lotService, _blocService);
             form.ShowDialog(this);
         }
 
@@ -253,7 +284,6 @@ namespace PlanAthena.Forms
         {
             Log("Lancement de la planification...");
 
-            // Validation des données avant planification
             if (!_projetService.ValiderDonneesAvantPlanification(out string messageValidation))
             {
                 Log($"ERREUR : {messageValidation}");
@@ -277,7 +307,6 @@ namespace PlanAthena.Forms
                     numCoutIndirect.Value
                 );
 
-                // Afficher les statistiques de traitement avant planification
                 var statsTraitement = _planificationService.ObtenirStatistiquesTraitement();
                 Log($"Préparation des données : {statsTraitement.Resume}");
 
@@ -285,17 +314,14 @@ namespace PlanAthena.Forms
                 _planificationService.ChargerDonnees(
                     _ouvrierService.ObtenirTousLesOuvriers(),
                     _tacheService.ObtenirToutesLesTaches(),
-                    _metierService.GetAllMetiers().ToList()
+                    _projetService.GetAllMetiers().ToList()
                 );
 
-                // MODIFIÉ : Appel de la nouvelle méthode qui retourne les deux résultats
                 var resultatComplet = await _planificationService.LancerPlanificationAsync(configuration);
 
-                // MODIFIÉ : Stocker les deux résultats séparément
                 _dernierResultatPlanification = resultatComplet.ResultatBrut;
                 _dernierGanttConsolide = resultatComplet.GanttConsolide;
 
-                // Le log continue d'utiliser le résultat brut pour l'analyse détaillée
                 AfficherResultatDansLog(_dernierResultatPlanification);
 
                 VerifierDisponibiliteExportGantt();
@@ -314,7 +340,6 @@ namespace PlanAthena.Forms
 
         private void VerifierDisponibiliteExportGantt()
         {
-            // MODIFIÉ : Vérifier les deux conditions pour l'export
             bool peutExporter = _dernierResultatPlanification?.OptimisationResultat?.Affectations?.Any() == true
                                && _dernierGanttConsolide?.TachesRacines?.Any() == true;
 
@@ -335,7 +360,6 @@ namespace PlanAthena.Forms
 
         private void btnExportGantt_Click(object sender, EventArgs e)
         {
-            // MODIFIÉ : Vérifier le Gantt consolidé au lieu du résultat brut
             if (_dernierGanttConsolide?.TachesRacines?.Any() != true)
             {
                 MessageBox.Show("Aucun planning consolidé à exporter. Veuillez d'abord lancer une planification.", "Export impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -349,7 +373,6 @@ namespace PlanAthena.Forms
                 {
                     var config = _configBuilder.ConstruireConfigExportGantt(_projetActuel?.NomProjet ?? "Planning", (double)numHeuresTravail.Value, chkListJoursOuvres.CheckedItems.Cast<DayOfWeek>());
 
-                    // MODIFIÉ : Passer le Gantt consolidé au lieu du résultat brut
                     _ganttExportService.ExporterVersGanttProjectXml(_dernierGanttConsolide, sfd.FileName, config);
 
                     Log($"📊 Export GanttProject réussi : {sfd.FileName}");
@@ -430,7 +453,6 @@ namespace PlanAthena.Forms
                 lblResume.Text = $"Résumé: {resume.StatistiquesOuvriers.NombreOuvriersTotal} ouvriers, {resume.NombreMetiers} métiers, {resume.StatistiquesTaches.NombreTachesTotal} tâches (+{jalonsUtilisateur} jalons)";
                 lblMapping.Text = $"Mapping: {resume.StatistiquesMappingMetiers.PourcentageMapping:F0}% ({resume.StatistiquesMappingMetiers.TachesAvecMetier}/{resume.StatistiquesMappingMetiers.TotalTaches} tâches)";
 
-                // MODIFIÉ: Afficher les statistiques simplifiées de traitement si des données existent
                 if (resume.StatistiquesTaches.NombreTachesTotal > 0)
                 {
                     try
@@ -481,7 +503,6 @@ namespace PlanAthena.Forms
             rtbLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}");
             rtbLog.ScrollToCaret();
         }
-
 
         private void AfficherResultatDansLog(PlanAthena.Core.Facade.Dto.Output.ProcessChantierResultDto resultat)
         {

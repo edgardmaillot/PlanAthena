@@ -29,42 +29,34 @@ namespace PlanAthena.Forms
         private void InitializeComponent()
         {
             splitContainer1 = new SplitContainer();
-            groupBoxListe = new GroupBox();
-            lblStatut = new Label();
+            panelLeft = new Panel();
             btnSupprimer = new Button();
-            btnModifier = new Button();
             btnNouveau = new Button();
-            txtRecherche = new TextBox();
-            lblRecherche = new Label();
-            listViewMetiers = new ListView();
-            colMetierId = new ColumnHeader();
-            colNom = new ColumnHeader();
-            colNombrePrerequisText = new ColumnHeader();
             groupBoxDetails = new GroupBox();
-            lblUtilisation = new Label();
-            btnSupprimerPrerequis = new Button();
-            btnAjouterPrerequis = new Button();
-            listViewPrerequis = new ListView();
-            colPrerequisId = new ColumnHeader();
-            colPrerequisNom = new ColumnHeader();
+            grpPhases = new GroupBox();
+            chkFinition = new CheckBox();
+            chkSecondOeuvre = new CheckBox();
+            chkGrosOeuvre = new CheckBox();
+            txtPictogram = new TextBox();
+            lblPictogram = new Label();
+            chkListPrerequis = new CheckedListBox();
             lblPrerequis = new Label();
             btnChoisirCouleur = new Button();
             panelCouleurApercu = new Panel();
             lblCouleur = new Label();
             txtNom = new TextBox();
             lblNom = new Label();
-            txtMetierId = new TextBox();
             lblMetierId = new Label();
             groupBoxActions = new GroupBox();
-            btnExporter = new Button();
-            btnImporter = new Button();
-            btnFermer = new Button();
+            btnAnnuler = new Button();
+            btnSauvegarder = new Button();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
             splitContainer1.SuspendLayout();
-            groupBoxListe.SuspendLayout();
+            panelLeft.SuspendLayout();
             groupBoxDetails.SuspendLayout();
+            grpPhases.SuspendLayout();
             groupBoxActions.SuspendLayout();
             SuspendLayout();
             // 
@@ -76,204 +68,145 @@ namespace PlanAthena.Forms
             // 
             // splitContainer1.Panel1
             // 
-            splitContainer1.Panel1.Controls.Add(groupBoxListe);
+            splitContainer1.Panel1.Controls.Add(panelLeft);
             // 
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.Controls.Add(groupBoxDetails);
             splitContainer1.Size = new Size(784, 461);
-            splitContainer1.SplitterDistance = 350;
+            splitContainer1.SplitterDistance = 450; // Ajusté pour le diagramme
             splitContainer1.TabIndex = 0;
             // 
-            // groupBoxListe
+            // panelLeft
             // 
-            groupBoxListe.Controls.Add(lblStatut);
-            groupBoxListe.Controls.Add(btnSupprimer);
-            groupBoxListe.Controls.Add(btnModifier);
-            groupBoxListe.Controls.Add(btnNouveau);
-            groupBoxListe.Controls.Add(txtRecherche);
-            groupBoxListe.Controls.Add(lblRecherche);
-            groupBoxListe.Controls.Add(listViewMetiers);
-            groupBoxListe.Dock = DockStyle.Fill;
-            groupBoxListe.Location = new Point(0, 0);
-            groupBoxListe.Name = "groupBoxListe";
-            groupBoxListe.Size = new Size(350, 461);
-            groupBoxListe.TabIndex = 0;
-            groupBoxListe.TabStop = false;
-            groupBoxListe.Text = "Liste des Métiers";
-            // 
-            // lblStatut
-            // 
-            lblStatut.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            lblStatut.AutoSize = true;
-            lblStatut.Location = new Point(6, 437);
-            lblStatut.Name = "lblStatut";
-            lblStatut.Size = new Size(76, 15);
-            lblStatut.TabIndex = 6;
-            lblStatut.Text = "0 métier(s)";
+            panelLeft.Controls.Add(btnSupprimer);
+            panelLeft.Controls.Add(btnNouveau);
+            panelLeft.Dock = DockStyle.Fill;
+            panelLeft.Location = new Point(0, 0);
+            panelLeft.Name = "panelLeft";
+            panelLeft.Size = new Size(450, 461);
+            panelLeft.TabIndex = 0;
             // 
             // btnSupprimer
             // 
             btnSupprimer.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnSupprimer.Location = new Point(269, 405);
+            btnSupprimer.Location = new Point(365, 426); // Ajusté position
             btnSupprimer.Name = "btnSupprimer";
             btnSupprimer.Size = new Size(75, 23);
-            btnSupprimer.TabIndex = 5;
+            btnSupprimer.TabIndex = 1;
             btnSupprimer.Text = "🗑️ Supprimer";
             btnSupprimer.UseVisualStyleBackColor = true;
             btnSupprimer.Click += btnSupprimer_Click;
             // 
-            // btnModifier
-            // 
-            btnModifier.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnModifier.Location = new Point(188, 405);
-            btnModifier.Name = "btnModifier";
-            btnModifier.Size = new Size(75, 23);
-            btnModifier.TabIndex = 4;
-            btnModifier.Text = "✏️ Modifier";
-            btnModifier.UseVisualStyleBackColor = true;
-            btnModifier.Click += btnModifier_Click;
-            // 
             // btnNouveau
             // 
-            btnNouveau.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnNouveau.Location = new Point(107, 405);
+            btnNouveau.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            btnNouveau.Location = new Point(12, 426); // Ajusté position
             btnNouveau.Name = "btnNouveau";
             btnNouveau.Size = new Size(75, 23);
-            btnNouveau.TabIndex = 3;
+            btnNouveau.TabIndex = 0;
             btnNouveau.Text = "➕ Nouveau";
             btnNouveau.UseVisualStyleBackColor = true;
             btnNouveau.Click += btnNouveau_Click;
             // 
-            // txtRecherche
-            // 
-            txtRecherche.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            txtRecherche.Location = new Point(72, 22);
-            txtRecherche.Name = "txtRecherche";
-            txtRecherche.Size = new Size(272, 23);
-            txtRecherche.TabIndex = 2;
-            txtRecherche.TextChanged += txtRecherche_TextChanged;
-            // 
-            // lblRecherche
-            // 
-            lblRecherche.AutoSize = true;
-            lblRecherche.Location = new Point(6, 25);
-            lblRecherche.Name = "lblRecherche";
-            lblRecherche.Size = new Size(60, 15);
-            lblRecherche.TabIndex = 1;
-            lblRecherche.Text = "Recherche:";
-            // 
-            // listViewMetiers
-            // 
-            listViewMetiers.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            listViewMetiers.Columns.AddRange(new ColumnHeader[] { colMetierId, colNom, colNombrePrerequisText });
-            listViewMetiers.FullRowSelect = true;
-            listViewMetiers.GridLines = true;
-            listViewMetiers.Location = new Point(6, 51);
-            listViewMetiers.MultiSelect = false;
-            listViewMetiers.Name = "listViewMetiers";
-            listViewMetiers.Size = new Size(338, 348);
-            listViewMetiers.TabIndex = 0;
-            listViewMetiers.UseCompatibleStateImageBehavior = false;
-            listViewMetiers.View = View.Details;
-            listViewMetiers.SelectedIndexChanged += listViewMetiers_SelectedIndexChanged;
-            // 
-            // colMetierId
-            // 
-            colMetierId.Text = "ID";
-            colMetierId.Width = 80;
-            // 
-            // colNom
-            // 
-            colNom.Text = "Nom";
-            colNom.Width = 180;
-            // 
-            // colNombrePrerequisText
-            // 
-            colNombrePrerequisText.Text = "Prérequis";
-            colNombrePrerequisText.Width = 70;
-            // 
             // groupBoxDetails
             // 
-            groupBoxDetails.Controls.Add(lblUtilisation);
-            groupBoxDetails.Controls.Add(btnSupprimerPrerequis);
-            groupBoxDetails.Controls.Add(btnAjouterPrerequis);
-            groupBoxDetails.Controls.Add(listViewPrerequis);
+            groupBoxDetails.Controls.Add(grpPhases);
+            groupBoxDetails.Controls.Add(txtPictogram);
+            groupBoxDetails.Controls.Add(lblPictogram);
+            groupBoxDetails.Controls.Add(chkListPrerequis);
             groupBoxDetails.Controls.Add(lblPrerequis);
             groupBoxDetails.Controls.Add(btnChoisirCouleur);
             groupBoxDetails.Controls.Add(panelCouleurApercu);
             groupBoxDetails.Controls.Add(lblCouleur);
             groupBoxDetails.Controls.Add(txtNom);
             groupBoxDetails.Controls.Add(lblNom);
-            groupBoxDetails.Controls.Add(txtMetierId);
             groupBoxDetails.Controls.Add(lblMetierId);
             groupBoxDetails.Dock = DockStyle.Fill;
             groupBoxDetails.Location = new Point(0, 0);
             groupBoxDetails.Name = "groupBoxDetails";
-            groupBoxDetails.Size = new Size(430, 461);
+            groupBoxDetails.Size = new Size(330, 461);
             groupBoxDetails.TabIndex = 0;
             groupBoxDetails.TabStop = false;
             groupBoxDetails.Text = "Détails du Métier";
             // 
-            // lblUtilisation
+            // grpPhases
             // 
-            lblUtilisation.AutoSize = true;
-            lblUtilisation.ForeColor = Color.Blue;
-            lblUtilisation.Location = new Point(16, 435);
-            lblUtilisation.Name = "lblUtilisation";
-            lblUtilisation.Size = new Size(188, 15);
-            lblUtilisation.TabIndex = 11;
-            lblUtilisation.Text = "⚠️ Utilisé par: 5 tâches, 12 ouvriers";
+            grpPhases.Controls.Add(chkFinition);
+            grpPhases.Controls.Add(chkSecondOeuvre);
+            grpPhases.Controls.Add(chkGrosOeuvre);
+            grpPhases.Location = new Point(16, 142);
+            grpPhases.Name = "grpPhases";
+            grpPhases.Size = new Size(300, 50);
+            grpPhases.TabIndex = 13;
+            grpPhases.TabStop = false;
+            grpPhases.Text = "Phases de chantier";
             // 
-            // btnSupprimerPrerequis
+            // chkFinition
             // 
-            btnSupprimerPrerequis.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnSupprimerPrerequis.Location = new Point(342, 370);
-            btnSupprimerPrerequis.Name = "btnSupprimerPrerequis";
-            btnSupprimerPrerequis.Size = new Size(75, 23);
-            btnSupprimerPrerequis.TabIndex = 10;
-            btnSupprimerPrerequis.Text = "🗑️ Enlever";
-            btnSupprimerPrerequis.UseVisualStyleBackColor = true;
-            btnSupprimerPrerequis.Click += btnSupprimerPrerequis_Click;
+            chkFinition.AutoSize = true;
+            chkFinition.Location = new Point(220, 22);
+            chkFinition.Name = "chkFinition";
+            chkFinition.Size = new Size(61, 19);
+            chkFinition.TabIndex = 2;
+            chkFinition.Text = "Finition";
+            chkFinition.UseVisualStyleBackColor = true;
+            chkFinition.CheckedChanged += OnDetailChanged;
             // 
-            // btnAjouterPrerequis
+            // chkSecondOeuvre
             // 
-            btnAjouterPrerequis.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnAjouterPrerequis.Location = new Point(342, 341);
-            btnAjouterPrerequis.Name = "btnAjouterPrerequis";
-            btnAjouterPrerequis.Size = new Size(75, 23);
-            btnAjouterPrerequis.TabIndex = 9;
-            btnAjouterPrerequis.Text = "➕ Ajouter";
-            btnAjouterPrerequis.UseVisualStyleBackColor = true;
-            btnAjouterPrerequis.Click += btnAjouterPrerequis_Click;
+            chkSecondOeuvre.AutoSize = true;
+            chkSecondOeuvre.Location = new Point(100, 22);
+            chkSecondOeuvre.Name = "chkSecondOeuvre";
+            chkSecondOeuvre.Size = new Size(102, 19);
+            chkSecondOeuvre.TabIndex = 1;
+            chkSecondOeuvre.Text = "Second œuvre";
+            chkSecondOeuvre.UseVisualStyleBackColor = true;
+            chkSecondOeuvre.CheckedChanged += OnDetailChanged;
             // 
-            // listViewPrerequis
+            // chkGrosOeuvre
             // 
-            listViewPrerequis.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            listViewPrerequis.Columns.AddRange(new ColumnHeader[] { colPrerequisId, colPrerequisNom });
-            listViewPrerequis.FullRowSelect = true;
-            listViewPrerequis.GridLines = true;
-            listViewPrerequis.Location = new Point(16, 124);
-            listViewPrerequis.Name = "listViewPrerequis";
-            listViewPrerequis.Size = new Size(320, 200);
-            listViewPrerequis.TabIndex = 8;
-            listViewPrerequis.UseCompatibleStateImageBehavior = false;
-            listViewPrerequis.View = View.Details;
+            chkGrosOeuvre.AutoSize = true;
+            chkGrosOeuvre.Location = new Point(7, 22);
+            chkGrosOeuvre.Name = "chkGrosOeuvre";
+            chkGrosOeuvre.Size = new Size(87, 19);
+            chkGrosOeuvre.TabIndex = 0;
+            chkGrosOeuvre.Text = "Gros œuvre";
+            chkGrosOeuvre.UseVisualStyleBackColor = true;
+            chkGrosOeuvre.CheckedChanged += OnDetailChanged;
             // 
-            // colPrerequisId
+            // txtPictogram
             // 
-            colPrerequisId.Text = "ID Prérequis";
-            colPrerequisId.Width = 100;
+            txtPictogram.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            txtPictogram.Location = new Point(100, 113);
+            txtPictogram.Name = "txtPictogram";
+            txtPictogram.Size = new Size(217, 23);
+            txtPictogram.TabIndex = 12;
+            txtPictogram.TextChanged += OnDetailChanged;
             // 
-            // colPrerequisNom
+            // lblPictogram
             // 
-            colPrerequisNom.Text = "Nom";
-            colPrerequisNom.Width = 200;
+            lblPictogram.AutoSize = true;
+            lblPictogram.Location = new Point(16, 116);
+            lblPictogram.Name = "lblPictogram";
+            lblPictogram.Size = new Size(68, 15);
+            lblPictogram.TabIndex = 11;
+            lblPictogram.Text = "Pictogram :";
+            // 
+            // chkListPrerequis
+            // 
+            chkListPrerequis.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            chkListPrerequis.FormattingEnabled = true;
+            chkListPrerequis.Location = new Point(16, 223);
+            chkListPrerequis.Name = "chkListPrerequis";
+            chkListPrerequis.Size = new Size(301, 220);
+            chkListPrerequis.TabIndex = 10;
+            chkListPrerequis.ItemCheck += chkListPrerequis_ItemCheck;
             // 
             // lblPrerequis
             // 
             lblPrerequis.AutoSize = true;
-            lblPrerequis.Location = new Point(16, 106);
+            lblPrerequis.Location = new Point(16, 205);
             lblPrerequis.Name = "lblPrerequis";
             lblPrerequis.Size = new Size(60, 15);
             lblPrerequis.TabIndex = 7;
@@ -281,7 +214,7 @@ namespace PlanAthena.Forms
             // 
             // btnChoisirCouleur
             // 
-            btnChoisirCouleur.Location = new Point(192, 80);
+            btnChoisirCouleur.Location = new Point(217, 80);
             btnChoisirCouleur.Name = "btnChoisirCouleur";
             btnChoisirCouleur.Size = new Size(100, 23);
             btnChoisirCouleur.TabIndex = 6;
@@ -292,9 +225,9 @@ namespace PlanAthena.Forms
             // panelCouleurApercu
             // 
             panelCouleurApercu.BorderStyle = BorderStyle.FixedSingle;
-            panelCouleurApercu.Location = new Point(70, 80);
+            panelCouleurApercu.Location = new Point(100, 80);
             panelCouleurApercu.Name = "panelCouleurApercu";
-            panelCouleurApercu.Size = new Size(116, 23);
+            panelCouleurApercu.Size = new Size(111, 23);
             panelCouleurApercu.TabIndex = 5;
             panelCouleurApercu.BackColor = Color.LightGray;
             panelCouleurApercu.Click += btnChoisirCouleur_Click;
@@ -311,10 +244,11 @@ namespace PlanAthena.Forms
             // txtNom
             // 
             txtNom.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            txtNom.Location = new Point(70, 54);
+            txtNom.Location = new Point(100, 54);
             txtNom.Name = "txtNom";
-            txtNom.Size = new Size(347, 23);
+            txtNom.Size = new Size(217, 23);
             txtNom.TabIndex = 3;
+            txtNom.TextChanged += OnDetailChanged;
             // 
             // lblNom
             // 
@@ -325,17 +259,10 @@ namespace PlanAthena.Forms
             lblNom.TabIndex = 2;
             lblNom.Text = "Nom:";
             // 
-            // txtMetierId
-            // 
-            txtMetierId.Location = new Point(70, 25);
-            txtMetierId.Name = "txtMetierId";
-            txtMetierId.Size = new Size(150, 23);
-            txtMetierId.TabIndex = 1;
-            // 
             // lblMetierId
             // 
             lblMetierId.AutoSize = true;
-            lblMetierId.Location = new Point(16, 28);
+            lblMetierId.Location = new Point(100, 28);
             lblMetierId.Name = "lblMetierId";
             lblMetierId.Size = new Size(21, 15);
             lblMetierId.TabIndex = 0;
@@ -343,9 +270,8 @@ namespace PlanAthena.Forms
             // 
             // groupBoxActions
             // 
-            groupBoxActions.Controls.Add(btnExporter);
-            groupBoxActions.Controls.Add(btnImporter);
-            groupBoxActions.Controls.Add(btnFermer);
+            groupBoxActions.Controls.Add(btnAnnuler);
+            groupBoxActions.Controls.Add(btnSauvegarder);
             groupBoxActions.Dock = DockStyle.Bottom;
             groupBoxActions.Location = new Point(0, 461);
             groupBoxActions.Name = "groupBoxActions";
@@ -354,36 +280,27 @@ namespace PlanAthena.Forms
             groupBoxActions.TabStop = false;
             groupBoxActions.Text = "Actions";
             // 
-            // btnExporter
+            // btnAnnuler
             // 
-            btnExporter.Location = new Point(165, 19);
-            btnExporter.Name = "btnExporter";
-            btnExporter.Size = new Size(100, 23);
-            btnExporter.TabIndex = 2;
-            btnExporter.Text = "📤 Export CSV";
-            btnExporter.UseVisualStyleBackColor = true;
-            btnExporter.Click += btnExporter_Click;
+            btnAnnuler.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnAnnuler.Location = new Point(697, 19);
+            btnAnnuler.Name = "btnAnnuler";
+            btnAnnuler.Size = new Size(75, 23);
+            btnAnnuler.TabIndex = 0;
+            btnAnnuler.Text = "❌ Annuler";
+            btnAnnuler.UseVisualStyleBackColor = true;
+            btnAnnuler.Click += btnAnnuler_Click;
             // 
-            // btnImporter
+            // btnSauvegarder
             // 
-            btnImporter.Location = new Point(59, 19);
-            btnImporter.Name = "btnImporter";
-            btnImporter.Size = new Size(100, 23);
-            btnImporter.TabIndex = 1;
-            btnImporter.Text = "📥 Import CSV";
-            btnImporter.UseVisualStyleBackColor = true;
-            btnImporter.Click += btnImporter_Click;
-            // 
-            // btnFermer
-            // 
-            btnFermer.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnFermer.Location = new Point(697, 19);
-            btnFermer.Name = "btnFermer";
-            btnFermer.Size = new Size(75, 23);
-            btnFermer.TabIndex = 0;
-            btnFermer.Text = "Fermer";
-            btnFermer.UseVisualStyleBackColor = true;
-            btnFermer.Click += btnFermer_Click;
+            btnSauvegarder.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnSauvegarder.Location = new Point(616, 19);
+            btnSauvegarder.Name = "btnSauvegarder";
+            btnSauvegarder.Size = new Size(75, 23);
+            btnSauvegarder.TabIndex = 1;
+            btnSauvegarder.Text = "💾 Sauvegarder";
+            btnSauvegarder.UseVisualStyleBackColor = true;
+            btnSauvegarder.Click += btnSauvegarder_Click;
             // 
             // MetierForm
             // 
@@ -400,10 +317,11 @@ namespace PlanAthena.Forms
             splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
             splitContainer1.ResumeLayout(false);
-            groupBoxListe.ResumeLayout(false);
-            groupBoxListe.PerformLayout();
+            panelLeft.ResumeLayout(false);
             groupBoxDetails.ResumeLayout(false);
             groupBoxDetails.PerformLayout();
+            grpPhases.ResumeLayout(false);
+            grpPhases.PerformLayout();
             groupBoxActions.ResumeLayout(false);
             ResumeLayout(false);
         }
@@ -411,35 +329,26 @@ namespace PlanAthena.Forms
         #endregion
 
         private SplitContainer splitContainer1;
-        private GroupBox groupBoxListe;
         private GroupBox groupBoxDetails;
         private GroupBox groupBoxActions;
-        private ListView listViewMetiers;
-        private ColumnHeader colMetierId;
-        private ColumnHeader colNom;
-        private ColumnHeader colNombrePrerequisText;
-        private TextBox txtRecherche;
-        private Label lblRecherche;
-        private Button btnSupprimer;
-        private Button btnModifier;
-        private Button btnNouveau;
-        private Label lblStatut;
-        private TextBox txtMetierId;
-        private Label lblMetierId;
-        private TextBox txtNom;
-        private Label lblNom;
-        private ListView listViewPrerequis;
-        private ColumnHeader colPrerequisId;
-        private ColumnHeader colPrerequisNom;
-        private Label lblPrerequis;
-        private Button btnAjouterPrerequis;
-        private Button btnSupprimerPrerequis;
-        private Label lblUtilisation;
-        private Button btnImporter;
-        private Button btnExporter;
-        private Button btnFermer;
         private Label lblCouleur;
         private Panel panelCouleurApercu;
         private Button btnChoisirCouleur;
+        private TextBox txtNom;
+        private Label lblNom;
+        private Label lblMetierId;
+        private Label lblPrerequis;
+        private CheckedListBox chkListPrerequis;
+        private TextBox txtPictogram;
+        private Label lblPictogram;
+        private GroupBox grpPhases;
+        private CheckBox chkGrosOeuvre;
+        private CheckBox chkFinition;
+        private CheckBox chkSecondOeuvre;
+        private Panel panelLeft; // Ce panel contiendra le PertDiagramControl
+        private Button btnNouveau;
+        private Button btnSupprimer;
+        private Button btnSauvegarder;
+        private Button btnAnnuler;
     }
 }

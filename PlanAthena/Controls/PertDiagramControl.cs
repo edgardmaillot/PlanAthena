@@ -3,7 +3,7 @@ using Microsoft.Msagl.GraphViewerGdi;
 using Microsoft.Msagl.Layout.Layered;
 using PlanAthena.Controls.Config;
 using PlanAthena.Data;
-using PlanAthena.Services.Business;
+using PlanAthena.Services.Business; // Ajouté pour ProjetService
 using PlanAthena.Utilities;
 using System.Drawing.Printing;
 using System.Reflection;
@@ -33,7 +33,7 @@ namespace PlanAthena.Controls
 
         private PertDiagramSettings _settings;
         private PertNodeBuilder _nodeBuilder;
-        private MetierService _metierService;
+        private ProjetService _projetService; // Ancien MetierService, maintenant ProjetService
         private LotService _lotService;
         private BlocService _blocService;
         private DependanceBuilder _dependanceBuilder;
@@ -75,14 +75,14 @@ namespace PlanAthena.Controls
             Controls.Add(_viewer);
         }
 
-        public void Initialize(MetierService metierService, LotService lotService, BlocService blocService, DependanceBuilder dependanceBuilder, PertDiagramSettings settings)
+        public void Initialize(ProjetService projetService, LotService lotService, BlocService blocService, DependanceBuilder dependanceBuilder, PertDiagramSettings settings) // Changement ici
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
-            _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
+            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService)); // Changement ici
             _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
             _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
             _dependanceBuilder = dependanceBuilder ?? throw new ArgumentNullException(nameof(dependanceBuilder));
-            _nodeBuilder = new PertNodeBuilder(settings, _metierService);
+            _nodeBuilder = new PertNodeBuilder(settings, _projetService); // Changement ici
 
             ConfigurerViewer();
 
@@ -117,7 +117,6 @@ namespace PlanAthena.Controls
 
             _lastKnownZoom = _viewer.ZoomF;
         }
-
         private void ZoomMonitorTimer_Tick(object sender, EventArgs e)
         {
             try
@@ -138,7 +137,6 @@ namespace PlanAthena.Controls
                 System.Diagnostics.Debug.WriteLine($"Erreur lors du monitoring du zoom: {ex.Message}");
             }
         }
-
         protected override void Dispose(bool disposing)
         {
             if (disposing)

@@ -1,0 +1,395 @@
+@startuml
+' --- Configuration FORCÉE pour layout vertical ---
+!define DIRECTION top to bottom direction
+top to bottom direction
+skinparam minClassWidth 120
+skinparam maxMessageSize 200
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam ranksep 60
+skinparam nodesep 40
+skinparam package {
+borderColor #555555
+borderThickness 2
+fontColor #333333
+backgroundColor #F8F9FA
+}
+skinparam class {
+borderColor #007ACC
+backgroundColor #DDEEFF
+arrowColor #005588
+shadowing false
+}
+title Architecture Générale de l'Application (v0.3.8 - Refonte Métiers)
+
+' ================================================
+' === NIVEAU 1 : UI ===
+' ================================================
+package "🖥️ UI (User Interface)" as UI {
+namespace Forms {
+class MainForm
+class TacheForm
+class TacheDetailForm
+class LotForm
+class BlocForm
+class OuvrierForm
+class MetierForm
+class CompetenceDialog
+class NouveauProjetDialog
+class ImportCsvGroupeDialog
+class SelectionMetierDialog
+class ImportTacheForm {
++MappingConfiguration: ImportMappingConfiguration
+}
+class ImportWarningsDialog
+}
+namespace Controls {
+class PertDiagramControl
+class MetierDiagramControl
+}
+namespace Controls.Config {
+class PertDiagramSettings
+class PertNodeBuilder
+class MetierDiagramSettings
+class MetierNodeBuilder
+}
+}
+' ================================================
+' === NIVEAU 2 : APPLICATION ===
+' ================================================
+package "🎯 Application (Orchestration & Workflows)" as APPLICATION {
+namespace Services.Business {
+class ProjetService {
++SauvegarderProjet()
++ChargerProjet()
++ValiderDonneesAvantPlanification()
++CreerNouveauProjet()
++ObtenirResumeProjet()
+-- Métiers (Fusionné de MetierService) --
++AjouterMetier()
++ModifierMetier()
++SupprimerMetier()
++GetPrerequisForMetier()
++ObtenirMetiersTriesParDependance()
++GetAllMetiers()
++GetMetierById()
++GetDisplayColorForMetier()
++RemplacerTousLesMetiers()
+}
+class PlanificationService {
++ChargerDonnees()
++LancerPlanificationAsync()
++ObtenirStatistiquesTraitement()
+}
+}
+class ImportOrchestrationService {
++ImporterTachesDepuisCsv(filePath, lotIdCible, mappingConfig, confirmerEcrasement)
+}
+class ImportMappingConfiguration {
++HasHeaderRecord: bool
++CsvColumn_IdImporte: string
++CsvColumn_TacheNom: string
++CsvColumn_HeuresHommeEstimees: string
++CsvColumn_MetierId: string
++CsvColumn_BlocId: string
++CsvColumn_Dependencies: string
++CsvColumn_ExclusionsDependances: string
++CsvColumn_EstJalon: string
++CreerBlocParDefautSiNonSpecifie: bool
++NomBlocParDefaut: string
++HeuresEstimeesParDefaut: int
++CapaciteMaxOuvriersBlocParDefaut: int
+}
+}
+' ================================================
+' === NIVEAU 3 : DOMAIN SERVICES ===
+' ================================================
+package "⚙️ Domain Services (Core Business Logic)" as DOMAIN_SERVICES {
+namespace Services.Business {
+class TacheService {
++AjouterTache()
++ModifierTache()
++SupprimerTache()
++ObtenirTachesParLot()
++ChargerTaches()
++ObtenirStatistiques()
+}
+class LotService {
++AjouterLot()
++ModifierLot()
++ObtenirTousLesLots()
++SupprimerLot()
++RemplacerTousLesLots()
+}
+class BlocService {
++AjouterBloc()
++ModifierBloc()
++ObtenirTousLesBlocs()
++SupprimerBloc()
++RemplacerTousLesBlocs()
+}
+class OuvrierService {
++AjouterOuvrier()
++ModifierOuvrier()
++SupprimerOuvrier()
++SupprimerCompetence()
++ObtenirTousLesOuvriers()
++ChargerOuvriers()
++ObtenirStatistiques()
+}
+}
+}
+' ================================================
+' === NIVEAU 4 : APPLICATION UTILITIES ===
+' ================================================
+package "🔧 Application Utilities (Data Processing & Helpers)" as APP_UTILITIES {
+namespace Services.Processing {
+class DataTransformer {
++TransformToChantierSetupDto()
+}
+class PreparationSolveurService {
++PreparerPourSolveur()
+}
+class ResultatConsolidationService {
++ConsoliderPourGantt()
+}
+}
+namespace Utilities {
+class DependanceBuilder {
++ObtenirDependancesPourTache()
+-ConstruireGrapheBloc()
+-FiltrerCandidatsValides()
+-AppliquerSuggestionsMetier()
++ValiderMetier()
+}
+class ConfigurationBuilder {
++ConstruireDepuisUI()
++ConstruireConfigExportGantt()
+}
+}
+}
+' ================================================
+' === NIVEAU 5 : INFRASTRUCTURE ===
+' ================================================
+package "🏗️ Infrastructure (Data Access & Generic Utilities)" as INFRASTRUCTURE {
+namespace Services.DataAccess {
+class CsvDataService {
++ImportCsv()
++ExportCsv()
++ValidateCsvStructure()
+}
+class ExcelReader {
++ImportExcel()
++ImportSapOuvriers()
++ImportFieldwireTaches()
+}
+class GanttExportService {
++ExporterVersGanttProjectXml()
++GenererXmlGanttProjectConsolide()
+}
+class IdGeneratorService {
++GenererProchainLotId()
++GenererProchainBlocId()
++GenererProchainTacheId()
++ValiderFormatTacheId()
++GenererProchainMetierId()
++ValiderFormatMetierId()
+}
+class ImportService {
++ImporterTachesCSV(filePath, lotIdCible, mappingConfig, confirmerEcrasement)
+-ViderLot()
+-ImporterDonneesInitial()
+-RemapperDependancesDesTaches()
+}
+class CsvImportException
+class CsvExportException
+class ExcelImportException
+}
+}
+' ================================================
+' === NIVEAU 6 : DOMAIN MODELS & DTOs ===
+' ================================================
+package "📊 Domain Models (Entities & DTOs)" as DOMAIN_MODELS {
+namespace Data {
+class Bloc
+class Lot {
++Phases: ChantierPhase <<New>>
+}
+class Metier {
++Pictogram: string <<New>>
++Phases: ChantierPhase <<New>>
+}
+class Ouvrier
+class Tache {
++IdImporte: string
+}
+class ProjetData
+enum TypeActivite
+enum ChantierPhase <<New>>
+}
+namespace Services.DataAccess {
+class ConfigurationUI
+class ImportResult
+class ValidationResult
+class ConfigurationIds
+class TacheImportee
+class ConfigurationExportGantt
+class TacheGroupee
+class TacheGantt
+class RessourceGantt
+}
+namespace Services.Processing {
+class ConsolidatedGanttDto
+class GanttTaskItem
+class PreparationResult
+}
+namespace Services.Business {
+class PlanificationResultDto
+class OuvrierInfo
+class StatistiquesOuvriers
+class StatistiquesTaches
+class StatistiquesMappingMetiers
+class InformationsProjet
+class ValidationProjet
+class ResumeImport
+class ResumeProjet
+class StatistiquesSimplifiees
+class OldTacheFormat
+class OldProjetDataFormat
+class PlanificationException
+class ProjetException
+}
+namespace Utilities {
+class DependanceAffichage
+enum EtatDependance
+}
+namespace Controls {
+class TacheSelectedEventArgs
+class ZoomChangedEventArgs
+class MetierSelectedEventArgs <<New>>
+}
+}
+' ================================================
+' === NIVEAU 7 : EXTERNAL DEPENDENCIES ===
+' ================================================
+package "🌍 External Dependencies" as EXTERNAL {
+namespace PlanAthena.Core.Facade {
+class PlanAthenaCoreFacade
+}
+namespace PlanAthena.Core.Facade.Dto.Input {
+class ChantierSetupInputDto
+class TacheDto
+class OuvrierDto
+class BlocTravailDto
+class LotTravauxDto
+class MetierDto
+class CalendrierTravailDefinitionDto
+class OptimizationConfigDto
+class CompetenceDto
+}
+namespace PlanAthena.Core.Facade.Dto.Output {
+class ProcessChantierResultDto
+class OptimisationResultDto
+class AffectationDto
+class AnalyseStatiqueResultatDto
+class AnalysePostOptimisationResultatDto
+class KpisGlobauxDto
+class KpisParOuvrierDto
+}
+namespace PlanAthena.Core.Facade.Dto.Enums {
+enum NiveauExpertise
+enum TypeActivite
+}
+class QuikGraph <<Library>>
+class CsvHelper <<Library>>
+class Microsoft.Msagl <<Library>>
+class System.Text.Json <<Library>>
+}
+' ================================================
+' === RELATIONS VERTICALES ===
+' ================================================
+UI -down-> APPLICATION
+APPLICATION -down-> DOMAIN_SERVICES
+DOMAIN_SERVICES -down-> APP_UTILITIES
+APP_UTILITIES -down-> INFRASTRUCTURE
+INFRASTRUCTURE -down-> DOMAIN_MODELS
+DOMAIN_MODELS -down-> EXTERNAL
+
+' ================================================
+' === RELATIONS DÉTAILLÉES SPÉCIFIQUES À LA REFONTE ===
+' ================================================
+
+' UI -> APPLICATION (ProjetService maintenant pour les métiers)
+Forms.MainForm --> APPLICATION.Services.Business.ProjetService
+Forms.OuvrierForm --> APPLICATION.Services.Business.ProjetService
+Forms.TacheForm --> APPLICATION.Services.Business.ProjetService
+Forms.TacheDetailForm --> APPLICATION.Services.Business.ProjetService
+Forms.MetierForm --> APPLICATION.Services.Business.ProjetService
+
+' UI -> NOUVEAUX CONTRÔLES DÉDIÉS AUX MÉTIERS
+Forms.MetierForm --> UI.Controls.MetierDiagramControl
+Forms.MetierForm --> INFRASTRUCTURE.Services.DataAccess.IdGeneratorService
+Forms.MetierForm --> APP_UTILITIES.Utilities.DependanceBuilder
+
+UI.Controls.MetierDiagramControl --> UI.Controls.Config.MetierDiagramSettings
+UI.Controls.MetierDiagramControl --> UI.Controls.Config.MetierNodeBuilder
+UI.Controls.MetierDiagramControl --> APPLICATION.Services.Business.ProjetService
+UI.Controls.MetierDiagramControl --> APP_UTILITIES.Utilities.DependanceBuilder
+
+UI.Controls.Config.MetierNodeBuilder --> UI.Controls.Config.MetierDiagramSettings
+' MetierNodeBuilder n'a pas de dépendance directe à ProjetService, car les données (Metier) sont passées directement.
+' Le GetDisplayColorForMetier sera appelé par MetierDiagramControl avant de passer la couleur au NodeBuilder si nécessaire.
+
+' Impact sur PertDiagramControl et PertNodeBuilder (pas de changement dans leurs relations existantes)
+' Ils restent pour les Taches et n'ont pas de dépendance directe aux nouveaux éléments Metier.
+
+' APPLICATION -> DOMAIN SERVICES (ProjetService gère les Métiers)
+APPLICATION.Services.Business.ProjetService --> DOMAIN_SERVICES.Services.Business.OuvrierService
+APPLICATION.Services.Business.ProjetService --> DOMAIN_SERVICES.Services.Business.TacheService
+APPLICATION.Services.Business.ProjetService --> DOMAIN_SERVICES.Services.Business.LotService
+APPLICATION.Services.Business.ProjetService --> DOMAIN_SERVICES.Services.Business.BlocService
+
+APPLICATION.Services.Business.PlanificationService --> APPLICATION.Services.Business.ProjetService
+
+' APP UTILITIES -> APPLICATION (DependanceBuilder)
+APP_UTILITIES.Utilities.DependanceBuilder --> APPLICATION.Services.Business.ProjetService
+APP_UTILITIES.Utilities.DependanceBuilder --> DOMAIN_SERVICES.Services.Business.TacheService
+
+' INFRASTRUCTURE -> DOMAIN MODELS (Nouvelles propriétés)
+INFRASTRUCTURE.Services.DataAccess.IdGeneratorService --> DOMAIN_MODELS.Data.Metier
+
+' INFRASTRUCTURE -> APPLICATION (Pour la gestion des IDs de métiers par IdGeneratorService)
+INFRASTRUCTURE.Services.DataAccess.IdGeneratorService --> APPLICATION.Services.Business.ProjetService
+
+' DOMAIN MODELS (Mise à jour des entités)
+DOMAIN_MODELS.Data.Metier .up.|> DOMAIN_MODELS.Data.ProjetData 
+DOMAIN_MODELS.Data.Lot --> DOMAIN_MODELS.Data.ChantierPhase
+DOMAIN_MODELS.Data.Metier --> DOMAIN_MODELS.Data.ChantierPhase
+
+' ================================================
+' === REMARQUES ET NOUVELLES DÉPENDANCES ===
+' ================================================
+note top of APPLICATION.Services.Business.ProjetService
+Assure la gestion centralisée des Métiers,
+y compris le tri topologique et les couleurs.
+Gère les dépendances circulaires avec
+TacheService et BlocService via Func<T>.
+end note
+
+note "MetierService est supprimé et fusionné dans ProjetService." as NoteMetierServiceFusion
+DOMAIN_SERVICES.Services.Business.OuvrierService ..> APPLICATION.Services.Business.ProjetService : Utilise pour métiers
+DOMAIN_SERVICES.Services.Business.TacheService ..> APPLICATION.Services.Business.ProjetService : Utilise pour métiers
+APP_UTILITIES.Utilities.DependanceBuilder ..> APPLICATION.Services.Business.ProjetService : Utilise pour métiers
+APPLICATION.Services.Business.PlanificationService ..> APPLICATION.Services.Business.ProjetService : Utilise pour métiers
+
+note "La classe Metier est déplacée/définie dans ProjetData.cs" as NoteMetierRelocation
+DOMAIN_MODELS.Data.ProjetData .. NoteMetierRelocation
+
+note "Nouveau contrôle pour l'affichage des métiers," as NoteNewMetierControl
+NoteNewMetierControl .down-> UI.Controls.MetierDiagramControl
+
+note "Nouvelles classes de configuration dédiées aux métiers." as NoteNewMetierConfig
+NoteNewMetierConfig .down-> UI.Controls.Config.MetierDiagramSettings
+NoteNewMetierConfig .down-> UI.Controls.Config.MetierNodeBuilder
+
+@enduml

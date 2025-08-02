@@ -5,6 +5,7 @@ using PlanAthena.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using PlanAthena.Services.DataAccess; // Ajouté pour CsvDataService, ExcelReader, IdGeneratorService
 
 namespace PlanAthenaTests.Utilities
 {
@@ -23,21 +24,69 @@ namespace PlanAthenaTests.Utilities
     [TestClass]
     public class DependanceBuilderTests
     {
-        private MetierService _metierService;
+        private ProjetService _projetService;
         private DependanceBuilder _dependanceBuilder;
 
         [TestInitialize]
         public void Setup()
         {
-            _metierService = new MetierService();
-            _dependanceBuilder = new DependanceBuilder(_metierService);
+            // Initialiser les dépendances de ProjetService et des autres services pour les tests.
+            // Utiliser des stubs ou des instances simples pour l'isolement du test unitaire.
+
+            // Déclaration anticipée des services qui ont des dépendances mutuelles ou circulaires
+            // pour pouvoir les référencer dans les délégués Func<T> (factories)
+            ProjetService projetServiceInstance = null;
+            TacheService tacheServiceInstance = null;
+            BlocService blocServiceInstance = null;
+
+            // Instanciation des services "feuilles" ou de base
+            var csvDataService = new CsvDataService();
+            var excelReader = new ExcelReader();
+            var ouvrierService = new OuvrierService(csvDataService, excelReader);
+            var lotService = new LotService();
+
+            // 1. Créer les Factories (Func<T>) qui captureront les instances une fois qu'elles existeront.
+            Func<ProjetService> projetServiceFactory = () => projetServiceInstance;
+            Func<TacheService> tacheServiceFactory = () => tacheServiceInstance;
+            Func<BlocService> blocServiceFactory = () => blocServiceInstance;
+
+            // 2. Instancier les services dans un ordre qui permet de briser les cycles.
+            // On peut commencer par BlocService car sa dépendance Func<TacheService> ne s'active qu'à l'appel.
+            blocServiceInstance = new BlocService(tacheServiceFactory);
+
+            // Ensuite TacheService, qui a besoin des factories de ProjetService et BlocService.
+            tacheServiceInstance = new TacheService(
+                csvDataService,
+                excelReader,
+                projetServiceFactory, // Factory vers ProjetService
+                lotService,
+                blocServiceFactory // Factory vers BlocService
+            );
+
+            // Enfin ProjetService, qui a besoin des factories de TacheService et BlocService.
+            projetServiceInstance = new ProjetService(
+                ouvrierService,
+                tacheServiceFactory, // Factory vers TacheService
+                csvDataService,
+                lotService,
+                blocServiceFactory // Factory vers BlocService
+            );
+
+            // Assigner l'instance de ProjetService à la variable de classe de test
+            _projetService = projetServiceInstance;
+
+            // Le DependanceBuilder dépend de ProjetService directement
+            _dependanceBuilder = new DependanceBuilder(_projetService);
+
+            // Initialiser les métiers pour les tests qui en ont besoin
+            // (La logique de setup spécifique aux métiers est déjà dans les tests individuels via _projetService.RemplacerTousLesMetiers)
         }
 
         #region Tests de Base et Validation
 
         [TestMethod]
         [TestCategory("Unit - Validation")]
-        public void Constructor_AvecMetierServiceNull_DoitLeverArgumentNullException()
+        public void Constructor_AvecProjetServiceNull_DoitLeverArgumentNullException()
         {
             Assert.ThrowsException<ArgumentNullException>(() => new DependanceBuilder(null));
         }
@@ -108,7 +157,7 @@ namespace PlanAthenaTests.Utilities
                 new Metier { MetierId = "M1", Nom = "Métier 1", PrerequisMetierIds = "" },
                 new Metier { MetierId = "M2", Nom = "Métier 2", PrerequisMetierIds = "M1" }
             };
-            _metierService.RemplacerTousLesMetiers(metiers);
+            _projetService.RemplacerTousLesMetiers(metiers);
 
             var taches = new List<Tache>
             {
@@ -138,7 +187,7 @@ namespace PlanAthenaTests.Utilities
                 new Metier { MetierId = "M1", Nom = "Métier 1", PrerequisMetierIds = "" },
                 new Metier { MetierId = "M2", Nom = "Métier 2", PrerequisMetierIds = "M1" }
             };
-            _metierService.RemplacerTousLesMetiers(metiers);
+            _projetService.RemplacerTousLesMetiers(metiers);
 
             var taches = new List<Tache>
             {
@@ -193,7 +242,7 @@ namespace PlanAthenaTests.Utilities
                 new Metier { MetierId = "M1", Nom = "Maçonnerie", PrerequisMetierIds = "" },
                 new Metier { MetierId = "M2", Nom = "Plaquerie", PrerequisMetierIds = "M1" }
             };
-            _metierService.RemplacerTousLesMetiers(metiers);
+            _projetService.RemplacerTousLesMetiers(metiers);
 
             var taches = new List<Tache>
             {
@@ -221,7 +270,7 @@ namespace PlanAthenaTests.Utilities
             {
                 new Metier { MetierId = "M1", Nom = "Métier 1", PrerequisMetierIds = "" }
             };
-            _metierService.RemplacerTousLesMetiers(metiers);
+            _projetService.RemplacerTousLesMetiers(metiers);
 
             var taches = new List<Tache>
             {
@@ -255,7 +304,7 @@ namespace PlanAthenaTests.Utilities
                 new Metier { MetierId = "M2", Nom = "Huisserie", PrerequisMetierIds = "M1" },
                 new Metier { MetierId = "M3", Nom = "Plaquerie", PrerequisMetierIds = "M2" }
             };
-            _metierService.RemplacerTousLesMetiers(metiers);
+            _projetService.RemplacerTousLesMetiers(metiers);
 
             var taches = new List<Tache>
             {
@@ -287,7 +336,7 @@ namespace PlanAthenaTests.Utilities
                 new Metier { MetierId = "M3", Nom = "Huisserie", PrerequisMetierIds = "M2" },
                 new Metier { MetierId = "M4", Nom = "Plaquerie", PrerequisMetierIds = "M3" }
             };
-            _metierService.RemplacerTousLesMetiers(metiers);
+            _projetService.RemplacerTousLesMetiers(metiers);
 
             var taches = new List<Tache>
             {
@@ -321,7 +370,7 @@ namespace PlanAthenaTests.Utilities
                 new Metier { MetierId = "M1", Nom = "Maçonnerie", PrerequisMetierIds = "" },
                 new Metier { MetierId = "M2", Nom = "Plaquerie", PrerequisMetierIds = "M1" }
             };
-            _metierService.RemplacerTousLesMetiers(metiers);
+            _projetService.RemplacerTousLesMetiers(metiers);
 
             var taches = new List<Tache>
             {
@@ -365,7 +414,7 @@ namespace PlanAthenaTests.Utilities
                 new Metier { MetierId = "M1", Nom = "Maçonnerie", PrerequisMetierIds = "" },
                 new Metier { MetierId = "M2", Nom = "Plaquerie", PrerequisMetierIds = "M1" }
             };
-            _metierService.RemplacerTousLesMetiers(metiers);
+            _projetService.RemplacerTousLesMetiers(metiers);
 
             var taches = new List<Tache>
             {
@@ -486,7 +535,7 @@ namespace PlanAthenaTests.Utilities
                 new Metier { MetierId = "M1", Nom = "Métier 1", PrerequisMetierIds = "" },
                 new Metier { MetierId = "M2", Nom = "Métier 2", PrerequisMetierIds = "M1" }
             };
-            _metierService.RemplacerTousLesMetiers(metiers);
+            _projetService.RemplacerTousLesMetiers(metiers);
 
             var taches = new List<Tache>
             {
@@ -523,7 +572,7 @@ namespace PlanAthenaTests.Utilities
                 new Metier { MetierId = "M1", Nom = "Métier 1", PrerequisMetierIds = "" },
                 new Metier { MetierId = "M2", Nom = "Métier 2", PrerequisMetierIds = "M1" }
             };
-            _metierService.RemplacerTousLesMetiers(metiers);
+            _projetService.RemplacerTousLesMetiers(metiers);
 
             var taches = new List<Tache>
             {
@@ -570,7 +619,7 @@ namespace PlanAthenaTests.Utilities
                 new Metier { MetierId = "ELECT_01", Nom = "Electricite Special", PrerequisMetierIds = "MACON_01" },
                 new Metier { MetierId = "PLAQUIST", Nom = "Plaquerie", PrerequisMetierIds = "BOISPoFe,ELECT_01,PLOMB_01" }
             };
-            _metierService.RemplacerTousLesMetiers(metiers);
+            _projetService.RemplacerTousLesMetiers(metiers);
 
             var taches = new List<Tache>
             {
@@ -631,7 +680,7 @@ namespace PlanAthenaTests.Utilities
                 new Metier { MetierId = "M1", Nom = "Métier 1", PrerequisMetierIds = "" },
                 new Metier { MetierId = "M2", Nom = "Métier 2", PrerequisMetierIds = "M1" }
             };
-            _metierService.RemplacerTousLesMetiers(metiers);
+            _projetService.RemplacerTousLesMetiers(metiers);
 
             var taches = new List<Tache>();
             for (int i = 1; i <= 50; i++)
@@ -667,7 +716,7 @@ namespace PlanAthenaTests.Utilities
             {
                 new Metier { MetierId = "M1", Nom = "Métier 1", PrerequisMetierIds = "" }
             };
-            _metierService.RemplacerTousLesMetiers(metiers);
+            _projetService.RemplacerTousLesMetiers(metiers);
 
             var taches = new List<Tache>
             {
@@ -690,7 +739,7 @@ namespace PlanAthenaTests.Utilities
 
         #region Tests de Cas Limites
 
-        
+
         [TestMethod]
         [TestCategory("Unit - Cas Limites")]
         public void ObtenirDependancesPourTache_AvecDependancesMalformees_DoitParserCorrectement()

@@ -10,7 +10,7 @@ namespace PlanAthena.Forms
     public partial class TacheDetailForm : System.Windows.Forms.Form
     {
         private readonly TacheService _tacheService;
-        private readonly MetierService _metierService;
+        private readonly ProjetService _projetService;
         private readonly LotService _lotService;
         private readonly BlocService _blocService;
         private readonly DependanceBuilder _dependanceBuilder;
@@ -22,7 +22,7 @@ namespace PlanAthena.Forms
 
         public event EventHandler TacheSauvegardee;
 
-        public TacheDetailForm(TacheService tacheService, MetierService metierService, LotService lotService, BlocService blocService, DependanceBuilder dependanceBuilder)
+        public TacheDetailForm(TacheService tacheService, ProjetService projetService, LotService lotService, BlocService blocService, DependanceBuilder dependanceBuilder)
         {
             InitializeComponent();
 
@@ -41,7 +41,7 @@ namespace PlanAthena.Forms
             chkListDependances.MouseMove += chkListDependances_MouseMove;
 
             _tacheService = tacheService;
-            _metierService = metierService;
+            _projetService = projetService;
             _lotService = lotService;
             _blocService = blocService;
             _dependanceBuilder = dependanceBuilder;
@@ -58,7 +58,7 @@ namespace PlanAthena.Forms
             try
             {
                 var metiersPourListe = new List<Metier> { new Metier { MetierId = "", Nom = "(Aucun métier assigné)" } };
-                metiersPourListe.AddRange(_metierService.GetAllMetiers().OrderBy(m => m.Nom));
+                metiersPourListe.AddRange(_projetService.GetAllMetiers().OrderBy(m => m.Nom));
                 cmbMetier.DataSource = null;
                 cmbMetier.DataSource = metiersPourListe;
                 cmbMetier.DisplayMember = "Nom";

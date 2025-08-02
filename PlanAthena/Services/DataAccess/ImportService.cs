@@ -14,20 +14,20 @@ namespace PlanAthena.Services.DataAccess
         private readonly TacheService _tacheService;
         private readonly LotService _lotService;
         private readonly BlocService _blocService;
-        private readonly MetierService _metierService;
+        private readonly ProjetService _projetService;
         private readonly IdGeneratorService _idGenerator;
 
         public ImportService(
             TacheService tacheService,
             LotService lotService,
             BlocService blocService,
-            MetierService metierService,
+            ProjetService projetService,
             IdGeneratorService idGenerator)
         {
             _tacheService = tacheService ?? throw new ArgumentNullException(nameof(tacheService));
             _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
             _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
-            _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
+            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
             _idGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
         }
 
@@ -119,7 +119,7 @@ namespace PlanAthena.Services.DataAccess
                 // pour fournir des avertissements complets.
                 if (!string.IsNullOrEmpty(mappingConfig.CsvColumn_MetierId))
                 {
-                    var allExistingMetiers = _metierService.GetAllMetiers().Select(m => m.MetierId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                    var allExistingMetiers = _projetService.GetAllMetiers().Select(m => m.MetierId).ToHashSet(StringComparer.OrdinalIgnoreCase);
                     var missingMetiersInFullData = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
                     foreach (var rowData in allCsvData)

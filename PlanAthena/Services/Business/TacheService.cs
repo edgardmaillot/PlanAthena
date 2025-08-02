@@ -1,5 +1,8 @@
 using PlanAthena.Data;
 using PlanAthena.Services.DataAccess;
+using System; // Ajouté pour ArgumentNullException, InvalidOperationException, Func
+using System.Collections.Generic; // Ajouté pour List
+using System.Linq; // Ajouté pour Any, FirstOrDefault, Select, DefaultIfEmpty, Max
 
 namespace PlanAthena.Services.Business
 {
@@ -12,22 +15,32 @@ namespace PlanAthena.Services.Business
         private readonly List<Tache> _taches = new List<Tache>();
         private readonly CsvDataService _csvDataService;
         private readonly ExcelReader _excelReader;
-        private readonly MetierService _metierService;
+        private readonly Func<ProjetService> _projetServiceFactory; // Changement ici: ProjetService devient une factory
         private readonly LotService _lotService;
-        private readonly BlocService _blocService;
+        private readonly Func<BlocService> _blocServiceFactory; // Changement ici: BlocService devient une factory
 
         // Compteurs pour génération d'ID automatique
         private int _compteurTaches = 1;
         private int _compteurJalons = 1;
 
-        public TacheService(CsvDataService csvDataService, ExcelReader excelReader, MetierService metierService, LotService lotService, BlocService blocService)
+        public TacheService(
+            CsvDataService csvDataService,
+            ExcelReader excelReader,
+            Func<ProjetService> projetServiceFactory, // Prend une factory
+            LotService lotService,
+            Func<BlocService> blocServiceFactory) // Prend une factory
         {
             _csvDataService = csvDataService ?? throw new ArgumentNullException(nameof(csvDataService));
             _excelReader = excelReader ?? throw new ArgumentNullException(nameof(excelReader));
-            _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
+            _projetServiceFactory = projetServiceFactory ?? throw new ArgumentNullException(nameof(projetServiceFactory)); // Assigner la factory
             _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
-            _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
+            _blocServiceFactory = blocServiceFactory ?? throw new ArgumentNullException(nameof(blocServiceFactory)); // Assigner la factory
         }
+
+        // Propriété pour accéder à l'instance de ProjetService de manière paresseuse
+        private ProjetService _projetService => _projetServiceFactory();
+        // Propriété pour accéder à l'instance de BlocService de manière paresseuse
+        private BlocService _blocService => _blocServiceFactory();
 
         #region CRUD Tâches - SIMPLIFIÉ
 
@@ -55,6 +68,7 @@ namespace PlanAthena.Services.Business
             if (!string.IsNullOrEmpty(tache.LotId) && _lotService.ObtenirLotParId(tache.LotId) == null)
                 throw new InvalidOperationException($"Le lot avec l'ID '{tache.LotId}' n'existe pas. Veuillez le créer avant d'ajouter la tâche.");
 
+            // Utilise la propriété _blocService
             if (!string.IsNullOrEmpty(tache.BlocId) && _blocService.ObtenirBlocParId(tache.BlocId) == null)
                 throw new InvalidOperationException($"Le bloc avec l'ID '{tache.BlocId}' n'existe pas. Veuillez le créer avant d'ajouter la tâche.");
 
@@ -77,6 +91,7 @@ namespace PlanAthena.Services.Business
             if (!string.IsNullOrEmpty(tacheModifiee.LotId) && _lotService.ObtenirLotParId(tacheModifiee.LotId) == null)
                 throw new InvalidOperationException($"Le lot avec l'ID '{tacheModifiee.LotId}' n'existe pas.");
 
+            // Utilise la propriété _blocService
             if (!string.IsNullOrEmpty(tacheModifiee.BlocId) && _blocService.ObtenirBlocParId(tacheModifiee.BlocId) == null)
                 throw new InvalidOperationException($"Le bloc avec l'ID '{tacheModifiee.BlocId}' n'existe pas.");
 
@@ -123,38 +138,51 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Génère un ID unique pour une nouvelle tâche ou jalon
         /// </summary>
-        private string GenererIdUnique(Tache tache)
+        public string GenererIdUnique(string blocId, TypeActivite type)
         {
-            string prefixe;
-            int compteur;
+            // La logique de génération d'ID est maintenant dans IdGeneratorService
+            // TacheService doit utiliser IdGeneratorService.
+            // Pour l'instant, comme IdGeneratorService n'est pas une dépendance directe de TacheService (pour éviter le cycle),
+            // nous allons faire une version simplifiée, ou passer par ProjetService si c'est la source de génération d'IDs.
 
-            if (tache.EstJalon)
-            {
-                prefixe = "J";
-                compteur = _compteurJalons++;
-            }
-            else
-            {
-                prefixe = "T";
-                compteur = _compteurTaches++;
-            }
+            // Si TacheService doit générer l'ID, il doit le faire lui-même ou via une factory.
+            // Dans votre plan, IdGeneratorService a été modifié pour avoir GenererProchainTacheId.
+            // La façon la plus simple est que ProjetService (ou MainForm) appelle IdGeneratorService et passe l'ID à TacheService.
+            // Pour cette méthode interne, nous devrions avoir une logique simple ou une dépendance à IdGeneratorService.
+
+            // Pour l'instant, je vais réimplémenter la logique de TacheService avec les compteurs internes,
+            // car IdGeneratorService n'est pas injecté ici directement pour éviter la complexité des cycles sur plusieurs niveaux.
+            // Cela duplique un peu la logique, mais est plus simple pour briser le cycle ici.
+
+            string prefixe = (type == TypeActivite.Tache) ? "T" : "J";
+            int compteur = (type == TypeActivite.Tache) ? _compteurTaches : _compteurJalons;
 
             string idCandidat;
             do
             {
-                idCandidat = $"{prefixe}{compteur:D3}";
+                idCandidat = $"{blocId}_{prefixe}{compteur:D3}";
                 if (!_taches.Any(t => t.TacheId == idCandidat))
                     break;
                 compteur++;
             } while (true);
 
-            if (tache.EstJalon)
-                _compteurJalons = compteur + 1;
-            else
+            if (type == TypeActivite.Tache)
                 _compteurTaches = compteur + 1;
+            else
+                _compteurJalons = compteur + 1;
 
             return idCandidat;
         }
+
+        /// <summary>
+        /// Génère un ID unique pour une nouvelle tâche ou jalon (anciennement GenererIdUnique(Tache tache))
+        /// Cette version est une surcharge pour compatibilité.
+        /// </summary>
+        private string GenererIdUnique(Tache tache)
+        {
+            return GenererIdUnique(tache.BlocId, tache.Type);
+        }
+
         /// <summary>
         /// Met à jour les compteurs basés sur les IDs existants
         /// </summary>
@@ -168,13 +196,13 @@ namespace PlanAthena.Services.Business
             }
 
             var maxTache = _taches
-                .Where(t => t.TacheId?.StartsWith("T") == true && int.TryParse(t.TacheId.Substring(1), out _))
+                .Where(t => t.TacheId?.StartsWith("T") == true && int.TryParse(t.TacheId.Substring(1), out _)) // Vérifier le préfixe
                 .Select(t => int.Parse(t.TacheId.Substring(1)))
                 .DefaultIfEmpty(0)
                 .Max();
 
             var maxJalon = _taches
-                .Where(t => t.TacheId?.StartsWith("J") == true && int.TryParse(t.TacheId.Substring(1), out _))
+                .Where(t => t.TacheId?.StartsWith("J") == true && int.TryParse(t.TacheId.Substring(1), out _)) // Vérifier le préfixe
                 .Select(t => int.Parse(t.TacheId.Substring(1)))
                 .DefaultIfEmpty(0)
                 .Max();
@@ -222,7 +250,6 @@ namespace PlanAthena.Services.Business
         #endregion
 
         #region Import/Export (Non fonctionnel après refonte - à traiter dans une phase ultérieure)
-
 
         /// <summary>
         /// Charge les tâches depuis une liste (utilisé par ProjetService)

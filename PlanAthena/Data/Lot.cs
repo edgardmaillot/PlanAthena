@@ -10,5 +10,6 @@ namespace PlanAthena.Data
         public string Nom { get; set; } = "";
         public int Priorite { get; set; }
         public string CheminFichierPlan { get; set; } = "";
+        public ChantierPhase Phases { get; set; } = ChantierPhase.None;
     }
 }

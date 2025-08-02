@@ -2,7 +2,7 @@
 
 using Microsoft.Msagl.Drawing;
 using PlanAthena.Data;
-using PlanAthena.Services.Business;
+using PlanAthena.Services.Business; // Inclut maintenant ProjetService
 using MsaglColor = Microsoft.Msagl.Drawing.Color;
 
 namespace PlanAthena.Controls.Config
@@ -15,12 +15,12 @@ namespace PlanAthena.Controls.Config
     public class PertNodeBuilder
     {
         private readonly PertDiagramSettings _settings;
-        private readonly MetierService _metierService;
+        private readonly ProjetService _projetService; // Remplacé MetierService par ProjetService
 
-        public PertNodeBuilder(PertDiagramSettings settings, MetierService metierService)
+        public PertNodeBuilder(PertDiagramSettings settings, ProjetService projetService) // Changement ici
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
-            _metierService = metierService ?? throw new ArgumentNullException(nameof(metierService));
+            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService)); // Changement ici
         }
 
         public Node BuildNodeFromTache(Tache tache, Graph graph)
@@ -43,7 +43,10 @@ namespace PlanAthena.Controls.Config
                     : _settings.JalonSansDureeIcon;
             }
 
-            var metierAffiche = !string.IsNullOrEmpty(tache.MetierId) ? tache.MetierId : _settings.UnassignedMetierLabel;
+            var metier = _projetService.GetMetierById(tache.MetierId); // Récupérer le métier
+            string metierAffiche = metier != null ? metier.Nom : _settings.UnassignedMetierLabel; // Nom du métier
+            string pictogrammeAffiche = metier != null && !string.IsNullOrEmpty(metier.Pictogram) ? $"({metier.Pictogram})" : ""; // Pictogramme
+
             var dependancesCount = !string.IsNullOrEmpty(tache.Dependencies) ? tache.Dependencies.Split(',').Length : 0;
 
             if (dependancesCount > 0)
@@ -51,7 +54,7 @@ namespace PlanAthena.Controls.Config
                 return string.Format(_settings.TacheLabelFormatAvecDeps,
                     tache.TacheId,
                     TronquerTexte(tache.TacheNom, _settings.TacheNomMaxLength),
-                    TronquerTexte(metierAffiche, _settings.MetierNomMaxLength),
+                    TronquerTexte($"{metierAffiche} {pictogrammeAffiche}".Trim(), _settings.MetierNomMaxLength), // Inclure le pictogramme
                     tache.HeuresHommeEstimees,
                     dependancesCount);
             }
@@ -59,7 +62,7 @@ namespace PlanAthena.Controls.Config
             return string.Format(_settings.TacheLabelFormat,
                 tache.TacheId,
                 TronquerTexte(tache.TacheNom, _settings.TacheNomMaxLength),
-                TronquerTexte(metierAffiche, _settings.MetierNomMaxLength),
+                TronquerTexte($"{metierAffiche} {pictogrammeAffiche}".Trim(), _settings.MetierNomMaxLength), // Inclure le pictogramme
                 tache.HeuresHommeEstimees);
         }
 
@@ -97,7 +100,7 @@ namespace PlanAthena.Controls.Config
             }
 
             // On demande la couleur au service, qui fait tout le travail !
-            var systemColor = _metierService.GetDisplayColorForMetier(tache.MetierId);
+            var systemColor = _projetService.GetDisplayColorForMetier(tache.MetierId); // Changement ici
 
             // On convertit simplement le résultat en couleur MSAGL
             return new MsaglColor(systemColor.R, systemColor.G, systemColor.B);
