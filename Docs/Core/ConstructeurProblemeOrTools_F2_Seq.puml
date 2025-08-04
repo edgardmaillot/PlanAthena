@@ -1,55 +1,85 @@
 @startuml
-title Diagramme de Séquence "Zoom" : CoutModelBuilder.Construire
+title Diagramme de Séquence "Zoom" : TacheModelBuilder.Construire (CORRIGÉ v2)
 
 participant "constructeur: Constructeur..." as Constructeur
-participant "coutBuilder: CoutModelBuilder" as Builder
+participant "tacheBuilder: TacheModelBuilder" as Builder
 participant "model: CpModel" as Model
 
-Constructeur -> Builder : Construire(model, probleme, intervals, assignables, makespan)
+Constructeur -> Builder : Construire(model, probleme)
 activate Builder
 
-Builder -> Builder : PreparerCachesTemporels(echelleTemps)
+Builder -> Builder : CreerPontTemporel(probleme.EchelleTemps)
 activate Builder
-note right: Met en cache les listes de slots par jour\npour optimiser les calculs suivants.
+note right: Calcule un tableau de mapping\n[index_slot] -> heure_absolue_depuis_début\n**STOCKÉ dans _mapSlotToHeureAbsolue**
 deactivate Builder
 
-group Calcul des Coûts RH
-    note over Builder
-        Crée les variables `ouvrierTravailleLeJour`
-        pour chaque (ouvrier, jour) possible.
-    end note
-    
-    loop pour chaque (ouvrierId, jour)
-        note over Builder
-            Lie `ouvrierTravailleLeJour` aux assignations de tâches
-            qui chevauchent ce jour-là.
-        end note
-        Builder -> Model : AddMaxEquality(...)
-    end
+group Création des variables de décision
+    loop pour chaque Tache dans chantier.ObtenirToutesLesTaches()
+        
+        alt tache.Type == TypeActivite.Tache
+            note over Builder: **Tâche normale (modélisée en slots)**
+            Builder -> Model : NewIntVar(start, end, size, ...)
+            activate Model
+            Model --> Builder : intervalVar
+            deactivate Model
+            note right of Model: Durée = HeuresHommeEstimees\nRespect du calendrier ouvré
+            
+            opt si durée <= heures_par_jour
+                Builder -> Model : AddModuloEquality(...)
+                note right: Contrainte NoSplitOverDays\nÉvite le chevauchement jour/nuit
+            end
+            
+        else tache.Type != TypeActivite.Tache
+            note over Builder: **Jalon (système dual : heures absolues + slots)**
+            Builder -> Model : NewIntVar(startAbsolu, endAbsolu)
+            note right: Variables en HEURES RÉELLES (24h/24)\npour la vraie durée du jalon
+            
+            Builder -> Model : Add(endAbsolu == startAbsolu + dureeHeures)
+            note right: Jalon s'écoule en temps continu\n(ignore le calendrier ouvré)
 
-    loop pour chaque (key, travailleCeJourVar)
-        note over Builder: `cout = travailleCeJourVar * coutJournalierOuvrier`
+            Builder -> Model : NewIntervalVar(startSlot, 1, ...)
+            activate Model
+            Model --> Builder : intervalVar
+            deactivate Model
+            note right of Model: IntervalVar cosmétique (taille = 1)\npour intégration dans contraintes
+
+            Builder -> Model : AddElement(startSlot, mapPontTemporel, startAbsolu)
+            note right: Synchronisation entre temps réel\net représentation en slots
+        end
+
+        loop pour chaque Ouvrier compétent
+            Builder -> Model : NewBoolVar(estAssignable)
+        end
     end
 end group
 
+group Ajout des contraintes
+    Builder -> Builder : AjouterContraintesAssignationUnique(...)
+    activate Builder
+    note right: Pour chaque tâche, ajoute une contrainte\n`model.AddExactlyOne(candidats)`
+    deactivate Builder
 
-group Calcul des Coûts Indirects
-    note over Builder
-        Crée les variables `jourActif` pour chaque
-        jour du planning.
-    end note
-
-    loop pour chaque jour
-        Builder -> Model : Add(makespan > jourStartSlot).OnlyEnforceIf(jourActif)
-        note right: Le jour est "actif" si le makespan\n(fin du chantier) est après son début.
-    end
+    Builder -> Builder : AjouterContraintesRessources(...)
+    activate Builder
+    note right: Pour chaque ouvrier, ajoute une contrainte\n`model.AddNoOverlap(intervallesOptionnels)`
+    deactivate Builder
     
-    note over Builder: `cout = totalJoursActifs * coutIndirectParJour`
+    Builder -> Builder : AjouterContraintesDePrecedence(...)
+    activate Builder
+    note right: DISTINCTION selon types :\n• Tâche->Tâche : contrainte slots\n• Jalon->Tâche : contrainte heures absolues\n• Jalon->Jalon : contrainte heures absolues
+    deactivate Builder
+
+    Builder -> Builder : AjouterContraintesDePrecedenceParPriorite(...)
+    activate Builder
+    note right: **CONTRAINTES ENTRE LOTS** :\nPriorité N doit finir avant priorité N+1\n✅ CORRIGÉ : Jalons d'attente en fin de lot\npris en compte via ConvertirHeureAbsolueEnSlot()
+    deactivate Builder
 end
 
-Builder -> Model : NewIntVar(coutRh, coutIndirect, coutTotal)
-Builder -> Model : Add(coutTotal == coutRh + coutIndirect)
+Builder -> Model : NewIntVar(makespan)
+Builder -> Model : AddMaxEquality(makespan, all_task_ends)
 
-Builder --> Constructeur : (coutTotal, coutRh, coutIndirect)
+Builder --> Constructeur : (intervals, assignables, makespan, lotStarts, lotEnds, ...)
+note right: **ÉTENDU** : Retourne aussi les variables\nde début/fin de lots et groupes de priorité\n✅ Fins de lot incluent vraies fins des jalons
 deactivate Builder
+
 @enduml

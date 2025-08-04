@@ -70,12 +70,12 @@ namespace PlanAthena.Controls.Config
         #region Labels & Texte
 
         public string JalonAvecDureeIcon { get; set; } = "⏳";
-        public string JalonSansDureeIcon { get; set; } = "◆";
+        public string JalonSansDureeIcon { get; set; } = "⚙️";
         public string UnassignedMetierLabel { get; set; } = "❌ Non assigné";
-        public int TacheNomMaxLength { get; set; } = 20;
+        public int TacheNomMaxLength { get; set; } = 26;
         public int MetierNomMaxLength { get; set; } = 18;
-        public string TacheLabelFormat { get; set; } = "🏷️ {0}\n{1}\n👨‍💼 {2}\n⏱️ {3}h";
-        public string TacheLabelFormatAvecDeps { get; set; } = "🏷️ {0}\n{1}\n👨‍💼 {2}\n⏱️ {3}h\n🔗 {4} dép.";
+        public string TacheLabelFormat { get; set; } = "⚒ {0}\n\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\n{1}\n\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\n👨‍💼 {2}\n⏱️ {3}h";
+        public string TacheLabelFormatAvecDeps { get; set; } = "⚒ {0}\n\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\n{1}\n\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\t─\n👨‍💼 {2}\n⏱️ {3}h          🔗 {4} dép.";
 
         #endregion
 

@@ -30,6 +30,9 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
         private Dictionary<int, IntVar> _priorityGroupStarts = new();
         private Dictionary<int, IntVar> _priorityGroupEnds = new();
 
+        // AJOUT : Stockage du pont temporel pour la conversion heures absolues -> slots
+        // Nécessaire pour corriger le calcul des fins de lot avec jalons d'attente
+        private long[] _mapSlotToHeureAbsolue = Array.Empty<long>();
 
         // La méthode Construire est le point d'entrée pour la création des variables et contraintes
         // du modèle CP-SAT spécifiques aux tâches, ressources et précédences.
@@ -65,18 +68,20 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
 
             // Crée une "passerelle" entre les indices de slots temporels (utilisés par CP-SAT)
             // et les heures absolues (pour les calculs de durée réels et les jalons).
-            var mapSlotToHeureAbsolue = CreerPontTemporel(probleme.EchelleTemps);
+            // MODIFICATION : Stockage dans le champ privé pour réutilisation
+            _mapSlotToHeureAbsolue = CreerPontTemporel(probleme.EchelleTemps);
 
             // Création des variables de décision pour chaque tâche et ses potentielles assignations.
-            CreerVariablesDeDecision(model, probleme, tachesAssignables, tachesIntervals, mapSlotToHeureAbsolue);
+            CreerVariablesDeDecision(model, probleme, tachesAssignables, tachesIntervals, _mapSlotToHeureAbsolue);
             // Ajout des contraintes assurant que chaque tâche est assignée à exactement un ouvrier compétent.
             AjouterContraintesAssignationUnique(model, chantier, tachesAssignables);
             // Ajout des contraintes de ressources, empêchant les chevauchements pour chaque ouvrier.
             AjouterContraintesRessources(model, chantier, tachesIntervals, tachesAssignables);
             // Ajout des contraintes de précédence entre tâches individuelles (s'il y en a).
-            AjouterContraintesDePrecedence(model, chantier, tachesIntervals, mapSlotToHeureAbsolue);
+            AjouterContraintesDePrecedence(model, chantier, tachesIntervals, _mapSlotToHeureAbsolue);
 
             // AJOUT : Ajout des contraintes de précédence strictes basées sur les niveaux de priorité des lots.
+            // CORRECTION : Prise en compte des vraies fins des jalons d'attente
             AjouterContraintesDePrecedenceParPriorite(model, probleme, tachesIntervals);
 
             // Calcul de la borne supérieure pour le makespan (durée totale du projet).
@@ -319,6 +324,7 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
         // AJOUT : Nouvelle méthode pour ajouter les contraintes de précédence basées sur les niveaux de priorité des lots.
         // Cette méthode assure que tous les lots d'un niveau de priorité N doivent se terminer
         // avant que n'importe quel lot d'un niveau de priorité N+1 (ou supérieur) ne puisse commencer.
+        // CORRECTION : Prend maintenant en compte les vraies fins des jalons d'attente en fin de lot.
         private void AjouterContraintesDePrecedenceParPriorite(
             CpModel model,
             ProblemeOptimisation probleme,
@@ -328,11 +334,12 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
             long horizonEnSlots = probleme.EchelleTemps.NombreTotalSlots;
 
             // PARTIE 1 : Calculer le début et la fin pour chaque lot individuel.
-            // Ces variables agrégées pour chaque lot sont nécessaires pour ensuite
-            // calculer les débuts et fins des groupes de priorité.
+            // CORRECTION : Prendre en compte la vraie fin des jalons pour les fins de lot
             foreach (var lot in chantier.Lots.Values)
             {
                 var tasksInLotIntervals = new List<IntervalVar>();
+                var jalonFinsDansLot = new List<IntVar>(); // NOUVEAU : collecter les vraies fins des jalons
+
                 // Rassembler toutes les IntervalVar des tâches appartenant à ce lot.
                 // Cela implique de parcourir les blocs pour identifier leurs tâches, puis vérifier l'appartenance au lot.
                 foreach (var bloc in chantier.Blocs.Values.Where(b => b.LotParentId == lot.Id))
@@ -342,6 +349,19 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
                         if (tachesIntervals.TryGetValue(tacheId, out var intervalVar))
                         {
                             tasksInLotIntervals.Add(intervalVar);
+
+                            // NOUVEAU : Si c'est un jalon, ajouter sa vraie fin absolue convertie en slots
+                            if (_typesActivites.TryGetValue(tacheId, out var typeActivite) &&
+                                typeActivite != TypeActivite.Tache &&
+                                _jalonEndAbsolu.TryGetValue(tacheId, out var jalonEndAbs))
+                            {
+                                // Convertir la fin absolue du jalon en équivalent slot
+                                var jalonEndEnSlots = ConvertirHeureAbsolueEnSlot(
+                                    model, jalonEndAbs, _mapSlotToHeureAbsolue, horizonEnSlots,
+                                    $"jalon_end_slots_{tacheId.Value}");
+
+                                jalonFinsDansLot.Add(jalonEndEnSlots);
+                            }
                         }
                     }
                 }
@@ -363,9 +383,15 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
                 model.AddMinEquality(lotStart, tasksInLotIntervals.Select(t => t.StartExpr()));
                 _lotStarts.Add(lot.Id, lotStart);
 
-                // La fin d'un lot est le moment de fin de sa dernière tâche.
+                // CORRECTION : La fin d'un lot prend en compte les vraies fins des jalons
                 var lotEnd = model.NewIntVar(0, horizonEnSlots + 1, $"lot_end_{lot.Id.Value}"); // +1 car la fin peut être à l'horizon max + 1 (pour la durée)
-                model.AddMaxEquality(lotEnd, tasksInLotIntervals.Select(t => t.EndExpr()));
+
+                // Combiner les fins normales des IntervalVar ET les vraies fins des jalons
+                var toutesLesFinsDuLot = new List<LinearExpr>();
+                toutesLesFinsDuLot.AddRange(tasksInLotIntervals.Select(t => t.EndExpr()));
+                toutesLesFinsDuLot.AddRange(jalonFinsDansLot.Cast<LinearExpr>());
+
+                model.AddMaxEquality(lotEnd, toutesLesFinsDuLot);
                 _lotEnds.Add(lot.Id, lotEnd);
             }
 
@@ -438,6 +464,54 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
                 // Met à jour la variable pour le prochain groupe de priorité dans la séquence.
                 previousPriorityGroupEnd = currentPriorityGroupEnd;
             }
+        }
+
+        // NOUVELLE MÉTHODE : Convertit une variable d'heure absolue en variable de slot équivalent.
+        // Cette méthode résout le problème principal : quand un jalon d'attente termine un lot,
+        // sa vraie fin (en heures absolues) doit être prise en compte pour le calcul de la fin du lot.
+        // Utilise le pont temporel inverse pour maintenir la cohérence avec le système existant.
+        private IntVar ConvertirHeureAbsolueEnSlot(
+            CpModel model,
+            IntVar heureAbsolue,
+            long[] mapSlotToHeureAbsolue,
+            long horizonEnSlots,
+            string nomVariable)
+        {
+            var slotCorrespondant = model.NewIntVar(0, horizonEnSlots, nomVariable);
+
+            // Cas particulier : si pas de mapping temporel, retourner directement l'heure comme slot
+            if (mapSlotToHeureAbsolue.Length == 0)
+            {
+                model.Add(slotCorrespondant == heureAbsolue);
+                return slotCorrespondant;
+            }
+
+            // Créer le mapping inverse : pour chaque heure absolue possible, 
+            // trouver le slot correspondant (le premier slot >= cette heure)
+            var maxHeureAbsolue = mapSlotToHeureAbsolue.Max();
+            var mapInverse = new long[maxHeureAbsolue + 1];
+
+            for (int heure = 0; heure <= maxHeureAbsolue; heure++)
+            {
+                // Trouver le premier slot dont l'heure absolue est >= heure
+                long slotTrouve = horizonEnSlots; // Par défaut, fin d'horizon
+                for (int slot = 0; slot < mapSlotToHeureAbsolue.Length; slot++)
+                {
+                    if (mapSlotToHeureAbsolue[slot] >= heure)
+                    {
+                        slotTrouve = slot;
+                        break;
+                    }
+                }
+                mapInverse[heure] = slotTrouve;
+            }
+
+            // Utiliser AddElement pour la conversion inverse
+            // Cette contrainte assure que slotCorrespondant pointe vers le bon slot
+            // pour représenter la fin réelle du jalon dans le système de slots
+            model.AddElement(heureAbsolue, mapInverse, slotCorrespondant);
+
+            return slotCorrespondant;
         }
     }
 }

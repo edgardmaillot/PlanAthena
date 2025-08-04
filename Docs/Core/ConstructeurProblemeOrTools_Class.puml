@@ -5,7 +5,7 @@ skinparam linetype ortho
 skinparam ranksep 60
 skinparam nodesep 90
 
-title Diagramme de Classe : Construction du Modèle de Résolution
+title Diagramme de Classe : Construction du Modèle de Résolution (CORRIGÉ v2)
 
 package "Infrastructure.Services.OrTools" {
     class ConstructeurProblemeOrTools implements IConstructeurProblemeOrTools {
@@ -13,18 +13,41 @@ package "Infrastructure.Services.OrTools" {
     }
 
     class TacheModelBuilder {
-        + Construire(model, probleme): (intervals, assignables, makespan)
+        + Construire(model, probleme): (intervals, assignables, makespan, ...)
         -- private --
         - CreerVariablesDeDecision(...)
         - AjouterContraintesAssignationUnique(...)
         - AjouterContraintesRessources(...)
         - AjouterContraintesDePrecedence(...)
+        - AjouterContraintesDePrecedenceParPriorite(...)
+        - CreerPontTemporel(...)
+        - CalculerBorneSuperieureMakespan(...)
+        - ConvertirHeureAbsolueEnSlot(...) // NOUVEAU
+        -- Champs privés --
+        - _jalonStartAbsolu: Dictionary<TacheId, IntVar>
+        - _jalonEndAbsolu: Dictionary<TacheId, IntVar>
+        - _dureesOriginales: Dictionary<TacheId, double>
+        - _typesActivites: Dictionary<TacheId, TypeActivite>
+        - _nomsActivites: Dictionary<TacheId, string>
+        - _lotStarts: Dictionary<LotId, IntVar>
+        - _lotEnds: Dictionary<LotId, IntVar>
+        - _priorityGroupStarts: Dictionary<int, IntVar>
+        - _priorityGroupEnds: Dictionary<int, IntVar>
+        - _mapSlotToHeureAbsolue: long[] // NOUVEAU
     }
     note right of TacheModelBuilder
-      Construit les variables de temps,
-      d'assignation et de ressources.
-      Gère les contraintes de non-chevauchement
-      et de dépendances.
+      **ÉTENDU** :
+      • Gère deux systèmes temporels :
+        - Slots (calendrier ouvré) pour tâches
+        - Heures absolues (24h/24) pour jalons
+      • Contraintes de précédence entre lots
+      • Variables agrégées par lot et priorité
+      
+      **PROBLÈME RÉSOLU** ✅ :
+      Jalons d'attente en fin de lot maintenant
+      correctement pris en compte dans les
+      contraintes inter-lots via conversion
+      heures absolues → slots équivalents
     end note
 
     class CoutModelBuilder {
@@ -38,6 +61,7 @@ package "Infrastructure.Services.OrTools" {
       Construit les variables de coût.
       Définit l'objectif économique
       du modèle (coût RH, coût indirect).
+      **INCHANGÉ**
     end note
 }
 
@@ -49,12 +73,29 @@ package "Application.InternalDto" {
     }
     class ModeleCpSat {
       + Model: CpModel
-      + TachesIntervals: Dictionary<...>
-      + TachesAssignables: Dictionary<...>
+      + TachesIntervals: Dictionary<TacheId, IntervalVar>
+      + TachesAssignables: Dictionary<(TacheId, OuvrierId), BoolVar>
       + Makespan: IntVar
       + CoutTotal: IntVar
-      ' ...
+      + CoutRh: IntVar
+      + CoutIndirect: IntVar
+      -- **AJOUTS pour métadonnées** --
+      + DureesOriginalesHeures: Dictionary<TacheId, double>
+      + TypesActivites: Dictionary<TacheId, TypeActivite>
+      + NomsActivites: Dictionary<TacheId, string>
+      -- **AJOUTS pour contraintes de lots** --
+      + LotStarts: Dictionary<LotId, IntVar>
+      + LotEnds: Dictionary<LotId, IntVar>
+      + PriorityGroupStarts: Dictionary<int, IntVar>
+      + PriorityGroupEnds: Dictionary<int, IntVar>
     }
+    note bottom of ModeleCpSat
+      **ÉTENDU** pour supporter :
+      • Métadonnées des jalons
+      • Variables agrégées des lots
+      • Interprétation correcte des solutions
+      ✅ Fins de lot incluent les vraies fins des jalons
+    end note
 }
 
 package "Google.OrTools.Sat" <<Librairie Externe>> {
@@ -74,6 +115,6 @@ ConstructeurProblemeOrTools ..> ModeleCpSat : "<<creates>>"
 TacheModelBuilder ..> ProblemeOptimisation : "<<reads>>"
 TacheModelBuilder ..> CpModel : "<<modifies>>"
 CoutModelBuilder ..> ProblemeOptimisation : "<<reads>>"
-CoutModelBuilder ..> CpModel : "<<modifies>>"
+CoutBuilder ..> CpModel : "<<modifies>>"
 
 @enduml

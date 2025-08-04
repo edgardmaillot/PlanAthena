@@ -69,6 +69,7 @@ namespace PlanAthena.Controls.Config
         public void ApplyNodeStyle(Node node, Tache tache)
         {
             node.Attr.FillColor = GetFillColor(tache);
+            node.Label.FontName = "Segoe UI Emoji";
 
             if (tache.EstJalon)
             {
@@ -78,6 +79,7 @@ namespace PlanAthena.Controls.Config
                 node.Label.FontSize = _settings.JalonFontSize;
                 node.Attr.LabelMargin = (int)_settings.JalonLabelMargin;
                 node.Attr.Color = _settings.JalonBorderColor;
+
             }
             else
             {

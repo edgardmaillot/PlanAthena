@@ -616,5 +616,116 @@ namespace PlanAthena.core.Tests.Infrastructure.OrTools
                 Configuration = chantier.ConfigurationOptimisation!
             };
         }
+
+        
+        // Teste le cas spécifique du problème résolu : jalon d'attente en fin de lot
+        // Vérifie que la vraie durée du jalon est prise en compte pour les contraintes inter-lots
+        [Fact]
+        public void Construire_AvecJalonAttenteEnFinDeLot_RespecteLaVraieDureeePourLesContraintesInterLots()
+        {
+            // Arrange
+            var model = new CpModel();
+            var probleme = CreerProblemeAvecJalonAttenteEnFinDeLot();
+
+            // Act
+            var (tachesIntervals, tachesAssignables, makespan, _, _, _, lotStarts, lotEnds, priorityGroupStarts, priorityGroupEnds) =
+                _builder.Construire(model, probleme);
+
+            // Assert - Vérifier que les variables sont créées
+            priorityGroupStarts.Should().ContainKey(10); // Lot avec jalon d'attente
+            priorityGroupEnds.Should().ContainKey(10);
+            priorityGroupStarts.Should().ContainKey(20); // Lot suivant
+            priorityGroupEnds.Should().ContainKey(20);
+
+            // Résoudre le modèle pour vérifier les valeurs
+            var solver = new CpSolver { StringParameters = "max_time_in_seconds:10.0" };
+            var status = solver.Solve(model);
+
+            status.Should().BeOneOf(CpSolverStatus.Optimal, CpSolverStatus.Feasible);
+
+            // VÉRIFICATION CLÉS : Le lot P20 doit respecter la vraie durée du jalon d'attente de P10
+            var endP10 = solver.Value(priorityGroupEnds[10]);
+            var startP20 = solver.Value(priorityGroupStarts[20]);
+
+            // Le jalon d'attente de 48h dans P10 doit être respecté
+            // P20 ne peut pas commencer avant que P10 soit vraiment terminé
+            startP20.Should().BeGreaterThanOrEqualTo(endP10,
+                "Le groupe P20 doit attendre la vraie fin du jalon d'attente de P10");
+
+            // Vérification plus spécifique : la tâche P20 doit commencer au minimum 
+            // après le début du jalon + sa durée de 48h
+            var tacheP10 = probleme.Chantier.ObtenirToutesLesTaches().First(t => t.Id.Value == "TACHE_P10");
+            var jalonP10 = probleme.Chantier.ObtenirToutesLesTaches().First(t => t.Id.Value == "JALON_ATTENTE_P10");
+            var tacheP20 = probleme.Chantier.ObtenirToutesLesTaches().First(t => t.Id.Value == "TACHE_P20");
+
+            var finTacheP10 = solver.Value(tachesIntervals[tacheP10.Id].EndExpr());
+            var debutJalonP10 = solver.Value(tachesIntervals[jalonP10.Id].StartExpr());
+            var debutTacheP20 = solver.Value(tachesIntervals[tacheP20.Id].StartExpr());
+
+            // Le jalon commence forcément après la tâche P10
+            debutJalonP10.Should().BeGreaterThanOrEqualTo(finTacheP10);
+
+            // ASSERTION PRINCIPALE : La tâche P20 doit commencer suffisamment tard
+            // pour respecter les 48h du jalon (converti en slots selon le calendrier)
+            var dureeJalonEnHeures = 48.0;
+            var slotsParJour = 8; // 8h par jour selon le setup
+            var dureeJalonEnSlots = Math.Ceiling(dureeJalonEnHeures / 24.0 * slotsParJour); // Approximation
+
+            debutTacheP20.Should().BeGreaterThanOrEqualTo(debutJalonP10 + (long)dureeJalonEnSlots,
+                $"La tâche P20 doit commencer au moins {dureeJalonEnSlots} slots après le début du jalon de 48h");
+        }
+
+        // Méthode helper pour créer le problème de test
+        private ProblemeOptimisation CreerProblemeAvecJalonAttenteEnFinDeLot()
+        {
+            var metierId = new MetierId("METIER_JALON_FIN");
+            var ouvrierId = new OuvrierId("OUV_JALON_FIN");
+
+            var lot10Id = new LotId("LOT_10_JALON");
+            var lot20Id = new LotId("LOT_20_APRES");
+
+            var bloc10Id = new BlocId("BLOC_10_JALON");
+            var bloc20Id = new BlocId("BLOC_20_APRES");
+
+            // Lot P10 : Tâche normale + Jalon d'attente EN FIN (cas problématique)
+            var tacheP10 = new Tache(new TacheId("TACHE_P10"), "Tâche P10", TypeActivite.Tache,
+                                   bloc10Id, new DureeHeuresHomme(8), metierId);
+
+            // CORRECTION : Dépendance définie dans le constructeur du jalon
+            var jalonAttenteP10 = new Tache(new TacheId("JALON_ATTENTE_P10"), "Séchage 48h",
+                                          TypeActivite.JalonUtilisateur, bloc10Id, new DureeHeuresHomme(48),
+                                          metierId, new[] { tacheP10.Id }); // Dépendance dans le constructeur
+
+            // Lot P20 : Tâche normale qui doit attendre la vraie fin du jalon P10
+            var tacheP20 = new Tache(new TacheId("TACHE_P20"), "Tâche P20", TypeActivite.Tache,
+                                   bloc20Id, new DureeHeuresHomme(8), metierId);
+
+            var chantier = new Chantier(
+                new ChantierId("CHANTIER_JALON_FIN"), "Test Jalon Fin Lot",
+                new PeriodePlanification(new LocalDate(2028, 1, 1).ToDateTimeUnspecified(),
+                                       new LocalDate(2028, 1, 10).ToDateTimeUnspecified()),
+                new CalendrierOuvreChantier(
+                    new HashSet<IsoDayOfWeek> { IsoDayOfWeek.Monday, IsoDayOfWeek.Tuesday, IsoDayOfWeek.Wednesday, IsoDayOfWeek.Thursday, IsoDayOfWeek.Friday },
+                    new LocalTime(8, 0), Duration.FromHours(8), new HashSet<LocalDate>()),
+                new List<Metier> { new(metierId, "Métier Jalon Fin") },
+                new List<Ouvrier> { new(ouvrierId, "Ouvrier", "Jalon Fin", new CoutJournalier(300),
+                              new List<Competence> { new(metierId, NiveauExpertise.Confirme) }) },
+                new List<BlocTravail>
+                {
+            new(bloc10Id, "Bloc P10 avec Jalon Fin", new CapaciteOuvriers(1),
+                new List<Tache> { tacheP10, jalonAttenteP10 }),
+            new(bloc20Id, "Bloc P20 Après Jalon", new CapaciteOuvriers(1),
+                new List<Tache> { tacheP20 })
+                },
+                new List<LotTravaux>
+                {
+            new(lot10Id, "Lot P10 avec Jalon Fin", 10, new[] { bloc10Id }),
+            new(lot20Id, "Lot P20 Après Jalon", 20, new[] { bloc20Id })
+                }
+            );
+
+            return CreerProblemeOptimisation(chantier, 10); // 10 jours pour laisser de la marge
+        }
+
     }
 }

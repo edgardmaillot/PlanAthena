@@ -400,25 +400,24 @@ namespace PlanAthena.Forms
         {
             if (_projetActuel != null)
             {
+                txtNomProjet.TextChanged -= SynchroniserProjet;
+                txtAuteur.TextChanged -= SynchroniserProjet;
+                txtDescription.TextChanged -= SynchroniserProjet;
+
                 txtNomProjet.Text = _projetActuel.NomProjet;
                 txtAuteur.Text = _projetActuel.Auteur;
                 txtDescription.Text = _projetActuel.Description;
                 lblDateCreation.Text = $"Créé le: {_projetActuel.DateCreation:dd/MM/yyyy}";
                 this.Text = $"PlanAthena - {_projetActuel.NomProjet}";
+
+                txtNomProjet.TextChanged -= SynchroniserProjet;
+                txtAuteur.TextChanged -= SynchroniserProjet;
+                txtDescription.TextChanged -= SynchroniserProjet;
             }
-            AttacherEvenementsSynchronisation();
+            
             MettreAJourResume();
         }
 
-        private void AttacherEvenementsSynchronisation()
-        {
-            txtNomProjet.TextChanged -= SynchroniserProjet;
-            txtAuteur.TextChanged -= SynchroniserProjet;
-            txtDescription.TextChanged -= SynchroniserProjet;
-            txtNomProjet.TextChanged += SynchroniserProjet;
-            txtAuteur.TextChanged += SynchroniserProjet;
-            txtDescription.TextChanged += SynchroniserProjet;
-        }
 
         private void SynchroniserProjet(object sender, EventArgs e)
         {

@@ -15,7 +15,7 @@ namespace PlanAthena.Controls.Config
 
         public double DefaultZoom { get; set; } = 0.9; // Zoom un peu plus grand pour les métiers
         public SystemColor OutsideAreaColor { get; set; } = SystemColor.LightYellow; // Couleur de fond du diagramme
-        public LayerDirection LayoutDirection { get; set; } = LayerDirection.LR; // De gauche à droite
+        public LayerDirection LayoutDirection { get; set; } = LayerDirection.TB; 
         public double LayoutAspectRatio { get; set; } = 0.5; // Plus large que haut
         public double LayoutNodeSeparation { get; set; } = 40;
         public double LayoutLayerSeparation { get; set; } = 100;
@@ -47,7 +47,9 @@ namespace PlanAthena.Controls.Config
         public int MetierNomMaxLength { get; set; } = 25; // Longueur max du nom du métier
         // Nouveau format pour les labels des nœuds de métier
         // {0}: Nom du métier, {1}: ID du métier, {2}: Pictogramme, {3}: Phases
-        public string MetierLabelFormat { get; set; } = "{0}\nID: {1}\n{2} {3}";
+        public string MetierLabelFormat { get; set; } = "{0}\n {2}\nID: {1}\n {3}";
+        //public string MetierFontName { get; set; } = "Material Symbols Outlined Medium";
+        public string MetierFontName { get; set; } = "Segoe UI";
 
         #endregion
 
