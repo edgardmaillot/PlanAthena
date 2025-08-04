@@ -1,5 +1,6 @@
 using Microsoft.VisualBasic.ApplicationServices;
 using PlanAthena.Data;
+using PlanAthena.Services.Business.DTOs; // ← AJOUT pour les DTOs
 using PlanAthena.Services.DataAccess;
 using QuikGraph;
 using QuikGraph.Algorithms;
@@ -530,7 +531,7 @@ namespace PlanAthena.Services.Business
 
                 if (!File.Exists(filePath))
                 {
-                    
+
                     return;
                 }
 
@@ -551,64 +552,4 @@ namespace PlanAthena.Services.Business
 
         #endregion
     }
-
-    #region Classes de support
-
-    /// <summary>
-    /// Informations générales sur un projet
-    /// </summary>
-    public class InformationsProjet
-    {
-        public string NomProjet { get; set; } = "";
-        public string Description { get; set; } = "";
-        public DateTime DateCreation { get; set; }
-        public DateTime DateDerniereModification { get; set; }
-        public string Auteur { get; set; } = "";
-    }
-
-    /// <summary>
-    /// Résultat de validation d'un projet
-    /// </summary>
-    public class ValidationProjet
-    {
-        public bool EstValide { get; set; }
-        public List<string> Erreurs { get; set; } = new List<string>();
-        public List<string> Avertissements { get; set; } = new List<string>();
-        public InformationsProjet InformationsProjet { get; set; }
-    }
-
-    /// <summary>
-    /// Résumé d'un import CSV groupé
-    /// </summary>
-    public class ResumeImport
-    {
-        public bool Succes { get; set; }
-        public string MessageErreur { get; set; } = "";
-        public int MetiersImportes { get; set; }
-        public int OuvriersImportes { get; set; }
-        public int TachesImportees { get; set; }
-        public int TotalImporte => MetiersImportes + OuvriersImportes + TachesImportees;
-    }
-
-    /// <summary>
-    /// Résumé complet d'un projet
-    /// </summary>
-    public class ResumeProjet
-    {
-        public int NombreMetiers { get; set; }
-        public StatistiquesOuvriers StatistiquesOuvriers { get; set; } = new StatistiquesOuvriers();
-        public StatistiquesTaches StatistiquesTaches { get; set; } = new StatistiquesTaches();
-        public StatistiquesMappingMetiers StatistiquesMappingMetiers { get; set; } = new StatistiquesMappingMetiers();
-    }
-
-    /// <summary>
-    /// Exception spécifique aux erreurs de projet
-    /// </summary>
-    public class ProjetException : Exception
-    {
-        public ProjetException(string message) : base(message) { }
-        public ProjetException(string message, Exception innerException) : base(message, innerException) { }
-    }
-
-    #endregion
 }

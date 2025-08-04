@@ -1,0 +1,161 @@
+@startuml
+!theme plain
+skinparam class {
+  borderColor #1E8449
+  backgroundColor #E8F8F5
+  arrowColor #239B56
+}
+
+title Architecture Mapping Automatique (v0.3.9 - Post Refactoring DTOs)
+
+' ================================================
+' ===              CORE COMMUN                  ===
+' ================================================
+class DependanceCore <<SHARED UTILITIES>> {
+  -ProjetService _projetService
+  __Méthodes Réutilisables__
+  +ConstruireGrapheBloc(List<Tache> taches) : BidirectionalGraph<string,Edge<string>>
+  +CalculerTousLesSuccesseurs(graphe, taches) : Dictionary<string,HashSet<string>>
+  +FiltrerCandidatsValides(tache, taches, successeurs) : List<Tache>
+  +TrouverMeilleuresTachesPourSuggestion(tachesDuMetier, taches) : List<Tache>
+  +TrouverFinsDeChaineDuMetier(tachesDuMetier) : List<Tache>
+  +RemonterChainePrerequis(metierId, metiersPresents) : HashSet<string>
+  +ParseDependances(string dependancesStr) : HashSet<string>
+  +ValiderCohérenceGraphe(graphe) : ValidationResult
+}
+
+' ================================================
+' ===          SERVICES SPÉCIALISÉS             ===
+' ================================================
+class DependanceBuilder <<UI SUGGESTIONS>> {
+  -ProjetService _projetService
+  __Focus: Interface Utilisateur__
+  +ObtenirDependancesPourTache(tache, contexteTaches) : List<DependanceAffichage>
+  -AppliquerSuggestionsMetier(tache, candidats) : HashSet<string>
+  -ClassifierDependances(candidats, strictes, excluses, suggestions) : List<DependanceAffichage>
+}
+
+class MappingAutoService <<BATCH PROCESSING>> {
+  -DependanceCore _core
+  -ProjetService _projetService
+  __Focus: Traitement par Lots__
+  +ConstruireDependancesLogiques(List<Tache> toutesLesTaches) : MappingResult
+  +PlacerJalonsDeSynchronisation(List<Tache> taches) : List<Tache>
+  +ValiderCohérenceGlobale(List<Tache> taches) : ValidationGlobale
+  __Méthodes Privées__
+  -AppliquerMappingMétierSurTâche(Tache tache, List<Tache> contexte) : List<string>
+  -IdentifierPointsDeSynchronisation(List<Tache> taches) : List<PositionJalon>
+  -OptimiserCheminsCritiques(graphe) : OptimisationResult
+  -GénérerRapportMapping(résultats) : RapportMapping
+}
+
+' ================================================
+' ===              CLASSES DTO                  ===
+' ================================================
+package "DTOs" <<Services.Business.DTOs>> {
+class MappingResult <<DTO>> {
+  +int NbDépendancesCréées
+  +int NbJalonsPlacés  
+  +List<ConflitRésolu> ConflitsRésolus
+  +List<string> AvertissementsMapping
+  +TimeSpan DuréeTraitement
+  +RapportMapping Rapport
+}
+
+class ValidationGlobale <<DTO>> {
+  +bool EstValide
+  +List<ErreurValidation> Erreurs
+  +List<AvertissementValidation> Avertissements
+  +StatistiquesGraphe Statistiques
+}
+
+class PositionJalon <<DTO>> {
+  +string BlocId
+  +List<string> TachesPrédécesseurs
+  +List<string> TachesSuccesseurs
+  +TypeJalon Type
+  +int PrioritéPlacement
+}
+}
+
+' ================================================
+' ===          SERVICES EXISTANTS               ===
+' ================================================
+class ProjetService <<REFACTORÉ v0.3.8>> {
+  __Métiers (ex-MetierService fusionné)__
+  +GetPrerequisForMetier(string metierId) : IReadOnlyList<string>
+  +GetAllMetiers() : IReadOnlyList<Metier>
+  +GetMetierById(string metierId) : Metier
+  +ObtenirMetiersTriesParDependance() : List<Metier>
+  __Projet__
+  +SauvegarderProjet() : void
+  +ChargerProjet() : InformationsProjet
+  +ValiderProjet() : ValidationProjet
+}
+
+class TacheService <<EXISTANT>> {
+  +CreerTachesBrutes(List<Tache> taches) : void
+  +PersisterDependancesFinales(List<Tache> taches) : void
+  +ObtenirTachesParBloc(string blocId) : List<Tache>
+}
+
+class LotService <<À FUSIONNER v0.4.x>> {
+  +AjouterLot() : void
+  +ObtenirTousLesLots() : List<Lot>
+  +ObtenirLotParId(string lotId) : Lot
+}
+
+' ================================================
+' ===              RELATIONS                     ===
+' ================================================
+DependanceBuilder --> ProjetService : utilise métiers
+MappingAutoService --> DependanceCore : utilise
+MappingAutoService --> ProjetService : utilise métiers
+DependanceCore --> ProjetService : consulte métiers
+
+MappingAutoService ..> MappingResult : produit
+MappingAutoService ..> ValidationGlobale : produit
+MappingAutoService ..> PositionJalon : utilise
+
+TacheService --> MappingAutoService : appelle pour import
+
+note right of ProjetService
+  <b>CHANGEMENT v0.3.8:</b>
+  MetierService fusionné dans ProjetService
+  
+  <b>Impact:</b> DependanceBuilder et 
+  MappingAutoService utilisent maintenant
+  ProjetService pour les opérations métier
+  
+  <b>À venir v0.4.x:</b> Fusion LotService
+end note
+
+note right of MappingAutoService
+  <b>Responsabilité:</b> Mapping automatique
+  par lots lors d'imports CSV
+  
+  <b>Adaptations post-refactoring:</b>
+  • Injection ProjetService au lieu de MetierService
+  • Utilisation GetAllMetiers() depuis ProjetService
+  • Conservation logique inchangée
+end note
+
+note right of DependanceBuilder
+  <b>Responsabilité:</b> Suggestions
+  interactives pour l'utilisateur
+  
+  <b>Adaptation:</b> Constructeur modifié pour
+  recevoir ProjetService au lieu de MetierService
+end note
+
+note top of DTOs
+  <b>DTOs Reorganisés v0.3.9:</b>
+  
+  DTOs déplacés dans
+  /Services/Business/DTOs/
+  
+  Dépendance circulaire résolue
+  ProjetData ↔ ProjetService
+end note
+
+@enduml

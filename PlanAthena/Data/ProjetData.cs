@@ -1,4 +1,4 @@
-using PlanAthena.Services.Business;
+using PlanAthena.Services.Business.DTOs; // ← NOUVEAU : Import des DTOs
 using System.Text.Json.Serialization;
 
 namespace PlanAthena.Data

@@ -1,0 +1,324 @@
+@startuml
+title Architecture PlanAthena - Vision Métier Simplifiée (v0.3.9)
+
+!define DIRECTION top to bottom direction
+top to bottom direction
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+skinparam package {
+  borderColor #555555
+  borderThickness 2
+  fontColor #333333
+  backgroundColor #F8F9FA
+}
+
+skinparam class {
+  borderColor #007ACC
+  backgroundColor #DDEEFF
+  arrowColor #005588
+}
+
+' ================================================
+' === COUCHE IHM ===
+' ================================================
+package "🖥️ Interface Utilisateur" as UI {
+  
+  package "Gestion de Projet" {
+    class MainForm
+    class NouveauProjetDialog
+  }
+  
+  package "Qualification des Tâches" {
+    class TacheForm
+    class TacheDetailForm
+    class ImportTacheForm
+    class ImportCsvGroupeDialog
+    class ImportWarningsDialog
+  }
+  
+  package "Configuration Ressources" {
+    class OuvrierForm
+    class MetierForm
+    class LotForm
+    class BlocForm
+    class CompetenceDialog
+    class SelectionMetierDialog
+  }
+  
+  package "Visualisation" {
+    class PertDiagramControl
+    class MetierDiagramControl
+  }
+}
+
+' ================================================
+' === COUCHE MÉTIER ===
+' ================================================
+package "⚙️ Services Métier" as BUSINESS {
+  
+  class ProjetService {
+    == Gestion Projet ==
+    +CreerNouveauProjet()
+    +SauvegarderProjet()
+    +ChargerProjet()
+    +ObtenirResumeProjet()
+    +ValiderDonneesAvantPlanification()
+    
+    == Gestion Métiers ==
+    +AjouterMetier()
+    +ModifierMetier()
+    +SupprimerMetier()
+    +GetAllMetiers()
+    +ObtenirMetiersTriesParDependance()
+    
+    == Gestion Lots (Phases) ==
+    +AjouterLot()
+    +ModifierLot()
+    +ObtenirTousLesLots()
+    +SupprimerLot()
+    +GererPrecedenceLots()
+  }
+  
+  class TacheService {
+    == Qualification Tâches ==
+    +AjouterTache()
+    +ModifierTache()
+    +SupprimerTache()
+    +ObtenirTachesParLot()
+    +ObtenirStatistiques()
+    
+    == Gestion Blocs (Contraintes) ==
+    +AjouterBloc()
+    +ModifierBloc()
+    +ObtenirTousLesBlocs()
+    +SupprimerBloc()
+    +ValiderDependancesIntraBloc()
+    +CalculerCapaciteOuvriers()
+    
+    == Import/Export ==
+    +ImporterTachesCSV()
+    +ExporterTaches()
+  }
+  
+  class OuvrierService {
+    == Gestion Ressources ==
+    +AjouterOuvrier()
+    +ModifierOuvrier()
+    +SupprimerOuvrier()
+    +ObtenirTousLesOuvriers()
+    +GererCompetences()
+  }
+  
+  class PlanificationService {
+    == Planification Optimale ==
+    +LancerPlanificationAsync()
+    +ObtenirStatistiquesTraitement()
+    +ChargerDonnees()
+    
+    == Préparation Solveur ==
+    +PreparerPourSolveur()
+    +TransformToChantierSetupDto()
+    
+    == Consolidation Résultats ==
+    +ConsoliderPourGantt()
+    +ExporterVersGantt()
+  }
+  
+  class ImportOrchestrationService {
+    == Import Orchestré ==
+    +ImporterTachesDepuisCsv()
+    +ValiderStructureFichier()
+    +GererMappingConfiguration()
+  }
+}
+
+' ================================================
+' === COUCHE DATA ===
+' ================================================
+package "🗄️ Accès aux Données" as DATA {
+  
+  package "Entités Métier" {
+    class ProjetData {
+      +Taches: List<Tache>
+      +Lots: List<Lot>
+      +Blocs: List<Bloc>
+      +Metiers: List<Metier>
+      +Ouvriers: List<Ouvrier>
+    }
+    
+    class Tache {
+      +TacheId: string
+      +IdImporte: string
+      +TacheNom: string
+      +HeuresHommeEstimees: int
+      +MetierId: string
+      +Dependencies: string
+      +ExclusionsDependances: string
+      +Type: TypeActivite
+      +EstJalon: bool (computed)
+      +LotId: string
+      +BlocId: string
+    }
+    
+    enum TypeActivite {
+      Tache
+      JalonUtilisateur
+      JalonDeSynchronisation
+      JalonTechnique
+    }
+    
+    class Lot {
+      +LotId: string
+      +Nom: string
+      +Priorite: int
+      +CheminFichierPlan: string
+      +Phases: ChantierPhase
+    }
+    
+    class Bloc {
+      +BlocId: string
+      +Nom: string
+      +CapaciteMaxOuvriers: int
+    }
+    
+    class Metier {
+      +MetierId: string
+      +Nom: string
+      +PrerequisMetierIds: string
+      +CouleurHex: string
+      +Pictogram: string
+      +Phases: ChantierPhase
+    }
+    
+    class Ouvrier {
+      +OuvrierId: string
+      +Nom: string
+      +Prenom: string
+      +CoutJournalier: int
+      +MetierId: string
+      +NiveauExpertise: NiveauExpertise
+      +PerformancePct: int?
+    }
+    
+    enum ChantierPhase {
+      None
+      GrosOeuvre
+      SecondOeuvre
+      Finition
+      GarantieDecennale
+    }
+    
+    enum NiveauExpertise {
+      Debutant
+      Confirme
+      Expert
+    }
+  }
+  
+  package "Services Data" {
+    class CsvDataService {
+      +ImportCsv()
+      +ExportCsv()
+      +ValidateCsvStructure()
+    }
+    
+    class ExcelReader {
+      +ImportExcel()
+      +ImportSapOuvriers()
+      +ImportFieldwireTaches()
+    }
+    
+    class GanttExportService {
+      +ExporterVersGanttProjectXml()
+      +GenererXmlGanttProjectConsolide()
+    }
+    
+    class IdGeneratorService {
+      +GenererProchainId()
+      +ValiderFormatId()
+    }
+  }
+  
+  package "Configuration & Helpers" {
+    class ImportMappingConfiguration
+    class DependanceBuilder
+    class ConfigurationBuilder
+  }
+}
+
+' ================================================
+' === EXTERNE ===
+' ================================================
+package "🌍 Systèmes Externes" as EXTERNAL {
+  class PlanAthenaCoreFacade {
+    +ProcessChantier()
+    +OptimiserPlanification()
+  }
+  
+  class "Bibliothèques" as LIBS {
+    +QuikGraph (Graphes)
+    +CsvHelper (CSV)
+    +Microsoft.Msagl (Diagrammes)
+    +System.Text.Json (JSON)
+  }
+}
+
+' ================================================
+' === RELATIONS ===
+' ================================================
+
+' UI vers Business
+UI -down-> BUSINESS : "Utilise"
+
+' Business vers Data
+BUSINESS -down-> DATA : "Persiste"
+
+' Data vers External
+DATA -down-> EXTERNAL : "Intègre"
+
+' Relations détaillées principales
+ProjetService -down-> ProjetData
+TacheService -down-> Tache
+OuvrierService -down-> Ouvrier
+PlanificationService -down-> PlanAthenaCoreFacade
+
+MainForm -down-> ProjetService
+TacheForm -down-> TacheService
+OuvrierForm -down-> OuvrierService
+PlanificationService -right-> TacheService : "Charge données"
+ImportOrchestrationService -down-> CsvDataService
+
+' ================================================
+' === NOTES MÉTIER ===
+' ================================================
+
+note top of BUSINESS
+<b>PROCESSUS MÉTIER UNIFIÉ</b>
+1️⃣ Qualification des tâches
+2️⃣ Planification optimale (Or-Tools)
+3️⃣ Suivi et re-planification
+end note
+
+note right of TacheService
+<b>Gestion des Contraintes</b>
+Gère les tâches ET leurs
+contraintes (blocs).
+Les dépendances entre tâches
+ne s'exercent qu'intra-bloc.
+end note
+
+note right of ProjetService
+<b>Vision Macro</b>
+Gère les lots (phases) et
+leurs règles de précédence.
+Lots = GrosOeuvre → SecondOeuvre
+end note
+
+note right of PlanificationService
+<b>Cœur de l'Optimisation</b>
+Interface avec le solveur
+Or-Tools via PlanAthena.Core
+end note
+
+@enduml
