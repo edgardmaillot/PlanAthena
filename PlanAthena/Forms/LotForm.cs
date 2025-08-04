@@ -5,16 +5,16 @@ namespace PlanAthena.Forms
 {
     public partial class LotForm : System.Windows.Forms.Form
     {
-        private readonly LotService _lotService;
+        private readonly ProjetService _projetService;
         private readonly TacheService _tacheService;
         private Lot _lotSelectionne = null;
         private bool _isEditing = false;
         private readonly ToolTip _toolTip = new ToolTip();
 
-        public LotForm(LotService lotService, TacheService tacheService)
+        public LotForm(ProjetService projetService, TacheService tacheService)
         {
             InitializeComponent();
-            _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
+            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
             _tacheService = tacheService ?? throw new ArgumentNullException(nameof(tacheService));
         }
 
@@ -101,7 +101,7 @@ namespace PlanAthena.Forms
         private void RafraichirListeLots()
         {
             listViewLots.Items.Clear();
-            var lots = _lotService.ObtenirTousLesLots();
+            var lots = _projetService.ObtenirTousLesLots();
             foreach (var lot in lots.OrderBy(l => l.Priorite).ThenBy(l => l.Nom))
             {
                 var item = new ListViewItem(new[] { lot.LotId, lot.Nom, lot.Priorite.ToString() }) { Tag = lot };
@@ -208,8 +208,8 @@ namespace PlanAthena.Forms
                     CheminFichierPlan = txtCheminFichierPlan.Text
                 };
 
-                if (isNew) _lotService.AjouterLot(lotToSave);
-                else _lotService.ModifierLot(lotToSave);
+                if (isNew) _projetService.AjouterLot(lotToSave);
+                else _projetService.ModifierLot(lotToSave);
 
                 _lotSelectionne = lotToSave;
                 SetEditingMode(false);
@@ -236,7 +236,7 @@ namespace PlanAthena.Forms
             {
                 try
                 {
-                    _lotService.SupprimerLot(_lotSelectionne.LotId);
+                    _projetService.SupprimerLot(_lotSelectionne.LotId);
                     _lotSelectionne = null;
                     NettoyerDetails();
                     SetEditingMode(false);

@@ -15,12 +15,12 @@ namespace PlanAthena.Services.Processing
     public class DataTransformer
     {
         private static readonly string[] s_splitChars = { "," };
-        private readonly LotService _lotService;
+        private readonly ProjetService _projetService;
         private readonly BlocService _blocService;
 
-        public DataTransformer(LotService lotService, BlocService blocService)
+        public DataTransformer(ProjetService projetService, BlocService blocService)
         {
-            _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
+            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
             _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
         }
 
@@ -55,12 +55,12 @@ namespace PlanAthena.Services.Processing
                     CapaciteMaxOuvriers = b.CapaciteMaxOuvriers
                 }).ToList();
 
-            // Transformation des lots depuis le LotService
+            // Transformation des lots depuis le ProjetService
             var blocIdsParLot = processedTaches
                 .GroupBy(t => t.LotId)
                 .ToDictionary(g => g.Key, g => g.Select(t => t.BlocId).Distinct().ToList());
 
-            var lotsDto = _lotService.ObtenirTousLesLots()
+            var lotsDto = _projetService.ObtenirTousLesLots()
                 .Select(l => new LotTravauxDto
                 {
                     LotId = l.LotId,

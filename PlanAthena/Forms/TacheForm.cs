@@ -20,7 +20,7 @@ namespace PlanAthena.Forms
     /// 
     /// PRINCIPE ARCHITECTURAL CLÉ :
     /// Ce formulaire n'embarque PAS de cache de données local (ex: _tachesBrutes).
-    /// Il s'appuie systématiquement sur les services (TacheService, LotService, etc.) comme
+    /// Il s'appuie systématiquement sur les services (TacheService, ProjetService, etc.) comme
     /// source de vérité unique. À chaque rafraîchissement, les données sont lues
     /// directement depuis le service, garantissant ainsi que l'affichage n'est jamais
     /// désynchronisé et éliminant une source majeure de bugs.
@@ -31,7 +31,6 @@ namespace PlanAthena.Forms
         private readonly TacheService _tacheService;
         private readonly ProjetService _projetService; 
         private readonly DependanceBuilder _dependanceBuilder;
-        private readonly LotService _lotService;
         private readonly BlocService _blocService;
 
         // AJOUT : ImportOrchestrationService pour l'import
@@ -46,14 +45,13 @@ namespace PlanAthena.Forms
         private readonly ToolTip _toolTipMetiers = new ToolTip();
         private readonly ToolTip _toolTipPlan = new ToolTip();
 
-        public TacheForm(TacheService tacheService, ProjetService projetService, DependanceBuilder dependanceBuilder, LotService lotService, BlocService blocService) // Changement ici
+        public TacheForm(TacheService tacheService, ProjetService projetService, DependanceBuilder dependanceBuilder, BlocService blocService) // Changement ici
         {
             InitializeComponent();
 
             _tacheService = tacheService ?? throw new ArgumentNullException(nameof(tacheService));
             _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService)); // Changement ici
             _dependanceBuilder = dependanceBuilder ?? throw new ArgumentNullException(nameof(dependanceBuilder));
-            _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
             _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
 
             try
@@ -61,7 +59,7 @@ namespace PlanAthena.Forms
                 // TODO: Vérifier comment ImportServiceConfig.CreerImportService et CreerProjetService sont gérés
                 // Ces lignes peuvent nécessiter une adaptation ou une suppression si l'injection est centralisée via DI
                 // Pour l'instant, je les laisse pour ne pas introduire d'autres erreurs, mais c'est un point à valider.
-                // var importService = ImportServiceConfig.CreerImportService(_tacheService, _lotService, _blocService, _metierService); // Ancien MetierService
+                // var importService = ImportServiceConfig.CreerImportService(_tacheService, _projetService, _blocService, _metierService); // Ancien MetierService
                 // _importOrchestrationService = ImportServiceConfig.CreerProjetService(importService);
 
                 // Temporairement pour la compilation, si ImportOrchestrationService doit être injecté
@@ -80,7 +78,7 @@ namespace PlanAthena.Forms
                 _pertControl = new PertDiagramControl();
                 _pertControl.Dock = DockStyle.Fill;
                 // Changement ici : _pertControl.Initialize reçoit _projetService
-                _pertControl.Initialize(_projetService, _lotService, _blocService, _dependanceBuilder, new PertDiagramSettings());
+                _pertControl.Initialize(_projetService, _blocService, _dependanceBuilder, new PertDiagramSettings());
 
                 // Événements existants
                 _pertControl.TacheSelected += PertControl_TacheSelected;
@@ -93,7 +91,7 @@ namespace PlanAthena.Forms
                 this.panelDiagrammeCentral.Controls.Add(_pertControl);
 
                 // Changement ici : _tacheDetailForm reçoit _projetService
-                _tacheDetailForm = new TacheDetailForm(_tacheService, _projetService, _lotService, _blocService, _dependanceBuilder);
+                _tacheDetailForm = new TacheDetailForm(_tacheService, _projetService, _blocService, _dependanceBuilder);
                 IntegrerFormulaireDetails();
             }
             catch (Exception ex)
@@ -204,7 +202,7 @@ namespace PlanAthena.Forms
         {
             try
             {
-                var lots = _lotService.ObtenirTousLesLots();
+                var lots = _projetService.ObtenirTousLesLots();
                 cmbLots.DataSource = null;
                 cmbLots.DataSource = lots;
                 cmbLots.DisplayMember = "Nom";
@@ -378,7 +376,7 @@ namespace PlanAthena.Forms
             if (sender is Button { Tag: Metier metier })
             {
                 // Changement ici : TacheDetailForm reçoit _projetService
-                using var form = new TacheDetailForm(_tacheService, _projetService, _lotService, _blocService, _dependanceBuilder);
+                using var form = new TacheDetailForm(_tacheService, _projetService, _blocService, _dependanceBuilder);
                 var nouvelleTache = new Tache
                 {
                     MetierId = metier.MetierId,
@@ -404,7 +402,7 @@ namespace PlanAthena.Forms
                 return;
             }
             // Changement ici : TacheDetailForm reçoit _projetService
-            using var form = new TacheDetailForm(_tacheService, _projetService, _lotService, _blocService, _dependanceBuilder);
+            using var form = new TacheDetailForm(_tacheService, _projetService, _blocService, _dependanceBuilder);
 
             // Correction: La définition d'un jalon se fait uniquement via la propriété 'Type'.
             // L'affectation à 'EstJalon' a été supprimée.
@@ -495,7 +493,7 @@ namespace PlanAthena.Forms
             if (tacheOriginale != null)
             {
                 // Changement ici : TacheDetailForm reçoit _projetService
-                using var form = new TacheDetailForm(_tacheService, _projetService, _lotService, _blocService, _dependanceBuilder);
+                using var form = new TacheDetailForm(_tacheService, _projetService, _blocService, _dependanceBuilder);
                 // Charger les blocs du lot de la tâche AVANT de charger la tâche
                 form.MettreAJourListesDeroulantes(tacheOriginale.LotId);
                 form.ChargerTache(tacheOriginale, false);
@@ -532,7 +530,7 @@ namespace PlanAthena.Forms
         {
             try
             {
-                using (var form = new LotForm(_lotService, _tacheService))
+                using (var form = new LotForm(_projetService, _tacheService))
                 {
                     form.ShowDialog(this);
                 }

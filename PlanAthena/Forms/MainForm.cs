@@ -22,7 +22,7 @@ namespace PlanAthena.Forms
         private readonly ProjetService _projetService;
         private readonly GanttExportService _ganttExportService;
         private readonly ConfigurationBuilder _configBuilder;
-        private readonly LotService _lotService;
+        
         private readonly BlocService _blocService;
 
         private InformationsProjet _projetActuel;
@@ -41,7 +41,7 @@ namespace PlanAthena.Forms
             _projetService = _serviceProvider.GetRequiredService<ProjetService>();
             _ganttExportService = _serviceProvider.GetRequiredService<GanttExportService>();
             _configBuilder = _serviceProvider.GetRequiredService<ConfigurationBuilder>();
-            _lotService = _serviceProvider.GetRequiredService<LotService>();
+            
             _blocService = _serviceProvider.GetRequiredService<BlocService>();
 
             InitializeInterface();
@@ -60,7 +60,7 @@ namespace PlanAthena.Forms
             serviceCollection.AddSingleton<CsvDataService>();
             serviceCollection.AddSingleton<ExcelReader>();
             serviceCollection.AddSingleton<OuvrierService>();
-            serviceCollection.AddSingleton<LotService>();
+            
 
             // 2. Enregistrement des Factories (Func<T>) en premier
             // Elles sont nécessaires pour briser les cycles lors de l'instanciation des services
@@ -80,30 +80,28 @@ namespace PlanAthena.Forms
 
             serviceCollection.AddSingleton<TacheService>(provider =>
             {
-                // TacheService a besoin de CsvDataService, ExcelReader, Func<ProjetService>, LotService, Func<BlocService>
+                // TacheService a besoin de CsvDataService, ExcelReader, Func<ProjetService>, ProjetService, Func<BlocService>
                 return new TacheService(
                     provider.GetRequiredService<CsvDataService>(),
                     provider.GetRequiredService<ExcelReader>(),
                     provider.GetRequiredService<Func<ProjetService>>(), // Utilise la factory
-                    provider.GetRequiredService<LotService>(),
                     provider.GetRequiredService<Func<BlocService>>()    // Utilise la factory
                 );
             });
 
             serviceCollection.AddSingleton<ProjetService>(provider =>
             {
-                // ProjetService a besoin de OuvrierService, Func<TacheService>, CsvDataService, LotService, Func<BlocService>
+                // ProjetService a besoin de OuvrierService, Func<TacheService>, CsvDataService, ProjetService, Func<BlocService>
                 return new ProjetService(
                     provider.GetRequiredService<OuvrierService>(),
                     provider.GetRequiredService<Func<TacheService>>(), // Utilise la factory
                     provider.GetRequiredService<CsvDataService>(),
-                    provider.GetRequiredService<LotService>(),
                     provider.GetRequiredService<Func<BlocService>>()   // Utilise la factory
                 );
             });
 
             // 4. Enregistrement des autres Singletons et Scoped
-            serviceCollection.AddSingleton<IdGeneratorService>(); // Dépend de LotService, BlocService, TacheService (maintenant résolvables)
+            serviceCollection.AddSingleton<IdGeneratorService>(); // Dépend de ProjetService, BlocService, TacheService (maintenant résolvables)
 
             serviceCollection.AddScoped<DataTransformer>();
             serviceCollection.AddScoped<PreparationSolveurService>();
@@ -252,7 +250,7 @@ namespace PlanAthena.Forms
 
         private void OuvrirGestionLots_Click(object sender, EventArgs e)
         {
-            using var form = new LotForm(_lotService, _tacheService);
+            using var form = new LotForm(_projetService, _tacheService);
             form.ShowDialog(this);
         }
 
@@ -265,7 +263,7 @@ namespace PlanAthena.Forms
         private void OuvrirGestionTaches_Click(object sender, EventArgs e)
         {
             var dependanceBuilder = _serviceProvider.GetRequiredService<DependanceBuilder>();
-            using var form = new TacheForm(_tacheService, _projetService, dependanceBuilder, _lotService, _blocService);
+            using var form = new TacheForm(_tacheService, _projetService, dependanceBuilder, _blocService);
             form.ShowDialog(this);
         }
 

@@ -33,8 +33,7 @@ namespace PlanAthena.Controls
 
         private PertDiagramSettings _settings;
         private PertNodeBuilder _nodeBuilder;
-        private ProjetService _projetService; // Ancien MetierService, maintenant ProjetService
-        private LotService _lotService;
+        private ProjetService _projetService;
         private BlocService _blocService;
         private DependanceBuilder _dependanceBuilder;
 
@@ -75,11 +74,10 @@ namespace PlanAthena.Controls
             Controls.Add(_viewer);
         }
 
-        public void Initialize(ProjetService projetService, LotService lotService, BlocService blocService, DependanceBuilder dependanceBuilder, PertDiagramSettings settings) // Changement ici
+        public void Initialize(ProjetService projetService, BlocService blocService, DependanceBuilder dependanceBuilder, PertDiagramSettings settings) // Changement ici
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
-            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService)); // Changement ici
-            _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
+            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
             _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
             _dependanceBuilder = dependanceBuilder ?? throw new ArgumentNullException(nameof(dependanceBuilder));
             _nodeBuilder = new PertNodeBuilder(settings, _projetService); // Changement ici
@@ -299,7 +297,7 @@ namespace PlanAthena.Controls
         {
             if (string.IsNullOrWhiteSpace(filtre)) return taches;
             var recherche = filtre.ToLower();
-            var matchingLotIds = _lotService.ObtenirTousLesLots().Where(l => l.Nom.ToLower().Contains(recherche)).Select(l => l.LotId).ToHashSet();
+            var matchingLotIds = _projetService.ObtenirTousLesLots().Where(l => l.Nom.ToLower().Contains(recherche)).Select(l => l.LotId).ToHashSet();
             var matchingBlocIds = _blocService.ObtenirTousLesBlocs().Where(b => b.Nom.ToLower().Contains(recherche)).Select(b => b.BlocId).ToHashSet();
             return taches.Where(t =>
                 t.TacheId.ToLower().Contains(recherche) ||

@@ -14,17 +14,15 @@ namespace PlanAthena
         /// </summary>
         public static ImportService CreerImportService(
             TacheService tacheService,
-            LotService lotService,
-            BlocService blocService,
-            ProjetService projetService)
+            ProjetService projetService,
+            BlocService blocService)
         {
-            var idGenerator = new IdGeneratorService(lotService, blocService, tacheService);
+            var idGenerator = new IdGeneratorService(projetService, blocService, tacheService);
 
             return new ImportService(
                 tacheService,
-                lotService,
-                blocService,
                 projetService,
+                blocService,
                 idGenerator);
         }
 

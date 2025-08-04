@@ -43,7 +43,7 @@ namespace PlanAthenaTests.Utilities
             var csvDataService = new CsvDataService();
             var excelReader = new ExcelReader();
             var ouvrierService = new OuvrierService(csvDataService, excelReader);
-            var lotService = new LotService();
+
 
             // 1. Créer les Factories (Func<T>) qui captureront les instances une fois qu'elles existeront.
             Func<ProjetService> projetServiceFactory = () => projetServiceInstance;
@@ -59,7 +59,6 @@ namespace PlanAthenaTests.Utilities
                 csvDataService,
                 excelReader,
                 projetServiceFactory, // Factory vers ProjetService
-                lotService,
                 blocServiceFactory // Factory vers BlocService
             );
 
@@ -68,7 +67,6 @@ namespace PlanAthenaTests.Utilities
                 ouvrierService,
                 tacheServiceFactory, // Factory vers TacheService
                 csvDataService,
-                lotService,
                 blocServiceFactory // Factory vers BlocService
             );
 

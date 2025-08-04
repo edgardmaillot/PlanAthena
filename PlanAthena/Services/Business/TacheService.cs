@@ -16,7 +16,6 @@ namespace PlanAthena.Services.Business
         private readonly CsvDataService _csvDataService;
         private readonly ExcelReader _excelReader;
         private readonly Func<ProjetService> _projetServiceFactory; // Changement ici: ProjetService devient une factory
-        private readonly LotService _lotService;
         private readonly Func<BlocService> _blocServiceFactory; // Changement ici: BlocService devient une factory
 
         // Compteurs pour génération d'ID automatique
@@ -27,13 +26,11 @@ namespace PlanAthena.Services.Business
             CsvDataService csvDataService,
             ExcelReader excelReader,
             Func<ProjetService> projetServiceFactory, // Prend une factory
-            LotService lotService,
             Func<BlocService> blocServiceFactory) // Prend une factory
         {
             _csvDataService = csvDataService ?? throw new ArgumentNullException(nameof(csvDataService));
             _excelReader = excelReader ?? throw new ArgumentNullException(nameof(excelReader));
             _projetServiceFactory = projetServiceFactory ?? throw new ArgumentNullException(nameof(projetServiceFactory)); // Assigner la factory
-            _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
             _blocServiceFactory = blocServiceFactory ?? throw new ArgumentNullException(nameof(blocServiceFactory)); // Assigner la factory
         }
 
@@ -65,7 +62,7 @@ namespace PlanAthena.Services.Business
             }
 
             // Validation de l'existence des IDs de référence
-            if (!string.IsNullOrEmpty(tache.LotId) && _lotService.ObtenirLotParId(tache.LotId) == null)
+            if (!string.IsNullOrEmpty(tache.LotId) && _projetService.ObtenirLotParId(tache.LotId) == null)
                 throw new InvalidOperationException($"Le lot avec l'ID '{tache.LotId}' n'existe pas. Veuillez le créer avant d'ajouter la tâche.");
 
             // Utilise la propriété _blocService
@@ -88,7 +85,7 @@ namespace PlanAthena.Services.Business
                 throw new InvalidOperationException($"Tâche {tacheModifiee.TacheId} non trouvée.");
 
             // Validation de l'existence des IDs de référence
-            if (!string.IsNullOrEmpty(tacheModifiee.LotId) && _lotService.ObtenirLotParId(tacheModifiee.LotId) == null)
+            if (!string.IsNullOrEmpty(tacheModifiee.LotId) && _projetService.ObtenirLotParId(tacheModifiee.LotId) == null)
                 throw new InvalidOperationException($"Le lot avec l'ID '{tacheModifiee.LotId}' n'existe pas.");
 
             // Utilise la propriété _blocService

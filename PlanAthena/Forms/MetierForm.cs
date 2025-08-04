@@ -17,7 +17,7 @@ namespace PlanAthena.Forms
         private readonly ProjetService _projetService;
         private readonly IdGeneratorService _idGeneratorService;
         private readonly DependanceBuilder _dependanceBuilder;
-        // Les services LotService et BlocService ne sont plus nécessaires directement ici
+        // Les services ProjetService et BlocService ne sont plus nécessaires directement ici
         // car MetierDiagramControl ne les utilise pas pour les métiers.
         // Ils pourraient être nécessaires si MetierForm gérait des aspects liés aux tâches/blocs,
         // mais pour la gestion pure des métiers, ils ne le sont pas.
@@ -34,19 +34,19 @@ namespace PlanAthena.Forms
         }
 
         // Constructeur mis à jour pour accepter les nouvelles dépendances
-        // Les dépendances LotService et BlocService ne sont plus nécessaires dans MetierForm
+        // Les dépendances ProjetService et BlocService ne sont plus nécessaires dans MetierForm
         // si elles ne sont utilisées que par PertDiagramControl (maintenant remplacé).
         public MetierForm(
             ProjetService projetService,
             IdGeneratorService idGeneratorService,
-            DependanceBuilder dependanceBuilder) // Changement ici: suppression de LotService et BlocService
+            DependanceBuilder dependanceBuilder) // Changement ici: suppression de ProjetService et BlocService
         {
             InitializeComponent();
 
             _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
             _idGeneratorService = idGeneratorService ?? throw new ArgumentNullException(nameof(idGeneratorService));
             _dependanceBuilder = dependanceBuilder ?? throw new ArgumentNullException(nameof(dependanceBuilder));
-            // _lotService et _blocService sont supprimés du constructeur
+            // _projetService et _blocService sont supprimés du constructeur
 
             _metierDiagramControl = new MetierDiagramControl(); // Changement ici: nouvelle instance
             _metierDiagramControl.Dock = DockStyle.Fill;

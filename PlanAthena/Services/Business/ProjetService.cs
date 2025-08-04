@@ -1,6 +1,6 @@
 using Microsoft.VisualBasic.ApplicationServices;
 using PlanAthena.Data;
-using PlanAthena.Services.Business.DTOs; // ← AJOUT pour les DTOs
+using PlanAthena.Services.Business.DTOs; 
 using PlanAthena.Services.DataAccess;
 using QuikGraph;
 using QuikGraph.Algorithms;
@@ -26,11 +26,13 @@ namespace PlanAthena.Services.Business
         private readonly OuvrierService _ouvrierService;
         private readonly Func<TacheService> _tacheServiceFactory;
         private readonly CsvDataService _csvDataService;
-        private readonly LotService _lotService;
         private readonly Func<BlocService> _blocServiceFactory;
 
         // Collection interne de métiers, gérée directement par ProjetService
         private readonly Dictionary<string, Metier> _metiersInternes = new Dictionary<string, Metier>();
+
+        // AJOUT: Collection interne de lots, fusionnée de ProjetService
+        private readonly Dictionary<string, Lot> _lotsInternes = new Dictionary<string, Lot>();
 
         // Champs liés aux couleurs de fallback des métiers, déplacés de MetierService
         private static readonly Color[] FallbackColors = {
@@ -46,13 +48,11 @@ namespace PlanAthena.Services.Business
             OuvrierService ouvrierService,
             Func<TacheService> tacheServiceFactory,
             CsvDataService csvDataService,
-            LotService lotService,
             Func<BlocService> blocServiceFactory)
         {
             _ouvrierService = ouvrierService ?? throw new ArgumentNullException(nameof(ouvrierService));
             _tacheServiceFactory = tacheServiceFactory ?? throw new ArgumentNullException(nameof(tacheServiceFactory));
             _csvDataService = csvDataService ?? throw new ArgumentNullException(nameof(csvDataService));
-            _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
             _blocServiceFactory = blocServiceFactory ?? throw new ArgumentNullException(nameof(blocServiceFactory));
         }
 
@@ -108,7 +108,7 @@ namespace PlanAthena.Services.Business
                     Metiers = GetAllMetiers().ToList(),
                     Ouvriers = _ouvrierService.ObtenirTousLesOuvriers(),
                     Taches = _tacheService.ObtenirToutesLesTaches(),
-                    Lots = _lotService.ObtenirTousLesLots(),
+                    Lots = ObtenirTousLesLots(), // MODIFIÉ: Utilise la méthode interne
                     Blocs = _blocService.ObtenirTousLesBlocs(),
                     DateSauvegarde = DateTime.Now,
                     VersionApplication = "0.3.8"
@@ -170,7 +170,7 @@ namespace PlanAthena.Services.Business
             // Charger les données dans l'ordre de dépendance
             RemplacerTousLesMetiers(projetData.Metiers);
             _ouvrierService.ChargerOuvriers(projetData.Ouvriers);
-            _lotService.RemplacerTousLesLots(projetData.Lots);
+            RemplacerTousLesLots(projetData.Lots); // MODIFIÉ: Utilise la méthode interne
             _blocService.RemplacerTousLesBlocs(projetData.Blocs);
             _tacheService.ChargerTaches(projetData.Taches);
 
@@ -228,6 +228,86 @@ namespace PlanAthena.Services.Business
                 validation.Erreurs.Add($"Erreur lors de la validation: {ex.Message}");
                 return validation;
             }
+        }
+
+        #endregion
+
+        #region CRUD Operations - Lots (fusionné de ProjetService)
+
+        /// <summary>
+        /// Ajoute un nouveau lot au projet.
+        /// </summary>
+        public void AjouterLot(Lot lot)
+        {
+            if (lot == null) throw new ArgumentNullException(nameof(lot));
+            if (string.IsNullOrWhiteSpace(lot.LotId)) throw new ArgumentException("L'ID du lot ne peut pas être vide.");
+            if (_lotsInternes.ContainsKey(lot.LotId)) throw new InvalidOperationException($"Un lot avec l'ID '{lot.LotId}' existe déjà.");
+            _lotsInternes.Add(lot.LotId, lot);
+        }
+
+        /// <summary>
+        /// Modifie un lot existant.
+        /// </summary>
+        public void ModifierLot(Lot lotModifie)
+        {
+            if (lotModifie == null) throw new ArgumentNullException(nameof(lotModifie));
+            if (!_lotsInternes.ContainsKey(lotModifie.LotId)) throw new KeyNotFoundException($"Lot {lotModifie.LotId} non trouvé.");
+            _lotsInternes[lotModifie.LotId] = lotModifie;
+        }
+
+        /// <summary>
+        /// Obtient un lot par son ID.
+        /// </summary>
+        public Lot ObtenirLotParId(string lotId)
+        {
+            _lotsInternes.TryGetValue(lotId, out var lot);
+            return lot;
+        }
+
+        /// <summary>
+        /// Retourne tous les lots triés par priorité puis nom.
+        /// </summary>
+        public List<Lot> ObtenirTousLesLots()
+        {
+            return _lotsInternes.Values.OrderBy(l => l.Priorite).ThenBy(l => l.Nom).ToList();
+        }
+
+        /// <summary>
+        /// Supprime un lot du projet.
+        /// TODO: Valider qu'aucune tâche n'utilise ce lot.
+        /// </summary>
+        public void SupprimerLot(string lotId)
+        {
+            if (!_lotsInternes.Remove(lotId))
+            {
+                throw new KeyNotFoundException($"Lot {lotId} non trouvé.");
+            }
+        }
+
+        /// <summary>
+        /// Remplace tous les lots existants par une nouvelle liste.
+        /// </summary>
+        public void RemplacerTousLesLots(List<Lot> lots)
+        {
+            _lotsInternes.Clear();
+            if (lots != null)
+            {
+                foreach (var lot in lots)
+                {
+                    if (!_lotsInternes.ContainsKey(lot.LotId))
+                    {
+                        _lotsInternes.Add(lot.LotId, lot);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Vide tous les lots du projet.
+        /// </summary>
+        public void ViderLots()
+        {
+            _lotsInternes.Clear();
         }
 
         #endregion
@@ -485,7 +565,7 @@ namespace PlanAthena.Services.Business
             RemplacerTousLesMetiers(new List<Metier>());
             _ouvrierService.Vider();
             _tacheService.Vider();
-            _lotService.Vider();
+            ViderLots(); // MODIFIÉ: Utilise la méthode interne
             _blocService.Vider();
 
             // Appel à ChargerMetiersParDefaut pour initialiser les métiers

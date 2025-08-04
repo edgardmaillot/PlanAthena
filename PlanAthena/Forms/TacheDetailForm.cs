@@ -11,7 +11,6 @@ namespace PlanAthena.Forms
     {
         private readonly TacheService _tacheService;
         private readonly ProjetService _projetService;
-        private readonly LotService _lotService;
         private readonly BlocService _blocService;
         private readonly DependanceBuilder _dependanceBuilder;
         private Tache _tache;
@@ -22,7 +21,7 @@ namespace PlanAthena.Forms
 
         public event EventHandler TacheSauvegardee;
 
-        public TacheDetailForm(TacheService tacheService, ProjetService projetService, LotService lotService, BlocService blocService, DependanceBuilder dependanceBuilder)
+        public TacheDetailForm(TacheService tacheService, ProjetService projetService, BlocService blocService, DependanceBuilder dependanceBuilder)
         {
             InitializeComponent();
 
@@ -42,7 +41,6 @@ namespace PlanAthena.Forms
 
             _tacheService = tacheService;
             _projetService = projetService;
-            _lotService = lotService;
             _blocService = blocService;
             _dependanceBuilder = dependanceBuilder;
 

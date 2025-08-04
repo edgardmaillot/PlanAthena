@@ -12,14 +12,14 @@ namespace PlanAthena.Services.DataAccess
     /// </summary>
     public class IdGeneratorService
     {
-        private readonly LotService _lotService;
+        private readonly ProjetService _projetService;
         private readonly BlocService _blocService;
         private readonly TacheService _tacheService;
         private readonly ConfigurationIds _config;
 
-        public IdGeneratorService(LotService lotService, BlocService blocService, TacheService tacheService)
+        public IdGeneratorService(ProjetService projetService, BlocService blocService, TacheService tacheService)
         {
-            _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
+            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
             _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
             _tacheService = tacheService ?? throw new ArgumentNullException(nameof(tacheService));
             _config = new ConfigurationIds();
@@ -32,7 +32,7 @@ namespace PlanAthena.Services.DataAccess
         /// </summary>
         public string GenererProchainLotId()
         {
-            var lotsExistants = _lotService.ObtenirTousLesLots();
+            var lotsExistants = _projetService.ObtenirTousLesLots();
             var numerosUtilises = lotsExistants
                 .Select(l => ExtraireNumeroLot(l.LotId))
                 .Where(n => n.HasValue)

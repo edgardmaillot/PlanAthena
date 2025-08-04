@@ -41,7 +41,6 @@ namespace PlanAthenaTests.Services.Business
             var csvDataService = new CsvDataService();
             var excelReader = new ExcelReader();
             var ouvrierService = new OuvrierService(csvDataService, excelReader);
-            var lotService = new LotService();
 
             // Factories pour gérer les dépendances circulaires
             Func<ProjetService> projetServiceFactory = () => projetServiceInstance;
@@ -50,8 +49,8 @@ namespace PlanAthenaTests.Services.Business
 
             // Instanciation dans l'ordre
             blocServiceInstance = new BlocService(tacheServiceFactory);
-            tacheServiceInstance = new TacheService(csvDataService, excelReader, projetServiceFactory, lotService, blocServiceFactory);
-            projetServiceInstance = new ProjetService(ouvrierService, tacheServiceFactory, csvDataService, lotService, blocServiceFactory);
+            tacheServiceInstance = new TacheService(csvDataService, excelReader, projetServiceFactory, blocServiceFactory);
+            projetServiceInstance = new ProjetService(ouvrierService, tacheServiceFactory, csvDataService, blocServiceFactory);
 
             _projetService = projetServiceInstance;
 

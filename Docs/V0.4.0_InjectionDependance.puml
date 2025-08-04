@@ -1,0 +1,201 @@
+@startuml
+title Injection de Dépendances et Cycles - PlanAthena v0.3.9
+
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+' ================================================
+' === SERVICES PRINCIPAUX ===
+' ================================================
+
+package "Services Business" {
+  class ProjetService {
+    Dependencies:
+    - OuvrierService
+    - Func<TacheService> ←factory
+    - CsvDataService  
+    - Func<BlocService> ←factory
+    
+    Provides:
+    • Métiers (ex-MetierService)
+    • Lots (ex-LotService)
+    • Projet complet
+  }
+  
+  class TacheService {
+    Dependencies:
+    - CsvDataService
+    - ExcelReader
+    - Func<ProjetService> ←factory pour lots
+    - Func<BlocService> ←factory
+    
+    Note: Utilise factory pour éviter
+    cycle avec ProjetService
+  }
+  
+  class BlocService {
+    Dependencies:
+    - Func<TacheService> ←factory
+    
+    Note: Utilise factory pour éviter
+    cycle avec TacheService
+  }
+  
+  class OuvrierService {
+    Dependencies: AUCUNE
+    
+    Note: Service "feuille"
+    sans dépendance
+  }
+}
+
+package "Services Data/Processing" {
+  class ImportService {
+    Dependencies:
+    - TacheService
+    - ProjetService ←pour lots
+    - BlocService
+    - IdGeneratorService
+  }
+  
+  class IdGeneratorService {
+    Dependencies:
+    - ProjetService ←pour lots
+    - BlocService
+    - TacheService
+  }
+  
+  class DataTransformer {
+    Dependencies:
+    - ProjetService ←pour lots
+  }
+  
+  class DependanceBuilder {
+    Dependencies:
+    - ProjetService ←pour lots
+  }
+}
+
+package "Services Infrastructure" {
+  class CsvDataService {
+    Dependencies: AUCUNE
+    Note: Service "feuille"
+  }
+  
+  class ExcelReader {
+    Dependencies: AUCUNE  
+    Note: Service "feuille"
+  }
+  
+  class PlanificationService {
+    Dependencies:
+    - DataTransformer
+    - PreparationSolveurService
+    - ResultatConsolidationService
+    - PlanAthenaCoreFacade
+  }
+}
+
+' ================================================
+' === FACTORY PATTERN ===
+' ================================================
+
+note as FactoryNote
+<b>🔄 FACTORY PATTERN pour éviter les cycles</b>
+
+<b>Problème résolu :</b>
+TacheService ←→ ProjetService (cycle direct)
+BlocService ←→ TacheService (cycle direct)
+
+<b>Solution :</b>
+• TacheService → Func<ProjetService>
+• BlocService → Func<TacheService>  
+• ProjetService → Func<TacheService>, Func<BlocService>
+
+<b>Usage :</b>
+var lot = _projetServiceFactory().ObtenirLotParId(id);
+end note
+
+' ================================================
+' === ORDRE D'INJECTION (MainForm.ConfigureServices) ===
+' ================================================
+
+note as InjectionOrder
+<b>📋 ORDRE D'INJECTION dans MainForm</b>
+
+<b>1. Services feuilles :</b>
+• CsvDataService (Singleton)
+• ExcelReader (Singleton)  
+• OuvrierService (Singleton)
+
+<b>2. Factories :</b>
+• Func<TacheService>
+• Func<ProjetService>
+• Func<BlocService>
+
+<b>3. Services avec factories :</b>
+• BlocService(Func<TacheService>)
+• TacheService(CsvData, Excel, Func<ProjetService>, Func<BlocService>)
+• ProjetService(Ouvrier, Func<TacheService>, CsvData, Func<BlocService>)
+
+<b>4. Services dépendants :</b>
+• IdGeneratorService
+• DataTransformer, etc.
+end note
+
+' ================================================
+' === RELATIONS ===
+' ================================================
+
+' Dépendances directes
+ProjetService --> OuvrierService
+ProjetService --> CsvDataService
+ImportService --> TacheService
+ImportService --> BlocService
+ImportService --> IdGeneratorService
+IdGeneratorService --> BlocService
+IdGeneratorService --> TacheService
+PlanificationService --> DataTransformer
+
+' Factory dependencies (pointillés)
+TacheService ..> ProjetService : "Func<ProjetService>\npour lots"
+BlocService ..> TacheService : "Func<TacheService>\néviter cycle"
+ProjetService ..> TacheService : "Func<TacheService>\néviter cycle"
+ProjetService ..> BlocService : "Func<BlocService>\néviter cycle"
+
+' Nouvelles dépendances post-fusion LotService
+ImportService --> ProjetService : "lots (ex-LotService)"
+DataTransformer --> ProjetService : "lots (ex-LotService)" 
+DependanceBuilder --> ProjetService : "lots (ex-LotService)"
+IdGeneratorService --> ProjetService : "lots (ex-LotService)"
+
+' ================================================
+' === IMPACT DE LA FUSION ===
+' ================================================
+
+note as FusionImpact
+<b>📊 IMPACT FUSION LotService → ProjetService</b>
+
+<b>Services modifiés (12 fichiers, 48 références) :</b>
+✅ TacheService : Func<ProjetService> pour lots
+✅ ImportService : ProjetService au lieu de LotService
+✅ DataTransformer : ProjetService pour lots
+✅ IdGeneratorService : ProjetService pour lots
+✅ DependanceBuilder : ProjetService pour lots
+✅ LotForm : ProjetService au lieu de LotService
+✅ TacheForm : ProjetService pour lots
+✅ PertDiagramControl : ProjetService pour lots
+✅ MainForm : Suppression LotService de l'injection
+
+<b>Bénéfices :</b>
+• Architecture simplifiée (-1 service)
+• Cohérence métier (projet = métiers + lots)
+• Maintenance réduite
+• Documentation centralisée
+end note
+
+FactoryNote --> TacheService
+InjectionOrder --> ProjetService
+FusionImpact --> ImportService
+
+@enduml

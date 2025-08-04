@@ -1,0 +1,390 @@
+@startuml
+title Architecture PlanAthena - Post Fusion LotService (v0.3.9)
+
+!define DIRECTION top to bottom direction
+top to bottom direction
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+skinparam package {
+  borderColor #555555
+  borderThickness 2
+  fontColor #333333
+  backgroundColor #F8F9FA
+}
+
+skinparam class {
+  borderColor #007ACC
+  backgroundColor #DDEEFF
+  arrowColor #005588
+}
+
+' ================================================
+' === COUCHE IHM ===
+' ================================================
+package "🖥️ Interface Utilisateur" as UI {
+  
+  package "Gestion de Projet" {
+    class MainForm
+    class NouveauProjetDialog
+  }
+  
+  package "Qualification des Tâches" {
+    class TacheForm
+    class TacheDetailForm
+    class ImportTacheForm
+    class ImportCsvGroupeDialog
+    class ImportWarningsDialog
+  }
+  
+  package "Configuration Ressources" {
+    class OuvrierForm
+    class MetierForm
+    class LotForm
+    class BlocForm
+    class CompetenceDialog
+    class SelectionMetierDialog
+  }
+  
+  package "Visualisation" {
+    class PertDiagramControl
+    class MetierDiagramControl
+  }
+}
+
+' ================================================
+' === COUCHE MÉTIER ===
+' ================================================
+package "⚙️ Services Métier" as BUSINESS {
+  
+  class ProjetService {
+    == Gestion Projet ==
+    +CreerNouveauProjet()
+    +SauvegarderProjet()
+    +ChargerProjet()
+    +ObtenirResumeProjet()
+    +ValiderDonneesAvantPlanification()
+    
+    == Gestion Métiers ==
+    +AjouterMetier()
+    +ModifierMetier()
+    +SupprimerMetier()
+    +GetAllMetiers()
+    +ObtenirMetiersTriesParDependance()
+    
+    == Gestion Lots (Fusionné de LotService) ==
+    +AjouterLot()
+    +ModifierLot()
+    +ObtenirLotParId()
+    +ObtenirTousLesLots()
+    +SupprimerLot()
+    +RemplacerTousLesLots()
+    +ViderLots()
+  }
+  
+  class TacheService {
+    == Qualification Tâches ==
+    +AjouterTache()
+    +ModifierTache()
+    +SupprimerTache()
+    +ObtenirTachesParLot()
+    +ObtenirStatistiques()
+    
+    == Gestion Blocs (Contraintes) ==
+    +AjouterBloc()
+    +ModifierBloc()
+    +ObtenirTousLesBlocs()
+    +SupprimerBloc()
+    +ValiderDependancesIntraBloc()
+    +CalculerCapaciteOuvriers()
+    
+    == Import/Export ==
+    +ImporterTachesCSV()
+    +ExporterTaches()
+    
+    --Dependencies--
+    -_projetServiceFactory: Func<ProjetService>
+  }
+  
+  class OuvrierService {
+    == Gestion Ressources ==
+    +AjouterOuvrier()
+    +ModifierOuvrier()
+    +SupprimerOuvrier()
+    +ObtenirTousLesOuvriers()
+    +GererCompetences()
+  }
+  
+  class BlocService {
+    == Gestion Contraintes ==
+    +AjouterBloc()
+    +ModifierBloc()
+    +SupprimerBloc()
+    +ObtenirTousLesBlocs()
+    +ValiderDependancesIntraBloc()
+    
+    --Dependencies--
+    -_tacheServiceFactory: Func<TacheService>
+  }
+  
+  class PlanificationService {
+    == Planification Optimale ==
+    +LancerPlanificationAsync()
+    +ObtenirStatistiquesTraitement()
+    +ChargerDonnees()
+    
+    == Préparation Solveur ==
+    +PreparerPourSolveur()
+    +TransformToChantierSetupDto()
+    
+    == Consolidation Résultats ==
+    +ConsoliderPourGantt()
+    +ExporterVersGantt()
+  }
+  
+  class ImportOrchestrationService {
+    == Import Orchestré ==
+    +ImporterTachesDepuisCsv()
+    +ValiderStructureFichier()
+    +GererMappingConfiguration()
+    
+    --Dependencies--
+    -_projetService: ProjetService
+  }
+}
+
+' ================================================
+' === COUCHE DATA ===
+' ================================================
+package "🗄️ Accès aux Données" as DATA {
+  
+  package "Entités Métier" {
+    class ProjetData {
+      +Taches: List<Tache>
+      +Lots: List<Lot>
+      +Blocs: List<Bloc>
+      +Metiers: List<Metier>
+      +Ouvriers: List<Ouvrier>
+    }
+    
+    class Tache {
+      +TacheId: string
+      +IdImporte: string
+      +TacheNom: string
+      +HeuresHommeEstimees: int
+      +MetierId: string
+      +Dependencies: string
+      +ExclusionsDependances: string
+      +Type: TypeActivite
+      +EstJalon: bool (computed)
+      +LotId: string
+      +BlocId: string
+    }
+    
+    enum TypeActivite {
+      Tache
+      JalonUtilisateur
+      JalonDeSynchronisation
+      JalonTechnique
+    }
+    
+    class Lot {
+      +LotId: string
+      +Nom: string
+      +Priorite: int
+      +CheminFichierPlan: string
+      +Phases: ChantierPhase
+    }
+    
+    class Bloc {
+      +BlocId: string
+      +Nom: string
+      +CapaciteMaxOuvriers: int
+    }
+    
+    class Metier {
+      +MetierId: string
+      +Nom: string
+      +PrerequisMetierIds: string
+      +CouleurHex: string
+      +Pictogram: string
+      +Phases: ChantierPhase
+    }
+    
+    class Ouvrier {
+      +OuvrierId: string
+      +Nom: string
+      +Prenom: string
+      +CoutJournalier: int
+      +MetierId: string
+      +NiveauExpertise: NiveauExpertise
+      +PerformancePct: int?
+    }
+    
+    enum ChantierPhase {
+      None
+      GrosOeuvre
+      SecondOeuvre
+      Finition
+      GarantieDecennale
+    }
+    
+    enum NiveauExpertise {
+      Debutant
+      Confirme
+      Expert
+    }
+  }
+  
+  package "Services Data" {
+    class CsvDataService {
+      +ImportCsv()
+      +ExportCsv()
+      +ValidateCsvStructure()
+    }
+    
+    class ExcelReader {
+      +ImportExcel()
+      +ImportSapOuvriers()
+      +ImportFieldwireTaches()
+    }
+    
+    class GanttExportService {
+      +ExporterVersGanttProjectXml()
+      +GenererXmlGanttProjectConsolide()
+    }
+    
+    class IdGeneratorService {
+      +GenererProchainId()
+      +ValiderFormatId()
+      
+      --Dependencies--
+      -_projetService: ProjetService
+    }
+    
+    class ImportService {
+      +ImporterTachesDepuisCsv()
+      +ValiderStructureFichier()
+      
+      --Dependencies--
+      -_projetService: ProjetService
+    }
+  }
+  
+  package "Configuration & Helpers" {
+    class ImportMappingConfiguration
+    class DependanceBuilder {
+      --Dependencies--
+      -_projetService: ProjetService
+    }
+    class ConfigurationBuilder
+  }
+  
+  package "Processing" {
+    class DataTransformer {
+      --Dependencies--
+      -_projetService: ProjetService
+    }
+    class PreparationSolveurService
+    class ResultatConsolidationService
+  }
+}
+
+' ================================================
+' === EXTERNE ===
+' ================================================
+package "🌍 Systèmes Externes" as EXTERNAL {
+  class PlanAthenaCoreFacade {
+    +ProcessChantier()
+    +OptimiserPlanification()
+  }
+  
+  class "Bibliothèques" as LIBS {
+    +QuikGraph (Graphes)
+    +CsvHelper (CSV)
+    +Microsoft.Msagl (Diagrammes)
+    +System.Text.Json (JSON)
+  }
+}
+
+' ================================================
+' === RELATIONS PRINCIPALES ===
+' ================================================
+
+' UI vers Business
+UI -down-> BUSINESS : "Utilise"
+
+' Business vers Data
+BUSINESS -down-> DATA : "Persiste"
+
+' Data vers External
+DATA -down-> EXTERNAL : "Intègre"
+
+' Relations détaillées principales
+ProjetService -down-> ProjetData
+TacheService -down-> Tache
+OuvrierService -down-> Ouvrier
+PlanificationService -down-> PlanAthenaCoreFacade
+
+MainForm -down-> ProjetService
+TacheForm -down-> TacheService
+LotForm -down-> ProjetService : "Utilise pour lots"
+OuvrierForm -down-> OuvrierService
+PlanificationService -right-> TacheService : "Charge données"
+ImportOrchestrationService -down-> CsvDataService
+
+' Relations Factory (éviter cycles)
+TacheService ..> ProjetService : "Func<ProjetService>\n(pour lots)"
+BlocService ..> TacheService : "Func<TacheService>\n(éviter cycle)"
+
+' Nouvelles relations post-fusion
+ImportService -up-> ProjetService : "lots"
+DependanceBuilder -up-> ProjetService : "lots"
+DataTransformer -up-> ProjetService : "lots"
+IdGeneratorService -up-> ProjetService : "lots"
+
+' ================================================
+' === NOTES MÉTIER ===
+' ================================================
+
+note top of BUSINESS
+<b>ARCHITECTURE POST-FUSION LotService</b>
+✅ LotService fusionné dans ProjetService
+✅ Cycles évités via Func<T> factories
+✅ 48 références mises à jour dans 12 fichiers
+end note
+
+note right of ProjetService
+<b>Service Unifié Projet + Lots</b>
+Gère maintenant :
+• Métiers (ex-MetierService)
+• Lots (ex-LotService)  
+• Projets (fonctions originales)
+• Sauvegarde/chargement complet
+end note
+
+note right of TacheService
+<b>Factory pour éviter cycle</b>
+Utilise Func<ProjetService> pour
+accéder aux lots sans créer de
+dépendance circulaire directe.
+_projetServiceFactory().ObtenirLotParId()
+end note
+
+note left of ImportService
+<b>Services simplifiés</b>
+Plus besoin d'injecter séparément
+ProjetService ET LotService.
+Un seul ProjetService suffit.
+end note
+
+note bottom of DATA
+<b>Impact de la fusion :</b>
+• IdGeneratorService : ProjetService pour lots
+• ImportService : ProjetService pour lots  
+• DataTransformer : ProjetService pour lots
+• DependanceBuilder : ProjetService pour lots
+• Tous utilisent le même service unifié
+end note
+
+@enduml

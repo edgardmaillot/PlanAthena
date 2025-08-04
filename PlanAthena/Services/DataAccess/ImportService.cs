@@ -12,22 +12,19 @@ namespace PlanAthena.Services.DataAccess
     public class ImportService
     {
         private readonly TacheService _tacheService;
-        private readonly LotService _lotService;
-        private readonly BlocService _blocService;
         private readonly ProjetService _projetService;
+        private readonly BlocService _blocService;
         private readonly IdGeneratorService _idGenerator;
 
         public ImportService(
             TacheService tacheService,
-            LotService lotService,
-            BlocService blocService,
             ProjetService projetService,
+            BlocService blocService,
             IdGeneratorService idGenerator)
         {
             _tacheService = tacheService ?? throw new ArgumentNullException(nameof(tacheService));
-            _lotService = lotService ?? throw new ArgumentNullException(nameof(lotService));
-            _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
             _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
+            _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
             _idGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
         }
 
@@ -144,7 +141,7 @@ namespace PlanAthena.Services.DataAccess
                 // 3. Vérification confirmation si nécessaire
                 if (!confirmerEcrasement)
                 {
-                    var lot = _lotService.ObtenirLotParId(lotIdCible);
+                    var lot = _projetService.ObtenirLotParId(lotIdCible);
                     if (lot != null)
                     {
                         var tachesExistantes = _tacheService.ObtenirTachesParLot(lotIdCible);
@@ -282,7 +279,7 @@ namespace PlanAthena.Services.DataAccess
             var importedTasks = new List<Tache>(); // Collecte les tâches nouvellement importées
 
             // 1. Créer/récupérer le lot
-            var lot = _lotService.ObtenirLotParId(lotIdCible);
+            var lot = _projetService.ObtenirLotParId(lotIdCible);
             if (lot == null)
             {
                 lot = new Lot
@@ -293,7 +290,7 @@ namespace PlanAthena.Services.DataAccess
                 };
                 try
                 {
-                    _lotService.AjouterLot(lot);
+                    _projetService.AjouterLot(lot);
                     warnings.Add($"Le lot '{lot.Nom}' (ID: {lot.LotId}) a été créé car il n'existait pas.");
                 }
                 catch (Exception ex)
