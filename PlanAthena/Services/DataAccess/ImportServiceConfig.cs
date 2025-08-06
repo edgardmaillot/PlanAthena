@@ -36,35 +36,7 @@ namespace PlanAthena
         }
     }
 
-    /// <summary>
-    /// Représente la configuration de mappage entre les noms de colonnes d'un fichier CSV
-    /// et les propriétés de l'objet Tache de PlanAthena.
-    /// Inclut également les paramètres par défaut et options d'import.
-    /// </summary>
-    public class ImportMappingConfiguration
-    {
-        /// <summary>
-        /// Indique si la première ligne du fichier CSV doit être traitée comme un en-tête.
-        /// </summary>
-        public bool HasHeaderRecord { get; set; } = true; // Nouvelle propriété
-
-        // Propriétés représentant les noms de colonnes CSV mappées aux champs de la Tache PlanAthena.
-        // Si une propriété est null ou vide, cela signifie que le champ correspondant n'a pas été mappé.
-        public string CsvColumn_IdImporte { get; set; } = string.Empty;
-        public string CsvColumn_TacheNom { get; set; } = string.Empty;
-        public string CsvColumn_HeuresHommeEstimees { get; set; } = string.Empty;
-        public string CsvColumn_MetierId { get; set; } = string.Empty;
-        public string CsvColumn_BlocId { get; set; } = string.Empty;
-        public string CsvColumn_Dependencies { get; set; } = string.Empty;
-        public string CsvColumn_ExclusionsDependances { get; set; } = string.Empty;
-        public string CsvColumn_EstJalon { get; set; } = string.Empty;
-
-        // Paramètres additionnels configurés par l'utilisateur lors de l'import
-        public bool CreerBlocParDefautSiNonSpecifie { get; set; } = true;
-        public string NomBlocParDefaut { get; set; } = "Bloc Général";
-        public int HeuresEstimeesParDefaut { get; set; } = 8;
-        public int CapaciteMaxOuvriersBlocParDefaut { get; set; } = 6;
-    }
+    
 
 
     /// <summary>

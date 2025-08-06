@@ -4,6 +4,7 @@ using PlanAthena.Core.Facade;
 using PlanAthena.Core.Facade.Dto.Output;
 using PlanAthena.Data;
 using PlanAthena.Services.DataAccess;
+using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Forms;
 using PlanAthena.Services.Processing;
 
@@ -53,7 +54,7 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Lance la planification et retourne le résultat complet (brut + consolidé)
         /// </summary>
-        public async Task<PlanificationResultDto> LancerPlanificationAsync(ConfigurationUI configuration)
+        public async Task<PlanificationResultDto> LancerPlanificationAsync(ConfigurationPlanification configuration)
         {
             if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));

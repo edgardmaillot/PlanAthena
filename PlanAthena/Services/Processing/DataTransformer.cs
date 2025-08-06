@@ -1,6 +1,7 @@
 using PlanAthena.Core.Facade.Dto.Input;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
+using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DataAccess;
 // Ajout pour éviter d'écrire les noms complets partout dans la méthode de mapping
 using CoreEnums = PlanAthena.Core.Facade.Dto.Enums;
@@ -28,11 +29,11 @@ namespace PlanAthena.Services.Processing
             List<Ouvrier> ouvriers,
             List<Tache> processedTaches,
             List<Metier> allMetiers,
-            ConfigurationUI configurationUI)
+            ConfigurationPlanification configurationPlanification)
         {
             ArgumentNullException.ThrowIfNull(ouvriers);
             ArgumentNullException.ThrowIfNull(processedTaches);
-            ArgumentNullException.ThrowIfNull(configurationUI);
+            ArgumentNullException.ThrowIfNull(configurationPlanification);
 
             // Transformation des tâches
             var tachesDto = processedTaches.Select(t => new TacheDto
@@ -101,21 +102,21 @@ namespace PlanAthena.Services.Processing
             // Transformation du calendrier
             var calendrierDto = new CalendrierTravailDefinitionDto
             {
-                JoursOuvres = configurationUI.JoursOuvres,
-                HeureDebutJournee = configurationUI.HeureDebutJournee,
-                HeuresTravailEffectifParJour = configurationUI.HeuresTravailEffectifParJour
+                JoursOuvres = configurationPlanification.JoursOuvres,
+                HeureDebutJournee = configurationPlanification.HeureDebutJournee,
+                HeuresTravailEffectifParJour = configurationPlanification.HeuresTravailEffectifParJour
             };
 
             // Configuration d'optimisation
             OptimizationConfigDto? optimConfig = null;
-            if (configurationUI.TypeDeSortie != "Analyse et Estimation")
+            if (configurationPlanification.TypeDeSortie != "Analyse et Estimation")
             {
                 optimConfig = new OptimizationConfigDto
                 {
-                    TypeDeSortie = configurationUI.TypeDeSortie ?? string.Empty,
-                    DureeJournaliereStandardHeures = configurationUI.DureeJournaliereStandardHeures,
-                    PenaliteChangementOuvrierPourcentage = configurationUI.PenaliteChangementOuvrierPourcentage,
-                    CoutIndirectJournalierPourcentage = configurationUI.CoutIndirectJournalierPourcentage
+                    TypeDeSortie = configurationPlanification.TypeDeSortie ?? string.Empty,
+                    DureeJournaliereStandardHeures = configurationPlanification.DureeJournaliereStandardHeures,
+                    PenaliteChangementOuvrierPourcentage = configurationPlanification.PenaliteChangementOuvrierPourcentage,
+                    CoutIndirectJournalierPourcentage = configurationPlanification.CoutIndirectJournalierPourcentage
                 };
             }
 
@@ -123,9 +124,9 @@ namespace PlanAthena.Services.Processing
             return new ChantierSetupInputDto
             {
                 ChantierId = $"CHANTIER_TEST_{DateTime.Now:yyyyMMdd_HHmmss}",
-                Description = configurationUI.Description,
-                DateDebutSouhaitee = configurationUI.DateDebutSouhaitee,
-                DateFinSouhaitee = configurationUI.DateFinSouhaitee,
+                Description = configurationPlanification.Description,
+                DateDebutSouhaitee = configurationPlanification.DateDebutSouhaitee,
+                DateFinSouhaitee = configurationPlanification.DateFinSouhaitee,
                 CalendrierTravail = calendrierDto,
                 OptimizationConfig = optimConfig,
                 Taches = tachesDto,

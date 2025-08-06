@@ -39,7 +39,7 @@ namespace PlanAthena.Services.Export
             IReadOnlyList<Ouvrier> ouvriers,
             IReadOnlyList<Metier> metiers,
             string nomProjet,
-            ConfigurationUI configuration,
+            ConfigurationPlanification configuration,
             ConfigurationExport config = null)
         {
             if (resultat?.ResultatBrut?.OptimisationResultat?.Affectations == null)
@@ -67,7 +67,7 @@ namespace PlanAthena.Services.Export
             IReadOnlyList<Ouvrier> ouvriers,
             IReadOnlyList<Metier> metiers,
             string nomProjet,
-            ConfigurationUI configuration)
+            ConfigurationPlanification configuration)
         {
             var affectations = resultat.ResultatBrut.OptimisationResultat.Affectations;
 
@@ -148,7 +148,7 @@ namespace PlanAthena.Services.Export
             IReadOnlyList<Metier> metiers,
             DateTime dateDebut,
             DateTime dateFin,
-            ConfigurationUI configuration)
+            ConfigurationPlanification configuration)
         {
             // CORRECTION : Regrouper par ouvrier unique (même OuvrierId = même personne)
             var ouvriersUniques = ouvriers.GroupBy(o => o.OuvrierId)

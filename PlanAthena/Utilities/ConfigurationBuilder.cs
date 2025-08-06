@@ -10,7 +10,7 @@ namespace PlanAthena.Utilities
     /// </summary>
     public class ConfigurationBuilder
     {
-        public ConfigurationUI ConstruireDepuisUI(
+        public ConfigurationPlanification ConstruireDepuisUI(
             List<DayOfWeek> joursOuvres,
             int heureDebut,
             int heuresTravail,
@@ -22,7 +22,7 @@ namespace PlanAthena.Utilities
             decimal penaliteChangement,
             decimal coutIndirect)
         {
-            return new ConfigurationUI
+            return new ConfigurationPlanification
             {
                 JoursOuvres = joursOuvres,
                 HeureDebutJournee = heureDebut,

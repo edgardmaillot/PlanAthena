@@ -1,12 +1,13 @@
-namespace PlanAthena.Services.DataAccess
+// Fichier: Services/Business/DTOs/ConfDTOs.cs
+
+namespace PlanAthena.Services.Business.DTOs
 {
     /// <summary>
-    /// Classe pour encapsuler la configuration de l'interface utilisateur
+    /// Configuration de planification et calculs métier
+    /// Anciennement ConfigurationUI - refactorisé pour une meilleure organisation
+    /// Utilisé pour l'export Excel, les calculs KPI et la planification
     /// </summary>
-    /// Classe à refactoriser car elle fait doublon avec ProjetDTOs
-    /// Egalement utilisée pour l'export exel des données ouvriers
-
-    public class ConfigurationUI
+    public class ConfigurationPlanification
     {
         public List<DayOfWeek> JoursOuvres { get; set; } = new List<DayOfWeek>();
         public int HeureDebutJournee { get; set; }
