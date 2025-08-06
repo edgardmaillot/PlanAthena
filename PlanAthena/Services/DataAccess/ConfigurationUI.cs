@@ -3,6 +3,9 @@ namespace PlanAthena.Services.DataAccess
     /// <summary>
     /// Classe pour encapsuler la configuration de l'interface utilisateur
     /// </summary>
+    /// Classe à refactoriser car elle fait doublon avec ProjetDTOs
+    /// Egalement utilisée pour l'export exel des données ouvriers
+
     public class ConfigurationUI
     {
         public List<DayOfWeek> JoursOuvres { get; set; } = new List<DayOfWeek>();

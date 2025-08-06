@@ -1,6 +1,8 @@
+// Fichier: Services/Business/DTOs/UIDTOs.cs
+
 using PlanAthena.Data;
 
-namespace PlanAthena.Utilities
+namespace PlanAthena.Services.Business.DTOs
 {
     /// <summary>
     /// Représente une dépendance potentielle dans l'interface utilisateur avec son état d'affichage.

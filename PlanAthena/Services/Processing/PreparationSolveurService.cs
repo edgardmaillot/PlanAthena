@@ -1,5 +1,5 @@
 // Fichier: Services/Processing/PreparationSolveurService.cs
-
+using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Data;
 
 namespace PlanAthena.Services.Processing

@@ -31,6 +31,7 @@ namespace PlanAthena.Forms
             splitContainer1 = new SplitContainer();
             groupBox3 = new GroupBox();
             btnExportGantt = new Button();
+            btnExportPlanningExcel = new Button();
             btnGenerateAndTest = new Button();
             numCoutIndirect = new NumericUpDown();
             label11 = new Label();
@@ -98,6 +99,7 @@ namespace PlanAthena.Forms
             // groupBox3
             // 
             groupBox3.Controls.Add(btnExportGantt);
+            groupBox3.Controls.Add(btnExportPlanningExcel);
             groupBox3.Controls.Add(btnGenerateAndTest);
             groupBox3.Controls.Add(numCoutIndirect);
             groupBox3.Controls.Add(label11);
@@ -125,20 +127,32 @@ namespace PlanAthena.Forms
             // 
             btnExportGantt.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             btnExportGantt.Enabled = false;
-            btnExportGantt.Location = new Point(589, 107);
+            btnExportGantt.Location = new Point(481, 107);
             btnExportGantt.Name = "btnExportGantt";
-            btnExportGantt.Size = new Size(186, 23);
+            btnExportGantt.Size = new Size(151, 23);
             btnExportGantt.TabIndex = 15;
             btnExportGantt.Text = "📊 Export GanttProject";
             btnExportGantt.UseVisualStyleBackColor = true;
             btnExportGantt.Click += btnExportGantt_Click;
+            // 
+            // btnExportPlanningExcel
+            // 
+            btnExportPlanningExcel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnExportPlanningExcel.Enabled = false;
+            btnExportPlanningExcel.Location = new Point(638, 107);
+            btnExportPlanningExcel.Name = "btnExportPlanningExcel";
+            btnExportPlanningExcel.Size = new Size(134, 23);
+            btnExportPlanningExcel.TabIndex = 15;
+            btnExportPlanningExcel.Text = "📊 Export Planning";
+            btnExportPlanningExcel.UseVisualStyleBackColor = true;
+            btnExportPlanningExcel.Click += btnExportPlanningExcel_Click;
             // 
             // btnGenerateAndTest
             // 
             btnGenerateAndTest.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             btnGenerateAndTest.Location = new Point(3, 107);
             btnGenerateAndTest.Name = "btnGenerateAndTest";
-            btnGenerateAndTest.Size = new Size(580, 23);
+            btnGenerateAndTest.Size = new Size(467, 23);
             btnGenerateAndTest.TabIndex = 14;
             btnGenerateAndTest.Text = "🚀 LANCER LA PLANIFICATION";
             btnGenerateAndTest.UseVisualStyleBackColor = true;
@@ -466,6 +480,7 @@ namespace PlanAthena.Forms
         private Label label11;
         private Button btnGenerateAndTest;
         private Button btnExportGantt;
+        private Button btnExportPlanningExcel;
         private RichTextBox rtbLog;
 
         // Nouveaux contrôles pour les informations projet

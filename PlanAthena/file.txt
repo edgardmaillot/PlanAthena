@@ -19,65 +19,39 @@ Data
     TypeActivite.cs
 Forms
     BlocForm.cs
-    BlocForm.Designer.cs
-    BlocForm.resx
+      BlocForm.Designer.cs
+      BlocForm.resx
     CompetenceDialog.cs
     ImportTacheForm.cs
-    ImportTacheForm.Designer.cs
-    ImportTacheForm.resx
+      ImportTacheForm.Designer.cs
+      ImportTacheForm.resx
     ImportWarningsDialog.cs
-    ImportWarningsDialog.Designer.cs
-    ImportWarningsDialog.resx
+      ImportWarningsDialog.Designer.cs
+      ImportWarningsDialog.resx
     LotForm.cs
-    LotForm.Designer.cs
-    LotForm.resx
+      LotForm.Designer.cs
+      LotForm.resx
     MainForm.cs
-    MainForm.Designer.cs
-    MainForm.resx
+      MainForm.Designer.cs
+      MainForm.resx
     MetierForm.cs
-    MetierForm.Designer.cs
-    MetierForm.resx
+      MetierForm.Designer.cs
+      MetierForm.resx
     OuvrierForm.cs
-    OuvrierForm.Designer.cs
-    OuvrierForm.resx
+      OuvrierForm.Designer.cs
+      OuvrierForm.resx
     ProjectDialogs.cs
     SelectionMetierDialog.cs
-    SelectionMetierDialog.resx
+      SelectionMetierDialog.resx
     TacheDetailForm.cs
-    TacheDetailForm.Designer.cs
-    TacheDetailForm.resx
+      TacheDetailForm.Designer.cs
+      TacheDetailForm.resx
     TacheForm.cs
-    TacheForm.Designer.cs
-    TacheForm.resx
+      TacheForm.Designer.cs
+      TacheForm.resx
 Resources
     Capture d'écran 2025-07-29 160101.png
     DefaultMetiersConfig.json
-    file.txt
-    Ic_ac_unit_24.png
-    Ic_air_24.png
-    Ic_aq_indoor_24.png
-    Ic_brick_24.png
-    Ic_carpenter_24.png
-    Ic_climate_mini_24.png
-    Ic_construction_24.png
-    Ic_device_thermostat_24.png
-    Ic_faucet_24.png
-    Ic_fire_extinguisher_24.png
-    Ic_foundation_24.png
-    Ic_garden_cart_24.png
-    Ic_handyman_24.png
-    Ic_heat_pump_24.png
-    Ic_paint_24.png
-    Ic_plumbing_24.png
-    Ic_power_24.png
-    Ic_roller_24.png
-    Ic_roofing_24.png
-    Ic_speed_camera_24.png
-    Ic_valve_24.png
-    MaterialSymbolsOutlined.ttf
-    office-layout-example-1.jpg
-    Tache.jpg
-    Tache.png
 Services
     Business
         DTOs
@@ -111,8 +85,6 @@ Utilities
     DependanceBuilder.cs
     IdGeneratorService.cs
 ClassDiagramPlanAthena.cd
-CreateFile.bat
-file.txt
 PlanAthena.csproj
 PlanAthena.csproj.user
 Program.cs

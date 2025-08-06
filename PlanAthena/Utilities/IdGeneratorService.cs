@@ -1,5 +1,6 @@
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
+using PlanAthena.Services.Business.DTOs;
 using System; // Ajouté pour ArgumentNullException, InvalidOperationException
 using System.Collections.Generic; // Ajouté pour HashSet
 using System.Linq; // Ajouté pour Select, Where, ToHashSet

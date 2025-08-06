@@ -1,8 +1,8 @@
-// Fichier: Services/Processing/PreparationResult.cs
+// Fichier: Services/Business/DTOs/ProcessDTOs.cs
 
 using PlanAthena.Data;
 
-namespace PlanAthena.Services.Processing
+namespace PlanAthena.Services.Business.DTOs
 {
     /// <summary>
     /// Résultat de la préparation des données pour le solveur.

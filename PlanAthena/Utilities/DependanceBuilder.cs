@@ -1,5 +1,6 @@
 using PlanAthena.Data;
-using PlanAthena.Services.Business; 
+using PlanAthena.Services.Business;
+using PlanAthena.Services.Business.DTOs;
 using QuikGraph;
 using QuikGraph.Algorithms; 
 using System;

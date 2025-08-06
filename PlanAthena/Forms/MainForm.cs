@@ -1,4 +1,4 @@
-//Fichier: MainForm.cs Version 0.3.8
+//Fichier: MainForm.cs Version 0.4.1 - Avec export Excel
 using Microsoft.Extensions.DependencyInjection;
 using PlanAthena.Core.Application;
 using PlanAthena.Core.Facade;
@@ -8,6 +8,8 @@ using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.Processing;
+using PlanAthena.Services.Export;
+using PlanAthena.Services.Infrastructure;
 using PlanAthena.Utilities;
 using System; // Nécessaire pour DayOfWeek, Action
 
@@ -22,12 +24,18 @@ namespace PlanAthena.Forms
         private readonly ProjetService _projetService;
         private readonly GanttExportService _ganttExportService;
         private readonly ConfigurationBuilder _configBuilder;
-        
         private readonly BlocService _blocService;
+
+        // NOUVEAUX SERVICES pour l'export Excel
+        private readonly PlanningExcelExportService _planningExcelExportService;
+        private readonly CheminsPrefereService _cheminsPrefereService;
 
         private InformationsProjet _projetActuel;
         private PlanAthena.Core.Facade.Dto.Output.ProcessChantierResultDto _dernierResultatPlanification;
         private ConsolidatedGanttDto _dernierGanttConsolide;
+
+        // NOUVEAU : Résultat complet pour l'export Excel
+        private PlanificationResultDto _dernierResultatPlanificationComplet;
 
         public MainForm()
         {
@@ -41,8 +49,11 @@ namespace PlanAthena.Forms
             _projetService = _serviceProvider.GetRequiredService<ProjetService>();
             _ganttExportService = _serviceProvider.GetRequiredService<GanttExportService>();
             _configBuilder = _serviceProvider.GetRequiredService<ConfigurationBuilder>();
-            
             _blocService = _serviceProvider.GetRequiredService<BlocService>();
+
+            // NOUVEAUX SERVICES
+            _cheminsPrefereService = _serviceProvider.GetRequiredService<CheminsPrefereService>();
+            _planningExcelExportService = _serviceProvider.GetRequiredService<PlanningExcelExportService>();
 
             InitializeInterface();
             CreerNouveauProjetParDefaut();
@@ -60,7 +71,10 @@ namespace PlanAthena.Forms
             serviceCollection.AddSingleton<CsvDataService>();
             serviceCollection.AddSingleton<ExcelReader>();
             serviceCollection.AddSingleton<OuvrierService>();
-            
+
+            // NOUVEAUX SERVICES
+            serviceCollection.AddSingleton<CheminsPrefereService>();
+            serviceCollection.AddSingleton<PlanningExcelExportService>();
 
             // 2. Enregistrement des Factories (Func<T>) en premier
             // Elles sont nécessaires pour briser les cycles lors de l'instanciation des services
@@ -185,7 +199,14 @@ namespace PlanAthena.Forms
         {
             if (ConfirmerPerteDonnees())
             {
-                using var ofd = new OpenFileDialog { Filter = "Fichiers projet (*.json)|*.json", Title = "Charger un projet" };
+                // MODIFIÉ : Utilise CheminsPrefereService
+                using var ofd = new OpenFileDialog
+                {
+                    InitialDirectory = _cheminsPrefereService.ObtenirDernierDossierProjets(),
+                    Filter = "Fichiers projet (*.json)|*.json",
+                    Title = "Charger un projet"
+                };
+
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
                     try
@@ -193,6 +214,9 @@ namespace PlanAthena.Forms
                         _projetActuel = _projetService.ChargerProjet(ofd.FileName);
                         MettreAJourAffichageProjet();
                         Log($"Projet chargé : {_projetActuel.NomProjet}");
+
+                        // NOUVEAU : Sauvegarder le chemin utilisé
+                        _cheminsPrefereService.SauvegarderDernierDossier(TypeOperation.ProjetChargement, ofd.FileName);
                     }
                     catch (Exception ex)
                     {
@@ -206,13 +230,25 @@ namespace PlanAthena.Forms
         private void SauvegarderProjet_Click(object sender, EventArgs e)
         {
             SynchroniserProjetDepuisInterface();
-            using var sfd = new SaveFileDialog { Filter = "Fichiers projet (*.json)|*.json", Title = "Sauvegarder le projet", FileName = $"{_projetActuel?.NomProjet?.Replace(" ", "_") ?? "projet"}.json" };
+
+            // MODIFIÉ : Utilise CheminsPrefereService
+            using var sfd = new SaveFileDialog
+            {
+                InitialDirectory = _cheminsPrefereService.ObtenirDernierDossierProjets(),
+                Filter = "Fichiers projet (*.json)|*.json",
+                Title = "Sauvegarder le projet",
+                FileName = $"{_projetActuel?.NomProjet?.Replace(" ", "_") ?? "projet"}.json"
+            };
+
             if (sfd.ShowDialog() == DialogResult.OK)
             {
                 try
                 {
                     _projetService.SauvegarderProjet(sfd.FileName, _projetActuel);
                     Log($"Projet sauvegardé : {sfd.FileName}");
+
+                    // NOUVEAU : Sauvegarder le chemin utilisé
+                    _cheminsPrefereService.SauvegarderDernierDossier(TypeOperation.ProjetSauvegarde, sfd.FileName);
                 }
                 catch (Exception ex)
                 {
@@ -321,15 +357,98 @@ namespace PlanAthena.Forms
                 _dernierResultatPlanification = resultatComplet.ResultatBrut;
                 _dernierGanttConsolide = resultatComplet.GanttConsolide;
 
+                // NOUVEAU : Sauvegarder le résultat complet pour l'export Excel
+                _dernierResultatPlanificationComplet = resultatComplet;
+
                 AfficherResultatDansLog(_dernierResultatPlanification);
 
                 VerifierDisponibiliteExportGantt();
+
+                // NOUVEAU : Vérifier disponibilité export Excel
+                VerifierDisponibiliteExportExcel();
+
                 Log("PLANIFICATION TERMINÉE.");
             }
             catch (Exception ex)
             {
                 Log($"ERREUR CRITIQUE lors de la planification : {ex}");
                 MessageBox.Show($"Une erreur critique est survenue:\n{ex.Message}", "Erreur Critique", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // NOUVELLE MÉTHODE : Export Planning Excel
+        private async void btnExportPlanningExcel_Click(object sender, EventArgs e)
+        {
+            if (_dernierResultatPlanificationComplet == null)
+            {
+                MessageBox.Show("Veuillez d'abord lancer une planification avant d'exporter.",
+                    "Planification requise", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                // Désactiver le bouton pendant l'export
+                btnExportPlanningExcel.Enabled = false;
+                btnExportPlanningExcel.Text = "Export en cours...";
+
+                // Récupérer les données nécessaires
+                var ouvriers = _ouvrierService.ObtenirTousLesOuvriers();
+                var metiers = _projetService.GetAllMetiers();
+                var nomProjet = _projetActuel?.NomProjet ?? "Projet PlanAthena";
+
+                // NOUVEAU : Récupérer la configuration pour les calculs KPI
+                var configuration = _configBuilder.ConstruireDepuisUI(
+                    chkListJoursOuvres.CheckedItems.Cast<DayOfWeek>().ToList(),
+                    (int)numHeureDebut.Value,
+                    (int)numHeuresTravail.Value,
+                    cmbTypeDeSortie.SelectedItem.ToString(),
+                    _projetActuel?.Description ?? txtDescription.Text,
+                    chkDateDebut.Checked ? dtpDateDebut.Value.Date : null,
+                    chkDateFin.Checked ? dtpDateFin.Value.Date : null,
+                    (int)numDureeStandard.Value,
+                    numPenaliteChangement.Value,
+                    numCoutIndirect.Value
+                );
+
+                Log("Début de l'export Planning Excel...");
+
+                // Lancer l'export avec la configuration
+                var cheminFichier = await _planningExcelExportService.ExporterPlanningComplet(
+                    _dernierResultatPlanificationComplet,
+                    ouvriers,
+                    metiers,
+                    nomProjet,
+                    configuration
+                );
+
+                Log($"📋 Export Planning Excel réussi : {cheminFichier}");
+
+                // Afficher le résultat
+                var result = MessageBox.Show(
+                    $"Planning exporté avec succès !\n\nFichier : {Path.GetFileName(cheminFichier)}\nDossier : {Path.GetDirectoryName(cheminFichier)}\n\nVoulez-vous ouvrir le dossier ?",
+                    "Export réussi",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Information
+                );
+
+                if (result == DialogResult.Yes)
+                {
+                    // Ouvrir le dossier contenant le fichier
+                    System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{cheminFichier}\"");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"ERREUR lors de l'export Excel : {ex.Message}");
+                MessageBox.Show($"Erreur lors de l'export Excel :\n{ex.Message}",
+                    "Erreur d'export", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                // Réactiver le bouton
+                btnExportPlanningExcel.Enabled = true;
+                btnExportPlanningExcel.Text = "📋 Export Planning Excel";
             }
         }
 
@@ -354,6 +473,26 @@ namespace PlanAthena.Forms
             if (peutExporter)
             {
                 Log($"📊 Export GanttProject disponible ({_dernierGanttConsolide.TachesRacines.Count} tâches consolidées)");
+            }
+        }
+
+        // NOUVELLE MÉTHODE : Vérifier disponibilité export Excel
+        private void VerifierDisponibiliteExportExcel()
+        {
+            bool peutExporter = _dernierResultatPlanificationComplet?.ResultatBrut?.OptimisationResultat?.Affectations?.Any() == true;
+
+            if (btnExportPlanningExcel.InvokeRequired)
+            {
+                btnExportPlanningExcel.Invoke(new Action(() => btnExportPlanningExcel.Enabled = peutExporter));
+            }
+            else
+            {
+                btnExportPlanningExcel.Enabled = peutExporter;
+            }
+
+            if (peutExporter)
+            {
+                Log($"📋 Export Planning Excel disponible ({_dernierResultatPlanificationComplet.ResultatBrut.OptimisationResultat.Affectations.Count} affectations)");
             }
         }
 
@@ -413,7 +552,7 @@ namespace PlanAthena.Forms
                 txtAuteur.TextChanged -= SynchroniserProjet;
                 txtDescription.TextChanged -= SynchroniserProjet;
             }
-            
+
             MettreAJourResume();
         }
 
