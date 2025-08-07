@@ -15,6 +15,7 @@ using DrawingNode = Microsoft.Msagl.Drawing.Node; // Alias pour éviter les conf
 
 namespace PlanAthena.Controls
 {
+    
     /// <summary>
     /// Arguments d'événement pour la sélection d'un métier via clic.
     /// </summary>
@@ -34,6 +35,13 @@ namespace PlanAthena.Controls
     /// </summary>
     public partial class MetierDiagramControl : UserControl
     {
+
+        /// <summary>
+        /// 🆕 V0.4.2 : Phase de chantier que ce diagramme représente
+        /// </summary>
+        public ChantierPhase? PhaseActuelle { get; private set; }
+
+
         #region Champs et Dépendances
 
         private readonly GViewer _viewer;
@@ -86,6 +94,13 @@ namespace PlanAthena.Controls
             InitializeComponent();
             _viewer = new GViewer { Dock = DockStyle.Fill };
             Controls.Add(_viewer);
+            this.Resize += MetierDiagramControl_Resize;
+        }
+        private void MetierDiagramControl_Resize(object sender, EventArgs e)
+        {
+            // Appelez la méthode qui sait comment tout ré-afficher correctement.
+            // D'après votre code, il semble que ce soit ZoomToutAjuster().
+            ZoomToutAjuster();
         }
 
         /// <summary>
@@ -191,9 +206,10 @@ namespace PlanAthena.Controls
         /// Charge les données des métiers à afficher dans le diagramme et regénère celui-ci.
         /// </summary>
         /// <param name="metiers">La liste des métiers à afficher.</param>
-        public void ChargerDonnees(List<Metier> metiers)
+        public void ChargerDonnees(List<Metier> metiers, ChantierPhase? phase = null)
         {
             _metiers = metiers ?? new List<Metier>();
+            PhaseActuelle = phase; // 🆕 Stocker la phase
             GenererDiagramme();
         }
 
@@ -355,7 +371,7 @@ namespace PlanAthena.Controls
                 else
                 {
                     // Ajouter les nœuds pour chaque métier
-                    foreach (var metier in _projetService.ObtenirMetiersTriesParDependance()) // Utilise le tri topologique du ProjetService
+                    foreach (var metier in _metiers.OrderBy(m => m.Nom))
                     {
                         var node = _nodeBuilder.BuildNodeFromMetier(metier); // Utilise le MetierNodeBuilder
                         // Note : La couleur de remplissage est déjà définie dans MetierNodeBuilder.ApplyNodeStyle
@@ -399,15 +415,32 @@ namespace PlanAthena.Controls
 
         /// <summary>
         /// Ajoute les arêtes (dépendances) entre les métiers dans le graphe.
+        /// 🔧 CORRIGÉ : Évite le fallback défaillant de GetPrerequisMetier()
         /// </summary>
         private void AjouterDependancesMetier()
         {
             foreach (var metierCourant in _metiers)
             {
-                var prerequisIds = _projetService.GetPrerequisForMetier(metierCourant.MetierId);
+                // 🔧 CORRECTION : Accès direct sans fallback défaillant
+                List<string> prerequisIds = new List<string>();
+
+                if (PhaseActuelle.HasValue)
+                {
+                    // Cas normal : on demande les prérequis pour la phase spécifique du diagramme
+                    prerequisIds = _projetService.GetPrerequisPourPhase(metierCourant.MetierId, PhaseActuelle.Value);
+                }
+                else
+                {
+                    // Cas de fallback (si un diagramme est affiché sans phase) : on affiche toutes les dépendances
+                    prerequisIds = _projetService.GetTousPrerequisConfondus(metierCourant.MetierId);
+                }
+
+                System.Diagnostics.Debug.WriteLine($"🔍 DIAGRAMME - Métier: {metierCourant.Nom}, Phase: {PhaseActuelle}");
+                System.Diagnostics.Debug.WriteLine($"  ✅ Prérequis: [{string.Join(", ", prerequisIds)}]");
+
                 foreach (var prerequisId in prerequisIds)
                 {
-                    // Vérifier que le prérequis existe et est affiché dans le graphe (parmi les métiers chargés)
+                    // Vérifier que le prérequis existe et est affiché dans le graphe
                     if (_metiers.Any(m => m.MetierId == prerequisId))
                     {
                         // Crée une arête du prérequis vers le métier dépendant
@@ -415,6 +448,8 @@ namespace PlanAthena.Controls
                         edge.Attr.Color = _settings.EdgeDefaultColor;
                         edge.Attr.LineWidth = _settings.EdgeDefaultWidth;
                         edge.Attr.ArrowheadAtTarget = _settings.EdgeArrowStyle;
+
+                        System.Diagnostics.Debug.WriteLine($"    ➡️ Flèche: {prerequisId} → {metierCourant.MetierId}");
                     }
                 }
             }

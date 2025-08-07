@@ -1,3 +1,6 @@
+// Forms/MetierForm.Designer.cs
+// 🔄 VERSION V0.4.2 - Interface adaptée pour 2 concepts
+
 namespace PlanAthena.Forms
 {
     partial class MetierForm
@@ -28,10 +31,9 @@ namespace PlanAthena.Forms
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             splitContainer1 = new SplitContainer();
             panelLeft = new Panel();
-            btnSupprimer = new Button();
-            btnNouveau = new Button();
             groupBoxDetails = new GroupBox();
             grpPhases = new GroupBox();
             chkFinition = new CheckBox();
@@ -39,8 +41,6 @@ namespace PlanAthena.Forms
             chkGrosOeuvre = new CheckBox();
             txtPictogram = new TextBox();
             lblPictogram = new Label();
-            chkListPrerequis = new CheckedListBox();
-            lblPrerequis = new Label();
             btnChoisirCouleur = new Button();
             panelCouleurApercu = new Panel();
             lblCouleur = new Label();
@@ -49,12 +49,12 @@ namespace PlanAthena.Forms
             lblMetierId = new Label();
             groupBoxActions = new GroupBox();
             btnAnnuler = new Button();
-            btnSauvegarder = new Button();
+            btnValider = new Button();
+            _toolTipMetiers = new ToolTip(components);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
             splitContainer1.SuspendLayout();
-            panelLeft.SuspendLayout();
             groupBoxDetails.SuspendLayout();
             grpPhases.SuspendLayout();
             groupBoxActions.SuspendLayout();
@@ -74,58 +74,33 @@ namespace PlanAthena.Forms
             // 
             splitContainer1.Panel2.Controls.Add(groupBoxDetails);
             splitContainer1.Size = new Size(784, 461);
-            splitContainer1.SplitterDistance = 450; // Ajusté pour le diagramme
+            splitContainer1.SplitterDistance = 377;
             splitContainer1.TabIndex = 0;
             // 
             // panelLeft
             // 
-            panelLeft.Controls.Add(btnSupprimer);
-            panelLeft.Controls.Add(btnNouveau);
+            panelLeft.AutoScroll = true;
             panelLeft.Dock = DockStyle.Fill;
             panelLeft.Location = new Point(0, 0);
             panelLeft.Name = "panelLeft";
-            panelLeft.Size = new Size(450, 461);
+            panelLeft.Size = new Size(377, 461);
             panelLeft.TabIndex = 0;
-            // 
-            // btnSupprimer
-            // 
-            btnSupprimer.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnSupprimer.Location = new Point(365, 426); // Ajusté position
-            btnSupprimer.Name = "btnSupprimer";
-            btnSupprimer.Size = new Size(75, 23);
-            btnSupprimer.TabIndex = 1;
-            btnSupprimer.Text = "🗑️ Supprimer";
-            btnSupprimer.UseVisualStyleBackColor = true;
-            btnSupprimer.Click += btnSupprimer_Click;
-            // 
-            // btnNouveau
-            // 
-            btnNouveau.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
-            btnNouveau.Location = new Point(12, 426); // Ajusté position
-            btnNouveau.Name = "btnNouveau";
-            btnNouveau.Size = new Size(75, 23);
-            btnNouveau.TabIndex = 0;
-            btnNouveau.Text = "➕ Nouveau";
-            btnNouveau.UseVisualStyleBackColor = true;
-            btnNouveau.Click += btnNouveau_Click;
             // 
             // groupBoxDetails
             // 
             groupBoxDetails.Controls.Add(grpPhases);
             groupBoxDetails.Controls.Add(txtPictogram);
             groupBoxDetails.Controls.Add(lblPictogram);
-            groupBoxDetails.Controls.Add(chkListPrerequis);
-            groupBoxDetails.Controls.Add(lblPrerequis);
             groupBoxDetails.Controls.Add(btnChoisirCouleur);
             groupBoxDetails.Controls.Add(panelCouleurApercu);
             groupBoxDetails.Controls.Add(lblCouleur);
             groupBoxDetails.Controls.Add(txtNom);
             groupBoxDetails.Controls.Add(lblNom);
             groupBoxDetails.Controls.Add(lblMetierId);
-            groupBoxDetails.Dock = DockStyle.Fill;
-            groupBoxDetails.Location = new Point(0, 0);
+            groupBoxDetails.Dock = DockStyle.Right;
+            groupBoxDetails.Location = new Point(-1, 0);
             groupBoxDetails.Name = "groupBoxDetails";
-            groupBoxDetails.Size = new Size(330, 461);
+            groupBoxDetails.Size = new Size(404, 461);
             groupBoxDetails.TabIndex = 0;
             groupBoxDetails.TabStop = false;
             groupBoxDetails.Text = "Détails du Métier";
@@ -147,7 +122,7 @@ namespace PlanAthena.Forms
             chkFinition.AutoSize = true;
             chkFinition.Location = new Point(220, 22);
             chkFinition.Name = "chkFinition";
-            chkFinition.Size = new Size(61, 19);
+            chkFinition.Size = new Size(66, 19);
             chkFinition.TabIndex = 2;
             chkFinition.Text = "Finition";
             chkFinition.UseVisualStyleBackColor = true;
@@ -180,7 +155,7 @@ namespace PlanAthena.Forms
             txtPictogram.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             txtPictogram.Location = new Point(100, 113);
             txtPictogram.Name = "txtPictogram";
-            txtPictogram.Size = new Size(217, 23);
+            txtPictogram.Size = new Size(291, 23);
             txtPictogram.TabIndex = 12;
             txtPictogram.TextChanged += OnDetailChanged;
             // 
@@ -192,25 +167,6 @@ namespace PlanAthena.Forms
             lblPictogram.Size = new Size(68, 15);
             lblPictogram.TabIndex = 11;
             lblPictogram.Text = "Pictogram :";
-            // 
-            // chkListPrerequis
-            // 
-            chkListPrerequis.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            chkListPrerequis.FormattingEnabled = true;
-            chkListPrerequis.Location = new Point(16, 223);
-            chkListPrerequis.Name = "chkListPrerequis";
-            chkListPrerequis.Size = new Size(301, 220);
-            chkListPrerequis.TabIndex = 10;
-            chkListPrerequis.ItemCheck += chkListPrerequis_ItemCheck;
-            // 
-            // lblPrerequis
-            // 
-            lblPrerequis.AutoSize = true;
-            lblPrerequis.Location = new Point(16, 205);
-            lblPrerequis.Name = "lblPrerequis";
-            lblPrerequis.Size = new Size(60, 15);
-            lblPrerequis.TabIndex = 7;
-            lblPrerequis.Text = "Prérequis:";
             // 
             // btnChoisirCouleur
             // 
@@ -224,12 +180,12 @@ namespace PlanAthena.Forms
             // 
             // panelCouleurApercu
             // 
+            panelCouleurApercu.BackColor = Color.LightGray;
             panelCouleurApercu.BorderStyle = BorderStyle.FixedSingle;
             panelCouleurApercu.Location = new Point(100, 80);
             panelCouleurApercu.Name = "panelCouleurApercu";
             panelCouleurApercu.Size = new Size(111, 23);
             panelCouleurApercu.TabIndex = 5;
-            panelCouleurApercu.BackColor = Color.LightGray;
             panelCouleurApercu.Click += btnChoisirCouleur_Click;
             // 
             // lblCouleur
@@ -237,7 +193,7 @@ namespace PlanAthena.Forms
             lblCouleur.AutoSize = true;
             lblCouleur.Location = new Point(16, 83);
             lblCouleur.Name = "lblCouleur";
-            lblCouleur.Size = new Size(51, 15);
+            lblCouleur.Size = new Size(52, 15);
             lblCouleur.TabIndex = 4;
             lblCouleur.Text = "Couleur:";
             // 
@@ -246,7 +202,7 @@ namespace PlanAthena.Forms
             txtNom.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             txtNom.Location = new Point(100, 54);
             txtNom.Name = "txtNom";
-            txtNom.Size = new Size(217, 23);
+            txtNom.Size = new Size(291, 23);
             txtNom.TabIndex = 3;
             txtNom.TextChanged += OnDetailChanged;
             // 
@@ -262,16 +218,17 @@ namespace PlanAthena.Forms
             // lblMetierId
             // 
             lblMetierId.AutoSize = true;
+            lblMetierId.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             lblMetierId.Location = new Point(100, 28);
             lblMetierId.Name = "lblMetierId";
-            lblMetierId.Size = new Size(21, 15);
+            lblMetierId.Size = new Size(23, 15);
             lblMetierId.TabIndex = 0;
             lblMetierId.Text = "ID:";
             // 
             // groupBoxActions
             // 
             groupBoxActions.Controls.Add(btnAnnuler);
-            groupBoxActions.Controls.Add(btnSauvegarder);
+            groupBoxActions.Controls.Add(btnValider);
             groupBoxActions.Dock = DockStyle.Bottom;
             groupBoxActions.Location = new Point(0, 461);
             groupBoxActions.Name = "groupBoxActions";
@@ -291,16 +248,22 @@ namespace PlanAthena.Forms
             btnAnnuler.UseVisualStyleBackColor = true;
             btnAnnuler.Click += btnAnnuler_Click;
             // 
-            // btnSauvegarder
+            // btnValider
             // 
-            btnSauvegarder.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            btnSauvegarder.Location = new Point(616, 19);
-            btnSauvegarder.Name = "btnSauvegarder";
-            btnSauvegarder.Size = new Size(75, 23);
-            btnSauvegarder.TabIndex = 1;
-            btnSauvegarder.Text = "💾 Sauvegarder";
-            btnSauvegarder.UseVisualStyleBackColor = true;
-            btnSauvegarder.Click += btnSauvegarder_Click;
+            btnValider.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnValider.Location = new Point(616, 19);
+            btnValider.Name = "btnValider";
+            btnValider.Size = new Size(75, 23);
+            btnValider.TabIndex = 1;
+            btnValider.Text = "✅ Valider";
+            btnValider.UseVisualStyleBackColor = true;
+            btnValider.Click += btnValider_Click;
+            // 
+            // _toolTipMetiers
+            // 
+            _toolTipMetiers.AutoPopDelay = 5000;
+            _toolTipMetiers.InitialDelay = 500;
+            _toolTipMetiers.ReshowDelay = 100;
             // 
             // MetierForm
             // 
@@ -317,7 +280,6 @@ namespace PlanAthena.Forms
             splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
             splitContainer1.ResumeLayout(false);
-            panelLeft.ResumeLayout(false);
             groupBoxDetails.ResumeLayout(false);
             groupBoxDetails.PerformLayout();
             grpPhases.ResumeLayout(false);
@@ -337,18 +299,21 @@ namespace PlanAthena.Forms
         private TextBox txtNom;
         private Label lblNom;
         private Label lblMetierId;
-        private Label lblPrerequis;
-        private CheckedListBox chkListPrerequis;
         private TextBox txtPictogram;
         private Label lblPictogram;
         private GroupBox grpPhases;
         private CheckBox chkGrosOeuvre;
         private CheckBox chkFinition;
         private CheckBox chkSecondOeuvre;
-        private Panel panelLeft; // Ce panel contiendra le PertDiagramControl
-        private Button btnNouveau;
-        private Button btnSupprimer;
-        private Button btnSauvegarder;
+        private Panel panelLeft; // 🆕 V0.4.2 : Panel dynamique pour les 2 concepts
+        private Button btnValider; // 🔄 V0.4.2 : Remplace btnSauvegarder
         private Button btnAnnuler;
+        private ToolTip _toolTipMetiers; // 🆕 V0.4.2 : Pour tooltips boutons métiers
+
+        // 🗑️ SUPPRIMÉ V0.4.2 : 
+        // private CheckedListBox chkListPrerequis;
+        // private Label lblPrerequis;
+        // private Button btnNouveau;
+        // private Button btnSupprimer;
     }
 }

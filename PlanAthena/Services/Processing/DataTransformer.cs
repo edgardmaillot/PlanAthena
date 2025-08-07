@@ -93,8 +93,8 @@ namespace PlanAthena.Services.Processing
                         Competences = g.Select(c => new CompetenceDto
                         {
                             MetierId = c.MetierId,
-                            Niveau = c.NiveauExpertise,
-                            PerformancePct = c.PerformancePct
+                            //Niveau = c.NiveauExpertise,
+                            //PerformancePct = c.PerformancePct
                         }).ToList()
                     };
                 }).ToList();

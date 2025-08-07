@@ -1,6 +1,6 @@
 using Microsoft.VisualBasic.ApplicationServices;
 using PlanAthena.Data;
-using PlanAthena.Services.Business.DTOs; 
+using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DataAccess;
 using QuikGraph;
 using QuikGraph.Algorithms;
@@ -20,6 +20,7 @@ namespace PlanAthena.Services.Business
 {
     /// <summary>
     /// Service de gestion des projets (sauvegarde/chargement complet)
+    /// 🔄 VERSION V0.4.2 - Système métiers avec prérequis par phase
     /// </summary>
     public class ProjetService
     {
@@ -42,7 +43,6 @@ namespace PlanAthena.Services.Business
         };
         private int _fallbackColorIndex = 0;
         private readonly Dictionary<string, Color> _assignedFallbackColors = new Dictionary<string, Color>();
-
 
         public ProjetService(
             OuvrierService ouvrierService,
@@ -108,10 +108,10 @@ namespace PlanAthena.Services.Business
                     Metiers = GetAllMetiers().ToList(),
                     Ouvriers = _ouvrierService.ObtenirTousLesOuvriers(),
                     Taches = _tacheService.ObtenirToutesLesTaches(),
-                    Lots = ObtenirTousLesLots(), // MODIFIÉ: Utilise la méthode interne
+                    Lots = ObtenirTousLesLots(),
                     Blocs = _blocService.ObtenirTousLesBlocs(),
                     DateSauvegarde = DateTime.Now,
-                    VersionApplication = "0.3.8"
+                    VersionApplication = "0.4.2"
                 };
 
                 var options = new JsonSerializerOptions
@@ -170,7 +170,7 @@ namespace PlanAthena.Services.Business
             // Charger les données dans l'ordre de dépendance
             RemplacerTousLesMetiers(projetData.Metiers);
             _ouvrierService.ChargerOuvriers(projetData.Ouvriers);
-            RemplacerTousLesLots(projetData.Lots); // MODIFIÉ: Utilise la méthode interne
+            RemplacerTousLesLots(projetData.Lots);
             _blocService.RemplacerTousLesBlocs(projetData.Blocs);
             _tacheService.ChargerTaches(projetData.Taches);
 
@@ -312,7 +312,7 @@ namespace PlanAthena.Services.Business
 
         #endregion
 
-        #region CRUD Operations - Métiers (déplacé de MetierService)
+        #region CRUD Operations - Métiers V0.4.2 (🔄 MIS À JOUR)
 
         /// <summary>
         /// Ajoute un nouveau métier au projet.
@@ -330,32 +330,81 @@ namespace PlanAthena.Services.Business
         }
 
         /// <summary>
-        /// Modifie un métier existant.
+        /// 🔄 MODIFIÉ V0.4.2 : Support Dictionary PrerequisParPhase
+        /// Utilisé par: MetierForm pour sauvegarder précédences par phase
         /// </summary>
-        public void ModifierMetier(string metierId, string nouveauNom, string nouveauxPrerequisIds, string couleurHex = null, string pictogram = null, ChantierPhase phases = ChantierPhase.None)
+        public void ModifierMetier(string metierId, string nom,
+            Dictionary<ChantierPhase, List<string>> prerequisParPhase,
+            string couleurHex = null, string pictogram = null, ChantierPhase? phases = null)
         {
             if (!_metiersInternes.TryGetValue(metierId, out var metierAModifier))
                 throw new KeyNotFoundException($"Le métier avec l'ID '{metierId}' n'a pas été trouvé.");
 
-            metierAModifier.Nom = nouveauNom;
-            metierAModifier.PrerequisMetierIds = nouveauxPrerequisIds;
+            metierAModifier.Nom = nom;
+
+            // 🆕 NOUVEAU : Gestion Dictionary PrerequisParPhase
+            metierAModifier.PrerequisParPhase = prerequisParPhase ?? new Dictionary<ChantierPhase, List<string>>();
 
             if (couleurHex != null)
-            {
                 metierAModifier.CouleurHex = couleurHex;
-            }
+
             if (pictogram != null)
-            {
                 metierAModifier.Pictogram = pictogram;
-            }
-            if (phases != ChantierPhase.None || (metierAModifier.Phases != ChantierPhase.None && phases == ChantierPhase.None)) // Update only if phases are provided or explicitly set to None
+
+            if (phases.HasValue)
+                metierAModifier.Phases = phases.Value;
+        }
+
+        /// <summary>
+        /// 🆕 NOUVEAU V0.4.2 : Support création métiers spécifiques (amiante, nucléaire, QSE)
+        /// Utilisé par: MetierForm Concept 1 pour métiers rares
+        /// 🔄 TODO V0.5 : Déléguer génération ID à IdMetierGeneratorService
+        /// </summary>
+        /// <param name="nom">Nom du métier spécifique</param>
+        /// <param name="phases">Phases d'intervention</param>
+        /// <param name="couleurHex">Couleur personnalisée (optionnel)</param>
+        /// <returns>ID généré pour le nouveau métier</returns>
+        public string AjouterMetierSpecifique(string nom, ChantierPhase phases, string couleurHex = null)
+        {
+            if (string.IsNullOrWhiteSpace(nom))
+                throw new ArgumentException("Le nom du métier ne peut pas être vide.", nameof(nom));
+
+            if (phases == ChantierPhase.None)
+                throw new ArgumentException("Au moins une phase d'intervention doit être spécifiée.", nameof(phases));
+
+            // 🔄 TEMPORAIRE V0.4.2 : Génération ID locale (à migrer vers IdMetierGeneratorService V0.5)
+            var nomNormalise = nom.ToUpperInvariant()
+                .Replace(" ", "_")
+                .Replace("É", "E")
+                .Replace("È", "E")
+                .Replace("Ê", "E");
+
+            var prefixe = $"M_{nomNormalise}_";
+            var compteur = 1;
+            string idCandidat;
+
+            do
             {
-                metierAModifier.Phases = phases;
-            }
+                idCandidat = $"{prefixe}{compteur:D3}";
+                compteur++;
+            } while (_metiersInternes.ContainsKey(idCandidat));
+
+            var nouveauMetier = new Metier
+            {
+                MetierId = idCandidat,
+                Nom = nom,
+                Phases = phases,
+                CouleurHex = couleurHex ?? "",
+                PrerequisParPhase = new Dictionary<ChantierPhase, List<string>>()
+            };
+
+            AjouterMetier(nouveauMetier);
+            return idCandidat;
         }
 
         /// <summary>
         /// Supprime un métier du projet.
+        /// 🔄 MODIFIÉ V0.4.2 : Mise à jour nettoyage prérequis avec nouvelle structure
         /// </summary>
         public void SupprimerMetier(string metierId)
         {
@@ -365,17 +414,24 @@ namespace PlanAthena.Services.Business
             // Supprimer ce métier des prérequis des autres métiers
             foreach (var metier in _metiersInternes.Values)
             {
-                var prerequis = GetPrerequisForMetier(metier.MetierId).ToList();
-                if (prerequis.Remove(metierId))
+                var prerequisParPhaseModifies = new Dictionary<ChantierPhase, List<string>>();
+
+                foreach (var (phase, prerequisPhase) in metier.PrerequisParPhase)
                 {
-                    metier.PrerequisMetierIds = string.Join(",", prerequis);
+                    var prerequisNettoyes = prerequisPhase.Where(id => id != metierId).ToList();
+                    if (prerequisNettoyes.Count > 0)
+                    {
+                        prerequisParPhaseModifies[phase] = prerequisNettoyes;
+                    }
                 }
+
+                metier.PrerequisParPhase = prerequisParPhaseModifies;
             }
         }
 
         #endregion
 
-        #region Data Loading and Retrieval - Métiers (déplacé de MetierService)
+        #region Data Loading and Retrieval - Métiers V0.4.2 (🔄 MIS À JOUR)
 
         /// <summary>
         /// Remplace tous les métiers existants par une nouvelle liste.
@@ -408,90 +464,56 @@ namespace PlanAthena.Services.Business
         /// </summary>
         public Metier GetMetierById(string metierId)
         {
+            if (string.IsNullOrEmpty(metierId))
+            {
+                return null;
+            }
+
             _metiersInternes.TryGetValue(metierId, out var metier);
             return metier;
         }
 
         /// <summary>
-        /// Obtient la liste des IDs des métiers prérequis pour un métier donné.
+        /// 🆕 V0.4.2.1 - Obtient les prérequis pour une phase SPÉCIFIQUE.
+        /// C'est la méthode à utiliser par défaut pour respecter la logique par phase.
         /// </summary>
-        public IReadOnlyList<string> GetPrerequisForMetier(string metierId)
+        /// <param name="metierId">L'ID du métier</param>
+        /// <param name="phase">La phase de chantier concernée. Ne peut pas être null.</param>
+        /// <returns>Une liste d'IDs de métiers prérequis pour cette phase précise.</returns>
+        public List<string> GetPrerequisPourPhase(string metierId, ChantierPhase phase)
         {
-            if (string.IsNullOrEmpty(metierId)) return Array.Empty<string>();
-
-            if (_metiersInternes.TryGetValue(metierId, out var metier) && !string.IsNullOrEmpty(metier.PrerequisMetierIds))
+            var metier = GetMetierById(metierId);
+            if (metier?.PrerequisParPhase != null && metier.PrerequisParPhase.TryGetValue(phase, out var prerequis))
             {
-                return metier.PrerequisMetierIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                return prerequis.ToList(); // Retourne la liste des prérequis pour la phase
             }
-            return Array.Empty<string>();
+            return new List<string>(); // Retourne une liste vide si pas de prérequis pour cette phase
         }
 
         /// <summary>
-        /// Obtient la liste complète et transitive de tous les prérequis pour un métier donné.
+        /// 🆕 V0.4.2.1 - Obtient TOUS les prérequis d'un métier, toutes phases confondues.
+        /// À utiliser avec précaution, principalement pour la validation de cycles globaux.
         /// </summary>
-        public HashSet<string> GetTransitivePrerequisites(string metierId)
+        /// <param name="metierId">L'ID du métier</param>
+        /// <returns>Une liste unique de tous les IDs de prérequis, peu importe la phase.</returns>
+        public List<string> GetTousPrerequisConfondus(string metierId)
         {
-            var allPrereqs = new HashSet<string>();
-            var toExplore = new Queue<string>(GetPrerequisForMetier(metierId));
-
-            while (toExplore.Count > 0)
+            var metier = GetMetierById(metierId);
+            if (metier?.PrerequisParPhase == null)
             {
-                var current = toExplore.Dequeue();
-                if (allPrereqs.Add(current)) // Si on l'ajoute (il n'y était pas déjà)
-                {
-                    var parents = GetPrerequisForMetier(current);
-                    foreach (var parent in parents)
-                    {
-                        toExplore.Enqueue(parent);
-                    }
-                }
+                return new List<string>();
             }
-            return allPrereqs;
+
+            // Aplatit les listes de toutes les phases et supprime les doublons
+            return metier.PrerequisParPhase.Values
+                .SelectMany(prereqs => prereqs)
+                .Distinct()
+                .ToList();
         }
+
 
         #endregion
 
-        #region Tri Topologique - Métiers (déplacé de MetierService)
-
-        /// <summary>
-        /// Retourne la liste des métiers ordonnée selon leurs dépendances (tri topologique), en utilisant QuikGraph.
-        /// Les métiers sans dépendances apparaissent en premier. Gère la détection de cycles.
-        /// </summary>
-        /// <returns>Une liste ordonnée de métiers.</returns>
-        public List<Metier> ObtenirMetiersTriesParDependance()
-        {
-            var graph = new AdjacencyGraph<string, Edge<string>>();
-            var metiersCollection = _metiersInternes.Values;
-
-            graph.AddVertexRange(metiersCollection.Select(m => m.MetierId));
-
-            foreach (var metier in metiersCollection)
-            {
-                var prerequis = GetPrerequisForMetier(metier.MetierId);
-                foreach (var prerequisId in prerequis)
-                {
-                    if (_metiersInternes.ContainsKey(prerequisId))
-                    {
-                        graph.AddEdge(new Edge<string>(prerequisId, metier.MetierId));
-                    }
-                }
-            }
-
-            try
-            {
-                var sortedIds = graph.TopologicalSort().ToList();
-                return sortedIds.Select(id => _metiersInternes[id]).ToList();
-            }
-            catch (NonAcyclicGraphException)
-            {
-                // Une dépendance circulaire a été détectée entre les métiers.
-                // On retourne une liste non triée pour éviter de planter l'UI.
-                // Un mécanisme de logging ou de notification à l'utilisateur serait idéal ici.
-                return metiersCollection.OrderBy(m => m.Nom).ToList();
-            }
-        }
-
-        #endregion
 
         #region Couleurs - Métiers (déplacé de MetierService)
 
@@ -561,11 +583,10 @@ namespace PlanAthena.Services.Business
         public InformationsProjet CreerNouveauProjet(string nomProjet, string description = "")
         {
             // Vider toutes les données existantes
-            // Utilise la méthode interne RemplacerTousLesMetiers()
             RemplacerTousLesMetiers(new List<Metier>());
             _ouvrierService.Vider();
             _tacheService.Vider();
-            ViderLots(); // MODIFIÉ: Utilise la méthode interne
+            ViderLots();
             _blocService.Vider();
 
             // Appel à ChargerMetiersParDefaut pour initialiser les métiers
@@ -588,7 +609,6 @@ namespace PlanAthena.Services.Business
         {
             return new ResumeProjet
             {
-                // Utilise la méthode interne GetAllMetiers()
                 NombreMetiers = GetAllMetiers().Count,
                 StatistiquesOuvriers = _ouvrierService.ObtenirStatistiques(),
                 StatistiquesTaches = _tacheService.ObtenirStatistiques(),
@@ -598,6 +618,8 @@ namespace PlanAthena.Services.Business
 
         /// <summary>
         /// Charge les métiers par défaut depuis le fichier de configuration.
+        /// 🔄 MODIFIÉ V0.4.2 : Support migration automatique PrerequisMetierIds → PrerequisParPhase
+        /// 🔄 TODO V0.5 : Déléguer à IdMetierGeneratorService + config loader dédié
         /// </summary>
         private void ChargerMetiersParDefaut()
         {
@@ -611,7 +633,6 @@ namespace PlanAthena.Services.Business
 
                 if (!File.Exists(filePath))
                 {
-
                     return;
                 }
 
@@ -620,6 +641,9 @@ namespace PlanAthena.Services.Business
 
                 if (defaultMetiers != null)
                 {
+                    // 🆕 V0.4.2 : Migration automatique pour les métiers de DefaultMetiersConfig.json
+                    // Les métiers avec ancienne propriété PrerequisMetierIds sont automatiquement migrés
+                    // grâce au setter de la propriété helper Metier.PrerequisMetierIds
                     RemplacerTousLesMetiers(defaultMetiers);
                 }
             }

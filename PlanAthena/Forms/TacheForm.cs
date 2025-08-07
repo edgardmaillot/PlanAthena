@@ -283,9 +283,10 @@ namespace PlanAthena.Forms
                 yPos += lblBlocTitle.Height + 5; // Hauteur du label + un petit espace
 
 
-                // Changement ici : _projetService.ObtenirMetiersTriesParDependance()
-                var metiersTries = _projetService.ObtenirMetiersTriesParDependance()
-                    .Where(m => m.MetierId != "JALON" && m.MetierId != "SYNC_0H");
+                var metiersTries = _dependanceBuilder.ObtenirMetiersTriesParDependance()
+                    .Where(m => m.MetierId != "JALON" && m.MetierId != "SYNC_0H")
+                    .Where(m => _lotActif?.Phases == null || m.Phases.HasFlag(_lotActif.Phases));
+
 
                 // Charger l'image pour les boutons (si vous voulez quand même les icônes sur les boutons,
                 // sinon vous pouvez supprimer les lignes liées à `btn.Image` plus bas)
@@ -313,8 +314,7 @@ namespace PlanAthena.Forms
 
                         btn.Click += MetierButton_Click;
 
-                        // Changement ici : _projetService.GetPrerequisForMetier
-                        var prerequis = _projetService.GetPrerequisForMetier(metier.MetierId);
+                        var prerequis = _projetService.GetPrerequisPourPhase(metier.MetierId, _lotActif.Phases);
                         if (prerequis.Any())
                         {
                             // Changement ici : _projetService.GetMetierById

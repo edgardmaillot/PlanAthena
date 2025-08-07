@@ -128,16 +128,6 @@ namespace PlanAthena.Forms
                     cmbMetier.SelectedItem = metierExistant;
                 }
 
-                // Sélectionner le niveau existant
-                var niveauItem = cmbNiveau.Items.Cast<dynamic>()
-                    .FirstOrDefault(item => item.Value.Equals(competenceExistante.NiveauExpertise));
-                if (niveauItem != null)
-                {
-                    cmbNiveau.SelectedItem = niveauItem;
-                }
-
-                // Performance existante
-                numPerformance.Value = competenceExistante.PerformancePct ?? 100;
             }
             else
             {

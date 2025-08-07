@@ -6,7 +6,7 @@ namespace PlanAthena.Core.Facade.Dto.Input
     public record CompetenceDto
     {
         public required string MetierId { get; init; }
-        public required NiveauExpertise Niveau { get; init; }
+        public NiveauExpertise Niveau { get; init; }
 
         /// <summary>
         /// Performance relative (pourcentage : 80, 100, 120). Si null, interprété comme 100%.

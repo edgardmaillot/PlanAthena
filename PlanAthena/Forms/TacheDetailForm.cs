@@ -156,42 +156,65 @@ namespace PlanAthena.Forms
         {
             try
             {
-                // FORCER la reconnexion de l'événement
-                chkListDependances.DrawItem -= chkListDependances_DrawItem; // Supprimer s'il existe
-                chkListDependances.DrawItem += chkListDependances_DrawItem; // Ajouter
-
+                chkListDependances.DrawItem -= chkListDependances_DrawItem;
+                chkListDependances.DrawItem += chkListDependances_DrawItem;
                 chkListDependances.Items.Clear();
 
-                if (_tache == null || string.IsNullOrEmpty(_tache.BlocId))
+                if (_tache == null)
                 {
-                    // DEBUG : Afficher pourquoi la liste est vide
-                    if (_tache == null)
-                        System.Diagnostics.Debug.WriteLine("ChargerListeDependances: _tache est null");
-                    else if (string.IsNullOrEmpty(_tache.BlocId))
-                        System.Diagnostics.Debug.WriteLine($"ChargerListeDependances: BlocId vide pour tâche {_tache?.TacheId}");
+                    // Cas où aucune tâche n'est chargée, on ne fait rien.
+                    return;
+                }
+
+                // =================================================================================
+                // 🔧 CORRIGÉ V0.4.2.1 (Version "Fail-Fast")
+                // On vérifie que les informations critiques sont présentes avant de continuer.
+                // =================================================================================
+                if (string.IsNullOrEmpty(_tache.LotId))
+                {
+                    throw new InvalidOperationException($"La tâche '{_tache.TacheNom}' (ID: {_tache.TacheId}) n'est assignée à aucun lot. Impossible de déterminer la phase.");
+                }
+
+                var lotDeLaTache = _projetService.ObtenirLotParId(_tache.LotId);
+                if (lotDeLaTache == null)
+                {
+                    throw new InvalidOperationException($"Le lot avec l'ID '{_tache.LotId}' (associé à la tâche '{_tache.TacheNom}') n'a pas été trouvé dans le projet.");
+                }
+
+                if (lotDeLaTache.Phases == ChantierPhase.None)
+                {
+                    throw new InvalidOperationException($"Le lot '{lotDeLaTache.Nom}' (ID: {_tache.LotId}) n'a pas de phase de chantier définie. Impossible de calculer les dépendances.");
+                }
+
+                ChantierPhase phaseContexte = lotDeLaTache.Phases;
+                // =================================================================================
+
+                if (string.IsNullOrEmpty(_tache.BlocId))
+                {
+                    // Si la tâche n'a pas de bloc, il n'y a pas de dépendances possibles.
+                    // C'est un cas normal, pas une erreur. On s'arrête ici.
                     return;
                 }
 
                 // Pré-filtrage : tâches du même bloc uniquement (Règle 1)
                 var tachesDuMemeBloc = _tacheService.ObtenirTachesParBloc(_tache.BlocId);
 
-                // Délégation complète de la logique au DependanceBuilder
-                var etatsDependances = _dependanceBuilder.ObtenirDependancesPourTache(_tache, tachesDuMemeBloc);
+                // Délégation complète de la logique au DependanceBuilder, en passant la phase
+                var etatsDependances = _dependanceBuilder.ObtenirDependancesPourTache(_tache, tachesDuMemeBloc, phaseContexte);
 
                 foreach (var etat in etatsDependances)
                 {
-                    // Logique de cochage selon l'état
                     bool estCochee = etat.Etat == EtatDependance.Stricte || etat.Etat == EtatDependance.Suggeree;
                     chkListDependances.Items.Add(etat, estCochee);
                 }
 
-                // FORCER le redessin
                 chkListDependances.Invalidate();
             }
             catch (Exception ex)
             {
+                // Maintenant, le catch affichera les messages d'erreur clairs que nous avons créés.
                 MessageBox.Show($"Erreur lors du chargement des dépendances : {ex.Message}",
-                    "Avertissement", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    "Erreur Critique", MessageBoxButtons.OK, MessageBoxIcon.Error); // Changé en Erreur Critique
             }
         }
 

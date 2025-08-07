@@ -52,28 +52,27 @@ namespace PlanAthena.Utilities
             var currentMetiers = tousLesMetiers.ToDictionary(m => m.MetierId, m => m);
 
             // Mettre à jour le métier en cours de validation dans la collection temporaire
-            currentMetiers[metier.MetierId] = metier; // S'assure que les prérequis modifiés sont utilisés
+            currentMetiers[metier.MetierId] = metier;
 
             graph.AddVertexRange(currentMetiers.Keys);
 
             foreach (var m in currentMetiers.Values)
             {
-                var prerequis = ParseDependances(m.PrerequisMetierIds);
-                foreach (var prerequisId in prerequis)
+                // On itère sur toutes les listes de prérequis de toutes les phases
+                if (m.PrerequisParPhase != null)
                 {
-                    if (currentMetiers.ContainsKey(prerequisId))
+                    foreach (var prerequisId in m.PrerequisParPhase.Values.SelectMany(p => p).Distinct())
                     {
-                        // Le prérequis pointe vers le métier.
-                        // Dans un graphe de dépendance, l'arête va du prérequis vers le dépendant.
-                        // Donc, Pre_req_MetierId -> MetierId
-                        graph.AddEdge(new Edge<string>(prerequisId, m.MetierId));
+                        if (currentMetiers.ContainsKey(prerequisId))
+                        {
+                            graph.AddEdge(new Edge<string>(prerequisId, m.MetierId));
+                        }
                     }
                 }
             }
 
             try
             {
-                // Tenter un tri topologique. Si une exception est levée, il y a un cycle.
                 graph.TopologicalSort();
             }
             catch (NonAcyclicGraphException)
@@ -94,7 +93,7 @@ namespace PlanAthena.Utilities
         /// 4. Application des suggestions métier
         /// 5. Classification finale
         /// </summary>
-        public List<DependanceAffichage> ObtenirDependancesPourTache(Tache tache, List<Tache> contexteTaches)
+        public List<DependanceAffichage> ObtenirDependancesPourTache(Tache tache, List<Tache> contexteTaches, ChantierPhase phaseContexte)
         {
             if (tache == null)
                 throw new ArgumentNullException(nameof(tache));
@@ -113,7 +112,7 @@ namespace PlanAthena.Utilities
                 var candidatsValides = FiltrerCandidatsValides(tache, contexteTaches, successeursParTache);
 
                 // 4. Appliquer les suggestions métier sur la base saine
-                var suggestions = AppliquerSuggestionsMetier(tache, candidatsValides);
+                var suggestions = AppliquerSuggestionsMetier(tache, candidatsValides, phaseContexte);
 
                 // 5. Classification finale
                 var strictes = ParseDependances(tache.Dependencies);
@@ -207,11 +206,12 @@ namespace PlanAthena.Utilities
         /// PARCOURS EN PROFONDEUR :
         /// Visite tous les descendants directs et indirects en évitant les cycles
         /// grâce au set de tâches déjà visitées.
+        /// 🔧 CORRIGÉ V0.4.2.1 (Anti-cycle) 
         /// </summary>
         private void ExploreerSuccesseurs(BidirectionalGraph<string, Edge<string>> graphe,
             string tacheId, HashSet<string> successeurs, HashSet<string> visite)
         {
-            if (visite.Contains(tacheId)) return; // Éviter les cycles infinis
+            if (visite.Contains(tacheId)) return; // Éviter les cycles infinis dans le graphe lui-même
             visite.Add(tacheId);
 
             if (!graphe.ContainsVertex(tacheId)) return;
@@ -220,10 +220,13 @@ namespace PlanAthena.Utilities
             foreach (var edge in graphe.OutEdges(tacheId))
             {
                 var successeurId = edge.Target;
+
+                // On ajoute le successeur à la liste des successeurs de la tâche d'origine
                 successeurs.Add(successeurId);
 
                 // Exploration récursive des successeurs du successeur
-                ExploreerSuccesseurs(graphe, successeurId, visite, successeurs); // Correction de l'ordre des paramètres pour 'visite' et 'successeurs'
+                // L'ordre des paramètres est maintenant correct : (..., successeurs, visite)
+                ExploreerSuccesseurs(graphe, successeurId, successeurs, visite);
             }
         }
 
@@ -277,7 +280,7 @@ namespace PlanAthena.Utilities
         /// - Privilégier les jalons quand ils existent
         /// - Appliquer la remontée de chaîne si nécessaire
         /// </summary>
-        private HashSet<string> AppliquerSuggestionsMetier(Tache tache, List<Tache> candidatsValides)
+        private HashSet<string> AppliquerSuggestionsMetier(Tache tache, List<Tache> candidatsValides, ChantierPhase phaseContexte)
         {
             var suggestions = new HashSet<string>();
 
@@ -288,7 +291,7 @@ namespace PlanAthena.Utilities
             try
             {
                 // Obtenir les prérequis métier via ProjetService
-                var prerequisMetier = _projetService.GetPrerequisForMetier(tache.MetierId);
+                var prerequisMetier = _projetService.GetPrerequisPourPhase(tache.MetierId, phaseContexte);
                 if (!prerequisMetier.Any()) return suggestions;
 
                 // Identifier les métiers présents parmi les candidats valides
@@ -316,7 +319,7 @@ namespace PlanAthena.Utilities
                     else
                     {
                         // Remontée de chaîne : chercher des prérequis plus en amont
-                        var prerequisIndirects = RemonterChainePrerequis(prerequisId, metiersPresentsParmi.Keys.ToHashSet());
+                        var prerequisIndirects = RemonterChainePrerequis(prerequisId, metiersPresentsParmi.Keys.ToHashSet(), phaseContexte);
                         foreach (var prerequisIndirect in prerequisIndirects)
                         {
                             if (metiersPresentsParmi.ContainsKey(prerequisIndirect))
@@ -340,6 +343,67 @@ namespace PlanAthena.Utilities
 
             return suggestions;
         }
+        /// <summary>
+        ///  relocated from ProjetService V0.4.2.1
+        /// Obtient la liste complète et transitive de tous les prérequis pour un métier donné.
+        /// </summary>
+        public HashSet<string> GetTransitivePrerequisites(string metierId)
+        {
+            var allPrereqs = new HashSet<string>();
+            // On utilise la nouvelle méthode explicite de ProjetService
+            var toExplore = new Queue<string>(_projetService.GetTousPrerequisConfondus(metierId));
+
+            while (toExplore.Count > 0)
+            {
+                var current = toExplore.Dequeue();
+                if (allPrereqs.Add(current)) // Si on l'ajoute (il n'y était pas déjà)
+                {
+                    var parents = _projetService.GetTousPrerequisConfondus(current);
+                    foreach (var parent in parents)
+                    {
+                        toExplore.Enqueue(parent);
+                    }
+                }
+            }
+            return allPrereqs;
+        }
+
+        /// <summary>
+        /// relocated from ProjetService V0.4.2.1
+        /// Retourne la liste des métiers ordonnée selon leurs dépendances (tri topologique).
+        /// </summary>
+        /// <returns>Une liste ordonnée de métiers.</returns>
+        public List<Metier> ObtenirMetiersTriesParDependance()
+        {
+            var graph = new AdjacencyGraph<string, Edge<string>>();
+            var metiersCollection = _projetService.GetAllMetiers();
+
+            graph.AddVertexRange(metiersCollection.Select(m => m.MetierId));
+
+            foreach (var metier in metiersCollection)
+            {
+                // On utilise la nouvelle méthode explicite pour construire le graphe complet
+                var prerequis = _projetService.GetTousPrerequisConfondus(metier.MetierId);
+                foreach (var prerequisId in prerequis)
+                {
+                    if (metiersCollection.Any(m => m.MetierId == prerequisId))
+                    {
+                        graph.AddEdge(new Edge<string>(prerequisId, metier.MetierId));
+                    }
+                }
+            }
+
+            try
+            {
+                var sortedIds = graph.TopologicalSort().ToList();
+                return sortedIds.Select(id => _projetService.GetMetierById(id)).ToList();
+            }
+            catch (NonAcyclicGraphException)
+            {
+                return metiersCollection.OrderBy(m => m.Nom).ToList();
+            }
+        }
+
 
         /// <summary>
         /// Trouve les meilleures tâches à suggérer pour un métier donné.
@@ -413,7 +477,7 @@ namespace PlanAthena.Utilities
         /// Si un métier prérequis direct n'est pas présent, chercher ses prérequis
         /// jusqu'à trouver des métiers effectivement présents dans le bloc.
         /// </summary>
-        private HashSet<string> RemonterChainePrerequis(string metierId, HashSet<string> metiersPresents)
+        private HashSet<string> RemonterChainePrerequis(string metierId, HashSet<string> metiersPresents, ChantierPhase phaseContexte)
         {
             var prerequisTrouves = new HashSet<string>();
             var visite = new HashSet<string>();
@@ -430,7 +494,7 @@ namespace PlanAthena.Utilities
                 try
                 {
                     // Changement ici : _projetService.GetPrerequisForMetier
-                    var prerequisDirects = _projetService.GetPrerequisForMetier(metierCourant);
+                    var prerequisDirects = _projetService.GetPrerequisPourPhase(metierCourant, phaseContexte);
                     foreach (var prerequis in prerequisDirects)
                     {
                         if (metiersPresents.Contains(prerequis))

@@ -1,5 +1,6 @@
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
+using PlanAthena.Services.Business.DTOs;
 
 namespace PlanAthena.Forms
 {
@@ -151,9 +152,7 @@ namespace PlanAthena.Forms
 
                 var item = new ListViewItem(new[] {
                     competence.MetierId,
-                    nomMetier,
-                    competence.NiveauExpertise.ToString(),
-                    (competence.PerformancePct?.ToString() ?? "100") + "%"
+                    nomMetier
                 })
                 {
                     Tag = competence
@@ -366,9 +365,7 @@ namespace PlanAthena.Forms
                     Nom = _ouvrierSelectionne.Nom,
                     Prenom = _ouvrierSelectionne.Prenom,
                     CoutJournalier = _ouvrierSelectionne.CoutJournalier,
-                    MetierId = dialog.MetierSelectionne.MetierId,
-                    NiveauExpertise = dialog.NiveauExpertise,
-                    PerformancePct = dialog.PerformancePct
+                    MetierId = dialog.MetierSelectionne.MetierId
                 };
 
                 try
@@ -404,9 +401,6 @@ namespace PlanAthena.Forms
             {
                 try
                 {
-                    _competenceSelectionnee.NiveauExpertise = dialog.NiveauExpertise;
-                    _competenceSelectionnee.PerformancePct = dialog.PerformancePct;
-
                     _ouvrierService.ModifierOuvrier(_competenceSelectionnee);
                     ChargerDonnees(); // Recharger depuis le service
 

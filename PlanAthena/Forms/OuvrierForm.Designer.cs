@@ -59,8 +59,6 @@ namespace PlanAthena.Forms
             listViewCompetences = new ListView();
             colMetierId = new ColumnHeader();
             colNomMetier = new ColumnHeader();
-            colNiveauExpertise = new ColumnHeader();
-            colPerformancePct = new ColumnHeader();
             groupBoxActions = new GroupBox();
             btnImportExcelSAP = new Button();
             btnExporter = new Button();
@@ -121,7 +119,7 @@ namespace PlanAthena.Forms
             lblStatutOuvriers.AutoSize = true;
             lblStatutOuvriers.Location = new Point(6, 487);
             lblStatutOuvriers.Name = "lblStatutOuvriers";
-            lblStatutOuvriers.Size = new Size(85, 15);
+            lblStatutOuvriers.Size = new Size(66, 15);
             lblStatutOuvriers.TabIndex = 6;
             lblStatutOuvriers.Text = "0 ouvrier(s)";
             // 
@@ -172,7 +170,7 @@ namespace PlanAthena.Forms
             lblRechercheOuvrier.AutoSize = true;
             lblRechercheOuvrier.Location = new Point(6, 25);
             lblRechercheOuvrier.Name = "lblRechercheOuvrier";
-            lblRechercheOuvrier.Size = new Size(60, 15);
+            lblRechercheOuvrier.Size = new Size(65, 15);
             lblRechercheOuvrier.TabIndex = 1;
             lblRechercheOuvrier.Text = "Recherche:";
             // 
@@ -194,7 +192,6 @@ namespace PlanAthena.Forms
             // colOuvrierId
             // 
             colOuvrierId.Text = "ID";
-            colOuvrierId.Width = 60;
             // 
             // colNomPrenom
             // 
@@ -204,7 +201,6 @@ namespace PlanAthena.Forms
             // colCoutJournalier
             // 
             colCoutJournalier.Text = "Coût/j";
-            colCoutJournalier.Width = 60;
             // 
             // colNombreCompetences
             // 
@@ -261,7 +257,7 @@ namespace PlanAthena.Forms
             lblCoutJournalier.AutoSize = true;
             lblCoutJournalier.Location = new Point(16, 104);
             lblCoutJournalier.Name = "lblCoutJournalier";
-            lblCoutJournalier.Size = new Size(98, 15);
+            lblCoutJournalier.Size = new Size(106, 15);
             lblCoutJournalier.TabIndex = 6;
             lblCoutJournalier.Text = "Coût journalier (€):";
             // 
@@ -339,7 +335,7 @@ namespace PlanAthena.Forms
             lblStatutCompetences.AutoSize = true;
             lblStatutCompetences.Location = new Point(16, 333);
             lblStatutCompetences.Name = "lblStatutCompetences";
-            lblStatutCompetences.Size = new Size(108, 15);
+            lblStatutCompetences.Size = new Size(95, 15);
             lblStatutCompetences.TabIndex = 4;
             lblStatutCompetences.Text = "0 compétence(s)";
             // 
@@ -379,7 +375,7 @@ namespace PlanAthena.Forms
             // listViewCompetences
             // 
             listViewCompetences.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            listViewCompetences.Columns.AddRange(new ColumnHeader[] { colMetierId, colNomMetier, colNiveauExpertise, colPerformancePct });
+            listViewCompetences.Columns.AddRange(new ColumnHeader[] { colMetierId, colNomMetier });
             listViewCompetences.FullRowSelect = true;
             listViewCompetences.GridLines = true;
             listViewCompetences.Location = new Point(16, 22);
@@ -400,16 +396,6 @@ namespace PlanAthena.Forms
             // 
             colNomMetier.Text = "Nom du Métier";
             colNomMetier.Width = 200;
-            // 
-            // colNiveauExpertise
-            // 
-            colNiveauExpertise.Text = "Niveau";
-            colNiveauExpertise.Width = 100;
-            // 
-            // colPerformancePct
-            // 
-            colPerformancePct.Text = "Performance %";
-            colPerformancePct.Width = 100;
             // 
             // groupBoxActions
             // 
@@ -526,8 +512,6 @@ namespace PlanAthena.Forms
         private ListView listViewCompetences;
         private ColumnHeader colMetierId;
         private ColumnHeader colNomMetier;
-        private ColumnHeader colNiveauExpertise;
-        private ColumnHeader colPerformancePct;
         private Button btnAjouterCompetence;
         private Button btnModifierCompetence;
         private Button btnSupprimerCompetence;
