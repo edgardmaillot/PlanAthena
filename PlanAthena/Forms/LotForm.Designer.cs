@@ -17,293 +17,327 @@ namespace PlanAthena.Forms
 
         private void InitializeComponent()
         {
-            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.groupBoxListe = new System.Windows.Forms.GroupBox();
-            this.btnAnnuler = new System.Windows.Forms.Button();
-            this.lblStatut = new System.Windows.Forms.Label();
-            this.btnSupprimer = new System.Windows.Forms.Button();
-            this.btnModifier = new System.Windows.Forms.Button();
-            this.btnNouveau = new System.Windows.Forms.Button();
-            this.listViewLots = new System.Windows.Forms.ListView();
-            this.colLotId = new System.Windows.Forms.ColumnHeader();
-            this.colNom = new System.Windows.Forms.ColumnHeader();
-            this.colPriorite = new System.Windows.Forms.ColumnHeader();
-            this.groupBoxDetails = new System.Windows.Forms.GroupBox();
-            this.btnParcourirPlan = new System.Windows.Forms.Button();
-            this.txtCheminFichierPlan = new System.Windows.Forms.TextBox();
-            this.lblCheminPlan = new System.Windows.Forms.Label();
-            this.numPriorite = new System.Windows.Forms.NumericUpDown();
-            this.lblPriorite = new System.Windows.Forms.Label();
-            this.txtNom = new System.Windows.Forms.TextBox();
-            this.lblNom = new System.Windows.Forms.Label();
-            this.txtLotId = new System.Windows.Forms.TextBox();
-            this.lblLotId = new System.Windows.Forms.Label();
-            this.groupBoxActions = new System.Windows.Forms.GroupBox();
-            this.btnFermer = new System.Windows.Forms.Button();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
-            this.splitContainer1.Panel1.SuspendLayout();
-            this.splitContainer1.Panel2.SuspendLayout();
-            this.splitContainer1.SuspendLayout();
-            this.groupBoxListe.SuspendLayout();
-            this.groupBoxDetails.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numPriorite)).BeginInit();
-            this.groupBoxActions.SuspendLayout();
-            this.SuspendLayout();
+            components = new System.ComponentModel.Container();
+            splitContainer1 = new SplitContainer();
+            groupBoxListe = new GroupBox();
+            btnAnnuler = new Button();
+            lblStatut = new Label();
+            btnSupprimer = new Button();
+            btnModifier = new Button();
+            btnNouveau = new Button();
+            listViewLots = new ListView();
+            colLotId = new ColumnHeader();
+            colNom = new ColumnHeader();
+            colPriorite = new ColumnHeader();
+            groupBoxDetails = new GroupBox();
+            label1 = new Label();
+            cmbPhases = new ComboBox();
+            btnParcourirPlan = new Button();
+            txtCheminFichierPlan = new TextBox();
+            lblCheminPlan = new Label();
+            numPriorite = new NumericUpDown();
+            lblPriorite = new Label();
+            txtNom = new TextBox();
+            lblNom = new Label();
+            txtLotId = new TextBox();
+            lblLotId = new Label();
+            groupBoxActions = new GroupBox();
+            btnFermer = new Button();
+            lotBindingSource = new BindingSource(components);
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
+            splitContainer1.Panel1.SuspendLayout();
+            splitContainer1.Panel2.SuspendLayout();
+            splitContainer1.SuspendLayout();
+            groupBoxListe.SuspendLayout();
+            groupBoxDetails.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)numPriorite).BeginInit();
+            groupBoxActions.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)lotBindingSource).BeginInit();
+            SuspendLayout();
             // 
             // splitContainer1
             // 
-            this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainer1.Location = new System.Drawing.Point(0, 0);
-            this.splitContainer1.Name = "splitContainer1";
-            this.splitContainer1.Size = new System.Drawing.Size(784, 411);
-            this.splitContainer1.SplitterDistance = 380;
-            this.splitContainer1.Panel1.Controls.Add(this.groupBoxListe);
-            this.splitContainer1.Panel2.Controls.Add(this.groupBoxDetails);
+            splitContainer1.Dock = DockStyle.Fill;
+            splitContainer1.Location = new Point(0, 0);
+            splitContainer1.Name = "splitContainer1";
+            // 
+            // splitContainer1.Panel1
+            // 
+            splitContainer1.Panel1.Controls.Add(groupBoxListe);
+            // 
+            // splitContainer1.Panel2
+            // 
+            splitContainer1.Panel2.Controls.Add(groupBoxDetails);
+            splitContainer1.Size = new Size(784, 411);
+            splitContainer1.SplitterDistance = 379;
+            splitContainer1.TabIndex = 0;
             // 
             // groupBoxListe
             // 
-            this.groupBoxListe.Controls.Add(this.btnAnnuler);
-            this.groupBoxListe.Controls.Add(this.lblStatut);
-            this.groupBoxListe.Controls.Add(this.btnSupprimer);
-            this.groupBoxListe.Controls.Add(this.btnModifier);
-            this.groupBoxListe.Controls.Add(this.btnNouveau);
-            this.groupBoxListe.Controls.Add(this.listViewLots);
-            this.groupBoxListe.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.groupBoxListe.Name = "groupBoxListe";
-            this.groupBoxListe.Size = new System.Drawing.Size(380, 411);
-            this.groupBoxListe.TabStop = false;
-            this.groupBoxListe.Text = "Liste des Lots";
+            groupBoxListe.Controls.Add(btnAnnuler);
+            groupBoxListe.Controls.Add(lblStatut);
+            groupBoxListe.Controls.Add(btnSupprimer);
+            groupBoxListe.Controls.Add(btnModifier);
+            groupBoxListe.Controls.Add(btnNouveau);
+            groupBoxListe.Controls.Add(listViewLots);
+            groupBoxListe.Dock = DockStyle.Fill;
+            groupBoxListe.Location = new Point(0, 0);
+            groupBoxListe.Name = "groupBoxListe";
+            groupBoxListe.Size = new Size(379, 411);
+            groupBoxListe.TabIndex = 0;
+            groupBoxListe.TabStop = false;
+            groupBoxListe.Text = "Liste des Lots";
             // 
             // btnAnnuler
             // 
-            this.btnAnnuler.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnAnnuler.Location = new System.Drawing.Point(218, 382);
-            this.btnAnnuler.Name = "btnAnnuler";
-            this.btnAnnuler.Size = new System.Drawing.Size(75, 23);
-            this.btnAnnuler.TabIndex = 7;
-            this.btnAnnuler.Text = "Annuler";
-            this.btnAnnuler.UseVisualStyleBackColor = true;
-            this.btnAnnuler.Click += new System.EventHandler(this.btnAnnuler_Click);
+            btnAnnuler.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnAnnuler.Location = new Point(217, 382);
+            btnAnnuler.Name = "btnAnnuler";
+            btnAnnuler.Size = new Size(75, 23);
+            btnAnnuler.TabIndex = 7;
+            btnAnnuler.Text = "Annuler";
+            btnAnnuler.UseVisualStyleBackColor = true;
+            btnAnnuler.Click += btnAnnuler_Click;
             // 
             // lblStatut
             // 
-            this.lblStatut.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblStatut.AutoSize = true;
-            this.lblStatut.Location = new System.Drawing.Point(6, 387);
-            this.lblStatut.Name = "lblStatut";
-            this.lblStatut.Size = new System.Drawing.Size(52, 15);
-            this.lblStatut.TabIndex = 6;
-            this.lblStatut.Text = "0 lot(s)";
+            lblStatut.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            lblStatut.AutoSize = true;
+            lblStatut.Location = new Point(6, 387);
+            lblStatut.Name = "lblStatut";
+            lblStatut.Size = new Size(43, 15);
+            lblStatut.TabIndex = 6;
+            lblStatut.Text = "0 lot(s)";
             // 
             // btnSupprimer
             // 
-            this.btnSupprimer.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnSupprimer.Location = new System.Drawing.Point(299, 353);
-            this.btnSupprimer.Name = "btnSupprimer";
-            this.btnSupprimer.Size = new System.Drawing.Size(75, 23);
-            this.btnSupprimer.TabIndex = 5;
-            this.btnSupprimer.Text = "🗑️ Supprimer";
-            this.btnSupprimer.UseVisualStyleBackColor = true;
-            this.btnSupprimer.Click += new System.EventHandler(this.btnSupprimer_Click);
+            btnSupprimer.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnSupprimer.Location = new Point(298, 353);
+            btnSupprimer.Name = "btnSupprimer";
+            btnSupprimer.Size = new Size(75, 23);
+            btnSupprimer.TabIndex = 5;
+            btnSupprimer.Text = "🗑️ Supprimer";
+            btnSupprimer.UseVisualStyleBackColor = true;
+            btnSupprimer.Click += btnSupprimer_Click;
             // 
             // btnModifier
             // 
-            this.btnModifier.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnModifier.Location = new System.Drawing.Point(218, 353);
-            this.btnModifier.Name = "btnModifier";
-            this.btnModifier.Size = new System.Drawing.Size(75, 23);
-            this.btnModifier.TabIndex = 4;
-            this.btnModifier.Text = "✏️ Modifier";
-            this.btnModifier.UseVisualStyleBackColor = true;
-            this.btnModifier.Click += new System.EventHandler(this.btnModifier_Click);
+            btnModifier.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnModifier.Location = new Point(217, 353);
+            btnModifier.Name = "btnModifier";
+            btnModifier.Size = new Size(75, 23);
+            btnModifier.TabIndex = 4;
+            btnModifier.Text = "✏️ Modifier";
+            btnModifier.UseVisualStyleBackColor = true;
+            btnModifier.Click += btnModifier_Click;
             // 
             // btnNouveau
             // 
-            this.btnNouveau.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnNouveau.Location = new System.Drawing.Point(137, 353);
-            this.btnNouveau.Name = "btnNouveau";
-            this.btnNouveau.Size = new System.Drawing.Size(75, 23);
-            this.btnNouveau.TabIndex = 3;
-            this.btnNouveau.Text = "➕ Nouveau";
-            this.btnNouveau.UseVisualStyleBackColor = true;
-            this.btnNouveau.Click += new System.EventHandler(this.btnNouveau_Click);
+            btnNouveau.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnNouveau.Location = new Point(136, 353);
+            btnNouveau.Name = "btnNouveau";
+            btnNouveau.Size = new Size(75, 23);
+            btnNouveau.TabIndex = 3;
+            btnNouveau.Text = "➕ Nouveau";
+            btnNouveau.UseVisualStyleBackColor = true;
+            btnNouveau.Click += btnNouveau_Click;
             // 
             // listViewLots
             // 
-            this.listViewLots.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.listViewLots.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.colLotId,
-            this.colNom,
-            this.colPriorite});
-            this.listViewLots.FullRowSelect = true;
-            this.listViewLots.GridLines = true;
-            this.listViewLots.Location = new System.Drawing.Point(6, 22);
-            this.listViewLots.MultiSelect = false;
-            this.listViewLots.Name = "listViewLots";
-            this.listViewLots.Size = new System.Drawing.Size(368, 325);
-            this.listViewLots.TabIndex = 0;
-            this.listViewLots.UseCompatibleStateImageBehavior = false;
-            this.listViewLots.View = System.Windows.Forms.View.Details;
-            this.listViewLots.SelectedIndexChanged += new System.EventHandler(this.listViewLots_SelectedIndexChanged);
+            listViewLots.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            listViewLots.Columns.AddRange(new ColumnHeader[] { colLotId, colNom, colPriorite });
+            listViewLots.FullRowSelect = true;
+            listViewLots.GridLines = true;
+            listViewLots.Location = new Point(6, 22);
+            listViewLots.MultiSelect = false;
+            listViewLots.Name = "listViewLots";
+            listViewLots.Size = new Size(367, 325);
+            listViewLots.TabIndex = 0;
+            listViewLots.UseCompatibleStateImageBehavior = false;
+            listViewLots.View = View.Details;
+            listViewLots.SelectedIndexChanged += listViewLots_SelectedIndexChanged;
             // 
             // colLotId
             // 
-            this.colLotId.Text = "ID";
-            this.colLotId.Width = 80;
+            colLotId.Text = "ID";
+            colLotId.Width = 80;
             // 
             // colNom
             // 
-            this.colNom.Text = "Nom";
-            this.colNom.Width = 180;
+            colNom.Text = "Nom";
+            colNom.Width = 180;
             // 
             // colPriorite
             // 
-            this.colPriorite.Text = "Priorité";
-            this.colPriorite.Width = 70;
+            colPriorite.Text = "Priorité";
+            colPriorite.Width = 70;
             // 
             // groupBoxDetails
             // 
-            this.groupBoxDetails.Controls.Add(this.btnParcourirPlan);
-            this.groupBoxDetails.Controls.Add(this.txtCheminFichierPlan);
-            this.groupBoxDetails.Controls.Add(this.lblCheminPlan);
-            this.groupBoxDetails.Controls.Add(this.numPriorite);
-            this.groupBoxDetails.Controls.Add(this.lblPriorite);
-            this.groupBoxDetails.Controls.Add(this.txtNom);
-            this.groupBoxDetails.Controls.Add(this.lblNom);
-            this.groupBoxDetails.Controls.Add(this.txtLotId);
-            this.groupBoxDetails.Controls.Add(this.lblLotId);
-            this.groupBoxDetails.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.groupBoxDetails.Location = new System.Drawing.Point(0, 0);
-            this.groupBoxDetails.Name = "groupBoxDetails";
-            this.groupBoxDetails.Size = new System.Drawing.Size(400, 411);
-            this.groupBoxDetails.TabStop = false;
-            this.groupBoxDetails.Text = "Détails du Lot";
+            groupBoxDetails.Controls.Add(label1);
+            groupBoxDetails.Controls.Add(cmbPhases);
+            groupBoxDetails.Controls.Add(btnParcourirPlan);
+            groupBoxDetails.Controls.Add(txtCheminFichierPlan);
+            groupBoxDetails.Controls.Add(lblCheminPlan);
+            groupBoxDetails.Controls.Add(numPriorite);
+            groupBoxDetails.Controls.Add(lblPriorite);
+            groupBoxDetails.Controls.Add(txtNom);
+            groupBoxDetails.Controls.Add(lblNom);
+            groupBoxDetails.Controls.Add(txtLotId);
+            groupBoxDetails.Controls.Add(lblLotId);
+            groupBoxDetails.Dock = DockStyle.Fill;
+            groupBoxDetails.Location = new Point(0, 0);
+            groupBoxDetails.Name = "groupBoxDetails";
+            groupBoxDetails.Size = new Size(401, 411);
+            groupBoxDetails.TabIndex = 0;
+            groupBoxDetails.TabStop = false;
+            groupBoxDetails.Text = "Détails du Lot";
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new Point(162, 85);
+            label1.Name = "label1";
+            label1.Size = new Size(72, 15);
+            label1.TabIndex = 10;
+            label1.Text = "Phase active";
+            // 
+            // cmbPhases
+            // 
+            cmbPhases.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbPhases.FormattingEnabled = true;
+            cmbPhases.Location = new Point(240, 82);
+            cmbPhases.Name = "cmbPhases";
+            cmbPhases.Size = new Size(149, 23);
+            cmbPhases.TabIndex = 9;
             // 
             // btnParcourirPlan
             // 
-            this.btnParcourirPlan.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnParcourirPlan.Location = new System.Drawing.Point(313, 112);
-            this.btnParcourirPlan.Name = "btnParcourirPlan";
-            this.btnParcourirPlan.Size = new System.Drawing.Size(75, 23);
-            this.btnParcourirPlan.TabIndex = 8;
-            this.btnParcourirPlan.Text = "Parcourir...";
-            this.btnParcourirPlan.UseVisualStyleBackColor = true;
-            this.btnParcourirPlan.Click += new System.EventHandler(this.btnParcourirPlan_Click);
+            btnParcourirPlan.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnParcourirPlan.Location = new Point(314, 112);
+            btnParcourirPlan.Name = "btnParcourirPlan";
+            btnParcourirPlan.Size = new Size(75, 23);
+            btnParcourirPlan.TabIndex = 8;
+            btnParcourirPlan.Text = "Parcourir...";
+            btnParcourirPlan.UseVisualStyleBackColor = true;
+            btnParcourirPlan.Click += btnParcourirPlan_Click;
             // 
             // txtCheminFichierPlan
             // 
-            this.txtCheminFichierPlan.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtCheminFichierPlan.Location = new System.Drawing.Point(70, 112);
-            this.txtCheminFichierPlan.Name = "txtCheminFichierPlan";
-            this.txtCheminFichierPlan.ReadOnly = true;
-            this.txtCheminFichierPlan.Size = new System.Drawing.Size(237, 23);
-            this.txtCheminFichierPlan.TabIndex = 7;
+            txtCheminFichierPlan.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            txtCheminFichierPlan.Location = new Point(70, 112);
+            txtCheminFichierPlan.Name = "txtCheminFichierPlan";
+            txtCheminFichierPlan.ReadOnly = true;
+            txtCheminFichierPlan.Size = new Size(238, 23);
+            txtCheminFichierPlan.TabIndex = 7;
             // 
             // lblCheminPlan
             // 
-            this.lblCheminPlan.AutoSize = true;
-            this.lblCheminPlan.Location = new System.Drawing.Point(16, 115);
-            this.lblCheminPlan.Name = "lblCheminPlan";
-            this.lblCheminPlan.Size = new System.Drawing.Size(32, 15);
-            this.lblCheminPlan.TabIndex = 6;
-            this.lblCheminPlan.Text = "Plan:";
+            lblCheminPlan.AutoSize = true;
+            lblCheminPlan.Location = new Point(16, 115);
+            lblCheminPlan.Name = "lblCheminPlan";
+            lblCheminPlan.Size = new Size(33, 15);
+            lblCheminPlan.TabIndex = 6;
+            lblCheminPlan.Text = "Plan:";
             // 
             // numPriorite
             // 
-            this.numPriorite.Location = new System.Drawing.Point(70, 83);
-            this.numPriorite.Name = "numPriorite";
-            this.numPriorite.Size = new System.Drawing.Size(120, 23);
-            this.numPriorite.TabIndex = 5;
+            numPriorite.Location = new Point(70, 83);
+            numPriorite.Name = "numPriorite";
+            numPriorite.Size = new Size(73, 23);
+            numPriorite.TabIndex = 5;
             // 
             // lblPriorite
             // 
-            this.lblPriorite.AutoSize = true;
-            this.lblPriorite.Location = new System.Drawing.Point(16, 85);
-            this.lblPriorite.Name = "lblPriorite";
-            this.lblPriorite.Size = new System.Drawing.Size(48, 15);
-            this.lblPriorite.TabIndex = 4;
-            this.lblPriorite.Text = "Priorité:";
+            lblPriorite.AutoSize = true;
+            lblPriorite.Location = new Point(16, 85);
+            lblPriorite.Name = "lblPriorite";
+            lblPriorite.Size = new Size(48, 15);
+            lblPriorite.TabIndex = 4;
+            lblPriorite.Text = "Priorité:";
             // 
             // txtNom
             // 
-            this.txtNom.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtNom.Location = new System.Drawing.Point(70, 54);
-            this.txtNom.Name = "txtNom";
-            this.txtNom.Size = new System.Drawing.Size(318, 23);
-            this.txtNom.TabIndex = 3;
+            txtNom.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            txtNom.Location = new Point(70, 54);
+            txtNom.Name = "txtNom";
+            txtNom.Size = new Size(319, 23);
+            txtNom.TabIndex = 3;
             // 
             // lblNom
             // 
-            this.lblNom.AutoSize = true;
-            this.lblNom.Location = new System.Drawing.Point(16, 57);
-            this.lblNom.Name = "lblNom";
-            this.lblNom.Size = new System.Drawing.Size(37, 15);
-            this.lblNom.TabIndex = 2;
-            this.lblNom.Text = "Nom:";
+            lblNom.AutoSize = true;
+            lblNom.Location = new Point(16, 57);
+            lblNom.Name = "lblNom";
+            lblNom.Size = new Size(37, 15);
+            lblNom.TabIndex = 2;
+            lblNom.Text = "Nom:";
             // 
             // txtLotId
             // 
-            this.txtLotId.Location = new System.Drawing.Point(70, 25);
-            this.txtLotId.Name = "txtLotId";
-            this.txtLotId.Size = new System.Drawing.Size(190, 23);
-            this.txtLotId.TabIndex = 1;
+            txtLotId.Location = new Point(70, 25);
+            txtLotId.Name = "txtLotId";
+            txtLotId.Size = new Size(190, 23);
+            txtLotId.TabIndex = 1;
             // 
             // lblLotId
             // 
-            this.lblLotId.AutoSize = true;
-            this.lblLotId.Location = new System.Drawing.Point(16, 28);
-            this.lblLotId.Name = "lblLotId";
-            this.lblLotId.Size = new System.Drawing.Size(21, 15);
-            this.lblLotId.TabIndex = 0;
-            this.lblLotId.Text = "ID:";
+            lblLotId.AutoSize = true;
+            lblLotId.Location = new Point(16, 28);
+            lblLotId.Name = "lblLotId";
+            lblLotId.Size = new Size(21, 15);
+            lblLotId.TabIndex = 0;
+            lblLotId.Text = "ID:";
             // 
             // groupBoxActions
             // 
-            this.groupBoxActions.Controls.Add(this.btnFermer);
-            this.groupBoxActions.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.groupBoxActions.Location = new System.Drawing.Point(0, 411);
-            this.groupBoxActions.Name = "groupBoxActions";
-            this.groupBoxActions.Size = new System.Drawing.Size(784, 50);
-            this.groupBoxActions.TabStop = false;
+            groupBoxActions.Controls.Add(btnFermer);
+            groupBoxActions.Dock = DockStyle.Bottom;
+            groupBoxActions.Location = new Point(0, 411);
+            groupBoxActions.Name = "groupBoxActions";
+            groupBoxActions.Size = new Size(784, 50);
+            groupBoxActions.TabIndex = 1;
+            groupBoxActions.TabStop = false;
             // 
             // btnFermer
             // 
-            this.btnFermer.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnFermer.Location = new System.Drawing.Point(697, 19);
-            this.btnFermer.Name = "btnFermer";
-            this.btnFermer.Size = new System.Drawing.Size(75, 23);
-            this.btnFermer.TabIndex = 0;
-            this.btnFermer.Text = "Fermer";
-            this.btnFermer.UseVisualStyleBackColor = true;
-            this.btnFermer.Click += new System.EventHandler(this.btnFermer_Click);
+            btnFermer.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            btnFermer.Location = new Point(697, 19);
+            btnFermer.Name = "btnFermer";
+            btnFermer.Size = new Size(75, 23);
+            btnFermer.TabIndex = 0;
+            btnFermer.Text = "Fermer";
+            btnFermer.UseVisualStyleBackColor = true;
+            btnFermer.Click += btnFermer_Click;
+            // 
+            // lotBindingSource
+            // 
+            lotBindingSource.DataSource = typeof(Data.Lot);
             // 
             // LotForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(784, 461);
-            this.Controls.Add(this.splitContainer1);
-            this.Controls.Add(this.groupBoxActions);
-            this.MinimumSize = new System.Drawing.Size(600, 400);
-            this.Name = "LotForm";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Gestion des Lots";
-            this.Load += new System.EventHandler(this.LotForm_Load);
-            this.splitContainer1.Panel1.ResumeLayout(false);
-            this.splitContainer1.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
-            this.splitContainer1.ResumeLayout(false);
-            this.groupBoxListe.ResumeLayout(false);
-            this.groupBoxListe.PerformLayout();
-            this.groupBoxDetails.ResumeLayout(false);
-            this.groupBoxDetails.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numPriorite)).EndInit();
-            this.groupBoxActions.ResumeLayout(false);
-            this.ResumeLayout(false);
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(784, 461);
+            Controls.Add(splitContainer1);
+            Controls.Add(groupBoxActions);
+            MinimumSize = new Size(600, 400);
+            Name = "LotForm";
+            StartPosition = FormStartPosition.CenterParent;
+            Text = "Gestion des Lots";
+            Load += LotForm_Load;
+            splitContainer1.Panel1.ResumeLayout(false);
+            splitContainer1.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
+            splitContainer1.ResumeLayout(false);
+            groupBoxListe.ResumeLayout(false);
+            groupBoxListe.PerformLayout();
+            groupBoxDetails.ResumeLayout(false);
+            groupBoxDetails.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)numPriorite).EndInit();
+            groupBoxActions.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)lotBindingSource).EndInit();
+            ResumeLayout(false);
         }
 
         #endregion
@@ -331,5 +365,8 @@ namespace PlanAthena.Forms
         private System.Windows.Forms.TextBox txtCheminFichierPlan;
         private System.Windows.Forms.Label lblCheminPlan;
         private System.Windows.Forms.Button btnAnnuler;
+        private ComboBox cmbPhases;
+        private BindingSource lotBindingSource;
+        private Label label1;
     }
 }

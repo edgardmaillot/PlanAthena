@@ -14,6 +14,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Windows.Documents;
 using System.Windows.Shapes;
+using PlanAthena.Interfaces;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace PlanAthena.Services.Business
@@ -24,18 +25,22 @@ namespace PlanAthena.Services.Business
     /// </summary>
     public class ProjetService
     {
+        // --- DÉPENDANCES DIRECTES ---
+        // Les dépendances sont maintenant des services directs, plus de "Func<T>" (factories).
         private readonly OuvrierService _ouvrierService;
-        private readonly Func<TacheService> _tacheServiceFactory;
+        private readonly TacheService _tacheService;
         private readonly CsvDataService _csvDataService;
-        private readonly Func<BlocService> _blocServiceFactory;
+        private readonly BlocService _blocService;
+        private readonly IIdGeneratorService _idGeneratorService;
 
+        // --- COLLECTIONS INTERNES ---
         // Collection interne de métiers, gérée directement par ProjetService
         private readonly Dictionary<string, Metier> _metiersInternes = new Dictionary<string, Metier>();
-
-        // AJOUT: Collection interne de lots, fusionnée de ProjetService
+        // Collection interne de lots
         private readonly Dictionary<string, Lot> _lotsInternes = new Dictionary<string, Lot>();
 
-        // Champs liés aux couleurs de fallback des métiers, déplacés de MetierService
+        // --- CHAMPS UTILITAIRES ---
+        // Champs liés aux couleurs de fallback des métiers
         private static readonly Color[] FallbackColors = {
             Color.LightBlue, Color.LightGreen, Color.LightYellow,
             Color.LightPink, Color.LightGray, Color.LightCyan,
@@ -44,20 +49,21 @@ namespace PlanAthena.Services.Business
         private int _fallbackColorIndex = 0;
         private readonly Dictionary<string, Color> _assignedFallbackColors = new Dictionary<string, Color>();
 
+        // --- CONSTRUCTEUR CORRIGÉ ---
+        // Le constructeur demande maintenant les services directement.
         public ProjetService(
             OuvrierService ouvrierService,
-            Func<TacheService> tacheServiceFactory,
+            TacheService tacheService,
             CsvDataService csvDataService,
-            Func<BlocService> blocServiceFactory)
+            BlocService blocService,
+            IIdGeneratorService idGeneratorService)
         {
             _ouvrierService = ouvrierService ?? throw new ArgumentNullException(nameof(ouvrierService));
-            _tacheServiceFactory = tacheServiceFactory ?? throw new ArgumentNullException(nameof(tacheServiceFactory));
+            _tacheService = tacheService ?? throw new ArgumentNullException(nameof(tacheService));
             _csvDataService = csvDataService ?? throw new ArgumentNullException(nameof(csvDataService));
-            _blocServiceFactory = blocServiceFactory ?? throw new ArgumentNullException(nameof(blocServiceFactory));
+            _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
+            _idGeneratorService = idGeneratorService ?? throw new ArgumentNullException(nameof(idGeneratorService));
         }
-
-        private TacheService _tacheService => _tacheServiceFactory();
-        private BlocService _blocService => _blocServiceFactory();
 
         public bool ValiderDonneesAvantPlanification(out string message)
         {
@@ -176,6 +182,42 @@ namespace PlanAthena.Services.Business
 
             return projetData.InformationsProjet;
         }
+        /// <summary>
+        /// Crée un nouveau projet vide
+        /// </summary>
+        public InformationsProjet CreerNouveauProjet(string nomProjet = "ProjetX", string description = "Description")
+        {
+            // Vider toutes les données existantes
+            RemplacerTousLesMetiers(new List<Metier>());
+            _ouvrierService.Vider();
+            _tacheService.Vider();
+            ViderLots();
+            _blocService.Vider();
+
+            // Appel à ChargerMetiersParDefaut pour initialiser les métiers
+            ChargerMetiersParDefaut();
+
+            // 🔧 NOUVEAU : Création d'un lot par défaut
+            var lotParDefaut = new Lot
+            {
+                LotId = _idGeneratorService.GenererProchainLotId(Array.Empty<Lot>()),
+                Nom = "Base",
+                Priorite = 50,
+                CheminFichierPlan = "",
+                // Pour formaliser un enum, on utilise son nom directement :
+                Phases = ChantierPhase.SecondOeuvre
+            };
+            AjouterLot(lotParDefaut);
+
+            return new InformationsProjet
+            {
+                NomProjet = nomProjet,
+                Description = description,
+                DateCreation = DateTime.Now,
+                DateDerniereModification = DateTime.Now,
+                Auteur = Environment.UserName
+            };
+        }
 
         /// <summary>
         /// Valide qu'un fichier de projet est valide
@@ -233,7 +275,22 @@ namespace PlanAthena.Services.Business
         #endregion
 
         #region CRUD Operations - Lots (fusionné de ProjetService)
-
+        /// <summary>
+        /// 🆕 V0.4.2.1 - Crée un nouvel objet Lot en mémoire avec des valeurs par défaut et un ID généré.
+        /// Cet objet n'est PAS sauvegardé dans le service. Il sert de "brouillon" pour le formulaire.
+        /// </summary>
+        /// <returns>Un nouvel objet Lot prêt à être modifié par l'utilisateur.</returns>
+        public Lot CreerNouveauLotBrouillon()
+        {
+            var nouveauLot = new Lot
+            {
+                LotId = _idGeneratorService.GenererProchainLotId(_lotsInternes.Values.ToList()),
+                Nom = "Nouveau lot",
+                Priorite = 99,
+                Phases = ChantierPhase.None // On commence sans phase par défaut
+            };
+            return nouveauLot;
+        }
         /// <summary>
         /// Ajoute un nouveau lot au projet.
         /// </summary>
@@ -248,11 +305,17 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Modifie un lot existant.
         /// </summary>
-        public void ModifierLot(Lot lotModifie)
+        public void ModifierLot(string lotId, string nom, int priorite, string cheminFichierPlan, ChantierPhase phases)
         {
-            if (lotModifie == null) throw new ArgumentNullException(nameof(lotModifie));
-            if (!_lotsInternes.ContainsKey(lotModifie.LotId)) throw new KeyNotFoundException($"Lot {lotModifie.LotId} non trouvé.");
-            _lotsInternes[lotModifie.LotId] = lotModifie;
+            if (!_lotsInternes.TryGetValue(lotId, out var lotAModifier))
+            {
+                throw new KeyNotFoundException($"Lot {lotId} non trouvé.");
+            }
+
+            lotAModifier.Nom = nom;
+            lotAModifier.Priorite = priorite;
+            lotAModifier.CheminFichierPlan = cheminFichierPlan;
+            lotAModifier.Phases = phases;
         }
 
         /// <summary>
@@ -577,30 +640,7 @@ namespace PlanAthena.Services.Business
 
         #region Utilitaires
 
-        /// <summary>
-        /// Crée un nouveau projet vide
-        /// </summary>
-        public InformationsProjet CreerNouveauProjet(string nomProjet, string description = "")
-        {
-            // Vider toutes les données existantes
-            RemplacerTousLesMetiers(new List<Metier>());
-            _ouvrierService.Vider();
-            _tacheService.Vider();
-            ViderLots();
-            _blocService.Vider();
-
-            // Appel à ChargerMetiersParDefaut pour initialiser les métiers
-            ChargerMetiersParDefaut();
-
-            return new InformationsProjet
-            {
-                NomProjet = nomProjet,
-                Description = description,
-                DateCreation = DateTime.Now,
-                DateDerniereModification = DateTime.Now,
-                Auteur = Environment.UserName
-            };
-        }
+        
 
         /// <summary>
         /// Obtient un résumé du projet actuel

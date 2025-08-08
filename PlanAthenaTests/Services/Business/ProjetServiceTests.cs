@@ -1,9 +1,10 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
-using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DataAccess;
-using PlanAthena.Utilities; // 🔧 CORRIGÉ V0.4.2.1 - Ajout du using pour DependanceBuilder
+using PlanAthena.Interfaces; // Assurez-vous d'avoir ce using
+using PlanAthena.Services.Business.DTOs;
+using PlanAthena.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -13,52 +14,46 @@ using System.Text.Json;
 
 namespace PlanAthenaTests.Services.Business
 {
-    /// <summary>
-    /// Tests unitaires pour ProjetService - Service central de gestion des projets.
-    /// 🔧 MIS À JOUR POUR V0.4.2.1
-    /// COUVERTURE :
-    /// - Sauvegarde/Chargement projet (JSON)
-    /// - Gestion métiers (CRUD)
-    /// - Validation projet
-    /// - Couleurs métiers
-    /// - Création nouveau projet
-    /// - Gestion des prérequis par phase
-    /// </summary>
     [TestClass]
     public class ProjetServiceTests
     {
         private ProjetService _projetService;
-        private DependanceBuilder _dependanceBuilder; // 🔧 CORRIGÉ V0.4.2.1 - Ajout pour tester les méthodes déplacées
+        private DependanceBuilder _dependanceBuilder;
         private string _tempDirectory;
 
         [TestInitialize]
         public void Setup()
         {
-            // 🔧 CORRIGÉ V0.4.2.1 - Initialisation propre avec DependanceBuilder
+            // --- SETUP CORRIGÉ QUI RESPECTE LES DÉPENDANCES CIRCULAIRES ---
+
+            // Phase 1: Déclaration des variables
             ProjetService projetServiceInstance = null;
             TacheService tacheServiceInstance = null;
             BlocService blocServiceInstance = null;
-            DependanceBuilder dependanceBuilderInstance = null;
 
-            // Services de base
+            // Phase 2: Services de base
             var csvDataService = new CsvDataService();
             var excelReader = new ExcelReader();
             var ouvrierService = new OuvrierService(csvDataService, excelReader);
+            var idGeneratorService = new IdGeneratorService();
 
-            // Factories pour gérer les dépendances circulaires
+            // Phase 3: Factories
             Func<ProjetService> projetServiceFactory = () => projetServiceInstance;
             Func<TacheService> tacheServiceFactory = () => tacheServiceInstance;
             Func<BlocService> blocServiceFactory = () => blocServiceInstance;
 
-            // Instanciation dans l'ordre
-            blocServiceInstance = new BlocService(tacheServiceFactory);
+            // Phase 4: Instanciation dans l'ordre
             tacheServiceInstance = new TacheService(csvDataService, excelReader, projetServiceFactory, blocServiceFactory);
-            projetServiceInstance = new ProjetService(ouvrierService, tacheServiceFactory, csvDataService, blocServiceFactory);
-            dependanceBuilderInstance = new DependanceBuilder(projetServiceInstance); // DependanceBuilder dépend de ProjetService
+            blocServiceInstance = new BlocService(tacheServiceFactory);
 
+            // ProjetService est l'objet à tester (SUT - System Under Test)
+            projetServiceInstance = new ProjetService(ouvrierService, tacheServiceInstance, csvDataService, blocServiceInstance, idGeneratorService);
+
+            // Phase 5: Instanciation des dépendances de test et assignation
+            _dependanceBuilder = new DependanceBuilder(projetServiceInstance);
             _projetService = projetServiceInstance;
-            _dependanceBuilder = dependanceBuilderInstance;
 
+            // Phase 6: Setup de l'environnement de test
             _tempDirectory = Path.Combine(Path.GetTempPath(), "PlanAthenaTests_" + Guid.NewGuid().ToString("N")[..8]);
             Directory.CreateDirectory(_tempDirectory);
         }

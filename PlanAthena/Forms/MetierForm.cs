@@ -6,6 +6,7 @@ using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Utilities;
+using PlanAthena.Interfaces;
 using PlanAthena.Controls;
 using PlanAthena.Controls.Config;
 using System;
@@ -31,7 +32,7 @@ namespace PlanAthena.Forms
         #region Champs et Services
 
         private readonly ProjetService _projetService;
-        private readonly IdGeneratorService _idGeneratorService;
+        private readonly IIdGeneratorService _idGeneratorService;
         private readonly DependanceBuilder _dependanceBuilder;
 
         private Metier _metierEnEdition = null;
@@ -62,7 +63,7 @@ namespace PlanAthena.Forms
 
         public MetierForm(
             ProjetService projetService,
-            IdGeneratorService idGeneratorService,
+            IIdGeneratorService idGeneratorService,
             DependanceBuilder dependanceBuilder)
         {
             InitializeComponent();

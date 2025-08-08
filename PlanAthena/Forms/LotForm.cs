@@ -1,5 +1,7 @@
 using PlanAthena.Data;
+using PlanAthena.Utilities;
 using PlanAthena.Services.Business;
+using PlanAthena.Services.DataAccess;
 
 namespace PlanAthena.Forms
 {
@@ -7,6 +9,7 @@ namespace PlanAthena.Forms
     {
         private readonly ProjetService _projetService;
         private readonly TacheService _tacheService;
+
         private Lot _lotSelectionne = null;
         private bool _isEditing = false;
         private readonly ToolTip _toolTip = new ToolTip();
@@ -20,8 +23,21 @@ namespace PlanAthena.Forms
 
         private void LotForm_Load(object sender, EventArgs e)
         {
+            InitialiserComboBoxPhases();
             SetEditingMode(false);
             RafraichirAffichageComplet();
+        }
+        private void InitialiserComboBoxPhases()
+        {
+            // On récupère toutes les valeurs de l'énumération ChantierPhase,
+            // on les convertit en une liste, et on exclut la valeur "None".
+            var phasesValides = Enum.GetValues(typeof(ChantierPhase))
+                                    .Cast<ChantierPhase>()
+                                    .Where(p => p != ChantierPhase.None)
+                                    .ToList();
+
+            cmbPhases.DataSource = phasesValides;
+            cmbPhases.SelectedItem = null; // Aucune sélection au départ
         }
 
         /// <summary>
@@ -39,6 +55,7 @@ namespace PlanAthena.Forms
                 txtNom.ReadOnly = false;
                 numPriorite.ReadOnly = false;
                 btnParcourirPlan.Enabled = true;
+                cmbPhases.Enabled = true;
                 txtLotId.ReadOnly = (_lotSelectionne != null && !string.IsNullOrEmpty(_lotSelectionne.LotId));
             }
             else
@@ -46,6 +63,7 @@ namespace PlanAthena.Forms
                 txtLotId.ReadOnly = true;
                 txtNom.ReadOnly = true;
                 numPriorite.ReadOnly = true;
+                cmbPhases.Enabled = false;
                 btnParcourirPlan.Enabled = false;
             }
 
@@ -127,6 +145,28 @@ namespace PlanAthena.Forms
             numPriorite.Value = lot.Priorite > 0 ? lot.Priorite : 1;
             txtCheminFichierPlan.Text = lot.CheminFichierPlan;
             groupBoxDetails.Text = $"Détails: {lot.Nom}";
+
+            // --- CORRECTION DU BUG D'AFFICHAGE DE LA PHASE ---
+
+            // 1. On récupère la liste des options valides du ComboBox.
+            var optionsValides = cmbPhases.DataSource as List<ChantierPhase>;
+
+            // 2. On vérifie si la phase du lot est une des options uniques disponibles.
+            //    Si lot.Phases est une combinaison de flags (ex: GrosOeuvre | SecondOeuvre),
+            //    cette condition sera fausse.
+            if (optionsValides != null && optionsValides.Contains(lot.Phases))
+            {
+                // La phase du lot est une valeur simple, on peut la sélectionner sans risque.
+                cmbPhases.SelectedItem = lot.Phases;
+            }
+            else
+            {
+                // La phase du lot est soit `None`, soit une combinaison de plusieurs phases.
+                // Dans ce cas, on ne peut pas l'afficher dans le ComboBox, donc on ne sélectionne rien.
+                cmbPhases.SelectedItem = null;
+                // Optionnel : vous pourriez afficher un message à l'utilisateur ici,
+                // par exemple dans un Label : "Phases multiples assignées".
+            }
         }
 
         private void NettoyerDetails()
@@ -180,10 +220,17 @@ namespace PlanAthena.Forms
         private void btnNouveau_Click(object sender, EventArgs e)
         {
             listViewLots.SelectedItems.Clear();
-            _lotSelectionne = new Lot { LotId = "", Nom = "Nouveau lot", Priorite = 99 };
+
+            // 🔧 LOGIQUE CORRIGÉE : Le formulaire DEMANDE un nouveau lot au service.
+            // Il ne sait pas comment il est créé.
+            _lotSelectionne = _projetService.CreerNouveauLotBrouillon();
+
             AfficherDetailsLot(_lotSelectionne);
             SetEditingMode(true);
-            txtLotId.Focus();
+
+            // 🔧 L'ID est déjà généré, donc on met le focus sur le Nom pour l'édition.
+            txtNom.Focus();
+            txtNom.SelectAll();
         }
 
         private void btnModifier_Click(object sender, EventArgs e)
@@ -199,19 +246,48 @@ namespace PlanAthena.Forms
 
             try
             {
-                bool isNew = string.IsNullOrEmpty(_lotSelectionne.LotId);
-                var lotToSave = new Lot
+                ChantierPhase phaseSelectionnee = ChantierPhase.None;
+                if (cmbPhases.SelectedItem is ChantierPhase phase)
                 {
-                    LotId = isNew ? txtLotId.Text : _lotSelectionne.LotId,
-                    Nom = txtNom.Text,
-                    Priorite = (int)numPriorite.Value,
-                    CheminFichierPlan = txtCheminFichierPlan.Text
-                };
+                    phaseSelectionnee = phase;
+                }
 
-                if (isNew) _projetService.AjouterLot(lotToSave);
-                else _projetService.ModifierLot(lotToSave);
+                if (phaseSelectionnee == ChantierPhase.None)
+                {
+                    MessageBox.Show("Veuillez sélectionner une phase pour le lot.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
 
-                _lotSelectionne = lotToSave;
+                if (string.IsNullOrWhiteSpace(txtNom.Text))
+                {
+                    MessageBox.Show("Le nom du lot ne peut pas être vide.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // 🔧 LOGIQUE CORRIGÉE : On vérifie si le lot existe déjà dans le service pour savoir si c'est un ajout ou une modification.
+                bool isNew = !_projetService.ObtenirTousLesLots().Any(l => l.LotId == _lotSelectionne.LotId);
+
+                if (isNew)
+                {
+                    // On met à jour l'objet brouillon avec les valeurs de l'UI et on l'ajoute.
+                    _lotSelectionne.Nom = txtNom.Text;
+                    _lotSelectionne.Priorite = (int)numPriorite.Value;
+                    _lotSelectionne.CheminFichierPlan = txtCheminFichierPlan.Text;
+                    _lotSelectionne.Phases = phaseSelectionnee;
+                    _projetService.AjouterLot(_lotSelectionne);
+                }
+                else
+                {
+                    // C'est une modification, on appelle la méthode de modification.
+                    _projetService.ModifierLot(
+                        _lotSelectionne.LotId,
+                        txtNom.Text,
+                        (int)numPriorite.Value,
+                        txtCheminFichierPlan.Text,
+                        phaseSelectionnee
+                    );
+                }
+
                 SetEditingMode(false);
                 RafraichirAffichageComplet();
             }
@@ -250,5 +326,6 @@ namespace PlanAthena.Forms
         }
 
         #endregion
+
     }
 }

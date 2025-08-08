@@ -512,6 +512,13 @@ namespace PlanAthena.Forms
                 if (cmbLots.SelectedItem is Lot selectedLot)
                 {
                     _lotActif = selectedLot;
+
+                    // --- CORRECTION ---
+                    // On reconstruit la barre d'outils des métiers pour qu'elle corresponde
+                    // aux phases et prérequis du nouveau lot sélectionné.
+                    CreerBoutonsMetiers();
+
+                    // Le reste de votre logique est correct et suit
                     RafraichirDiagrammeEtStatistiques();
                     _tacheDetailForm?.MettreAJourListesDeroulantes(_lotActif.LotId);
                     _tacheDetailForm?.ChargerTache(new Tache { LotId = _lotActif.LotId, HeuresHommeEstimees = 8, Type = TypeActivite.Tache }, true);

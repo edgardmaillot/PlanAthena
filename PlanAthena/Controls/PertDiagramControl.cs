@@ -337,15 +337,25 @@ namespace PlanAthena.Controls
             var bloc = _blocService.ObtenirBlocParId(blocId);
             if (bloc == null) return;
 
+            int capaciteAffichee = Math.Min(bloc.CapaciteMaxOuvriers, 10); // Limite à 10 icônes pour ne pas surcharger
+            string capaciteIcones = string.Concat(Enumerable.Repeat(_settings.ClusterLabelIcon, capaciteAffichee));
+
             var cluster = new Subgraph(blocId)
             {
-                LabelText = string.Format(_settings.ClusterLabelFormat, bloc.Nom, tachesDuBloc.Count, tachesDuBloc.Sum(t => t.HeuresHommeEstimees))
+                LabelText = string.Format(
+                    _settings.ClusterLabelFormat,
+                    capaciteIcones,                             // {0}: Les icônes de capacité
+                    bloc.Nom,                                   // {1}: Le nom du bloc
+                    tachesDuBloc.Count,                         // {2}: Le nombre de tâches
+                    tachesDuBloc.Sum(t => t.HeuresHommeEstimees) // {3}: Le total des heures
+                    )
             };
             cluster.Attr.FillColor = _settings.ClusterFillColor;
             cluster.Attr.Color = _settings.ClusterBorderColor;
             cluster.Attr.LineWidth = _settings.ClusterLineWidth;
             cluster.Label.FontColor = _settings.ClusterFontColor;
             cluster.Label.FontSize = (int)_settings.ClusterFontSize;
+            cluster.Label.FontName = "Segoe UI Emoji";
 
             if (tachesDuBloc.Any())
             {

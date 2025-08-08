@@ -2,20 +2,21 @@ using PlanAthena.Core.Facade.Dto.Input;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
-using PlanAthena.Services.DataAccess;
-// Ajout pour éviter d'écrire les noms complets partout dans la méthode de mapping
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using CoreEnums = PlanAthena.Core.Facade.Dto.Enums;
 
 namespace PlanAthena.Services.Processing
 {
     /// <summary>
-    /// Service de transformation des données du projet vers les DTOs de la DLL PlanAthena.Core.
-    /// Agit comme une couche anti-corruption, traduisant les modèles de données internes
-    /// en contrats d'entrée stables et propres pour le cœur du système.
+    /// Service de transformation des données V0.4.2.1
+    /// 🔧 VERSION FINALE CORRIGÉE : Gère la nouvelle structure Ouvrier/Compétences,
+    /// Metier/PrerequisParPhase et fournit des valeurs par défaut pour les champs supprimés
+    /// (NiveauExpertise, PerformancePct) afin de respecter le contrat de la DLL Core.
     /// </summary>
     public class DataTransformer
     {
-        private static readonly string[] s_splitChars = { "," };
         private readonly ProjetService _projetService;
         private readonly BlocService _blocService;
 
@@ -44,7 +45,7 @@ namespace PlanAthena.Services.Processing
                 BlocId = t.BlocId,
                 HeuresHommeEstimees = t.HeuresHommeEstimees,
                 MetierId = t.MetierId ?? string.Empty,
-                Dependencies = t.Dependencies?.Split(s_splitChars, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>()
+                Dependencies = t.Dependencies?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>()
             }).ToList();
 
             // Transformation des blocs depuis le BlocService
@@ -70,34 +71,38 @@ namespace PlanAthena.Services.Processing
                     BlocIds = blocIdsParLot.GetValueOrDefault(l.LotId, new List<string>())
                 }).ToList();
 
-            // Transformation des métiers
+            // 🔧 NOUVELLE LOGIQUE V0.4.2.1 - Transformation des métiers
+            // On envoie au Core la liste de tous les prérequis, toutes phases confondues,
+            // car le contrat de la DLL Core ne gère pas encore les phases.
             var metiersDto = allMetiers.Select(m => new MetierDto
             {
                 MetierId = m.MetierId,
                 Nom = m.Nom,
-                PrerequisMetierIds = m.PrerequisMetierIds?.Split(s_splitChars, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>()
+                PrerequisMetierIds = _projetService.GetTousPrerequisConfondus(m.MetierId).ToArray()
             }).ToList();
 
-            // Transformation des ouvriers
-            var ouvriersDto = ouvriers
-                .GroupBy(o => o.OuvrierId)
-                .Select(g =>
+            // 🔧 NOUVELLE LOGIQUE V0.4.2.1 - Transformation des ouvriers
+            // On parcourt directement la liste des ouvriers uniques et leurs compétences.
+            var ouvriersDto = ouvriers.Select(ouvrier => new OuvrierDto
+            {
+                OuvrierId = ouvrier.OuvrierId,
+                Nom = ouvrier.Nom,
+                Prenom = ouvrier.Prenom,
+                CoutJournalier = ouvrier.CoutJournalier,
+                Competences = ouvrier.Competences.Select(comp => new CompetenceDto
                 {
-                    var premierOuvrier = g.First();
-                    return new OuvrierDto
-                    {
-                        OuvrierId = g.Key,
-                        Nom = premierOuvrier.Nom,
-                        Prenom = premierOuvrier.Prenom,
-                        CoutJournalier = premierOuvrier.CoutJournalier,
-                        Competences = g.Select(c => new CompetenceDto
-                        {
-                            MetierId = c.MetierId,
-                            //Niveau = c.NiveauExpertise,
-                            //PerformancePct = c.PerformancePct
-                        }).ToList()
-                    };
-                }).ToList();
+                    MetierId = comp.MetierId,
+
+                    // 🔧 CORRECTION FINALE : On envoie des valeurs par défaut VALIDES pour les champs
+                    // qui ont été supprimés de notre modèle mais sont TOUJOURS REQUIS par le Core.
+
+                    // Pour NiveauExpertise, on envoie "Confirmé" pour passer la validation de l'enum.
+                    Niveau = CoreEnums.NiveauExpertise.Confirme,
+
+                    // Pour PerformancePct, on envoie 100% par défaut.
+                    PerformancePct = 100
+                }).ToList()
+            }).ToList();
 
             // Transformation du calendrier
             var calendrierDto = new CalendrierTravailDefinitionDto

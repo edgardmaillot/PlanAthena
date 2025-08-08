@@ -1,41 +1,49 @@
+// START OF FILE IdGeneratorService.cs
+
 using PlanAthena.Data;
-using PlanAthena.Services.Business;
-using PlanAthena.Services.Business.DTOs;
-using System; // Ajouté pour ArgumentNullException, InvalidOperationException
-using System.Collections.Generic; // Ajouté pour HashSet
-using System.Linq; // Ajouté pour Select, Where, ToHashSet
+using PlanAthena.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace PlanAthena.Services.DataAccess
 {
     /// <summary>
-    /// Service centralisé pour la génération et validation des IDs selon les règles de nommage
-    /// Règles: LotId = L001-L999, BlocId = {LotId}_B001-B999, TacheId = {BlocId}_T001-T999 ou {BlocId}_J001-J999
+    /// Service utilitaire centralisé pour la génération et la validation d'identifiants.
+    /// Ce service est volontairement sans dépendances ("service feuille") pour éviter les références circulaires.
+    /// Les méthodes requièrent que les données nécessaires (listes d'entités existantes) leur soient fournies en paramètre.
+    /// Règles de nommage :
+    /// - LotId   : L001-L999
+    /// - BlocId  : {LotId}_B001-B999
+    /// - TacheId : {BlocId}_T001-T999 ou {BlocId}_J001-J999
+    /// - MetierId: M001-M999
+    /// - OuvrierId: W001-W999
     /// </summary>
-    public class IdGeneratorService
+    public class IdGeneratorService : IIdGeneratorService
     {
-        private readonly ProjetService _projetService;
-        private readonly BlocService _blocService;
-        private readonly TacheService _tacheService;
-        private readonly ConfigurationIds _config;
+        // Formats des IDs, définis comme constantes pour la clarté et la performance.
+        private const string FormatLot = "L{0:D3}";
+        private const string FormatBloc = "{0}_B{1:D3}";
+        private const string FormatTache = "{0}_{1}{2:D3}"; // {0}=BlocId, {1}=Prefixe(T/J), {2}=Numero
+        private const string FormatMetier = "M{0:D3}";
+        private const string FormatOuvrier = "W{0:D3}";
 
-        public IdGeneratorService(ProjetService projetService, BlocService blocService, TacheService tacheService)
+        /// <summary>
+        /// Constructeur sans dépendances pour garantir que ce service reste une "feuille" dans l'arbre des dépendances.
+        /// </summary>
+        public IdGeneratorService()
         {
-            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
-            _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
-            _tacheService = tacheService ?? throw new ArgumentNullException(nameof(tacheService));
-            _config = new ConfigurationIds();
+            // Aucune injection de dépendance ici.
         }
 
         #region Génération IDs Lots
 
-        /// <summary>
-        /// Génère le prochain ID de lot disponible (L001, L002, etc.)
-        /// </summary>
-        public string GenererProchainLotId()
+        public string GenererProchainLotId(IReadOnlyList<Lot> lotsExistants)
         {
-            var lotsExistants = _projetService.ObtenirTousLesLots();
+            // Extrait tous les numéros de lots déjà utilisés et les stocke dans un HashSet pour une recherche rapide (complexité O(1)).
             var numerosUtilises = lotsExistants
-                .Select(l => ExtraireNumeroLot(l.LotId))
+                .Select(l => ExtraireNumeroDepuisId(l.LotId, "L"))
                 .Where(n => n.HasValue)
                 .Select(n => n.Value)
                 .ToHashSet();
@@ -44,45 +52,33 @@ namespace PlanAthena.Services.DataAccess
             {
                 if (!numerosUtilises.Contains(i))
                 {
-                    return string.Format(_config.FormatLot, i);
+                    return string.Format(FormatLot, i);
                 }
             }
 
             throw new InvalidOperationException("Impossible de générer un nouvel ID de lot. Limite de 999 lots atteinte.");
         }
 
-        /// <summary>
-        /// Valide qu'un ID de lot respecte le format L001-L999
-        /// </summary>
-        public bool ValiderFormatLotId(string lotId)
+        public static bool ValiderFormatLotId(string lotId)
         {
             if (string.IsNullOrWhiteSpace(lotId)) return false;
-            return System.Text.RegularExpressions.Regex.IsMatch(lotId, @"^L\d{3}$");
-        }
-
-        private int? ExtraireNumeroLot(string lotId)
-        {
-            if (string.IsNullOrWhiteSpace(lotId) || !lotId.StartsWith("L")) return null;
-            if (int.TryParse(lotId.Substring(1), out int numero)) return numero;
-            return null;
+            return Regex.IsMatch(lotId, @"^L\d{3}$");
         }
 
         #endregion
 
         #region Génération IDs Blocs
 
-        /// <summary>
-        /// Génère le prochain ID de bloc disponible pour un lot donné ({LotId}_B001, {LotId}_B002, etc.)
-        /// </summary>
-        public string GenererProchainBlocId(string lotId)
+        public string GenererProchainBlocId(string lotId, IReadOnlyList<Bloc> blocsExistants)
         {
-            if (string.IsNullOrWhiteSpace(lotId))
-                throw new ArgumentException("L'ID du lot ne peut pas être vide.", nameof(lotId));
+            if (!ValiderFormatLotId(lotId))
+                throw new ArgumentException("Le format de l'ID du lot fourni est invalide.", nameof(lotId));
 
-            var blocsExistants = _blocService.ObtenirTousLesBlocs();
+            var prefixeRecherche = $"{lotId}_B";
+
             var numerosUtilises = blocsExistants
-                .Where(b => b.BlocId.StartsWith($"{lotId}_B"))
-                .Select(b => ExtraireNumeroBloc(b.BlocId, lotId))
+                .Where(b => b.BlocId.StartsWith(prefixeRecherche))
+                .Select(b => ExtraireNumeroDepuisId(b.BlocId, prefixeRecherche))
                 .Where(n => n.HasValue)
                 .Select(n => n.Value)
                 .ToHashSet();
@@ -91,90 +87,155 @@ namespace PlanAthena.Services.DataAccess
             {
                 if (!numerosUtilises.Contains(i))
                 {
-                    return string.Format(_config.FormatBloc, lotId, i);
+                    return string.Format(FormatBloc, lotId, i);
                 }
             }
 
             throw new InvalidOperationException($"Impossible de générer un nouvel ID de bloc pour le lot {lotId}. Limite de 999 blocs atteinte.");
         }
 
-        /// <summary>
-        /// Valide qu'un ID de bloc respecte le format {LotId}_B001-B999
-        /// </summary>
-        public bool ValiderFormatBlocId(string blocId)
+        public static bool ValiderFormatBlocId(string blocId)
         {
             if (string.IsNullOrWhiteSpace(blocId)) return false;
-            return System.Text.RegularExpressions.Regex.IsMatch(blocId, @"^L\d{3}_B\d{3}$");
-        }
-
-        private int? ExtraireNumeroBloc(string blocId, string lotId)
-        {
-            var prefixe = $"{lotId}_B";
-            if (string.IsNullOrWhiteSpace(blocId) || !blocId.StartsWith(prefixe)) return null;
-            if (int.TryParse(blocId.Substring(prefixe.Length), out int numero)) return numero;
-            return null;
+            return Regex.IsMatch(blocId, @"^L\d{3}_B\d{3}$");
         }
 
         #endregion
 
         #region Génération IDs Tâches
 
-        /// <summary>
-        /// Génère le prochain ID de tâche disponible pour un bloc donné
-        /// CORRECTION : Utilise la logique de TacheService pour éviter les doublons
-        /// </summary>
-        public string GenererProchainTacheId(string blocId, TypeActivite type = TypeActivite.Tache)
+        public string GenererProchainTacheId(string blocId, IReadOnlyList<Tache> tachesExistantes, TypeActivite type = TypeActivite.Tache)
         {
-            if (string.IsNullOrWhiteSpace(blocId))
-                throw new ArgumentException("L'ID du bloc ne peut pas être vide.", nameof(blocId));
+            if (!ValiderFormatBlocId(blocId))
+                throw new ArgumentException("Le format de l'ID du bloc fourni est invalide.", nameof(blocId));
 
-            // CORRECTION : Créer une tâche temporaire et utiliser la logique existante de TacheService
-            var tacheTemp = new Tache
-            {
-                Type = type,
-                BlocId = blocId,
-                LotId = ExtraireLotId(blocId),
-                TacheNom = "temp"
-                // TacheId sera généré automatiquement par TacheService.GenererIdUnique()
-            };
+            // Le préfixe est "T" pour une tâche, "J" pour tout type de jalon.
+            var prefixeLettre = EstJalon(type) ? "J" : "T";
+            var prefixeRecherche = $"{blocId}_{prefixeLettre}";
 
-            // Utiliser la logique existante de génération d'ID
-            // Note: Cette approche nécessite d'accéder à la méthode privée ou de l'exposer
-            // Pour l'instant, on fait une génération basique en attendant
-
-            var tachesExistantes = _tacheService.ObtenirToutesLesTaches();
-            var prefixe = type == TypeActivite.Tache ? "T" : "J";
-            var patternId = $"{blocId}_{prefixe}";
-
-            // Trouver le plus grand numéro existant
             var numerosUtilises = tachesExistantes
-                .Where(t => t.TacheId.StartsWith(patternId))
-                .Select(t => ExtraireNumero(t.TacheId, patternId))
+                .Where(t => t.TacheId.StartsWith(prefixeRecherche))
+                .Select(t => ExtraireNumeroDepuisId(t.TacheId, prefixeRecherche))
                 .Where(n => n.HasValue)
                 .Select(n => n.Value)
                 .ToHashSet();
 
-            // Trouver le premier numéro disponible
             for (int i = 1; i <= 999; i++)
             {
                 if (!numerosUtilises.Contains(i))
                 {
-                    return $"{patternId}{i:D3}";
+                    return string.Format(FormatTache, blocId, prefixeLettre, i);
                 }
             }
 
-            throw new InvalidOperationException($"Impossible de générer un nouvel ID de {(type == TypeActivite.Tache ? "tâche" : "jalon")} pour le bloc {blocId}. Limite de 999 éléments atteinte.");
+            string nomType = EstJalon(type) ? "jalon" : "tâche";
+            throw new InvalidOperationException($"Impossible de générer un nouvel ID de {nomType} pour le bloc {blocId}. Limite de 999 éléments atteinte.");
+        }
+
+        public static bool ValiderFormatTacheId(string tacheId)
+        {
+            if (string.IsNullOrWhiteSpace(tacheId)) return false;
+            return Regex.IsMatch(tacheId, @"^L\d{3}_B\d{3}_[TJ]\d{3}$");
+        }
+
+        #endregion
+
+        #region Génération IDs Métiers
+
+        public string GenererProchainMetierId(IReadOnlyList<Metier> metiersExistants)
+        {
+            var numerosUtilises = metiersExistants
+                .Select(m => ExtraireNumeroDepuisId(m.MetierId, "M"))
+                .Where(n => n.HasValue)
+                .Select(n => n.Value)
+                .ToHashSet();
+
+            for (int i = 1; i <= 999; i++)
+            {
+                if (!numerosUtilises.Contains(i))
+                {
+                    return string.Format(FormatMetier, i);
+                }
+            }
+            throw new InvalidOperationException("Impossible de générer un nouvel ID de métier. Limite de 999 métiers atteinte.");
+        }
+
+        public static bool ValiderFormatMetierId(string metierId)
+        {
+            if (string.IsNullOrWhiteSpace(metierId)) return false;
+            return Regex.IsMatch(metierId, @"^M\d{3}$");
+        }
+
+        #endregion
+
+        #region Génération IDs Ouvriers
+
+        public string GenererProchainOuvrierId(IReadOnlyList<Ouvrier> ouvriersExistants)
+        {
+            var numerosUtilises = ouvriersExistants
+                .Select(o => ExtraireNumeroDepuisId(o.OuvrierId, "W"))
+                .Where(n => n.HasValue)
+                .Select(n => n.Value)
+                .ToHashSet();
+
+            for (int i = 1; i <= 999; i++)
+            {
+                if (!numerosUtilises.Contains(i))
+                {
+                    return string.Format(FormatOuvrier, i);
+                }
+            }
+            throw new InvalidOperationException("Impossible de générer un nouvel ID d'ouvrier. Limite de 999 ouvriers atteinte.");
+        }
+
+        public static bool ValiderFormatOuvrierId(string ouvrierId)
+        {
+            if (string.IsNullOrWhiteSpace(ouvrierId)) return false;
+            return Regex.IsMatch(ouvrierId, @"^W\d{3}$");
+        }
+
+        #endregion
+
+        #region Méthodes utilitaires
+
+        public string NormaliserIdDepuisCsv(string idOriginal, string blocIdCible, IReadOnlyList<Tache> tachesExistantes, TypeActivite type = TypeActivite.Tache)
+        {
+            // Si l'ID original respecte déjà notre format standard, on le conserve.
+            if (ValiderFormatTacheId(idOriginal))
+            {
+                return idOriginal;
+            }
+
+            // Sinon, l'ID n'est pas conforme ou est vide. On génère un nouvel ID standard et sécurisé.
+            return GenererProchainTacheId(blocIdCible, tachesExistantes, type);
+        }
+
+        public static string ExtraireLotId(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return null;
+            var match = Regex.Match(id, @"^(L\d{3})");
+            return match.Success ? match.Groups[1].Value : null;
+        }
+
+        public static string ExtraireBlocId(string tacheId)
+        {
+            if (string.IsNullOrWhiteSpace(tacheId)) return null;
+            var match = Regex.Match(tacheId, @"^(L\d{3}_B\d{3})");
+            return match.Success ? match.Groups[1].Value : null;
         }
 
         /// <summary>
-        /// Extrait le numéro d'une tâche depuis son ID
+        /// Méthode privée générique pour extraire la partie numérique d'un ID basé sur son préfixe.
         /// </summary>
-        private int? ExtraireNumero(string tacheId, string prefixe)
+        /// <param name="id">L'identifiant complet (ex: "L001", "L001_B002", "M042")</param>
+        /// <param name="prefixe">Le préfixe à retirer avant de parser le nombre (ex: "L", "L001_B", "M")</param>
+        /// <returns>Le numéro extrait, ou null si le format est incorrect.</returns>
+        private static int? ExtraireNumeroDepuisId(string id, string prefixe)
         {
-            if (string.IsNullOrWhiteSpace(tacheId) || !tacheId.StartsWith(prefixe))
+            if (string.IsNullOrWhiteSpace(id) || !id.StartsWith(prefixe))
                 return null;
 
-            var numeroStr = tacheId.Substring(prefixe.Length);
+            var numeroStr = id.Substring(prefixe.Length);
             if (int.TryParse(numeroStr, out int numero))
                 return numero;
 
@@ -182,123 +243,11 @@ namespace PlanAthena.Services.DataAccess
         }
 
         /// <summary>
-        /// Valide qu'un ID de tâche respecte le format {BlocId}_T001-T999 ou {BlocId}_J001-J999
+        /// Détermine si le type d'activité correspond à un jalon (de quelque type que ce soit).
         /// </summary>
-        public bool ValiderFormatTacheId(string tacheId)
+        private static bool EstJalon(TypeActivite type)
         {
-            if (string.IsNullOrWhiteSpace(tacheId)) return false;
-            return System.Text.RegularExpressions.Regex.IsMatch(tacheId, @"^L\d{3}_B\d{3}_[TJ]\d{3}$");
-        }
-
-        private int? ExtraireNumeroTache(string tacheId, string blocId, string prefixe)
-        {
-            var prefixeComplet = $"{blocId}_{prefixe}";
-            if (string.IsNullOrWhiteSpace(tacheId) || !tacheId.StartsWith(prefixeComplet)) return null;
-            if (int.TryParse(tacheId.Substring(prefixeComplet.Length), out int numero)) return numero;
-            return null;
-        }
-
-        #endregion
-
-        #region Génération IDs Métiers
-
-        /// <summary>
-        /// Génère le prochain ID de métier disponible (M001, M002, etc.)
-        /// </summary>
-        public string GenererProchainMetierId(IReadOnlyList<Metier> existingMetiers)
-        {
-            var numerosUtilises = existingMetiers
-                .Select(m => ExtraireNumeroMetier(m.MetierId))
-                .Where(n => n.HasValue)
-                .Select(n => n.Value)
-                .ToHashSet();
-
-            for (int i = 1; i <= 999; i++)
-            {
-                if (!numerosUtilises.Contains(i))
-                {
-                    return $"M{i:D3}"; // Format M001, M002...
-                }
-            }
-            throw new InvalidOperationException("Impossible de générer un nouvel ID de métier. Limite de 999 métiers atteinte.");
-        }
-
-        /// <summary>
-        /// Valide qu'un ID de métier respecte le format M001-M999
-        /// </summary>
-        public bool ValiderFormatMetierId(string metierId)
-        {
-            if (string.IsNullOrWhiteSpace(metierId)) return false;
-            return System.Text.RegularExpressions.Regex.IsMatch(metierId, @"^M\d{3}$");
-        }
-
-        private int? ExtraireNumeroMetier(string metierId)
-        {
-            if (string.IsNullOrWhiteSpace(metierId) || !metierId.StartsWith("M")) return null;
-            if (int.TryParse(metierId.Substring(1), out int numero)) return numero;
-            return null;
-        }
-
-        #endregion
-
-        #region Méthodes utilitaires
-
-        /// <summary>
-        /// Extrait l'ID du lot depuis un ID de bloc ou de tâche
-        /// </summary>
-        public string ExtraireLotId(string id)
-        {
-            if (string.IsNullOrWhiteSpace(id)) return null;
-
-            var match = System.Text.RegularExpressions.Regex.Match(id, @"^(L\d{3})");
-            return match.Success ? match.Groups[1].Value : null;
-        }
-
-        /// <summary>
-        /// Extrait l'ID du bloc depuis un ID de tâche
-        /// </summary>
-        public string ExtraireBlocId(string tacheId)
-        {
-            if (string.IsNullOrWhiteSpace(tacheId)) return null;
-
-            var match = System.Text.RegularExpressions.Regex.Match(tacheId, @"^(L\d{3}_B\d{3})");
-            return match.Success ? match.Groups[1].Value : null;
-        }
-
-        /// <summary>
-        /// Normalise un ID CSV vers le format standard en utilisant le préfixe de bloc
-        /// </summary>
-        public string NormaliserIdDepuisCsv(string idOriginal, string blocIdCible, TypeActivite type = TypeActivite.Tache)
-        {
-            if (string.IsNullOrWhiteSpace(idOriginal))
-            {
-                return GenererProchainTacheId(blocIdCible, type);
-            }
-
-            // Si l'ID original respecte déjà notre format, le conserver
-            if (ValiderFormatTacheId(idOriginal))
-            {
-                return idOriginal;
-            }
-
-            // Sinon, générer un nouvel ID basé sur le nom original
-            var idSanitized = SanitizeIdString(idOriginal);
-            var prefixe = type == TypeActivite.Tache ? "T" : "J";
-            return $"{blocIdCible}_{prefixe}_{idSanitized}";
-        }
-
-        private string SanitizeIdString(string input)
-        {
-            if (string.IsNullOrWhiteSpace(input)) return "001";
-
-            // Remplacer espaces et caractères spéciaux par des underscores
-            var sanitized = System.Text.RegularExpressions.Regex.Replace(input, @"[^\w]", "_");
-
-            // Limiter la longueur pour éviter des IDs trop longs
-            if (sanitized.Length > 20)
-                sanitized = sanitized.Substring(0, 20);
-
-            return sanitized;
+            return type != TypeActivite.Tache;
         }
 
         #endregion

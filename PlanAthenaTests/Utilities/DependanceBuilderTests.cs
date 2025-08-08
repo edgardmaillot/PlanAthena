@@ -1,5 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PlanAthena.Data;
+using PlanAthena.Interfaces; // Ajout du using pour l'interface
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DataAccess;
@@ -10,42 +11,54 @@ using System.Linq;
 
 namespace PlanAthenaTests.Utilities
 {
-    /// <summary>
-    /// Suite de tests pour DependanceBuilder V0.4.2.1
-    /// 🔧 MIS À JOUR pour gérer la logique de dépendances par phase.
-    /// </summary>
     [TestClass]
     public class DependanceBuilderTests
     {
         private ProjetService _projetService;
         private DependanceBuilder _dependanceBuilder;
-
-        // 🔧 CORRIGÉ V0.4.2.1 : Définir une phase de contexte par défaut pour les tests
         private const ChantierPhase TestPhaseContexte = ChantierPhase.SecondOeuvre;
 
         [TestInitialize]
         public void Setup()
         {
-            // Initialisation propre, déjà correcte.
+            // --- SETUP CORRIGÉ QUI RESPECTE LES DÉPENDANCES CIRCULAIRES ---
+
+            // Phase 1: Déclaration des variables qui contiendront les instances
             ProjetService projetServiceInstance = null;
             TacheService tacheServiceInstance = null;
             BlocService blocServiceInstance = null;
-            Func<ProjetService> projetServiceFactory = () => projetServiceInstance;
-            Func<TacheService> tacheServiceFactory = () => tacheServiceInstance;
-            Func<BlocService> blocServiceFactory = () => blocServiceInstance;
+
+            // Phase 2: Services de base sans dépendances circulaires
             var csvDataService = new CsvDataService();
             var excelReader = new ExcelReader();
             var ouvrierService = new OuvrierService(csvDataService, excelReader);
-            blocServiceInstance = new BlocService(tacheServiceFactory);
+            // IdGeneratorService est maintenant un service simple
+            var idGeneratorService = new IdGeneratorService();
+
+            // Phase 3: Création des factories qui "promettent" une instance future
+            Func<ProjetService> projetServiceFactory = () => projetServiceInstance;
+            Func<TacheService> tacheServiceFactory = () => tacheServiceInstance;
+            Func<BlocService> blocServiceFactory = () => blocServiceInstance;
+
+            // Phase 4: Instanciation des services en utilisant les factories
+            // TacheService et BlocService peuvent être créés car ils reçoivent des Func<T>
             tacheServiceInstance = new TacheService(csvDataService, excelReader, projetServiceFactory, blocServiceFactory);
-            projetServiceInstance = new ProjetService(ouvrierService, tacheServiceFactory, csvDataService, blocServiceFactory);
+            blocServiceInstance = new BlocService(tacheServiceFactory);
+
+            // ProjetService peut maintenant être créé car TacheService et BlocService existent
+            projetServiceInstance = new ProjetService(ouvrierService, tacheServiceInstance, csvDataService, blocServiceInstance, idGeneratorService);
+
+            // Phase 5: Création de l'objet à tester
+            _dependanceBuilder = new DependanceBuilder(projetServiceInstance);
+
+            // Phase 6: Assignation à la variable de la classe de test
             _projetService = projetServiceInstance;
-            _dependanceBuilder = new DependanceBuilder(_projetService);
         }
 
-        #region Tests de Base et Validation
 
-        [TestMethod]
+#region Tests de Base et Validation
+
+[TestMethod]
         [TestCategory("Unit - Validation")]
         public void Constructor_AvecProjetServiceNull_DoitLeverArgumentNullException()
         {

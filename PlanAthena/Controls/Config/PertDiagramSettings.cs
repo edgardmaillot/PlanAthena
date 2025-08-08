@@ -38,7 +38,8 @@ namespace PlanAthena.Controls.Config
         public double ClusterFontSize { get; set; } = 12;
         public MsaglColor ClusterFontColor { get; set; } = MsaglColor.DarkBlue;
         public double ClusterPadding { get; set; } = 20;
-        public string ClusterLabelFormat { get; set; } = "{0} - ({1} tâches - {2}h)";
+        public string ClusterLabelIcon { get; set; } = "👷";
+        public string ClusterLabelFormat { get; set; } = "{0} | {1}- ({2} tâches - {3}h)";
 
         #endregion
 

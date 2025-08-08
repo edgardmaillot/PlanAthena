@@ -250,7 +250,7 @@ namespace PlanAthena.Forms
             numCoutJournalier.Name = "numCoutJournalier";
             numCoutJournalier.Size = new Size(100, 23);
             numCoutJournalier.TabIndex = 7;
-            numCoutJournalier.ValueChanged += numCoutJournalier_ValueChanged;
+            numCoutJournalier.ValueChanged += DetailOuvrier_Changed;
             // 
             // lblCoutJournalier
             // 
@@ -268,7 +268,7 @@ namespace PlanAthena.Forms
             txtPrenom.Name = "txtPrenom";
             txtPrenom.Size = new Size(497, 23);
             txtPrenom.TabIndex = 5;
-            txtPrenom.TextChanged += txtPrenom_TextChanged;
+            txtPrenom.TextChanged += DetailOuvrier_Changed;
             // 
             // lblPrenom
             // 
@@ -286,7 +286,7 @@ namespace PlanAthena.Forms
             txtNom.Name = "txtNom";
             txtNom.Size = new Size(497, 23);
             txtNom.TabIndex = 3;
-            txtNom.TextChanged += txtNom_TextChanged;
+            txtNom.TextChanged += DetailOuvrier_Changed;
             // 
             // lblNom
             // 
@@ -303,7 +303,7 @@ namespace PlanAthena.Forms
             txtOuvrierId.Name = "txtOuvrierId";
             txtOuvrierId.Size = new Size(150, 23);
             txtOuvrierId.TabIndex = 1;
-            txtOuvrierId.TextChanged += txtOuvrierId_TextChanged;
+            txtOuvrierId.TextChanged += DetailOuvrier_Changed;
             // 
             // lblOuvrierId
             // 

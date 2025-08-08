@@ -275,48 +275,55 @@ namespace PlanAthena.Services.Business
         /// </summary>
         public int ImporterDepuisCsv(string filePath, bool remplacerExistants = true)
         {
-            var ouvriersImportes = _csvDataService.ImportCsv<Ouvrier>(filePath);
-            int countAdded = 0;
+            // On importe les "lignes" du CSV, qui peuvent contenir des doublons d'OuvrierId
+            var lignesOuvrierImportees = _csvDataService.ImportCsv<Ouvrier>(filePath);
+            int countAddedOrUpdated = 0;
 
             if (remplacerExistants)
             {
                 Vider();
             }
 
-            foreach (var ouvrier in ouvriersImportes)
+            foreach (var ligneOuvrier in lignesOuvrierImportees)
             {
                 try
                 {
-                    // 🆕 V0.4.2 : Migration automatique MetierId → Competences
-                    // Si l'ouvrier importé utilise l'ancienne propriété MetierId, la convertir
-                    if (ouvrier.Competences == null || !ouvrier.Competences.Any())
+                    // La migration automatique via la propriété `MetierId` est correcte, on la garde.
+                    if (ligneOuvrier.Competences == null || !ligneOuvrier.Competences.Any())
                     {
-                        if (!string.IsNullOrWhiteSpace(ouvrier.MetierId))
+                        if (!string.IsNullOrWhiteSpace(ligneOuvrier.MetierId))
                         {
-                            ouvrier.Competences = new List<CompetenceOuvrier>
-                            {
-                                new CompetenceOuvrier
-                                {
-                                    MetierId = ouvrier.MetierId,
-                                    EstMetierPrincipal = true
-                                }
-                            };
+                            ligneOuvrier.Competences.Add(new CompetenceOuvrier { MetierId = ligneOuvrier.MetierId, EstMetierPrincipal = true });
                         }
                         else
                         {
-                            // Ouvrier sans métier, ignorer
-                            System.Diagnostics.Debug.WriteLine($"Ouvrier '{ouvrier.OuvrierId}' ignoré : aucun métier défini.");
-                            continue;
+                            continue; // Ligne sans métier, on ignore
                         }
                     }
 
-                    AjouterOuvrier(ouvrier);
-                    countAdded++;
+                    // La compétence à ajouter (la seule de cette ligne)
+                    var competenceDeLaLigne = ligneOuvrier.Competences.First();
+
+                    // Vérifier si l'ouvrier existe déjà dans notre dictionnaire
+                    if (OuvrierExiste(ligneOuvrier.OuvrierId))
+                    {
+                        // L'ouvrier existe : on lui AJOUTE la nouvelle compétence
+                        // On met estPrincipal à false car seule la première compétence importée sera la principale par défaut.
+                        AjouterCompetence(ligneOuvrier.OuvrierId, competenceDeLaLigne.MetierId, false);
+                    }
+                    else
+                    {
+                        // Nouvel ouvrier : on l'ajoute. La première compétence est principale par défaut.
+                        competenceDeLaLigne.EstMetierPrincipal = true;
+                        ligneOuvrier.Competences = new List<CompetenceOuvrier> { competenceDeLaLigne };
+                        AjouterOuvrier(ligneOuvrier);
+                    }
+                    countAddedOrUpdated++;
                 }
                 catch (InvalidOperationException ex)
                 {
-                    // Doublon ignoré
-                    System.Diagnostics.Debug.WriteLine($"Doublon d'ouvrier ignoré lors de l'import CSV: {ex.Message}");
+                    // Doublon de compétence (Ouvrier X a déjà métier Y), on ignore
+                    System.Diagnostics.Debug.WriteLine($"Doublon de compétence ignoré lors de l'import CSV: {ex.Message}");
                 }
                 catch (ArgumentException ex)
                 {
@@ -324,7 +331,7 @@ namespace PlanAthena.Services.Business
                     System.Diagnostics.Debug.WriteLine($"Données d'ouvrier invalides ignorées lors de l'import CSV: {ex.Message}");
                 }
             }
-            return countAdded;
+            return countAddedOrUpdated;
         }
 
         /// <summary>

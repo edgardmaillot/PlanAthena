@@ -4,12 +4,13 @@ using PlanAthena.Core.Application;
 using PlanAthena.Core.Facade;
 using PlanAthena.Core.Infrastructure;
 using PlanAthena.Data;
+using PlanAthena.Interfaces;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DataAccess;
-using PlanAthena.Services.Processing;
 using PlanAthena.Services.Export;
 using PlanAthena.Services.Infrastructure;
+using PlanAthena.Services.Processing;
 using PlanAthena.Utilities;
 using System; // Nécessaire pour DayOfWeek, Action
 
@@ -25,6 +26,7 @@ namespace PlanAthena.Forms
         private readonly GanttExportService _ganttExportService;
         private readonly ConfigurationBuilder _configBuilder;
         private readonly BlocService _blocService;
+        private readonly IIdGeneratorService _idGeneratorService;
 
         // NOUVEAUX SERVICES pour l'export Excel
         private readonly PlanningExcelExportService _planningExcelExportService;
@@ -37,93 +39,113 @@ namespace PlanAthena.Forms
         // NOUVEAU : Résultat complet pour l'export Excel
         private PlanificationResultDto _dernierResultatPlanificationComplet;
 
+        // Dans MainForm.cs
+
         public MainForm()
         {
-            InitializeComponent();
-            _serviceProvider = ConfigureServices();
+            try
+            {
+                InitializeComponent();
 
-            // Récupération de tous les services nécessaires
-            _planificationService = _serviceProvider.GetRequiredService<PlanificationService>();
-            _ouvrierService = _serviceProvider.GetRequiredService<OuvrierService>();
-            _tacheService = _serviceProvider.GetRequiredService<TacheService>();
-            _projetService = _serviceProvider.GetRequiredService<ProjetService>();
-            _ganttExportService = _serviceProvider.GetRequiredService<GanttExportService>();
-            _configBuilder = _serviceProvider.GetRequiredService<ConfigurationBuilder>();
-            _blocService = _serviceProvider.GetRequiredService<BlocService>();
+                // 1. Configurer l'injection de dépendances
+                _serviceProvider = ConfigureServices();
 
-            // NOUVEAUX SERVICES
-            _cheminsPrefereService = _serviceProvider.GetRequiredService<CheminsPrefereService>();
-            _planningExcelExportService = _serviceProvider.GetRequiredService<PlanningExcelExportService>();
+                // 2. Récupérer les services nécessaires pour le formulaire principal
+                // On récupère les services dans un ordre logique, bien que le conteneur gère les dépendances.
+                _projetService = _serviceProvider.GetRequiredService<ProjetService>();
+                _tacheService = _serviceProvider.GetRequiredService<TacheService>();
+                _blocService = _serviceProvider.GetRequiredService<BlocService>();
+                _ouvrierService = _serviceProvider.GetRequiredService<OuvrierService>();
+                _planificationService = _serviceProvider.GetRequiredService<PlanificationService>();
 
-            InitializeInterface();
-            CreerNouveauProjetParDefaut();
+                // Services utilitaires ou d'export
+                _configBuilder = _serviceProvider.GetRequiredService<ConfigurationBuilder>();
+                _cheminsPrefereService = _serviceProvider.GetRequiredService<CheminsPrefereService>();
+                _ganttExportService = _serviceProvider.GetRequiredService<GanttExportService>();
+                _planningExcelExportService = _serviceProvider.GetRequiredService<PlanningExcelExportService>();
+
+                // L'IdGeneratorService n'est plus une dépendance directe de MainForm,
+                // mais il est disponible pour les autres services via l'injection.
+                _idGeneratorService = _serviceProvider.GetRequiredService<IIdGeneratorService>();
+                // 3. Initialiser l'interface utilisateur et les données
+                InitializeInterface();
+                CreerNouveauProjetParDefaut();
+            }
+            catch (Exception ex)
+            {
+                // En cas d'erreur grave à l'initialisation, afficher un message clair et fermer.
+                var errorForm = new Form
+                {
+                    Text = "Erreur d'initialisation critique",
+                    Size = new System.Drawing.Size(600, 400),
+                    StartPosition = FormStartPosition.CenterScreen
+                };
+
+                var textBox = new TextBox
+                {
+                    Multiline = true,
+                    ScrollBars = ScrollBars.Both,
+                    Dock = DockStyle.Fill,
+                    ReadOnly = true,
+                    Text = $"Une erreur irrécupérable est survenue lors du démarrage de l'application :\r\n\r\n" +
+                           $"{ex.Message}\r\n\r\n" +
+                           $"Détails techniques :\r\n{ex.StackTrace}"
+                };
+
+                errorForm.Controls.Add(textBox);
+                errorForm.ShowDialog();
+
+                // Si l'initialisation échoue, l'application ne peut pas continuer.
+                Application.Exit();
+            }
         }
 
         private ServiceProvider ConfigureServices()
         {
             var serviceCollection = new ServiceCollection();
+
+            // --- Core DLL ---
             serviceCollection.AddApplicationServices();
             serviceCollection.AddInfrastructureServices();
             serviceCollection.AddScoped<PlanAthena.Core.Application.Interfaces.IConstructeurProblemeOrTools, PlanAthena.Core.Infrastructure.Services.OrTools.ConstructeurProblemeOrTools>();
             serviceCollection.AddScoped<PlanAthenaCoreFacade>();
 
-            // 1. Enregistrement des services "feuilles" ou sans dépendances circulaires directes
+            // --- Services de l'application principale ---
+
+            // Utilitaires et services de données (généralement des Singletons)
             serviceCollection.AddSingleton<CsvDataService>();
             serviceCollection.AddSingleton<ExcelReader>();
-            serviceCollection.AddSingleton<OuvrierService>();
-
-            // NOUVEAUX SERVICES
             serviceCollection.AddSingleton<CheminsPrefereService>();
+            serviceCollection.AddSingleton<GanttExportService>();
+            serviceCollection.AddSingleton<ConfigurationBuilder>();
             serviceCollection.AddSingleton<PlanningExcelExportService>();
 
-            // 2. Enregistrement des Factories (Func<T>) en premier
-            // Elles sont nécessaires pour briser les cycles lors de l'instanciation des services
-            serviceCollection.AddSingleton<Func<TacheService>>(provider => () => provider.GetRequiredService<TacheService>());
+            // Services de traitement
+            serviceCollection.AddSingleton<PreparationSolveurService>();
+            serviceCollection.AddSingleton<ResultatConsolidationService>();
+            serviceCollection.AddSingleton<DependanceBuilder>();
+            serviceCollection.AddSingleton<DataTransformer>();
+
+            // --- GESTION DES DÉPENDANCES CIRCULAIRES VIA FACTORIES ---
+            // C'est la partie qui manquait.
+            // On explique au conteneur comment créer une "factory" (un Func<T>) pour chaque service
+            // impliqué dans une dépendance circulaire.
+            // Quand TacheService demandera Func<ProjetService>, le conteneur saura lui fournir.
             serviceCollection.AddSingleton<Func<ProjetService>>(provider => () => provider.GetRequiredService<ProjetService>());
+            serviceCollection.AddSingleton<Func<TacheService>>(provider => () => provider.GetRequiredService<TacheService>());
             serviceCollection.AddSingleton<Func<BlocService>>(provider => () => provider.GetRequiredService<BlocService>());
 
-            // 3. Enregistrement des services qui consomment ces factories pour briser les cycles
-            // L'ordre peut avoir une importance si un service est utilisé par un autre avant sa résolution complète.
-            // Ici, on va enregistrer BlocService, puis TacheService, puis ProjetService.
+            // Services métier principaux (en Singleton car ils maintiennent l'état du projet chargé)
+            // Le conteneur peut maintenant les construire, même avec leurs dépendances circulaires,
+            // grâce aux factories enregistrées juste au-dessus.
+            serviceCollection.AddSingleton<OuvrierService>();
+            serviceCollection.AddSingleton<TacheService>();
+            serviceCollection.AddSingleton<BlocService>();
+            serviceCollection.AddSingleton<ProjetService>();
+            serviceCollection.AddSingleton<PlanificationService>();
 
-            serviceCollection.AddSingleton<BlocService>(provider =>
-            {
-                // BlocService a besoin de Func<TacheService>
-                return new BlocService(provider.GetRequiredService<Func<TacheService>>());
-            });
-
-            serviceCollection.AddSingleton<TacheService>(provider =>
-            {
-                // TacheService a besoin de CsvDataService, ExcelReader, Func<ProjetService>, ProjetService, Func<BlocService>
-                return new TacheService(
-                    provider.GetRequiredService<CsvDataService>(),
-                    provider.GetRequiredService<ExcelReader>(),
-                    provider.GetRequiredService<Func<ProjetService>>(), // Utilise la factory
-                    provider.GetRequiredService<Func<BlocService>>()    // Utilise la factory
-                );
-            });
-
-            serviceCollection.AddSingleton<ProjetService>(provider =>
-            {
-                // ProjetService a besoin de OuvrierService, Func<TacheService>, CsvDataService, ProjetService, Func<BlocService>
-                return new ProjetService(
-                    provider.GetRequiredService<OuvrierService>(),
-                    provider.GetRequiredService<Func<TacheService>>(), // Utilise la factory
-                    provider.GetRequiredService<CsvDataService>(),
-                    provider.GetRequiredService<Func<BlocService>>()   // Utilise la factory
-                );
-            });
-
-            // 4. Enregistrement des autres Singletons et Scoped
-            serviceCollection.AddSingleton<IdGeneratorService>(); // Dépend de ProjetService, BlocService, TacheService (maintenant résolvables)
-
-            serviceCollection.AddScoped<DataTransformer>();
-            serviceCollection.AddScoped<PreparationSolveurService>();
-            serviceCollection.AddScoped<ResultatConsolidationService>();
-            serviceCollection.AddScoped<PlanificationService>(); // Son constructeur n'a pas de Func<T> ici
-            serviceCollection.AddScoped<GanttExportService>();
-            serviceCollection.AddScoped<ConfigurationBuilder>();
-            serviceCollection.AddScoped<DependanceBuilder>(); // Dépend de ProjetService (qui est Singleton)
+            // IdGeneratorService n'a pas de dépendances circulaires, son enregistrement est simple.
+            serviceCollection.AddSingleton<IIdGeneratorService, IdGeneratorService>();
 
             return serviceCollection.BuildServiceProvider();
         }
@@ -272,7 +294,7 @@ namespace PlanAthena.Forms
         {
             using var form = new MetierForm(
                 _serviceProvider.GetRequiredService<ProjetService>(),
-                _serviceProvider.GetRequiredService<IdGeneratorService>(),
+                _serviceProvider.GetRequiredService<IIdGeneratorService>(),
                 _serviceProvider.GetRequiredService<DependanceBuilder>()
             );
             form.ShowDialog(this);
@@ -280,7 +302,7 @@ namespace PlanAthena.Forms
 
         private void OuvrirGestionOuvriers_Click(object sender, EventArgs e)
         {
-            using var form = new OuvrierForm(_ouvrierService, _projetService);
+            using var form = new OuvrierForm(_ouvrierService, _projetService, _idGeneratorService);
             form.ShowDialog(this);
         }
 
