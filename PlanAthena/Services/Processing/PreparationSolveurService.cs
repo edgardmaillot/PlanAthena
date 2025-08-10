@@ -11,9 +11,7 @@ namespace PlanAthena.Services.Processing
     /// </summary>
     public class PreparationSolveurService
     {
-        //Codé en dur pour le POC, à remplacer par une configuration externe dans la version finale.
-        private const int HEURE_LIMITE_DECOUPAGE = 8;
-        private const int MAX_HEURES_PAR_SOUS_TACHE = 7;
+        
         private const string JALON_TECHNIQUE_PREFIX = "JT_";
         private const string DECOUPAGE_SUFFIX = "_P";
 
@@ -24,13 +22,17 @@ namespace PlanAthena.Services.Processing
         /// </summary>
         /// <param name="tachesDuProjet">Liste des tâches originales du projet</param>
         /// <returns>Résultat contenant les tâches préparées et la table de mappage parent/enfant</returns>
-        public PreparationResult PreparerPourSolveur(IReadOnlyList<Tache> tachesDuProjet)
+        public PreparationResult PreparerPourSolveur(IReadOnlyList<Tache> tachesDuProjet, int heuresTravailEffectifParJour)
         {
             if (tachesDuProjet == null || !tachesDuProjet.Any())
                 return new PreparationResult();
+            int maxHeuresParSousTache = heuresTravailEffectifParJour / 2;
+            if (maxHeuresParSousTache < 1) maxHeuresParSousTache = 1;
+
+            int heureLimiteDecoupage = (maxHeuresParSousTache * 2) + 1;
 
             var tachesDeTravail = tachesDuProjet.Select(CopierTache).ToList();
-            var (tachesDecoupees, tableDecoupage) = DecouperTachesLongues(tachesDeTravail);
+            var (tachesDecoupees, tableDecoupage) = DecouperTachesLongues(tachesDeTravail, heureLimiteDecoupage, maxHeuresParSousTache);
             var tachesAvecJalons = CreerJalonsTechniques(tachesDecoupees, tableDecoupage);
             var tachesFinales = MettreAJourDependances(tachesAvecJalons, tableDecoupage);
 
@@ -65,20 +67,21 @@ namespace PlanAthena.Services.Processing
             return mappageInverse;
         }
 
-        private static (List<Tache> TachesDecoupees, Dictionary<string, List<string>> TableDecoupage) DecouperTachesLongues(IReadOnlyList<Tache> taches)
+        private static (List<Tache> TachesDecoupees, Dictionary<string, List<string>> TableDecoupage) DecouperTachesLongues(
+        IReadOnlyList<Tache> taches, int heureLimiteDecoupage, int maxHeuresParSousTache)
         {
             var tachesResultat = new List<Tache>();
             var tableDecoupage = new Dictionary<string, List<string>>();
 
             foreach (var tache in taches)
             {
-                if (tache.EstJalon || tache.HeuresHommeEstimees <= HEURE_LIMITE_DECOUPAGE)
+                if (tache.EstJalon || tache.HeuresHommeEstimees < heureLimiteDecoupage)
                 {
                     tachesResultat.Add(tache);
                 }
                 else
                 {
-                    var sousTaches = DecouperTacheUnique(tache);
+                    var sousTaches = DecouperTacheUnique(tache, maxHeuresParSousTache);
                     tachesResultat.AddRange(sousTaches);
                     tableDecoupage[tache.TacheId] = sousTaches.Select(st => st.TacheId).ToList();
                 }
@@ -86,7 +89,7 @@ namespace PlanAthena.Services.Processing
             return (tachesResultat, tableDecoupage);
         }
 
-        private static List<Tache> DecouperTacheUnique(Tache tacheOriginale)
+        private static List<Tache> DecouperTacheUnique(Tache tacheOriginale, int maxHeuresParSousTache)
         {
             var sousTaches = new List<Tache>();
             int heuresRestantes = tacheOriginale.HeuresHommeEstimees;
@@ -94,7 +97,7 @@ namespace PlanAthena.Services.Processing
 
             while (heuresRestantes > 0)
             {
-                int heuresPourCeBloc = Math.Min(heuresRestantes, MAX_HEURES_PAR_SOUS_TACHE);
+                int heuresPourCeBloc = Math.Min(heuresRestantes, maxHeuresParSousTache);
                 string nouvelId = $"{tacheOriginale.TacheId}{DECOUPAGE_SUFFIX}{compteur}";
 
                 var sousTache = CopierTache(tacheOriginale);
@@ -103,10 +106,10 @@ namespace PlanAthena.Services.Processing
                 sousTache.HeuresHommeEstimees = heuresPourCeBloc;
                 sousTache.Type = TypeActivite.Tache;
 
-                // --- CORRECTION DU BUG ---
+
                 // On s'assure que les dépendances de la tâche originale sont bien reportées sur chaque sous-tâche.
                 sousTache.Dependencies = tacheOriginale.Dependencies;
-                // -------------------------
+
 
                 sousTaches.Add(sousTache);
                 heuresRestantes -= heuresPourCeBloc;

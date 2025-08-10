@@ -47,6 +47,12 @@ namespace PlanAthena.Core.Application.Validation
             {
                 RuleFor(x => x.ConfigurationCdC!).SetValidator(new ConfigurationChefChantierDtoValidator());
             });
+
+            // NOUVEAU : Validation de la configuration d'optimisation
+            When(x => x.OptimizationConfig != null, () =>
+            {
+                RuleFor(x => x.OptimizationConfig!).SetValidator(new OptimizationConfigDtoValidator());
+            });
         }
 
         private bool HaveDateCoherence(ChantierSetupInputDto dto) =>
@@ -66,6 +72,27 @@ namespace PlanAthena.Core.Application.Validation
 
         private bool HaveUniqueMetierIds(IReadOnlyList<MetierDto> metiers) =>
             metiers.Select(m => m.MetierId).Distinct(StringComparer.OrdinalIgnoreCase).Count() == metiers.Count;
+    }
+
+    // --- NOUVEAU : Validateur pour OptimizationConfigDto ---
+    public class OptimizationConfigDtoValidator : AbstractValidator<OptimizationConfigDto>
+    {
+        public OptimizationConfigDtoValidator()
+        {
+            RuleFor(x => x.TypeDeSortie).NotEmpty().WithMessage("Le type de sortie doit être spécifié.");
+
+            RuleFor(x => x.DureeJournaliereStandardHeures).GreaterThan(0)
+                .WithMessage("La durée journalière standard doit être strictement positive.");
+
+            RuleFor(x => x.PenaliteChangementOuvrierPourcentage).GreaterThanOrEqualTo(0)
+                .WithMessage("La pénalité de changement d'ouvrier ne peut pas être négative.");
+
+            RuleFor(x => x.CoutIndirectJournalier).GreaterThanOrEqualTo(0)
+                .WithMessage("Le coût indirect journalier ne peut pas être négatif.");
+
+            RuleFor(x => x.DureeCalculMaxSecondes).GreaterThan(0)
+                .WithMessage("La durée maximale de calcul doit être strictement positive.");
+        }
     }
 
     // --- Validateurs pour DTOs Imbriqués ---

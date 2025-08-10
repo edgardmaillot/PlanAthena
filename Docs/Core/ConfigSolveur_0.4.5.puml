@@ -1,0 +1,54 @@
+@startuml
+title Diagramme de Flux : Configuration du Solveur et de l'Objectif de Coût
+actor "Client App" as Client
+participant "ProcessChantierUseCase" as UseCase
+participant "settings: IOptions<SolverSettings>" as Settings
+participant "chantier: Chantier" as ChantierDomaine
+participant "config: ConfigurationOptimisation" as ConfigDomaine
+participant "solver: CpSolver" as Solver
+Client -> UseCase : ExecuteAsync(inputDto)
+note right of Client
+inputDto.OptimizationConfig contient :
+- CoutIndirectJournalier (ex: 500)
+- DureeCalculMaxSecondes (ex: 300)
+end note
+activate UseCase
+UseCase -> Settings : .Value
+activate Settings
+Settings --> UseCase : solverSettings
+deactivate Settings
+note left of UseCase
+Récupère NumSearchWorkers
+depuis la configuration injectée.
+end note
+UseCase -> ConfigDomaine **: new(duree, penalite, coutIndirectCentimes)
+activate ConfigDomaine
+note right of ConfigDomaine
+<b>NOUVEAU CALCUL</b>
+Le coût indirect en centimes
+est calculé : 500 * 100.
+end note
+deactivate ConfigDomaine
+UseCase -> ChantierDomaine : AppliquerConfigurationOptimisation(config)
+activate ChantierDomaine
+deactivate ChantierDomaine
+' ... la construction du modèle a lieu ici, mais n'est pas détaillée pour la clarté ...
+UseCase -> Solver **: Configuration des paramètres
+activate Solver
+note right of Solver
+<b>NOUVEAU PARAMETRAGE</b>
+StringParameters est construit dynamiquement :
+- max_time_in_seconds utilise DureeCalculMaxSecondes (300).
+- num_search_workers utilise solverSettings.NumSearchWorkers.
+end note
+deactivate Solver
+UseCase -> Solver : Solve(...)
+note right of Solver
+La recherche s'exécute avec
+les nouvelles contraintes de temps
+et de performance.
+end note
+
+
+deactivate UseCase
+@enduml

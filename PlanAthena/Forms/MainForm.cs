@@ -171,6 +171,10 @@ namespace PlanAthena.Forms
             chkDateDebut.Checked = true;
             chkDateFin.Checked = true;
 
+            cmbCalculMax.Items.Clear();
+            cmbCalculMax.Items.AddRange(new object[] { 1, 5, 15, 30, 60 });
+            cmbCalculMax.SelectedItem = 5; // Valeur par défaut de 15 minutes
+
             Log("Application prête. Créez un nouveau projet ou chargez un projet existant.");
         }
 
@@ -181,9 +185,6 @@ namespace PlanAthena.Forms
             menuProjet.DropDownItems.Add("🆕 Nouveau projet", null, NouveauProjet_Click);
             menuProjet.DropDownItems.Add("📂 Charger projet", null, ChargerProjet_Click);
             menuProjet.DropDownItems.Add("💾 Sauvegarder projet", null, SauvegarderProjet_Click);
-            menuProjet.DropDownItems.Add(new ToolStripSeparator());
-            menuProjet.DropDownItems.Add("📤 Export CSV (tout)", null, ExportCsvTout_Click);
-            menuProjet.DropDownItems.Add("📥 Import CSV groupé", null, ImportCsvGroupe_Click);
             menuProjet.DropDownItems.Add(new ToolStripSeparator());
             menuProjet.DropDownItems.Add("❌ Quitter", null, Quitter_Click);
 
@@ -209,7 +210,7 @@ namespace PlanAthena.Forms
                 using var dialog = new NouveauProjetDialog();
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    _projetActuel = _projetService.CreerNouveauProjet(dialog.NomProjet, dialog.Description);
+                    _projetActuel = _projetService.CreerNouveauProjet(dialog.NomProjet="Nouveau", dialog.Description="Description");
                     _projetActuel.Auteur = dialog.Auteur;
                     MettreAJourAffichageProjet();
                     Log($"Nouveau projet créé : {_projetActuel.NomProjet}");
@@ -278,16 +279,6 @@ namespace PlanAthena.Forms
                     MessageBox.Show($"Erreur lors de la sauvegarde :\n{ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
-        }
-
-        private void ExportCsvTout_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show("L'export CSV est en cours de refonte et sera disponible dans une prochaine version.", "Fonctionnalité indisponible", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        private void ImportCsvGroupe_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show("L'import CSV est en cours de refonte et sera disponible dans une prochaine version.", "Fonctionnalité indisponible", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void OuvrirGestionMetiers_Click(object sender, EventArgs e)
@@ -361,10 +352,12 @@ namespace PlanAthena.Forms
                     chkDateFin.Checked ? dtpDateFin.Value.Date : null,
                     (int)numDureeStandard.Value,
                     numPenaliteChangement.Value,
-                    numCoutIndirect.Value
+                    (long)numCoutIndirect.Value, 
+                    (int)cmbCalculMax.SelectedItem 
                 );
 
-                var statsTraitement = _planificationService.ObtenirStatistiquesTraitement();
+                int heuresTravail = (int)numHeuresTravail.Value;
+                var statsTraitement = _planificationService.ObtenirStatistiquesTraitement(heuresTravail);
                 Log($"Préparation des données : {statsTraitement.Resume}");
 
                 Log("Lancement de la planification avec PlanAthena...");
@@ -430,7 +423,8 @@ namespace PlanAthena.Forms
                     chkDateFin.Checked ? dtpDateFin.Value.Date : null,
                     (int)numDureeStandard.Value,
                     numPenaliteChangement.Value,
-                    numCoutIndirect.Value
+                    (long)numCoutIndirect.Value,
+                    (int)cmbCalculMax.SelectedItem
                 );
 
                 Log("Début de l'export Planning Excel...");
@@ -552,7 +546,7 @@ namespace PlanAthena.Forms
 
         private void CreerNouveauProjetParDefaut()
         {
-            _projetActuel = new InformationsProjet { NomProjet = "Nouveau projet", Description = "", DateCreation = DateTime.Now, DateDerniereModification = DateTime.Now, Auteur = Environment.UserName };
+            _projetActuel = new InformationsProjet { NomProjet = "Nouveau projet", Description = "Description", DateCreation = DateTime.Now, DateDerniereModification = DateTime.Now, Auteur = Environment.UserName };
             MettreAJourAffichageProjet();
         }
 
@@ -616,7 +610,8 @@ namespace PlanAthena.Forms
                 {
                     try
                     {
-                        var statsTraitement = _planificationService.ObtenirStatistiquesTraitement();
+                        int heuresTravail = (int)numHeuresTravail.Value;
+                        var statsTraitement = _planificationService.ObtenirStatistiquesTraitement(heuresTravail);
                         if (statsTraitement.TachesSolveur > statsTraitement.TachesChef)
                         {
                             var decoupees = statsTraitement.TachesDecoupees;

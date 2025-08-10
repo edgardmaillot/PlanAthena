@@ -65,12 +65,12 @@ namespace PlanAthena.Services.Business
             try
             {
                 // Étape 1 : Préparation des données avec récupération de la table de mappage
-                var preparationResult = _preparationSolveurService.PreparerPourSolveur(_taches);
+                var preparationResult = _preparationSolveurService.PreparerPourSolveur(_taches, configuration.HeuresTravailEffectifParJour);
 
                 // Étape 2 : Transformation pour le solveur
                 var inputDto = _dataTransformer.TransformToChantierSetupDto(
                     _ouvriers.ToList(),
-                    preparationResult.TachesPreparees, // Utiliser les tâches préparées
+                    preparationResult.TachesPreparees, 
                     _metiers.ToList(),
                     configuration
                 );
@@ -100,7 +100,7 @@ namespace PlanAthena.Services.Business
         }
 
         // CORRIGÉ : La méthode a été entièrement revue pour être plus robuste.
-        public StatistiquesSimplifiees ObtenirStatistiquesTraitement()
+        public StatistiquesSimplifiees ObtenirStatistiquesTraitement(int heuresTravailEffectifParJour)
         {
             if (!ValiderDonneesChargees())
             {
@@ -109,12 +109,13 @@ namespace PlanAthena.Services.Business
 
             try
             {
-                var preparationResult = _preparationSolveurService.PreparerPourSolveur(_taches);
+                var preparationResult = _preparationSolveurService.PreparerPourSolveur(_taches, heuresTravailEffectifParJour);
                 var tachesPourSolveur = preparationResult.TachesPreparees;
 
                 // Calcul plus fiable des statistiques :
                 // 1. Tâches découpées : on compte les tâches originales qui satisfont la condition.
-                int tachesLonguesDecoupees = _taches.Count(t => t.Type == TypeActivite.Tache && t.HeuresHommeEstimees > 8);
+                int heureLimiteDecoupage = heuresTravailEffectifParJour + 1;
+                int tachesLonguesDecoupees = _taches.Count(t => t.Type == TypeActivite.Tache && t.HeuresHommeEstimees > heureLimiteDecoupage);
 
                 // 2. Jalons techniques : on compte les tâches du bon type dans le résultat final.
                 int jalonsTechniquesCrees = tachesPourSolveur.Count(t => t.Type == TypeActivite.JalonTechnique);
@@ -147,13 +148,13 @@ namespace PlanAthena.Services.Business
             return _taches.ToList();
         }
 
-        public List<Tache> ObtenirTachesPourSolveur()
+        public List<Tache> ObtenirTachesPourSolveur(int heuresTravailEffectifParJour)
         {
             if (!ValiderDonneesChargees())
                 return new List<Tache>();
             try
             {
-                var preparationResult = _preparationSolveurService.PreparerPourSolveur(_taches);
+                var preparationResult = _preparationSolveurService.PreparerPourSolveur(_taches, heuresTravailEffectifParJour);
                 return preparationResult.TachesPreparees;
             }
             catch (Exception)

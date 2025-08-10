@@ -3,6 +3,7 @@
 using FluentValidation;
 using Google.OrTools.Sat;
 using NodaTime;
+using PlanAthena.core.Application;
 using PlanAthena.core.Application.InternalDto;
 using PlanAthena.Core.Application.Interfaces;
 using PlanAthena.Core.Domain;
@@ -25,6 +26,7 @@ namespace PlanAthena.Core.Application.UseCases
         private readonly IConstructeurProblemeOrTools _problemeBuilder;
         private readonly ISolutionInterpreterService _solutionInterpreter;
         private readonly IPlanningAnalysisService _planningAnalyzer;
+        private readonly SolverSettings _solverSettings;
 
         public ProcessChantierUseCase(
             IValidator<ChantierSetupInputDto> fluentValidator,
@@ -35,7 +37,8 @@ namespace PlanAthena.Core.Application.UseCases
             ICalendrierService calendrierService,
             IConstructeurProblemeOrTools problemeBuilder,
             ISolutionInterpreterService solutionInterpreter,
-            IPlanningAnalysisService planningAnalyzer)
+            IPlanningAnalysisService planningAnalyzer,
+            SolverSettings solverSettings)
         {
             _fluentValidator = fluentValidator;
             _inputMapper = inputMapper;
@@ -46,6 +49,7 @@ namespace PlanAthena.Core.Application.UseCases
             _problemeBuilder = problemeBuilder;
             _solutionInterpreter = solutionInterpreter;
             _planningAnalyzer = planningAnalyzer;
+            _solverSettings = solverSettings;
         }
 
         public async Task<ProcessChantierResultDto> ExecuteAsync(ChantierSetupInputDto inputDto)
@@ -196,47 +200,47 @@ namespace PlanAthena.Core.Application.UseCases
 
             await Task.Run(async () =>
             {
-                // 1. Préparation commune
-                const decimal COUT_INDIRECT_DEFAUT_PCT = 0.10m;
-                decimal masseSalarialeJournaliereTotale = chantier.Ouvriers.Values.Sum(o => o.Cout.Value);
-                decimal pourcentageApplique = config.CoutIndirectJournalierPourcentage.HasValue ? config.CoutIndirectJournalierPourcentage.Value / 100.0m : COUT_INDIRECT_DEFAUT_PCT;
-                long coutIndirectJournalierEnCentimes = (long)(masseSalarialeJournaliereTotale * pourcentageApplique * 100);
+                // 1. Préparation commune avec NOUVEAU CALCUL DE COÛT INDIRECT
+                long coutIndirectJournalierEnCentimes = config.CoutIndirectJournalier * 100;
                 var configOptimisation = new ConfigurationOptimisation(config.DureeJournaliereStandardHeures, config.PenaliteChangementOuvrierPourcentage, coutIndirectJournalierEnCentimes);
                 chantier.AppliquerConfigurationOptimisation(configOptimisation);
 
                 var echelleTemps = _calendrierService.CreerEchelleTempsOuvree(chantier.Calendrier, LocalDate.FromDateTime(chantier.PeriodeSouhaitee.DateDebut.Value), LocalDate.FromDateTime(chantier.PeriodeSouhaitee.DateFin.Value));
                 var probleme = new ProblemeOptimisation { Chantier = chantier, EchelleTemps = echelleTemps, Configuration = chantier.ConfigurationOptimisation! };
 
-                // 2. Aiguillage de la stratégie
+                // 2. Récupération du nombre de workers depuis la configuration
+                int numWorkers = _solverSettings.NumSearchWorkers;
+
+                // 3. Aiguillage de la stratégie avec PARAMÉTRAGE DYNAMIQUE
                 string solverParams;
                 string objectif = "COUT"; // Par défaut
 
                 switch (config.TypeDeSortie)
                 {
                     case "ANALYSE_RAPIDE":
-                        solverParams = "max_time_in_seconds:5.0,log_search_progress:false,cp_model_presolve:true";
+                        solverParams = $"max_time_in_seconds:{config.DureeCalculMaxSecondes}.0,log_search_progress:false,cp_model_presolve:true";
                         objectif = "COUT";
                         break;
 
                     case "OPTIMISATION_DELAI":
-                        solverParams = "max_time_in_seconds:60.0,num_search_workers:8,log_search_progress:false,relative_gap_limit:0.01";
+                        solverParams = $"max_time_in_seconds:{config.DureeCalculMaxSecondes}.0,num_search_workers:{numWorkers},log_search_progress:false,relative_gap_limit:0.01";
                         objectif = "DELAI";
                         break;
 
                     case "OPTIMISATION_COUT":
                     default:
-                        solverParams = "max_time_in_seconds:120.0,num_search_workers:8,log_search_progress:false,relative_gap_limit:0.01";
+                        solverParams = $"max_time_in_seconds:{config.DureeCalculMaxSecondes}.0,num_search_workers:{numWorkers},log_search_progress:false,relative_gap_limit:0.01";
                         objectif = "COUT";
                         break;
                 }
 
-                // 3. Construction et Résolution
+                // 4. Construction et Résolution
                 var modeleCpSat = _problemeBuilder.ConstruireModele(probleme, objectif); // On passe l'objectif au builder
                 var solver = new CpSolver { StringParameters = solverParams };
                 var solverStatus = solver.Solve(modeleCpSat.Model);
                 var resultatStatus = solverStatus switch { CpSolverStatus.Optimal => OptimizationStatus.Optimal, CpSolverStatus.Feasible => OptimizationStatus.Feasible, _ => OptimizationStatus.Infeasible };
 
-                // 4. Interprétation et Analyse
+                // 5. Interprétation et Analyse
                 if (resultatStatus == OptimizationStatus.Optimal || resultatStatus == OptimizationStatus.Feasible)
                 {
                     var affectations = _solutionInterpreter.InterpreterLaSolution(solver, modeleCpSat, probleme);

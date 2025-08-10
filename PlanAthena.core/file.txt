@@ -1,5 +1,5 @@
 Structure du dossier
-D:.
+
 ¦   ClassDiagram1.cd
 ¦   Doxyfile
 ¦   PlanAthena.core.csproj

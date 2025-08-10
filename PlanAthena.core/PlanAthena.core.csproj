@@ -40,4 +40,12 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <ItemGroup>
+    <EditorConfigFiles Remove="D:\Users\eldam\Source\Repos\PlanAthena\PlanAthena.core\Application\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="D:\Users\eldam\Source\Repos\PlanAthena\PlanAthena.core\Application\.editorconfig" />
+  </ItemGroup>
+
 </Project>

@@ -1,0 +1,38 @@
+@startuml
+title Diagramme de Flux : Validation des Nouveaux Paramètres
+actor "ProcessChantierUseCase" as UseCase
+participant "validator: IValidator<ChantierSetupInputDto>" as MainValidator
+participant "optiConfigValidator: OptimizationConfigDtoValidator" as OptiConfigValidator
+activate UseCase
+UseCase -> MainValidator : ValidateAsync(inputDto)
+activate MainValidator
+note right of MainValidator
+Le validateur principal vérifie d'abord
+les propriétés de ChantierSetupInputDto.
+end note
+MainValidator -> MainValidator : When(x => x.OptimizationConfig != null, ...)
+alt inputDto.OptimizationConfig n'est pas null
+MainValidator -> OptiConfigValidator : Validate(inputDto.OptimizationConfig)
+activate OptiConfigValidator
+
+
+note left of OptiConfigValidator
+    <b>NOUVEAU FLUX DE VALIDATION</b>
+    Ce validateur dédié est appelé
+    pour vérifier les nouvelles règles.
+end note
+
+OptiConfigValidator -> OptiConfigValidator : RuleFor(x => x.CoutIndirectJournalier).GreaterThanOrEqualTo(0)
+note right of OptiConfigValidator : Vérifie que le coût n'est pas négatif.
+
+OptiConfigValidator -> OptiConfigValidator : RuleFor(x => x.DureeCalculMaxSecondes).GreaterThan(0)
+note right of OptiConfigValidator : Vérifie que le timeout est strictement positif.
+
+OptiConfigValidator --> MainValidator : (Validation OK / KO)
+deactivate OptiConfigValidator
+
+end
+MainValidator --> UseCase : validationResult
+deactivate MainValidator
+deactivate UseCase
+@enduml

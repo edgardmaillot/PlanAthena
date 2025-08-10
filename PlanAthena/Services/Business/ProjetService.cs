@@ -154,7 +154,7 @@ namespace PlanAthena.Services.Business
                 if (jsonNode == null)
                     throw new ProjetException("Le fichier de projet est invalide ou corrompu.");
 
-                return ChargerNouveauProjet(jsonNode);
+                return ChargerDonneesProjet(jsonNode);
             }
             catch (JsonException ex)
             {
@@ -166,7 +166,7 @@ namespace PlanAthena.Services.Business
             }
         }
 
-        private InformationsProjet ChargerNouveauProjet(JsonNode jsonNode)
+        private InformationsProjet ChargerDonneesProjet(JsonNode jsonNode)
         {
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var projetData = jsonNode.Deserialize<ProjetData>(options);

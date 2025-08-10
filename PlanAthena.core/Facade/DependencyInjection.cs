@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using PlanAthena.core.Application;
 using PlanAthena.Core.Application.Interfaces;
 using PlanAthena.Core.Application.Services;
 using PlanAthena.Core.Application.UseCases;
@@ -12,6 +13,9 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
+        // Configuration du solveur - chargement automatique depuis appsettings.json
+        services.AddSingleton(SolverSettings.LoadFromConfiguration());
+
         // Enregistrement des validateurs
         services.AddValidatorsFromAssemblyContaining<ChantierSetupInputDtoValidator>();
 

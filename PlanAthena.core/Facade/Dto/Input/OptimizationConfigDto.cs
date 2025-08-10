@@ -21,7 +21,13 @@ public record OptimizationConfigDto
     /// </summary>
     public decimal PenaliteChangementOuvrierPourcentage { get; init; } = 30.0m;
 
-    // Coût indirect en pourcentage de la masse salariale journalière.
-    // Optionnel : si null, une valeur par défaut sera appliquée.
-    public decimal? CoutIndirectJournalierPourcentage { get; init; }
+    /// <summary>
+    /// Coût fixe journalier en euros entiers.
+    /// </summary>
+    public long CoutIndirectJournalier { get; init; }
+
+    /// <summary>
+    /// Temps maximal de recherche pour le solveur en secondes.
+    /// </summary>
+    public int DureeCalculMaxSecondes { get; init; }
 }

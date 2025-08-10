@@ -40,6 +40,8 @@ namespace PlanAthena.Forms
             numDureeStandard = new NumericUpDown();
             label9 = new Label();
             cmbTypeDeSortie = new ComboBox();
+            labelCalculMax = new Label();
+            cmbCalculMax = new ComboBox();
             label8 = new Label();
             numHeuresTravail = new NumericUpDown();
             label7 = new Label();
@@ -92,7 +94,7 @@ namespace PlanAthena.Forms
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.Controls.Add(rtbLog);
-            splitContainer1.Size = new Size(784, 711);
+            splitContainer1.Size = new Size(844, 711);
             splitContainer1.SplitterDistance = 303;
             splitContainer1.TabIndex = 4;
             // 
@@ -108,6 +110,8 @@ namespace PlanAthena.Forms
             groupBox3.Controls.Add(numDureeStandard);
             groupBox3.Controls.Add(label9);
             groupBox3.Controls.Add(cmbTypeDeSortie);
+            groupBox3.Controls.Add(labelCalculMax);
+            groupBox3.Controls.Add(cmbCalculMax);
             groupBox3.Controls.Add(label8);
             groupBox3.Controls.Add(numHeuresTravail);
             groupBox3.Controls.Add(label7);
@@ -118,7 +122,7 @@ namespace PlanAthena.Forms
             groupBox3.Dock = DockStyle.Top;
             groupBox3.Location = new Point(0, 158);
             groupBox3.Name = "groupBox3";
-            groupBox3.Size = new Size(784, 133);
+            groupBox3.Size = new Size(844, 142);
             groupBox3.TabIndex = 6;
             groupBox3.TabStop = false;
             groupBox3.Text = "Configuration et Planification";
@@ -127,7 +131,7 @@ namespace PlanAthena.Forms
             // 
             btnExportGantt.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             btnExportGantt.Enabled = false;
-            btnExportGantt.Location = new Point(481, 107);
+            btnExportGantt.Location = new Point(666, 113);
             btnExportGantt.Name = "btnExportGantt";
             btnExportGantt.Size = new Size(151, 23);
             btnExportGantt.TabIndex = 15;
@@ -139,7 +143,7 @@ namespace PlanAthena.Forms
             // 
             btnExportPlanningExcel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             btnExportPlanningExcel.Enabled = false;
-            btnExportPlanningExcel.Location = new Point(638, 107);
+            btnExportPlanningExcel.Location = new Point(666, 87);
             btnExportPlanningExcel.Name = "btnExportPlanningExcel";
             btnExportPlanningExcel.Size = new Size(134, 23);
             btnExportPlanningExcel.TabIndex = 15;
@@ -150,9 +154,9 @@ namespace PlanAthena.Forms
             // btnGenerateAndTest
             // 
             btnGenerateAndTest.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            btnGenerateAndTest.Location = new Point(3, 107);
+            btnGenerateAndTest.Location = new Point(210, 113);
             btnGenerateAndTest.Name = "btnGenerateAndTest";
-            btnGenerateAndTest.Size = new Size(467, 23);
+            btnGenerateAndTest.Size = new Size(433, 23);
             btnGenerateAndTest.TabIndex = 14;
             btnGenerateAndTest.Text = "🚀 LANCER LA PLANIFICATION";
             btnGenerateAndTest.UseVisualStyleBackColor = true;
@@ -160,21 +164,21 @@ namespace PlanAthena.Forms
             // 
             // numCoutIndirect
             // 
-            numCoutIndirect.DecimalPlaces = 1;
             numCoutIndirect.Location = new Point(566, 48);
+            numCoutIndirect.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
             numCoutIndirect.Name = "numCoutIndirect";
-            numCoutIndirect.Size = new Size(53, 23);
+            numCoutIndirect.Size = new Size(80, 23);
             numCoutIndirect.TabIndex = 13;
-            numCoutIndirect.Value = new decimal(new int[] { 15, 0, 0, 0 });
+            numCoutIndirect.Value = new decimal(new int[] { 500, 0, 0, 0 });
             // 
             // label11
             // 
             label11.AutoSize = true;
             label11.Location = new Point(460, 50);
             label11.Name = "label11";
-            label11.Size = new Size(97, 15);
+            label11.Size = new Size(93, 15);
             label11.TabIndex = 12;
-            label11.Text = "Coût indirect (%)";
+            label11.Text = "Coût indirect (€)";
             // 
             // numPenaliteChangement
             // 
@@ -196,7 +200,7 @@ namespace PlanAthena.Forms
             // 
             // numDureeStandard
             // 
-            numDureeStandard.Location = new Point(384, 76);
+            numDureeStandard.Location = new Point(781, 21);
             numDureeStandard.Maximum = new decimal(new int[] { 12, 0, 0, 0 });
             numDureeStandard.Name = "numDureeStandard";
             numDureeStandard.Size = new Size(51, 23);
@@ -206,7 +210,7 @@ namespace PlanAthena.Forms
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(245, 78);
+            label9.Location = new Point(642, 23);
             label9.Name = "label9";
             label9.Size = new Size(113, 15);
             label9.TabIndex = 8;
@@ -215,15 +219,32 @@ namespace PlanAthena.Forms
             // cmbTypeDeSortie
             // 
             cmbTypeDeSortie.FormattingEnabled = true;
-            cmbTypeDeSortie.Location = new Point(547, 75);
+            cmbTypeDeSortie.Location = new Point(522, 84);
             cmbTypeDeSortie.Name = "cmbTypeDeSortie";
             cmbTypeDeSortie.Size = new Size(121, 23);
             cmbTypeDeSortie.TabIndex = 7;
             // 
+            // labelCalculMax
+            // 
+            labelCalculMax.AutoSize = true;
+            labelCalculMax.Location = new Point(210, 89);
+            labelCalculMax.Name = "labelCalculMax";
+            labelCalculMax.Size = new Size(113, 15);
+            labelCalculMax.TabIndex = 17;
+            labelCalculMax.Text = "⏳ Calcul du solveur";
+            // 
+            // cmbCalculMax
+            // 
+            cmbCalculMax.FormattingEnabled = true;
+            cmbCalculMax.Location = new Point(329, 84);
+            cmbCalculMax.Name = "cmbCalculMax";
+            cmbCalculMax.Size = new Size(70, 23);
+            cmbCalculMax.TabIndex = 16;
+            // 
             // label8
             // 
             label8.AutoSize = true;
-            label8.Location = new Point(460, 78);
+            label8.Location = new Point(436, 89);
             label8.Name = "label8";
             label8.Size = new Size(81, 15);
             label8.TabIndex = 6;
@@ -270,7 +291,7 @@ namespace PlanAthena.Forms
             chkListJoursOuvres.FormattingEnabled = true;
             chkListJoursOuvres.Location = new Point(84, 22);
             chkListJoursOuvres.Name = "chkListJoursOuvres";
-            chkListJoursOuvres.Size = new Size(120, 76);
+            chkListJoursOuvres.Size = new Size(120, 112);
             chkListJoursOuvres.TabIndex = 1;
             // 
             // label5
@@ -300,7 +321,7 @@ namespace PlanAthena.Forms
             groupBox2.Dock = DockStyle.Top;
             groupBox2.Location = new Point(0, 0);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new Size(784, 158);
+            groupBox2.Size = new Size(844, 158);
             groupBox2.TabIndex = 5;
             groupBox2.TabStop = false;
             groupBox2.Text = "Informations du Projet";
@@ -426,7 +447,7 @@ namespace PlanAthena.Forms
             rtbLog.Location = new Point(0, 0);
             rtbLog.Name = "rtbLog";
             rtbLog.ReadOnly = true;
-            rtbLog.Size = new Size(784, 404);
+            rtbLog.Size = new Size(844, 404);
             rtbLog.TabIndex = 0;
             rtbLog.Text = "Bienvenue sur PlanAthena. Créez un nouveau projet ou chargez un projet existant.";
             // 
@@ -434,7 +455,7 @@ namespace PlanAthena.Forms
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(784, 711);
+            ClientSize = new Size(844, 711);
             Controls.Add(splitContainer1);
             Name = "MainForm";
             Text = "PlanAthena";
@@ -491,5 +512,8 @@ namespace PlanAthena.Forms
         private Label lblDateCreation;
         private Label lblResume;
         private Label lblMapping;
+
+        private ComboBox cmbCalculMax;
+        private Label labelCalculMax;
     }
 }

@@ -18,6 +18,10 @@ namespace PlanAthena.Services.Business.DTOs
         public DateTime? DateFinSouhaitee { get; set; }
         public int DureeJournaliereStandardHeures { get; set; }
         public decimal PenaliteChangementOuvrierPourcentage { get; set; }
+        public int DureeCalculMaxMinutes { get; set; }
+
+        public long CoutIndirectJournalierAbsolu { get; set; }
+        //Conserver cette data jusqu'à la mise à jour du Core
         public decimal CoutIndirectJournalierPourcentage { get; set; }
     }
 }

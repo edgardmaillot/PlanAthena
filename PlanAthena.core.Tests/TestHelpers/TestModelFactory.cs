@@ -62,7 +62,8 @@ namespace PlanAthena.Core.Tests.TestHelpers
                 new List<Metier> { metier }
             );
 
-            var configOptimisation = new ConfigurationOptimisation(8, 10, 5000); // 8h/jour, 10% pénalité, 50€ coût indirect
+            // CORRECTION : Nouveau calcul direct du coût indirect
+            var configOptimisation = new ConfigurationOptimisation(8, 10.0m, 5000); // 8h/jour, 10% pénalité, 5000 centimes (50€) coût indirect
             chantier.AppliquerConfigurationOptimisation(configOptimisation);
 
             return new ProblemeOptimisation { Chantier = chantier, EchelleTemps = echelleTemps, Configuration = configOptimisation };
@@ -113,7 +114,8 @@ namespace PlanAthena.Core.Tests.TestHelpers
                 new List<Metier> { metierReel, metierVirtuel }
             );
 
-            var configOptimisation = new ConfigurationOptimisation(8, 10, 5000);
+            // CORRECTION : Nouveau calcul direct du coût indirect
+            var configOptimisation = new ConfigurationOptimisation(8, 10.0m, 5000); // Coût direct en centimes
             chantier.AppliquerConfigurationOptimisation(configOptimisation);
 
             return new ProblemeOptimisation { Chantier = chantier, EchelleTemps = echelleTemps, Configuration = configOptimisation };

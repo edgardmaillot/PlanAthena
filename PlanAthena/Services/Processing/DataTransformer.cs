@@ -121,7 +121,9 @@ namespace PlanAthena.Services.Processing
                     TypeDeSortie = configurationPlanification.TypeDeSortie ?? string.Empty,
                     DureeJournaliereStandardHeures = configurationPlanification.DureeJournaliereStandardHeures,
                     PenaliteChangementOuvrierPourcentage = configurationPlanification.PenaliteChangementOuvrierPourcentage,
-                    CoutIndirectJournalierPourcentage = configurationPlanification.CoutIndirectJournalierPourcentage
+                    CoutIndirectJournalier = configurationPlanification.CoutIndirectJournalierAbsolu,
+                    // NOUVEAU : Conversion des minutes (depuis l'UI) en secondes (pour la DLL)
+                    DureeCalculMaxSecondes = configurationPlanification.DureeCalculMaxMinutes * 60
                 };
             }
 
