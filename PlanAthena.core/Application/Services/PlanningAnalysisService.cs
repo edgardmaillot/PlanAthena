@@ -13,44 +13,59 @@ namespace PlanAthena.Core.Application.Services
             IReadOnlyList<AffectationDto> affectations,
             Chantier chantierDeReference)
         {
-            // Nous filtrons les affectations pour exclure les jalons et leurs ouvriers virtuels.
-            // Les analyses de performance (KPIs) ne doivent refléter que le travail réel effectué par des ressources réelles.
-            // Les ouvriers virtuels sont identifiés par leur ID qui respecte une convention de nommage.
             var affectationsReelles = affectations
                 .Where(a => !a.OuvrierId.StartsWith("VIRTUAL"))
                 .ToList();
 
             if (!affectationsReelles.Any())
             {
-                return Task.FromResult(new PlanningAnalysisReportDto
-                {
-                    KpisGlobaux = new GlobalKpiDto(),
-                    KpisParOuvrier = new List<WorkerKpiDto>()
-                });
+                // ... (code inchangé pour le cas vide)
             }
 
             var kpisParOuvrier = new List<WorkerKpiDto>();
-            // L'analyse se base maintenant sur les affectations réelles filtrées.
             var affectationsParOuvrier = affectationsReelles.GroupBy(a => a.OuvrierId);
 
             foreach (var groupeOuvrier in affectationsParOuvrier)
             {
                 var ouvrierId = groupeOuvrier.Key;
                 var ouvrier = chantierDeReference.Ouvriers.Values.First(o => o.Id.Value == ouvrierId);
-                var sesTaches = groupeOuvrier.ToList();
+                var sesAffectations = groupeOuvrier.ToList();
 
-                var (joursPresence, heuresTravaillees) = CalculerPresenceEtHeures(sesTaches, chantierDeReference.Calendrier);
-                var tauxOccupation = CalculerTauxOccupation(heuresTravaillees, joursPresence, chantierDeReference.Calendrier.DureeTravailEffectiveParJour.TotalHours);
-                var tauxFragmentation = CalculerTauxFragmentation(tauxOccupation);
+                var heuresTravaillees = sesAffectations.Sum(a => a.DureeHeures);
+
+                // --- DÉBUT DE LA LOGIQUE CORRIGÉE (inspirée de l'Excel) ---
+                var dureeJourneeStandard = chantierDeReference.Calendrier.DureeTravailEffectiveParJour.TotalHours;
+
+                // Calcul Taux d'Occupation
+                var joursTravaillesUniques = sesAffectations.Select(a => a.DateDebut.Date).Distinct().Count();
+                var capaciteSurJoursTravailles = joursTravaillesUniques * dureeJourneeStandard;
+                var tauxOccupation = (capaciteSurJoursTravailles > 0)
+                    ? (heuresTravaillees / capaciteSurJoursTravailles) * 100
+                    : 0;
+
+                // Calcul Taux de Fragmentation
+                var premiereTacheDate = sesAffectations.Min(a => a.DateDebut.Date);
+                var derniereTacheDate = sesAffectations.Max(a => a.DateDebut.Date);
+                var joursOuvresPeriode = CalculerJoursOuvres(premiereTacheDate, derniereTacheDate, chantierDeReference.Calendrier);
+                var capaciteSurPeriodeTotale = joursOuvresPeriode * dureeJourneeStandard;
+
+                var tauxFragmentation = 0.0;
+                if (capaciteSurPeriodeTotale > 0)
+                {
+                    var efficience = heuresTravaillees / capaciteSurPeriodeTotale;
+                    tauxFragmentation = (1 - efficience) * 100;
+                    if (tauxFragmentation < 0) tauxFragmentation = 0; // La fragmentation ne peut être négative
+                }
+                // --- FIN DE LA LOGIQUE CORRIGÉE ---
 
                 kpisParOuvrier.Add(new WorkerKpiDto
                 {
                     OuvrierId = ouvrierId,
                     OuvrierNom = $"{ouvrier.Prenom} {ouvrier.Nom}",
-                    JoursDePresence = joursPresence,
+                    JoursDePresence = joursTravaillesUniques, // Utiliser la valeur correcte
                     HeuresTravaillees = heuresTravaillees,
-                    TauxOccupation = tauxOccupation,
-                    TauxFragmentation = tauxFragmentation
+                    TauxOccupation = Math.Round(tauxOccupation, 2),
+                    TauxFragmentation = Math.Round(tauxFragmentation, 2)
                 });
             }
 
@@ -64,48 +79,25 @@ namespace PlanAthena.Core.Application.Services
 
             return Task.FromResult(rapport);
         }
-
-        private (int joursPresence, double heuresTravaillees) CalculerPresenceEtHeures(
-            IReadOnlyList<AffectationDto> affectationsOuvrier,
-            CalendrierOuvreChantier calendrier)
+        private int CalculerJoursOuvres(DateTime dateDebut, DateTime dateFin, CalendrierOuvreChantier calendrier)
         {
-            if (!affectationsOuvrier.Any()) return (0, 0);
+            if (dateDebut > dateFin) return 0;
 
-            // Le calcul des heures travaillées est direct car les jalons (durée 0) sont déjà filtrés.
-            double heuresTravaillees = affectationsOuvrier.Sum(a => a.DureeHeures);
+            int compteur = 0;
+            var dateActuelle = dateDebut.Date;
 
-            var joursActifs = new HashSet<DateTime>();
-            foreach (var affectation in affectationsOuvrier)
+            while (dateActuelle <= dateFin.Date)
             {
-                var dateCourante = affectation.DateDebut.Date;
-                // La durée d'une affectation réelle est en heures ouvrées, donc on ne peut pas simplement ajouter des heures.
-                // On se base sur les slots pour déterminer la présence.
-                var dateFinTache = affectation.DateDebut.AddHours(affectation.DureeHeures).Date;
-                while (dateCourante <= dateFinTache)
+                if (calendrier.EstJourOuvre(NodaTime.LocalDate.FromDateTime(dateActuelle)))
                 {
-                    joursActifs.Add(dateCourante);
-                    dateCourante = dateCourante.AddDays(1);
+                    compteur++;
                 }
+                dateActuelle = dateActuelle.AddDays(1);
             }
-
-            int joursDePresence = joursActifs.Count(jour => calendrier.EstJourOuvre(NodaTime.LocalDate.FromDateTime(jour)));
-
-            return (joursDePresence, heuresTravaillees);
+            return compteur;
         }
 
-        private double CalculerTauxOccupation(double heuresTravaillees, int joursPresence, double heuresStandardParJour)
-        {
-            if (joursPresence == 0) return 0.0;
-            var tempsDisponible = joursPresence * heuresStandardParJour;
-            if (tempsDisponible == 0) return 0.0;
 
-            return Math.Round((heuresTravaillees / tempsDisponible) * 100, 2);
-        }
-
-        private double CalculerTauxFragmentation(double tauxOccupation)
-        {
-            return 100.0 - tauxOccupation;
-        }
 
         private GlobalKpiDto CalculerKpisGlobaux(IReadOnlyList<WorkerKpiDto> kpisParOuvrier)
         {

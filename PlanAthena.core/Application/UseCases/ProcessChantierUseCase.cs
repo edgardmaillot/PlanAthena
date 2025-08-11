@@ -121,10 +121,10 @@ namespace PlanAthena.Core.Application.UseCases
 
                 // 1. Calculer le timeout basé sur le nombre de tâches
                 int nombreDeTaches = chantier.ObtenirToutesLesTaches().Count();
-                double timeoutCalcule = 5.0 + (nombreDeTaches * 0.2);
+                double timeoutCalcule = 5.0 + (nombreDeTaches * 0.35);
 
                 // 2. Appliquer les limites minimales et maximales
-                double timeoutFinalSecondes = Math.Max(10.0, Math.Min(timeoutCalcule, 300.0));
+                double timeoutFinalSecondes = Math.Max(10.0, Math.Min(timeoutCalcule, 180.0));
 
                 // On ajoute un message pour le débogage et la traçabilité
                 allMessages.Add(new MessageValidationDto { Type = TypeMessageValidation.Suggestion, CodeMessage = "INFO_TIMEOUT_CALC", Message = $"Timeout adaptatif pour l'estimation calculé à {timeoutFinalSecondes:F1} secondes pour {nombreDeTaches} tâches." });
@@ -133,15 +133,15 @@ namespace PlanAthena.Core.Application.UseCases
 
 
                 // 1. Préparation d'une configuration minimale pour le solveur.
-                // 7 heures de travail par jour, 30% de pénalité pour changement d'ouvrier, 10000 centimes de coût indirect journalier.
-                var configOptimisation = new ConfigurationOptimisation(7, 30m, 10000);
+                // 7 heures de travail par jour, 0% de pénalité pour changement d'ouvrier, 0 centimes de coût indirect journalier.
+                var configOptimisation = new ConfigurationOptimisation(7, 0m, 0);
                 chantier.AppliquerConfigurationOptimisation(configOptimisation);
 
                 var echelleTemps = _calendrierService.CreerEchelleTempsOuvree(chantier.Calendrier, LocalDate.FromDateTime(chantier.PeriodeSouhaitee.DateDebut.Value), LocalDate.FromDateTime(chantier.PeriodeSouhaitee.DateFin.Value));
                 var probleme = new ProblemeOptimisation { Chantier = chantier, EchelleTemps = echelleTemps, Configuration = chantier.ConfigurationOptimisation! };
 
                 // 2. Construction du modèle.
-                var modeleCpSat = _problemeBuilder.ConstruireModele(probleme, "COUT");
+                var modeleCpSat = _problemeBuilder.ConstruireModele(probleme, "DELAI");
 
                 // 3. Configuration du solveur avec le timeout calculé.
                 var solver = new CpSolver
