@@ -68,7 +68,7 @@ namespace PlanAthena.Services.DataAccess
         #endregion
 
         #region Génération IDs Blocs
-
+        // Prévoir une adaptation suite à la modification de la structure des blocs & lotId dans PROJET
         public string GenererProchainBlocId(string lotId, IReadOnlyList<Bloc> blocsExistants)
         {
             if (!ValiderFormatLotId(lotId))

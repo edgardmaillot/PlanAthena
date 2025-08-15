@@ -31,10 +31,12 @@ namespace PlanAthena.Utilities
     public class DependanceBuilder
     {
         private readonly ProjetService _projetService; 
+        private readonly RessourceService _ressourceService; 
 
-        public DependanceBuilder(ProjetService projetService) 
+        public DependanceBuilder(ProjetService projetService, RessourceService ressourceService) 
         {
             _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
+            _ressourceService = ressourceService ?? throw new ArgumentNullException(nameof(ressourceService));
         }
 
         /// <summary>
@@ -291,7 +293,7 @@ namespace PlanAthena.Utilities
             try
             {
                 // Obtenir les prérequis métier via ProjetService
-                var prerequisMetier = _projetService.GetPrerequisPourPhase(tache.MetierId, phaseContexte);
+                var prerequisMetier = _ressourceService.GetPrerequisPourPhase(tache.MetierId, phaseContexte);
                 if (!prerequisMetier.Any()) return suggestions;
 
                 // Identifier les métiers présents parmi les candidats valides
@@ -351,14 +353,14 @@ namespace PlanAthena.Utilities
         {
             var allPrereqs = new HashSet<string>();
             // On utilise la nouvelle méthode explicite de ProjetService
-            var toExplore = new Queue<string>(_projetService.GetTousPrerequisConfondus(metierId));
+            var toExplore = new Queue<string>(_ressourceService.GetTousPrerequisConfondus(metierId));
 
             while (toExplore.Count > 0)
             {
                 var current = toExplore.Dequeue();
                 if (allPrereqs.Add(current)) // Si on l'ajoute (il n'y était pas déjà)
                 {
-                    var parents = _projetService.GetTousPrerequisConfondus(current);
+                    var parents = _ressourceService.GetTousPrerequisConfondus(current);
                     foreach (var parent in parents)
                     {
                         toExplore.Enqueue(parent);
@@ -376,14 +378,14 @@ namespace PlanAthena.Utilities
         public List<Metier> ObtenirMetiersTriesParDependance()
         {
             var graph = new AdjacencyGraph<string, Edge<string>>();
-            var metiersCollection = _projetService.GetAllMetiers();
+            var metiersCollection = _ressourceService.GetAllMetiers();
 
             graph.AddVertexRange(metiersCollection.Select(m => m.MetierId));
 
             foreach (var metier in metiersCollection)
             {
                 // On utilise la nouvelle méthode explicite pour construire le graphe complet
-                var prerequis = _projetService.GetTousPrerequisConfondus(metier.MetierId);
+                var prerequis = _ressourceService.GetTousPrerequisConfondus(metier.MetierId);
                 foreach (var prerequisId in prerequis)
                 {
                     if (metiersCollection.Any(m => m.MetierId == prerequisId))
@@ -396,7 +398,7 @@ namespace PlanAthena.Utilities
             try
             {
                 var sortedIds = graph.TopologicalSort().ToList();
-                return sortedIds.Select(id => _projetService.GetMetierById(id)).ToList();
+                return sortedIds.Select(id => _ressourceService.GetMetierById(id)).ToList();
             }
             catch (NonAcyclicGraphException)
             {
@@ -494,7 +496,7 @@ namespace PlanAthena.Utilities
                 try
                 {
                     // Changement ici : _projetService.GetPrerequisForMetier
-                    var prerequisDirects = _projetService.GetPrerequisPourPhase(metierCourant, phaseContexte);
+                    var prerequisDirects = _ressourceService.GetPrerequisPourPhase(metierCourant, phaseContexte);
                     foreach (var prerequis in prerequisDirects)
                     {
                         if (metiersPresents.Contains(prerequis))

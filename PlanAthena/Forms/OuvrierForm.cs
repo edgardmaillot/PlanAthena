@@ -1,8 +1,10 @@
+// Fichier: PlanAthena/Forms/OuvrierForm.cs
+// Version: 0.4.4
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
-using PlanAthena.Services.DataAccess; // Assurez-vous que ce using est présent
+using PlanAthena.Services.DataAccess; 
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,9 +14,10 @@ namespace PlanAthena.Forms
 {
     public partial class OuvrierForm : Form
     {
-        private readonly OuvrierService _ouvrierService;
+        private readonly RessourceService _ressourceService;
         private readonly ProjetService _projetService;
         private readonly IIdGeneratorService _idGeneratorService;
+        private readonly ImportService _importService; 
 
         // 🔧 CHANGEMENT MAJEUR : La source de vérité est la liste des DTOs uniques pour l'affichage.
         private List<OuvrierInfo> _ouvriersInfo = new List<OuvrierInfo>();
@@ -26,12 +29,13 @@ namespace PlanAthena.Forms
 
         private bool _isLoading = false;
 
-        public OuvrierForm(OuvrierService ouvrierService, ProjetService projetService, IIdGeneratorService idGeneratorService)
+        public OuvrierForm(RessourceService ouvrierService, ProjetService projetService, IIdGeneratorService idGeneratorService, ImportService importService)
         {
             InitializeComponent();
-            _ouvrierService = ouvrierService ?? throw new ArgumentNullException(nameof(ouvrierService));
+            _ressourceService = ouvrierService ?? throw new ArgumentNullException(nameof(ouvrierService));
             _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
             _idGeneratorService = idGeneratorService ?? throw new ArgumentNullException(nameof(idGeneratorService));
+            _importService = importService ?? throw new ArgumentNullException(nameof(importService));
         }
 
         private void OuvrierForm_Load(object sender, EventArgs e)
@@ -45,8 +49,17 @@ namespace PlanAthena.Forms
         private void ChargerDonnees()
         {
             // 🔧 SIMPLIFIÉ : On récupère directement la liste des DTOs uniques.
-            _ouvriersInfo = _ouvrierService.ObtenirListeOuvriersUniques();
-            _metiers = _projetService.GetAllMetiers().ToList();
+            _ouvriersInfo = _ressourceService.GetAllOuvriers()
+    .Select(ouvrier => new OuvrierInfo
+    {
+        OuvrierId = ouvrier.OuvrierId,
+        Nom = ouvrier.Nom,
+        Prenom = ouvrier.Prenom,
+        CoutJournalier = ouvrier.CoutJournalier,
+        NombreCompetences = ouvrier.Competences.Count
+    })
+    .ToList();
+            _metiers = _ressourceService.GetAllMetiers().ToList();
         }
 
         private void MettreAJourUI()
@@ -135,12 +148,12 @@ namespace PlanAthena.Forms
 
             if (_ouvrierSelectionne != null)
             {
-                var ouvrierComplet = _ouvrierService.ObtenirOuvrierParId(_ouvrierSelectionne.OuvrierId);
+                var ouvrierComplet = _ressourceService.GetOuvrierById(_ouvrierSelectionne.OuvrierId);
                 if (ouvrierComplet != null)
                 {
                     foreach (var competence in ouvrierComplet.Competences.OrderBy(c => c.MetierId))
                     {
-                        var metier = _projetService.GetMetierById(competence.MetierId);
+                        var metier = _ressourceService.GetMetierById(competence.MetierId);
                         var nomMetier = metier?.Nom ?? "(Métier inconnu)";
                         var estPrincipal = competence.EstMetierPrincipal ? " (Principal)" : "";
                         var item = new ListViewItem(new[] { competence.MetierId, nomMetier + estPrincipal }) { Tag = competence };
@@ -223,7 +236,7 @@ namespace PlanAthena.Forms
                 CoutJournalier = _ouvrierSelectionne.CoutJournalier
             };
 
-            _ouvrierService.ModifierOuvrier(ouvrierAModifier);
+            _ressourceService.ModifierOuvrier(ouvrierAModifier);
 
             // Mettre à jour l'affichage dans la liste de gauche
             var itemToUpdate = listViewOuvriers.Items.Cast<ListViewItem>().FirstOrDefault(i => (i.Tag as OuvrierInfo)?.OuvrierId == _ouvrierSelectionne.OuvrierId);
@@ -240,27 +253,12 @@ namespace PlanAthena.Forms
 
         private void btnNouveauOuvrier_Click(object sender, EventArgs e)
         {
-            var nouvelOuvrier = new Ouvrier
-            {
-                OuvrierId = _idGeneratorService.GenererProchainOuvrierId(_ouvrierService.ObtenirTousLesOuvriers()),
-                Nom = "Ouvrier",
-                Prenom = "Nouveau",
-                CoutJournalier = 200,
-            };
-
-            var premierMetier = _metiers.FirstOrDefault();
-            if (premierMetier == null)
-            {
-                MessageBox.Show("Impossible de créer un ouvrier : aucun métier n'est défini.", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-            nouvelOuvrier.Competences.Add(new CompetenceOuvrier { MetierId = premierMetier.MetierId, EstMetierPrincipal = true });
-
             try
             {
-                _ouvrierService.AjouterOuvrier(nouvelOuvrier);
+                // Le formulaire demande simplement la création, sans savoir comment elle se fait.
+                _ressourceService.CreerOuvrierParDefaut();
                 ChargerDonnees();
-                MettreAJourUI(); // Ceci va resélectionner le nouvel ouvrier
+                MettreAJourUI();
             }
             catch (Exception ex)
             {
@@ -272,7 +270,7 @@ namespace PlanAthena.Forms
         {
             if (_ouvrierSelectionne == null) return;
 
-            var ouvrierComplet = _ouvrierService.ObtenirOuvrierParId(_ouvrierSelectionne.OuvrierId);
+            var ouvrierComplet = _ressourceService.GetOuvrierById(_ouvrierSelectionne.OuvrierId);
             if (ouvrierComplet == null) return;
 
             var competencesActuelles = ouvrierComplet.Competences.Select(c => c.MetierId).ToList();
@@ -288,7 +286,7 @@ namespace PlanAthena.Forms
             {
                 try
                 {
-                    _ouvrierService.AjouterCompetence(_ouvrierSelectionne.OuvrierId, dialog.MetierSelectionne.MetierId);
+                    _ressourceService.AjouterCompetence(_ouvrierSelectionne.OuvrierId, dialog.MetierSelectionne.MetierId);
                     // Mettre à jour le nombre de compétences dans notre DTO local
                     _ouvrierSelectionne.NombreCompetences++;
                     MettreAJourUI();
@@ -309,7 +307,7 @@ namespace PlanAthena.Forms
             {
                 try
                 {
-                    _ouvrierService.SupprimerOuvrier(_ouvrierSelectionne.OuvrierId);
+                    _ressourceService.SupprimerOuvrier(_ouvrierSelectionne.OuvrierId);
                     ChargerDonnees();
                     MettreAJourUI();
                 }
@@ -327,12 +325,12 @@ namespace PlanAthena.Forms
             if (_ouvrierSelectionne == null || _competenceSelectionnee == null) return;
 
             var result = MessageBox.Show(
-                $"Définir '{_projetService.GetMetierById(_competenceSelectionnee.MetierId)?.Nom}' comme métier principal ?",
+                $"Définir '{_ressourceService.GetMetierById(_competenceSelectionnee.MetierId)?.Nom}' comme métier principal ?",
                 "Définir comme principal", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (result == DialogResult.Yes)
             {
-                _ouvrierService.DefinirMetierPrincipal(_ouvrierSelectionne.OuvrierId, _competenceSelectionnee.MetierId);
+                _ressourceService.DefinirMetierPrincipal(_ouvrierSelectionne.OuvrierId, _competenceSelectionnee.MetierId);
                 MettreAJourListeCompetences();
             }
         }
@@ -341,14 +339,14 @@ namespace PlanAthena.Forms
         {
             if (_ouvrierSelectionne == null || _competenceSelectionnee == null) return;
 
-            var metier = _projetService.GetMetierById(_competenceSelectionnee.MetierId);
+            var metier = _ressourceService.GetMetierById(_competenceSelectionnee.MetierId);
             var result = MessageBox.Show($"Supprimer la compétence '{metier?.Nom}' ?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 
             if (result == DialogResult.Yes)
             {
                 try
                 {
-                    _ouvrierService.SupprimerCompetence(_ouvrierSelectionne.OuvrierId, _competenceSelectionnee.MetierId);
+                    _ressourceService.SupprimerCompetence(_ouvrierSelectionne.OuvrierId, _competenceSelectionnee.MetierId);
                     _ouvrierSelectionne.NombreCompetences--;
                     _competenceSelectionnee = null;
                     MettreAJourUI();
@@ -394,7 +392,7 @@ namespace PlanAthena.Forms
 
                     if (result == DialogResult.Cancel) return;
 
-                    var nombreImporte = _ouvrierService.ImporterDepuisCsv(ofd.FileName, result == DialogResult.Yes);
+                    var nombreImporte = _importService.ImporterOuvriersCSV(ofd.FileName, result == DialogResult.Yes);
                     ChargerDonnees(); // Recharger depuis le service
 
                     _ouvrierSelectionne = null;
@@ -423,53 +421,11 @@ namespace PlanAthena.Forms
 
         private void btnImportExcelSAP_Click(object sender, EventArgs e)
         {
-            using var ofd = new OpenFileDialog
-            {
-                Filter = "Fichiers Excel (*.xlsx;*.xls)|*.xlsx;*.xls|Tous les fichiers (*.*)|*.*",
-                Title = "Importer les ouvriers depuis un fichier Excel SAP"
-            };
-
-            if (ofd.ShowDialog() == DialogResult.OK)
-            {
-                try
-                {
-                    // TODO: Implémenter l'import Excel SAP spécifique
-                    var nombreImporte = _ouvrierService.ImporterDepuisExcelSap(ofd.FileName);
-
-                    if (nombreImporte > 0)
-                    {
-                        ChargerDonnees();
-                        _ouvrierSelectionne = null;
-                        _competenceSelectionnee = null;
-                        //_enModification = false;
-                        RafraichirAffichage();
-
-                        MessageBox.Show(
-                            $"Import Excel SAP terminé avec succès !\n\n" +
-                            $"• {nombreImporte} ouvriers importés",
-                            "Import réussi",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information);
-                    }
-                    else
-                    {
-                        MessageBox.Show(
-                            "L'import Excel SAP n'est pas encore implémenté.\n" +
-                            "Utilisez l'import CSV pour le moment.",
-                            "Fonctionnalité en développement",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(
-                        $"Erreur lors de l'import Excel SAP :\n{ex.Message}",
-                        "Erreur d'import",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
-                }
-            }
+            MessageBox.Show(
+                "L'import depuis Excel SAP sera implémenté dans une future version.",
+                "Fonctionnalité en développement",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
         }
 
         private void btnExporter_Click(object sender, EventArgs e)
@@ -491,7 +447,7 @@ namespace PlanAthena.Forms
             {
                 try
                 {
-                    _ouvrierService.ExporterVersCsv(sfd.FileName);
+                    _importService.ExporterOuvriersCSV(sfd.FileName);
 
                     var nombreOuvriers = _ouvriersInfo.GroupBy(o => o.OuvrierId).Count();
                     MessageBox.Show(
@@ -605,7 +561,7 @@ namespace PlanAthena.Forms
             if (_ouvrierSelectionne == null) return;
 
             // 🔧 CORRECTION : On demande au service l'objet Ouvrier COMPLET pour l'ID sélectionné.
-            var ouvrierComplet = _ouvrierService.ObtenirOuvrierParId(_ouvrierSelectionne.OuvrierId);
+            var ouvrierComplet = _ressourceService.GetOuvrierById(_ouvrierSelectionne.OuvrierId);
 
             // On vérifie que l'ouvrier a bien été trouvé.
             if (ouvrierComplet == null) return;
@@ -613,7 +569,7 @@ namespace PlanAthena.Forms
             // On itère sur la VRAIE liste de compétences de cet ouvrier.
             foreach (var competence in ouvrierComplet.Competences.OrderBy(c => c.MetierId))
             {
-                var metier = _projetService.GetMetierById(competence.MetierId);
+                var metier = _ressourceService.GetMetierById(competence.MetierId);
                 var nomMetier = metier?.Nom ?? "(Métier inconnu)";
                 var estPrincipal = competence.EstMetierPrincipal ? " (Principal)" : "";
 

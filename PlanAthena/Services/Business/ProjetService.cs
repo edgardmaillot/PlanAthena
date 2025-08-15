@@ -1,698 +1,214 @@
-using Microsoft.VisualBasic.ApplicationServices;
+// Fichier: PlanAthena/Services/Business/ProjetService.cs
+// Version: 0.4.4 (Refactorisation Finale)
 using PlanAthena.Data;
-using PlanAthena.Services.Business.DTOs;
-using PlanAthena.Services.DataAccess;
-using QuikGraph;
-using QuikGraph.Algorithms;
+using PlanAthena.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
-using System.IO;
 using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Windows.Documents;
-using System.Windows.Shapes;
-using PlanAthena.Interfaces;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace PlanAthena.Services.Business
 {
-    /// <summary>
-    /// Service de gestion des projets (sauvegarde/chargement complet)
-    /// 🔄 VERSION V0.4.2 - Système métiers avec prérequis par phase
-    /// </summary>
     public class ProjetService
     {
-        // --- DÉPENDANCES DIRECTES ---
-        // Les dépendances sont maintenant des services directs, plus de "Func<T>" (factories).
-        private readonly OuvrierService _ouvrierService;
-        private readonly TacheService _tacheService;
-        private readonly CsvDataService _csvDataService;
-        private readonly BlocService _blocService;
-        private readonly IIdGeneratorService _idGeneratorService;
+        private readonly IIdGeneratorService _idGenerator;
+        private readonly Dictionary<string, Lot> _lots = new();
+        private readonly Dictionary<string, Tache> _taches = new();
 
-        // --- COLLECTIONS INTERNES ---
-        // Collection interne de métiers, gérée directement par ProjetService
-        private readonly Dictionary<string, Metier> _metiersInternes = new Dictionary<string, Metier>();
-        // Collection interne de lots
-        private readonly Dictionary<string, Lot> _lotsInternes = new Dictionary<string, Lot>();
-
-        // --- CHAMPS UTILITAIRES ---
-        // Champs liés aux couleurs de fallback des métiers
-        private static readonly Color[] FallbackColors = {
-            Color.LightBlue, Color.LightGreen, Color.LightYellow,
-            Color.LightPink, Color.LightGray, Color.LightCyan,
-            Color.LightSalmon
-        };
-        private int _fallbackColorIndex = 0;
-        private readonly Dictionary<string, Color> _assignedFallbackColors = new Dictionary<string, Color>();
-
-        // --- CONSTRUCTEUR CORRIGÉ ---
-        // Le constructeur demande maintenant les services directement.
-        public ProjetService(
-            OuvrierService ouvrierService,
-            TacheService tacheService,
-            CsvDataService csvDataService,
-            BlocService blocService,
-            IIdGeneratorService idGeneratorService)
+        public ProjetService(IIdGeneratorService idGenerator)
         {
-            _ouvrierService = ouvrierService ?? throw new ArgumentNullException(nameof(ouvrierService));
-            _tacheService = tacheService ?? throw new ArgumentNullException(nameof(tacheService));
-            _csvDataService = csvDataService ?? throw new ArgumentNullException(nameof(csvDataService));
-            _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
-            _idGeneratorService = idGeneratorService ?? throw new ArgumentNullException(nameof(idGeneratorService));
+            _idGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
         }
 
-        public bool ValiderDonneesAvantPlanification(out string message)
+        #region Cycle de vie du projet
+
+        public void InitialiserNouveauProjet()
         {
-            var resumeTaches = _tacheService.ObtenirStatistiques();
-            if (resumeTaches.NombreTachesTotal == 0)
-            {
-                message = "Aucune tâche chargée. Veuillez charger des tâches avant de lancer la planification.";
-                return false;
-            }
-
-            var resumeOuvriers = _ouvrierService.ObtenirStatistiques();
-            if (resumeOuvriers.NombreOuvriersTotal == 0)
-            {
-                message = "Aucun ouvrier chargé. Veuillez charger des ouvriers avant de lancer la planification.";
-                return false;
-            }
-
-            if (GetAllMetiers().Count == 0)
-            {
-                message = "Aucun métier chargé. Veuillez charger des métiers avant de lancer la planification.";
-                return false;
-            }
-
-            message = "Validation réussie.";
-            return true;
+            ViderProjet();
+            CreerLot("Lot Principal", 50, ChantierPhase.SecondOeuvre);
         }
 
-        #region Sauvegarde/Chargement Projet
-
-        /// <summary>
-        /// Sauvegarde un projet complet au format JSON
-        /// </summary>
-        /// <param name="filePath">Chemin du fichier de sauvegarde</param>
-        /// <param name="informationsProjet">Informations sur le projet</param>
-        public void SauvegarderProjet(string filePath, InformationsProjet informationsProjet)
+        public void ChargerProjet(ProjetData projetData)
         {
-            if (string.IsNullOrWhiteSpace(filePath))
-                throw new ArgumentException("Le chemin du fichier ne peut pas être vide.");
+            ViderProjet();
+            if (projetData == null) return;
 
-            if (informationsProjet == null)
-                throw new ArgumentNullException(nameof(informationsProjet));
+            projetData.Lots?.ForEach(lot => _lots.TryAdd(lot.LotId, lot));
+            projetData.Taches?.ForEach(tache => _taches.TryAdd(tache.TacheId, tache));
 
-            try
+            if (projetData.Blocs != null && projetData.Blocs.Any())
             {
-                var projetData = new ProjetData
+                foreach (var bloc in projetData.Blocs)
                 {
-                    InformationsProjet = informationsProjet,
-                    Metiers = GetAllMetiers().ToList(),
-                    Ouvriers = _ouvrierService.ObtenirTousLesOuvriers(),
-                    Taches = _tacheService.ObtenirToutesLesTaches(),
-                    Lots = ObtenirTousLesLots(),
-                    Blocs = _blocService.ObtenirTousLesBlocs(),
-                    DateSauvegarde = DateTime.Now,
-                    VersionApplication = "0.4.2"
-                };
-
-                var options = new JsonSerializerOptions
-                {
-                    WriteIndented = true,
-                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                };
-
-                var jsonString = JsonSerializer.Serialize(projetData, options);
-                File.WriteAllText(filePath, jsonString);
-            }
-            catch (Exception ex)
-            {
-                throw new ProjetException($"Erreur lors de la sauvegarde du projet: {ex.Message}", ex);
+                    string lotIdParent = ExtraireLotIdDepuisBlocId(bloc.BlocId);
+                    if (lotIdParent != null && _lots.TryGetValue(lotIdParent, out var lotParent))
+                    {
+                        bloc.LotId = lotIdParent;
+                        if (!lotParent.Blocs.Any(b => b.BlocId == bloc.BlocId))
+                        {
+                            lotParent.Blocs.Add(bloc);
+                        }
+                    }
+                }
             }
         }
 
-        /// <summary>
-        /// Charge un projet complet depuis un fichier JSON.
-        /// Gère de manière transparente la migration depuis l'ancien format de fichier.
-        /// </summary>
-        /// <param name="filePath">Chemin du fichier de projet</param>
-        /// <returns>Informations du projet chargé</returns>
-        public InformationsProjet ChargerProjet(string filePath)
+        public ProjetData GetProjetDataPourSauvegarde()
         {
-            if (!File.Exists(filePath))
-                throw new FileNotFoundException($"Le fichier de projet '{filePath}' n'existe pas.");
-
-            try
+            return new ProjetData
             {
-                var jsonString = File.ReadAllText(filePath);
-                var jsonNode = JsonNode.Parse(jsonString);
-
-                if (jsonNode == null)
-                    throw new ProjetException("Le fichier de projet est invalide ou corrompu.");
-
-                return ChargerDonneesProjet(jsonNode);
-            }
-            catch (JsonException ex)
-            {
-                throw new ProjetException($"Erreur lors de la lecture du fichier JSON: {ex.Message}", ex);
-            }
-            catch (Exception ex)
-            {
-                throw new ProjetException($"Erreur lors du chargement du projet: {ex.Message}", ex);
-            }
-        }
-
-        private InformationsProjet ChargerDonneesProjet(JsonNode jsonNode)
-        {
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var projetData = jsonNode.Deserialize<ProjetData>(options);
-            if (projetData == null)
-                throw new ProjetException("Le fichier de projet est invalide ou corrompu.");
-
-            // Charger les données dans l'ordre de dépendance
-            RemplacerTousLesMetiers(projetData.Metiers);
-            _ouvrierService.ChargerOuvriers(projetData.Ouvriers);
-            RemplacerTousLesLots(projetData.Lots);
-            _blocService.RemplacerTousLesBlocs(projetData.Blocs);
-            _tacheService.ChargerTaches(projetData.Taches);
-
-            return projetData.InformationsProjet;
-        }
-        /// <summary>
-        /// Crée un nouveau projet vide
-        /// </summary>
-        public InformationsProjet CreerNouveauProjet(string nomProjet = "ProjetX", string description = "Description")
-        {
-            // Vider toutes les données existantes
-            RemplacerTousLesMetiers(new List<Metier>());
-            _ouvrierService.Vider();
-            _tacheService.Vider();
-            ViderLots();
-            _blocService.Vider();
-
-            // Appel à ChargerMetiersParDefaut pour initialiser les métiers
-            ChargerMetiersParDefaut();
-
-            // 🔧 NOUVEAU : Création d'un lot par défaut
-            var lotParDefaut = new Lot
-            {
-                LotId = _idGeneratorService.GenererProchainLotId(Array.Empty<Lot>()),
-                Nom = "Base",
-                Priorite = 50,
-                CheminFichierPlan = "",
-                // Pour formaliser un enum, on utilise son nom directement :
-                Phases = ChantierPhase.SecondOeuvre
-            };
-            AjouterLot(lotParDefaut);
-
-            return new InformationsProjet
-            {
-                NomProjet = nomProjet,
-                Description = description,
-                DateCreation = DateTime.Now,
-                DateDerniereModification = DateTime.Now,
-                Auteur = Environment.UserName
+                Lots = this.ObtenirTousLesLots(),
+                Taches = this.ObtenirToutesLesTaches(),
             };
         }
 
-        /// <summary>
-        /// Valide qu'un fichier de projet est valide
-        /// </summary>
-        /// <param name="filePath">Chemin du fichier à valider</param>
-        /// <returns>Résultat de la validation</returns>
-        public ValidationProjet ValiderProjet(string filePath)
+        public void ViderProjet()
         {
-            var validation = new ValidationProjet { EstValide = false };
+            _lots.Clear();
+            _taches.Clear();
+        }
 
-            try
+        public void ViderLot(string lotId)
+        {
+            if (string.IsNullOrEmpty(lotId)) return;
+            var tachesASupprimer = ObtenirTachesParLot(lotId);
+            foreach (var tache in tachesASupprimer)
             {
-                if (!File.Exists(filePath))
-                {
-                    validation.Erreurs.Add("Le fichier n'existe pas.");
-                    return validation;
-                }
-
-                // Pour la validation, nous ne nous soucions pas du format (ancien/nouveau)
-                // tant que les informations de base sont présentes.
-                var jsonString = File.ReadAllText(filePath);
-                var projetData = JsonSerializer.Deserialize<ProjetData>(jsonString);
-
-                if (projetData == null)
-                {
-                    validation.Erreurs.Add("Le fichier JSON est invalide.");
-                    return validation;
-                }
-
-                // Validation des données essentielles
-                if (projetData.InformationsProjet == null)
-                    validation.Erreurs.Add("Informations du projet manquantes.");
-
-                if (projetData.Metiers == null || projetData.Metiers.Count == 0)
-                    validation.Avertissements.Add("Aucun métier défini.");
-
-                if (projetData.Ouvriers == null || projetData.Ouvriers.Count == 0)
-                    validation.Avertissements.Add("Aucun ouvrier défini.");
-
-                if (projetData.Taches == null || projetData.Taches.Count == 0)
-                    validation.Avertissements.Add("Aucune tâche définie.");
-
-                validation.EstValide = validation.Erreurs.Count == 0;
-                validation.InformationsProjet = projetData.InformationsProjet;
-
-                return validation;
+                _taches.Remove(tache.TacheId);
             }
-            catch (Exception ex)
+            var lot = ObtenirLotParId(lotId);
+            if (lot != null)
             {
-                validation.Erreurs.Add($"Erreur lors de la validation: {ex.Message}");
-                return validation;
+                lot.Blocs.Clear();
             }
+        }
+
+        private static string ExtraireLotIdDepuisBlocId(string blocId)
+        {
+            if (string.IsNullOrEmpty(blocId) || !blocId.StartsWith("L") || blocId.Length < 4) return null;
+            return blocId.Substring(0, 4);
         }
 
         #endregion
 
-        #region CRUD Operations - Lots (fusionné de ProjetService)
-        /// <summary>
-        /// 🆕 V0.4.2.1 - Crée un nouvel objet Lot en mémoire avec des valeurs par défaut et un ID généré.
-        /// Cet objet n'est PAS sauvegardé dans le service. Il sert de "brouillon" pour le formulaire.
-        /// </summary>
-        /// <returns>Un nouvel objet Lot prêt à être modifié par l'utilisateur.</returns>
-        public Lot CreerNouveauLotBrouillon()
+        #region Gestion des Lots
+
+        public Lot CreerLot(string nom = "Nouveau Lot", int priorite = 99, ChantierPhase phases = ChantierPhase.SecondOeuvre)
         {
+            if (string.IsNullOrWhiteSpace(nom)) throw new ArgumentException("Le nom du lot ne peut pas être vide.", nameof(nom));
             var nouveauLot = new Lot
             {
-                LotId = _idGeneratorService.GenererProchainLotId(_lotsInternes.Values.ToList()),
-                Nom = "Nouveau lot",
-                Priorite = 99,
-                Phases = ChantierPhase.None // On commence sans phase par défaut
+                LotId = _idGenerator.GenererProchainLotId(_lots.Values.ToList()),
+                Nom = nom,
+                Priorite = priorite,
+                Phases = phases
             };
+            _lots.Add(nouveauLot.LotId, nouveauLot);
             return nouveauLot;
         }
-        /// <summary>
-        /// Ajoute un nouveau lot au projet.
-        /// </summary>
-        public void AjouterLot(Lot lot)
+
+        public void ModifierLot(Lot lotModifie)
         {
-            if (lot == null) throw new ArgumentNullException(nameof(lot));
-            if (string.IsNullOrWhiteSpace(lot.LotId)) throw new ArgumentException("L'ID du lot ne peut pas être vide.");
-            if (_lotsInternes.ContainsKey(lot.LotId)) throw new InvalidOperationException($"Un lot avec l'ID '{lot.LotId}' existe déjà.");
-            _lotsInternes.Add(lot.LotId, lot);
+            if (lotModifie == null) throw new ArgumentNullException(nameof(lotModifie));
+            if (!_lots.ContainsKey(lotModifie.LotId)) throw new InvalidOperationException($"Le lot '{lotModifie.Nom}' n'a pas été trouvé.");
+            _lots[lotModifie.LotId] = lotModifie;
         }
 
-        /// <summary>
-        /// Modifie un lot existant.
-        /// </summary>
-        public void ModifierLot(string lotId, string nom, int priorite, string cheminFichierPlan, ChantierPhase phases)
-        {
-            if (!_lotsInternes.TryGetValue(lotId, out var lotAModifier))
-            {
-                throw new KeyNotFoundException($"Lot {lotId} non trouvé.");
-            }
-
-            lotAModifier.Nom = nom;
-            lotAModifier.Priorite = priorite;
-            lotAModifier.CheminFichierPlan = cheminFichierPlan;
-            lotAModifier.Phases = phases;
-        }
-
-        /// <summary>
-        /// Obtient un lot par son ID.
-        /// </summary>
-        public Lot ObtenirLotParId(string lotId)
-        {
-            _lotsInternes.TryGetValue(lotId, out var lot);
-            return lot;
-        }
-
-        /// <summary>
-        /// Retourne tous les lots triés par priorité puis nom.
-        /// </summary>
-        public List<Lot> ObtenirTousLesLots()
-        {
-            return _lotsInternes.Values.OrderBy(l => l.Priorite).ThenBy(l => l.Nom).ToList();
-        }
-
-        /// <summary>
-        /// Supprime un lot du projet.
-        /// TODO: Valider qu'aucune tâche n'utilise ce lot.
-        /// </summary>
         public void SupprimerLot(string lotId)
         {
-            if (!_lotsInternes.Remove(lotId))
-            {
-                throw new KeyNotFoundException($"Lot {lotId} non trouvé.");
-            }
+            if (ObtenirTachesParLot(lotId).Any())
+                throw new InvalidOperationException("Impossible de supprimer ce lot car il est utilisé par au moins une tâche.");
+            _lots.Remove(lotId);
         }
 
-        /// <summary>
-        /// Remplace tous les lots existants par une nouvelle liste.
-        /// </summary>
-        public void RemplacerTousLesLots(List<Lot> lots)
-        {
-            _lotsInternes.Clear();
-            if (lots != null)
-            {
-                foreach (var lot in lots)
-                {
-                    if (!_lotsInternes.ContainsKey(lot.LotId))
-                    {
-                        _lotsInternes.Add(lot.LotId, lot);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Vide tous les lots du projet.
-        /// </summary>
-        public void ViderLots()
-        {
-            _lotsInternes.Clear();
-        }
+        public List<Lot> ObtenirTousLesLots() => _lots.Values.OrderBy(l => l.Priorite).ThenBy(l => l.Nom).ToList();
+        public Lot ObtenirLotParId(string lotId) => _lots.GetValueOrDefault(lotId);
 
         #endregion
 
-        #region CRUD Operations - Métiers V0.4.2 (🔄 MIS À JOUR)
+        #region Gestion des Blocs
 
-        /// <summary>
-        /// Ajoute un nouveau métier au projet.
-        /// </summary>
-        public void AjouterMetier(Metier nouveauMetier)
+        public Bloc CreerBloc(string lotIdParent, string nom = "Nouveau Bloc", int capacite = 1)
         {
-            if (nouveauMetier == null)
-                throw new ArgumentNullException(nameof(nouveauMetier));
-            if (string.IsNullOrWhiteSpace(nouveauMetier.MetierId))
-                throw new ArgumentException("L'ID du métier ne peut pas être vide.", nameof(nouveauMetier.MetierId));
-            if (_metiersInternes.ContainsKey(nouveauMetier.MetierId))
-                throw new InvalidOperationException($"Un métier avec l'ID '{nouveauMetier.MetierId}' existe déjà.");
-
-            _metiersInternes.Add(nouveauMetier.MetierId, nouveauMetier);
-        }
-
-        /// <summary>
-        /// 🔄 MODIFIÉ V0.4.2 : Support Dictionary PrerequisParPhase
-        /// Utilisé par: MetierForm pour sauvegarder précédences par phase
-        /// </summary>
-        public void ModifierMetier(string metierId, string nom,
-            Dictionary<ChantierPhase, List<string>> prerequisParPhase,
-            string couleurHex = null, string pictogram = null, ChantierPhase? phases = null)
-        {
-            if (!_metiersInternes.TryGetValue(metierId, out var metierAModifier))
-                throw new KeyNotFoundException($"Le métier avec l'ID '{metierId}' n'a pas été trouvé.");
-
-            metierAModifier.Nom = nom;
-
-            // 🆕 NOUVEAU : Gestion Dictionary PrerequisParPhase
-            metierAModifier.PrerequisParPhase = prerequisParPhase ?? new Dictionary<ChantierPhase, List<string>>();
-
-            if (couleurHex != null)
-                metierAModifier.CouleurHex = couleurHex;
-
-            if (pictogram != null)
-                metierAModifier.Pictogram = pictogram;
-
-            if (phases.HasValue)
-                metierAModifier.Phases = phases.Value;
-        }
-
-        /// <summary>
-        /// 🆕 NOUVEAU V0.4.2 : Support création métiers spécifiques (amiante, nucléaire, QSE)
-        /// Utilisé par: MetierForm Concept 1 pour métiers rares
-        /// 🔄 TODO V0.5 : Déléguer génération ID à IdMetierGeneratorService
-        /// </summary>
-        /// <param name="nom">Nom du métier spécifique</param>
-        /// <param name="phases">Phases d'intervention</param>
-        /// <param name="couleurHex">Couleur personnalisée (optionnel)</param>
-        /// <returns>ID généré pour le nouveau métier</returns>
-        public string AjouterMetierSpecifique(string nom, ChantierPhase phases, string couleurHex = null)
-        {
-            if (string.IsNullOrWhiteSpace(nom))
-                throw new ArgumentException("Le nom du métier ne peut pas être vide.", nameof(nom));
-
-            if (phases == ChantierPhase.None)
-                throw new ArgumentException("Au moins une phase d'intervention doit être spécifiée.", nameof(phases));
-
-            // 🔄 TEMPORAIRE V0.4.2 : Génération ID locale (à migrer vers IdMetierGeneratorService V0.5)
-            var nomNormalise = nom.ToUpperInvariant()
-                .Replace(" ", "_")
-                .Replace("É", "E")
-                .Replace("È", "E")
-                .Replace("Ê", "E");
-
-            var prefixe = $"M_{nomNormalise}_";
-            var compteur = 1;
-            string idCandidat;
-
-            do
+            var lotParent = ObtenirLotParId(lotIdParent);
+            if (lotParent == null) throw new InvalidOperationException($"Lot parent '{lotIdParent}' non trouvé.");
+            var tousLesBlocs = _lots.Values.SelectMany(l => l.Blocs).ToList();
+            var nouveauBloc = new Bloc
             {
-                idCandidat = $"{prefixe}{compteur:D3}";
-                compteur++;
-            } while (_metiersInternes.ContainsKey(idCandidat));
-
-            var nouveauMetier = new Metier
-            {
-                MetierId = idCandidat,
+                LotId = lotIdParent,
+                BlocId = _idGenerator.GenererProchainBlocId(lotIdParent, tousLesBlocs),
                 Nom = nom,
-                Phases = phases,
-                CouleurHex = couleurHex ?? "",
-                PrerequisParPhase = new Dictionary<ChantierPhase, List<string>>()
+                CapaciteMaxOuvriers = capacite
             };
-
-            AjouterMetier(nouveauMetier);
-            return idCandidat;
+            lotParent.Blocs.Add(nouveauBloc);
+            return nouveauBloc;
         }
 
-        /// <summary>
-        /// Supprime un métier du projet.
-        /// 🔄 MODIFIÉ V0.4.2 : Mise à jour nettoyage prérequis avec nouvelle structure
-        /// </summary>
-        public void SupprimerMetier(string metierId)
+        public void ModifierBloc(Bloc blocModifie)
         {
-            if (!_metiersInternes.Remove(metierId))
-                throw new KeyNotFoundException($"Le métier avec l'ID '{metierId}' n'a pas été trouvé.");
+            if (blocModifie == null) throw new ArgumentNullException(nameof(blocModifie));
+            var lotParent = ObtenirLotParId(blocModifie.LotId);
+            if (lotParent == null) throw new InvalidOperationException("Lot parent non trouvé pour ce bloc.");
+            var blocIndex = lotParent.Blocs.FindIndex(b => b.BlocId == blocModifie.BlocId);
+            if (blocIndex == -1) throw new InvalidOperationException($"Le bloc '{blocModifie.Nom}' n'a pas été trouvé.");
+            lotParent.Blocs[blocIndex] = blocModifie;
+        }
 
-            // Supprimer ce métier des prérequis des autres métiers
-            foreach (var metier in _metiersInternes.Values)
+        public void SupprimerBloc(string blocId)
+        {
+            if (ObtenirTachesParBloc(blocId).Any())
+                throw new InvalidOperationException("Impossible de supprimer ce bloc car il est utilisé par au moins une tâche.");
+            foreach (var lot in _lots.Values)
             {
-                var prerequisParPhaseModifies = new Dictionary<ChantierPhase, List<string>>();
-
-                foreach (var (phase, prerequisPhase) in metier.PrerequisParPhase)
-                {
-                    var prerequisNettoyes = prerequisPhase.Where(id => id != metierId).ToList();
-                    if (prerequisNettoyes.Count > 0)
-                    {
-                        prerequisParPhaseModifies[phase] = prerequisNettoyes;
-                    }
-                }
-
-                metier.PrerequisParPhase = prerequisParPhaseModifies;
+                lot.Blocs.RemoveAll(b => b.BlocId == blocId);
             }
         }
+
+        public List<Bloc> ObtenirBlocsParLot(string lotId)
+        {
+            var lot = ObtenirLotParId(lotId);
+            return lot?.Blocs.OrderBy(b => b.Nom).ToList() ?? new List<Bloc>();
+        }
+
+        public List<Bloc> ObtenirTousLesBlocs() => _lots.Values.SelectMany(l => l.Blocs).OrderBy(b => b.Nom).ToList();
+        public Bloc ObtenirBlocParId(string blocId) => _lots.Values.SelectMany(l => l.Blocs).FirstOrDefault(b => b.BlocId == blocId);
 
         #endregion
 
-        #region Data Loading and Retrieval - Métiers V0.4.2 (🔄 MIS À JOUR)
+        #region Gestion des Tâches
 
-        /// <summary>
-        /// Remplace tous les métiers existants par une nouvelle liste.
-        /// </summary>
-        public void RemplacerTousLesMetiers(IReadOnlyList<Metier> metiers)
+        public Tache CreerTache(string lotId, string blocId, string nom = "Nouvelle Tâche", int heures = 8)
         {
-            _metiersInternes.Clear();
-            if (metiers != null)
+            var nouvelleTache = new Tache
             {
-                foreach (var metier in metiers)
-                {
-                    if (!string.IsNullOrEmpty(metier.MetierId) && !_metiersInternes.ContainsKey(metier.MetierId))
-                    {
-                        _metiersInternes.Add(metier.MetierId, metier);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Retourne tous les métiers du projet.
-        /// </summary>
-        public IReadOnlyList<Metier> GetAllMetiers()
-        {
-            return _metiersInternes.Values.ToList();
-        }
-
-        /// <summary>
-        /// Retourne un métier par son ID.
-        /// </summary>
-        public Metier GetMetierById(string metierId)
-        {
-            if (string.IsNullOrEmpty(metierId))
-            {
-                return null;
-            }
-
-            _metiersInternes.TryGetValue(metierId, out var metier);
-            return metier;
-        }
-
-        /// <summary>
-        /// 🆕 V0.4.2.1 - Obtient les prérequis pour une phase SPÉCIFIQUE.
-        /// C'est la méthode à utiliser par défaut pour respecter la logique par phase.
-        /// </summary>
-        /// <param name="metierId">L'ID du métier</param>
-        /// <param name="phase">La phase de chantier concernée. Ne peut pas être null.</param>
-        /// <returns>Une liste d'IDs de métiers prérequis pour cette phase précise.</returns>
-        public List<string> GetPrerequisPourPhase(string metierId, ChantierPhase phase)
-        {
-            var metier = GetMetierById(metierId);
-            if (metier?.PrerequisParPhase != null && metier.PrerequisParPhase.TryGetValue(phase, out var prerequis))
-            {
-                return prerequis.ToList(); // Retourne la liste des prérequis pour la phase
-            }
-            return new List<string>(); // Retourne une liste vide si pas de prérequis pour cette phase
-        }
-
-        /// <summary>
-        /// 🆕 V0.4.2.1 - Obtient TOUS les prérequis d'un métier, toutes phases confondues.
-        /// À utiliser avec précaution, principalement pour la validation de cycles globaux.
-        /// </summary>
-        /// <param name="metierId">L'ID du métier</param>
-        /// <returns>Une liste unique de tous les IDs de prérequis, peu importe la phase.</returns>
-        public List<string> GetTousPrerequisConfondus(string metierId)
-        {
-            var metier = GetMetierById(metierId);
-            if (metier?.PrerequisParPhase == null)
-            {
-                return new List<string>();
-            }
-
-            // Aplatit les listes de toutes les phases et supprime les doublons
-            return metier.PrerequisParPhase.Values
-                .SelectMany(prereqs => prereqs)
-                .Distinct()
-                .ToList();
-        }
-
-
-        #endregion
-
-
-        #region Couleurs - Métiers (déplacé de MetierService)
-
-        /// <summary>
-        /// Obtient la couleur d'affichage pour un métier.
-        /// Priorité 1: Utilise la couleur personnalisée si elle est valide.
-        /// Priorité 2: Attribue et mémorise une couleur de fallback unique.
-        /// </summary>
-        public Color GetDisplayColorForMetier(string metierId)
-        {
-            if (string.IsNullOrEmpty(metierId))
-            {
-                return Color.MistyRose; // Couleur pour "non assigné"
-            }
-
-            var metier = GetMetierById(metierId);
-
-            // Priorité 1: Couleur personnalisée
-            if (metier != null && !string.IsNullOrEmpty(metier.CouleurHex))
-            {
-                try
-                {
-                    return ColorTranslator.FromHtml(metier.CouleurHex);
-                }
-                catch
-                {
-                    // La couleur est malformée, on passe au fallback
-                }
-            }
-
-            // Priorité 2: Couleur de fallback
-            if (!_assignedFallbackColors.ContainsKey(metierId))
-            {
-                _assignedFallbackColors[metierId] = FallbackColors[_fallbackColorIndex % FallbackColors.Length];
-                _fallbackColorIndex++;
-            }
-            return _assignedFallbackColors[metierId];
-        }
-
-        #endregion
-
-        #region Export/Import CSV groupé (Non fonctionnel - à traiter dans une phase ultérieure)
-
-        /// <summary>
-        /// Exporte toutes les données vers des fichiers CSV séparés
-        /// </summary>
-        public void ExporterToutVersCsv(string dossierDestination, string prefixeNom = "export")
-        {
-            throw new NotImplementedException("La fonctionnalité d'export CSV doit être revue pour la nouvelle structure de données.");
-        }
-
-        /// <summary>
-        /// Importe toutes les données depuis des fichiers CSV
-        /// </summary>
-        public ResumeImport ImporterToutDepuisCsv(string cheminMetiers, string cheminOuvriers, string cheminTaches)
-        {
-            throw new NotImplementedException("La fonctionnalité d'import CSV doit être revue pour la nouvelle structure de données.");
-        }
-
-        #endregion
-
-        #region Utilitaires
-
-        
-
-        /// <summary>
-        /// Obtient un résumé du projet actuel
-        /// </summary>
-        public ResumeProjet ObtenirResumeProjet()
-        {
-            return new ResumeProjet
-            {
-                NombreMetiers = GetAllMetiers().Count,
-                StatistiquesOuvriers = _ouvrierService.ObtenirStatistiques(),
-                StatistiquesTaches = _tacheService.ObtenirStatistiques(),
-                StatistiquesMappingMetiers = _tacheService.ObtenirStatistiquesMappingMetiers()
+                LotId = lotId,
+                BlocId = blocId,
+                TacheId = _idGenerator.GenererProchainTacheId(blocId, _taches.Values.ToList()),
+                TacheNom = nom,
+                HeuresHommeEstimees = heures
             };
+            _taches.Add(nouvelleTache.TacheId, nouvelleTache);
+            return nouvelleTache;
         }
 
-        /// <summary>
-        /// Charge les métiers par défaut depuis le fichier de configuration.
-        /// 🔄 MODIFIÉ V0.4.2 : Support migration automatique PrerequisMetierIds → PrerequisParPhase
-        /// 🔄 TODO V0.5 : Déléguer à IdMetierGeneratorService + config loader dédié
-        /// </summary>
-        private void ChargerMetiersParDefaut()
+        public void ModifierTache(Tache tacheModifiee)
         {
-            // Ne charger que si aucun métier n'est déjà là (pour les nouveaux projets)
-            if (_metiersInternes.Any()) return;
-
-            try
-            {
-                // Chemin du fichier de configuration à côté de l'exécutable
-                string filePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "DefaultMetiersConfig.json");
-
-                if (!File.Exists(filePath))
-                {
-                    return;
-                }
-
-                string json = File.ReadAllText(filePath);
-                var defaultMetiers = JsonSerializer.Deserialize<List<Metier>>(json);
-
-                if (defaultMetiers != null)
-                {
-                    // 🆕 V0.4.2 : Migration automatique pour les métiers de DefaultMetiersConfig.json
-                    // Les métiers avec ancienne propriété PrerequisMetierIds sont automatiquement migrés
-                    // grâce au setter de la propriété helper Metier.PrerequisMetierIds
-                    RemplacerTousLesMetiers(defaultMetiers);
-                }
-            }
-            catch (Exception ex)
-            {
-                // Gérer l'erreur de chargement des métiers par défaut (log, message d'erreur si critique)
-                Console.WriteLine($"Erreur lors du chargement des métiers par défaut: {ex.Message}");
-            }
+            if (tacheModifiee == null) throw new ArgumentNullException(nameof(tacheModifiee));
+            if (!_taches.ContainsKey(tacheModifiee.TacheId)) throw new InvalidOperationException($"La tâche '{tacheModifiee.TacheNom}' n'a pas été trouvée.");
+            _taches[tacheModifiee.TacheId] = tacheModifiee;
         }
+
+        public void SupprimerTache(string tacheId)
+        {
+            if (_taches.Values.Any(t => (t.Dependencies ?? "").Split(',').Select(d => d.Trim()).Contains(tacheId)))
+                throw new InvalidOperationException("Impossible de supprimer cette tâche car d'autres tâches en dépendent.");
+            _taches.Remove(tacheId);
+        }
+
+        public List<Tache> ObtenirToutesLesTaches() => _taches.Values.ToList();
+        public Tache ObtenirTacheParId(string tacheId) => _taches.GetValueOrDefault(tacheId);
+        public List<Tache> ObtenirTachesParLot(string lotId) => _taches.Values.Where(t => t.LotId == lotId).ToList();
+        public List<Tache> ObtenirTachesParBloc(string blocId) => _taches.Values.Where(t => t.BlocId == blocId).ToList();
+        public virtual List<Tache> ObtenirTachesParMetier(string metierId) => _taches.Values.Where(t => t.MetierId == metierId).ToList();
 
         #endregion
     }

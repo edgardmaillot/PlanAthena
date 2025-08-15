@@ -5,8 +5,7 @@ namespace PlanAthena.Forms
 {
     public partial class BlocForm : System.Windows.Forms.Form
     {
-        private readonly BlocService _blocService;
-        private readonly TacheService _tacheService;
+        private readonly ProjetService _projetService;
         private Bloc _blocSelectionne = null;
         private readonly string _blocIdToEditOnInit;
         private readonly Lot _lotActifPourCreation;
@@ -19,11 +18,11 @@ namespace PlanAthena.Forms
         /// <param name="tacheService">Service de gestion des tâches</param>
         /// <param name="blocIdToEdit">ID du bloc à éditer (null pour création)</param>
         /// <param name="lotActifPourCreation">Lot actif pour la création d'un nouveau bloc (null pour édition)</param>
-        public BlocForm(BlocService blocService, TacheService tacheService, string blocIdToEdit = null, Lot lotActifPourCreation = null)
+        public BlocForm(ProjetService projetService, string blocIdToEdit = null, Lot lotActifPourCreation = null)
         {
             InitializeComponent();
-            _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
-            _tacheService = tacheService ?? throw new ArgumentNullException(nameof(tacheService));
+            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
+
             _blocIdToEditOnInit = blocIdToEdit;
             _lotActifPourCreation = lotActifPourCreation;
         }
@@ -34,7 +33,7 @@ namespace PlanAthena.Forms
 
             if (!string.IsNullOrEmpty(_blocIdToEditOnInit))
             {
-                var blocExistant = _blocService.ObtenirBlocParId(_blocIdToEditOnInit);
+                var blocExistant = _projetService.ObtenirBlocParId(_blocIdToEditOnInit);
                 if (blocExistant != null)
                 {
                     _blocSelectionne = blocExistant;
@@ -43,13 +42,11 @@ namespace PlanAthena.Forms
             }
             else if (_lotActifPourCreation != null)
             {
-                var nouveauBlocId = _blocService.GenerateNewBlocId(_lotActifPourCreation.LotId);
-                _blocSelectionne = new Bloc
-                {
-                    BlocId = nouveauBlocId,
-                    Nom = "Nouveau bloc",
-                    CapaciteMaxOuvriers = 1
-                };
+                // C'est super DIRTY mais on n'a pas le choix pour l'instant
+                // Ca peut bug si l'utilisateur annule la création de bloc
+                // A nettoyer propremant lors de la refonte de l'IHM
+                var nouveauBloc = _projetService.CreerBloc(_lotActifPourCreation.LotId);
+                _blocSelectionne = nouveauBloc;
                 AfficherDetailsBloc(_blocSelectionne);
                 txtNom.Focus();
                 txtNom.SelectAll();
@@ -116,7 +113,7 @@ namespace PlanAthena.Forms
         private bool IsBlocUtilise(string blocId)
         {
             if (string.IsNullOrEmpty(blocId)) return false;
-            return _tacheService.ObtenirTachesParBloc(blocId).Any();
+            return _projetService.ObtenirTachesParBloc(blocId).Any();
         }
 
         /// <summary>
@@ -166,7 +163,7 @@ namespace PlanAthena.Forms
                 _blocSelectionne.Nom = txtNom.Text;
                 _blocSelectionne.CapaciteMaxOuvriers = (int)numCapaciteMax.Value;
 
-                _blocService.SaveBloc(_blocSelectionne);
+                _projetService.ModifierBloc(_blocSelectionne);
 
                 this.DialogResult = DialogResult.OK;
                 this.Close();
@@ -205,7 +202,7 @@ namespace PlanAthena.Forms
             {
                 try
                 {
-                    _blocService.SupprimerBloc(_blocSelectionne.BlocId);
+                    _projetService.SupprimerBloc(_blocSelectionne.BlocId);
                     this.DialogResult = DialogResult.OK;
                     this.Close();
                 }

@@ -1,6 +1,10 @@
+// Fichier: PlanAthena/Services/Processing/DataTransformer.cs
+// Version: 0.4.4
+// Description: Mise à jour complète pour s'aligner sur la nouvelle architecture.
+// Le service opère désormais sur l'objet ProjetData et les pools de ressources globaux.
+
 using PlanAthena.Core.Facade.Dto.Input;
 using PlanAthena.Data;
-using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
 using System;
 using System.Collections.Generic;
@@ -9,30 +13,23 @@ using CoreEnums = PlanAthena.Core.Facade.Dto.Enums;
 
 namespace PlanAthena.Services.Processing
 {
-    /// <summary>
-    /// Service de transformation des données V0.4.2.1
-    /// 🔧 VERSION FINALE CORRIGÉE : Gère la nouvelle structure Ouvrier/Compétences,
-    /// Metier/PrerequisParPhase et fournit des valeurs par défaut pour les champs supprimés
-    /// (NiveauExpertise, PerformancePct) afin de respecter le contrat de la DLL Core.
-    /// </summary>
     public class DataTransformer
     {
-        private readonly ProjetService _projetService;
-        private readonly BlocService _blocService;
-
-        public DataTransformer(ProjetService projetService, BlocService blocService)
+        // Le service n'a plus besoin de dépendances pour fonctionner.
+        public DataTransformer()
         {
-            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
-            _blocService = blocService ?? throw new ArgumentNullException(nameof(blocService));
         }
 
         public ChantierSetupInputDto TransformToChantierSetupDto(
-            List<Ouvrier> ouvriers,
+            ProjetData projet,
+            List<Ouvrier> poolOuvriers,
+            List<Metier> poolMetiers,
             List<Tache> processedTaches,
-            List<Metier> allMetiers,
             ConfigurationPlanification configurationPlanification)
         {
-            ArgumentNullException.ThrowIfNull(ouvriers);
+            ArgumentNullException.ThrowIfNull(projet);
+            ArgumentNullException.ThrowIfNull(poolOuvriers);
+            ArgumentNullException.ThrowIfNull(poolMetiers);
             ArgumentNullException.ThrowIfNull(processedTaches);
             ArgumentNullException.ThrowIfNull(configurationPlanification);
 
@@ -48,8 +45,8 @@ namespace PlanAthena.Services.Processing
                 Dependencies = t.Dependencies?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>()
             }).ToList();
 
-            // Transformation des blocs depuis le BlocService
-            var blocsDto = _blocService.ObtenirTousLesBlocs()
+            // Transformation des blocs (extraits de la hiérarchie des lots)
+            var blocsDto = projet.Lots.SelectMany(l => l.Blocs)
                 .Select(b => new BlocTravailDto
                 {
                     BlocId = b.BlocId,
@@ -57,33 +54,30 @@ namespace PlanAthena.Services.Processing
                     CapaciteMaxOuvriers = b.CapaciteMaxOuvriers
                 }).ToList();
 
-            // Transformation des lots depuis le ProjetService
+            // Transformation des lots
             var blocIdsParLot = processedTaches
                 .GroupBy(t => t.LotId)
                 .ToDictionary(g => g.Key, g => g.Select(t => t.BlocId).Distinct().ToList());
 
-            var lotsDto = _projetService.ObtenirTousLesLots()
-                .Select(l => new LotTravauxDto
-                {
-                    LotId = l.LotId,
-                    Nom = l.Nom,
-                    Priorite = l.Priorite,
-                    BlocIds = blocIdsParLot.GetValueOrDefault(l.LotId, new List<string>())
-                }).ToList();
+            var lotsDto = projet.Lots.Select(l => new LotTravauxDto
+            {
+                LotId = l.LotId,
+                Nom = l.Nom,
+                Priorite = l.Priorite,
+                BlocIds = blocIdsParLot.GetValueOrDefault(l.LotId, new List<string>())
+            }).ToList();
 
-            // 🔧 NOUVELLE LOGIQUE V0.4.2.1 - Transformation des métiers
-            // On envoie au Core la liste de tous les prérequis, toutes phases confondues,
-            // car le contrat de la DLL Core ne gère pas encore les phases.
-            var metiersDto = allMetiers.Select(m => new MetierDto
+            // Transformation des métiers (depuis le pool de ressources)
+            var metiersDto = poolMetiers.Select(m => new MetierDto
             {
                 MetierId = m.MetierId,
                 Nom = m.Nom,
-                PrerequisMetierIds = _projetService.GetTousPrerequisConfondus(m.MetierId).ToArray()
+                // Aplatit les prérequis de toutes les phases pour compatibilité avec le Core
+                PrerequisMetierIds = m.PrerequisParPhase.Values.SelectMany(prereqs => prereqs).Distinct().ToArray()
             }).ToList();
 
-            // 🔧 NOUVELLE LOGIQUE V0.4.2.1 - Transformation des ouvriers
-            // On parcourt directement la liste des ouvriers uniques et leurs compétences.
-            var ouvriersDto = ouvriers.Select(ouvrier => new OuvrierDto
+            // Transformation des ouvriers (depuis le pool de ressources)
+            var ouvriersDto = poolOuvriers.Select(ouvrier => new OuvrierDto
             {
                 OuvrierId = ouvrier.OuvrierId,
                 Nom = ouvrier.Nom,
@@ -92,14 +86,8 @@ namespace PlanAthena.Services.Processing
                 Competences = ouvrier.Competences.Select(comp => new CompetenceDto
                 {
                     MetierId = comp.MetierId,
-
-                    // 🔧 CORRECTION FINALE : On envoie des valeurs par défaut VALIDES pour les champs
-                    // qui ont été supprimés de notre modèle mais sont TOUJOURS REQUIS par le Core.
-
-                    // Pour NiveauExpertise, on envoie "Confirmé" pour passer la validation de l'enum.
+                    // Valeurs par défaut pour les champs supprimés mais requis par le Core
                     Niveau = CoreEnums.NiveauExpertise.Confirme,
-
-                    // Pour PerformancePct, on envoie 100% par défaut.
                     PerformancePct = 100
                 }).ToList()
             }).ToList();
@@ -122,7 +110,6 @@ namespace PlanAthena.Services.Processing
                     DureeJournaliereStandardHeures = configurationPlanification.DureeJournaliereStandardHeures,
                     PenaliteChangementOuvrierPourcentage = configurationPlanification.PenaliteChangementOuvrierPourcentage,
                     CoutIndirectJournalier = configurationPlanification.CoutIndirectJournalierAbsolu,
-                    // NOUVEAU : Conversion des minutes (depuis l'UI) en secondes (pour la DLL)
                     DureeCalculMaxSecondes = configurationPlanification.DureeCalculMaxMinutes * 60
                 };
             }
@@ -130,7 +117,7 @@ namespace PlanAthena.Services.Processing
             // Construction du DTO final
             return new ChantierSetupInputDto
             {
-                ChantierId = $"CHANTIER_TEST_{DateTime.Now:yyyyMMdd_HHmmss}",
+                ChantierId = $"CHANTIER_{DateTime.Now:yyyyMMdd_HHmmss}",
                 Description = configurationPlanification.Description,
                 DateDebutSouhaitee = configurationPlanification.DateDebutSouhaitee,
                 DateFinSouhaitee = configurationPlanification.DateFinSouhaitee,

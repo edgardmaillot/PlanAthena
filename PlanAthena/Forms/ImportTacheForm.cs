@@ -16,6 +16,7 @@ namespace PlanAthena.Forms
     {
         private Lot _lotActif;
         private ProjetService _projetService;
+        private RessourceService _ressourceService;
         private List<string> _csvHeaders = new List<string>();
         private List<Dictionary<string, string>> _csvDataPreview = new List<Dictionary<string, string>>();
         private ImportMappingConfiguration _mappingConfiguration = new ImportMappingConfiguration();
@@ -46,12 +47,13 @@ namespace PlanAthena.Forms
 
         public ImportMappingConfiguration MappingConfiguration => _mappingConfiguration;
 
-        public ImportTacheForm(string filePath, Lot lotActif, ProjetService projetService)
+        public ImportTacheForm(string filePath, Lot lotActif, ProjetService projetService, RessourceService ressourceService)
         {
             InitializeComponent();
             _filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
             _lotActif = lotActif ?? throw new ArgumentNullException(nameof(lotActif));
             _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
+            _ressourceService = ressourceService ?? throw new ArgumentNullException(nameof(ressourceService));
 
             this.Text = $"Importer des tâches dans le lot '{_lotActif.Nom}'";
             lblSelectedLot.Text = $"Lot cible : {_lotActif.Nom} ({_lotActif.LotId})";
@@ -59,6 +61,7 @@ namespace PlanAthena.Forms
             InitializeMappingUI();
             LoadCsvFile();
             CheckValidationStatus(); // Vérifier l'état initial du bouton d'import
+            _ressourceService = ressourceService;
         }
 
         private void InitializeMappingUI()
@@ -450,7 +453,7 @@ namespace PlanAthena.Forms
                 return;
             }
 
-            var allExistingMetiers = _projetService.GetAllMetiers().Select(m => m.MetierId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var allExistingMetiers = _ressourceService.GetAllMetiers().Select(m => m.MetierId).ToHashSet(StringComparer.OrdinalIgnoreCase);
             var missingMetiers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var row in _csvDataPreview)

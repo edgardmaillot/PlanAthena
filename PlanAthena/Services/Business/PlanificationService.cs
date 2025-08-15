@@ -1,12 +1,16 @@
-// Fichier: Services/Business/PlanificationService.cs
+// Fichier: PlanAthena/Services/Business/PlanificationService.cs
+// Version: 0.4.4
+// Description: Mise à jour complète pour s'aligner sur la nouvelle architecture. Le service est sans état
+// et reçoit les données (ProjetData, pools de ressources) via les paramètres de ses méthodes.
 
 using PlanAthena.Core.Facade;
-using PlanAthena.Core.Facade.Dto.Output;
 using PlanAthena.Data;
-using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.Business.DTOs;
-using PlanAthena.Forms;
 using PlanAthena.Services.Processing;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PlanAthena.Services.Business
 {
@@ -23,10 +27,6 @@ namespace PlanAthena.Services.Business
         private readonly PreparationSolveurService _preparationSolveurService;
         private readonly ResultatConsolidationService _consolidationService;
 
-        private IReadOnlyList<Ouvrier> _ouvriers = new List<Ouvrier>();
-        private IReadOnlyList<Tache> _taches = new List<Tache>();
-        private IReadOnlyList<Metier> _metiers = new List<Metier>();
-
         public PlanificationService(
             PlanAthenaCoreFacade facade,
             DataTransformer dataTransformer,
@@ -39,54 +39,43 @@ namespace PlanAthena.Services.Business
             _consolidationService = consolidationService ?? throw new ArgumentNullException(nameof(consolidationService));
         }
 
-        public void ChargerDonnees(IReadOnlyList<Ouvrier> ouvriers, IReadOnlyList<Tache> taches, IReadOnlyList<Metier> metiers)
-        {
-            _ouvriers = ouvriers ?? new List<Ouvrier>();
-            _taches = taches ?? new List<Tache>();
-            _metiers = metiers ?? new List<Metier>();
-        }
-
-        public bool ValiderDonneesChargees()
-        {
-            return _ouvriers.Any() && _metiers.Any() && _taches.Any();
-        }
-
-        /// <summary>
-        /// Lance la planification et retourne le résultat complet (brut + consolidé)
-        /// </summary>
-        public async Task<PlanificationResultDto> LancerPlanificationAsync(ConfigurationPlanification configuration)
+        public async Task<PlanificationResultDto> LancerPlanificationAsync(
+            ProjetData projet,
+            List<Ouvrier> poolOuvriers,
+            List<Metier> poolMetiers,
+            ConfigurationPlanification configuration)
         {
             if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));
 
-            if (!ValiderDonneesChargees())
-                throw new PlanificationException("Toutes les données (ouvriers, métiers, tâches) doivent être chargées avant de lancer la planification.");
+            if (projet?.Taches == null || !projet.Taches.Any())
+                throw new PlanificationException("Le projet ne contient aucune tâche à planifier.");
+            if (poolOuvriers == null || !poolOuvriers.Any())
+                throw new PlanificationException("Le pool de ressources ne contient aucun ouvrier.");
+            if (poolMetiers == null || !poolMetiers.Any())
+                throw new PlanificationException("Le pool de ressources ne contient aucun métier.");
 
             try
             {
-                // Étape 1 : Préparation des données avec récupération de la table de mappage
-                var preparationResult = _preparationSolveurService.PreparerPourSolveur(_taches, configuration.HeuresTravailEffectifParJour);
+                var preparationResult = _preparationSolveurService.PreparerPourSolveur(projet.Taches, configuration.HeuresTravailEffectifParJour);
 
-                // Étape 2 : Transformation pour le solveur
                 var inputDto = _dataTransformer.TransformToChantierSetupDto(
-                    _ouvriers.ToList(),
-                    preparationResult.TachesPreparees, 
-                    _metiers.ToList(),
+                    projet,
+                    poolOuvriers,
+                    poolMetiers,
+                    preparationResult.TachesPreparees,
                     configuration
                 );
 
-                // Étape 3 : Appel du solveur
                 var resultatBrut = await _facade.ProcessChantierAsync(inputDto);
 
-                // Étape 4 : Consolidation pour l'export Gantt
                 var ganttConsolide = _consolidationService.ConsoliderPourGantt(
                     resultatBrut,
                     preparationResult.ParentIdParSousTacheId,
-                    _taches,
-                    "Planning PlanAthena"
+                    projet.Taches,
+                    projet.InformationsProjet.NomProjet ?? "Planning"
                 );
 
-                // Retourner le résultat complet
                 return new PlanificationResultDto
                 {
                     ResultatBrut = resultatBrut,
@@ -99,34 +88,29 @@ namespace PlanAthena.Services.Business
             }
         }
 
-        // CORRIGÉ : La méthode a été entièrement revue pour être plus robuste.
-        public StatistiquesSimplifiees ObtenirStatistiquesTraitement(int heuresTravailEffectifParJour)
+        public StatistiquesSimplifiees ObtenirStatistiquesTraitement(IReadOnlyList<Tache> taches, int heuresTravailEffectifParJour)
         {
-            if (!ValiderDonneesChargees())
+            if (taches == null || !taches.Any())
             {
                 return new StatistiquesSimplifiees();
             }
 
             try
             {
-                var preparationResult = _preparationSolveurService.PreparerPourSolveur(_taches, heuresTravailEffectifParJour);
+                var preparationResult = _preparationSolveurService.PreparerPourSolveur(taches, heuresTravailEffectifParJour);
                 var tachesPourSolveur = preparationResult.TachesPreparees;
 
-                // Calcul plus fiable des statistiques :
-                // 1. Tâches découpées : on compte les tâches originales qui satisfont la condition.
                 int heureLimiteDecoupage = heuresTravailEffectifParJour + 1;
-                int tachesLonguesDecoupees = _taches.Count(t => t.Type == TypeActivite.Tache && t.HeuresHommeEstimees > heureLimiteDecoupage);
-
-                // 2. Jalons techniques : on compte les tâches du bon type dans le résultat final.
+                int tachesLonguesDecoupees = taches.Count(t => t.Type == TypeActivite.Tache && t.HeuresHommeEstimees > heureLimiteDecoupage);
                 int jalonsTechniquesCrees = tachesPourSolveur.Count(t => t.Type == TypeActivite.JalonTechnique);
 
                 return new StatistiquesSimplifiees
                 {
-                    TachesChef = _taches.Count,
+                    TachesChef = taches.Count,
                     TachesSolveur = tachesPourSolveur.Count,
                     TachesDecoupees = tachesLonguesDecoupees,
                     JalonsTechniques = jalonsTechniquesCrees,
-                    Resume = $"Chef: {_taches.Count} tâches → Solveur: {tachesPourSolveur.Count} " +
+                    Resume = $"Chef: {taches.Count} tâches → Solveur: {tachesPourSolveur.Count} " +
                             $"({tachesLonguesDecoupees} découpées, {jalonsTechniquesCrees} jalons tech.)"
                 };
             }
@@ -134,43 +118,28 @@ namespace PlanAthena.Services.Business
             {
                 return new StatistiquesSimplifiees
                 {
-                    TachesChef = _taches.Count,
-                    TachesSolveur = _taches.Count,
-                    Resume = $"Chef: {_taches.Count} tâches (erreur préparation solveur)"
+                    TachesChef = taches.Count,
+                    TachesSolveur = taches.Count,
+                    Resume = $"Chef: {taches.Count} tâches (erreur préparation solveur)"
                 };
             }
         }
 
-        public List<Tache> ObtenirTachesLogiques()
+        public List<Tache> ObtenirTachesPourSolveur(IReadOnlyList<Tache> taches, int heuresTravailEffectifParJour)
         {
-            if (!ValiderDonneesChargees())
-                return new List<Tache>();
-            return _taches.ToList();
-        }
-
-        public List<Tache> ObtenirTachesPourSolveur(int heuresTravailEffectifParJour)
-        {
-            if (!ValiderDonneesChargees())
+            if (taches == null || !taches.Any())
                 return new List<Tache>();
             try
             {
-                var preparationResult = _preparationSolveurService.PreparerPourSolveur(_taches, heuresTravailEffectifParJour);
+                var preparationResult = _preparationSolveurService.PreparerPourSolveur(taches, heuresTravailEffectifParJour);
                 return preparationResult.TachesPreparees;
             }
             catch (Exception)
             {
-                // En cas d'erreur, retourner la liste originale pour éviter un crash.
-                return _taches.ToList();
+                return taches.ToList();
             }
         }
     }
 
-    public class StatistiquesSimplifiees
-    {
-        public int TachesChef { get; set; }
-        public int TachesSolveur { get; set; }
-        public int TachesDecoupees { get; set; }
-        public int JalonsTechniques { get; set; }
-        public string Resume { get; set; } = "";
-    }
+    
 }

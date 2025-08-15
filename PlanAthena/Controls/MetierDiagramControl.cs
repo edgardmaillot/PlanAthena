@@ -50,6 +50,7 @@ namespace PlanAthena.Controls
         private MetierDiagramSettings _settings; // Paramètres de style spécifiques aux métiers
         private MetierNodeBuilder _nodeBuilder; // Builder pour créer les nœuds de métier
         private ProjetService _projetService; // Service principal pour accéder aux données des métiers
+        private RessourceService _ressourceService; // Service pour récupérer les prérequis et autres données métier
         private DependanceBuilder _dependanceBuilder; // Pour la validation des dépendances métier (non utilisé directement dans le diagramme, mais peut être utile pour des futures fonctionnalités d'interaction)
 
         private List<Metier> _metiers = new List<Metier>(); // La liste des métiers actuellement affichée
@@ -109,10 +110,11 @@ namespace PlanAthena.Controls
         /// <param name="projetService">Le service de gestion du projet (pour les métiers).</param>
         /// <param name="dependanceBuilder">Le service de construction de dépendances (pour les validations).</param>
         /// <param name="settings">Les paramètres de configuration visuelle du diagramme.</param>
-        public void Initialize(ProjetService projetService, DependanceBuilder dependanceBuilder, MetierDiagramSettings settings)
+        public void Initialize(ProjetService projetService,RessourceService ressourceService, DependanceBuilder dependanceBuilder, MetierDiagramSettings settings)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
+            _ressourceService = ressourceService ?? throw new ArgumentNullException(nameof(ressourceService));
             _dependanceBuilder = dependanceBuilder ?? throw new ArgumentNullException(nameof(dependanceBuilder));
             // Le MetierNodeBuilder n'a besoin que des settings pour son initialisation de style
             _nodeBuilder = new MetierNodeBuilder(settings);
@@ -427,12 +429,12 @@ namespace PlanAthena.Controls
                 if (PhaseActuelle.HasValue)
                 {
                     // Cas normal : on demande les prérequis pour la phase spécifique du diagramme
-                    prerequisIds = _projetService.GetPrerequisPourPhase(metierCourant.MetierId, PhaseActuelle.Value);
+                    prerequisIds = _ressourceService.GetPrerequisPourPhase(metierCourant.MetierId, PhaseActuelle.Value);
                 }
                 else
                 {
                     // Cas de fallback (si un diagramme est affiché sans phase) : on affiche toutes les dépendances
-                    prerequisIds = _projetService.GetTousPrerequisConfondus(metierCourant.MetierId);
+                    prerequisIds = _ressourceService.GetTousPrerequisConfondus(metierCourant.MetierId);
                 }
 
                 System.Diagnostics.Debug.WriteLine($"🔍 DIAGRAMME - Métier: {metierCourant.Nom}, Phase: {PhaseActuelle}");

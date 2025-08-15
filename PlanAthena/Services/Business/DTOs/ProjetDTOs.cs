@@ -1,3 +1,8 @@
+// Fichier: PlanAthena/Services/Business/DTOs/ProjetDTOs.cs
+// Version: 0.4.4
+// Description: Fichier nettoyé, ajout des 'using' nécessaires pour référencer
+// les DTOs de statistiques qui ont été déplacés dans leurs propres fichiers.
+
 using System;
 using System.Collections.Generic;
 
@@ -27,15 +32,11 @@ namespace PlanAthena.Services.Business.DTOs
     }
 
     /// <summary>
-    /// Résumé complet d'un projet
-    /// NOTE: Utilise des DTOs qui doivent être accessibles depuis les services métier
-    /// Les types StatistiquesXXX sont supposés être définis dans les services correspondants
+    /// Résumé complet d'un projet pour affichage.
     /// </summary>
     public class ResumeProjet
     {
         public int NombreMetiers { get; set; }
-        // Note: Ces types sont référencés depuis d'autres services
-        // Si erreur de compilation, ajouter les using appropriés ou déplacer ces DTOs
         public StatistiquesOuvriers StatistiquesOuvriers { get; set; } = new StatistiquesOuvriers();
         public StatistiquesTaches StatistiquesTaches { get; set; } = new StatistiquesTaches();
         public StatistiquesMappingMetiers StatistiquesMappingMetiers { get; set; } = new StatistiquesMappingMetiers();
