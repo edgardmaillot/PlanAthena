@@ -1,0 +1,164 @@
+@startuml
+'---------------------------------
+' Titre et Configuration
+'---------------------------------
+title Diagramme de Séquence pour ProjetService (Opérations CRUD)
+autonumber
+
+actor Utilisateur
+
+'---------------------------------
+' Participants
+'---------------------------------
+participant "form:LotForm" as LotForm
+participant "form:BlocForm" as BlocForm
+participant "form:TacheDetailForm" as TacheDetailForm
+participant "service:ProjetService" as ProjetService
+participant "service:IdGeneratorService" as IdGeneratorService
+
+'=================================
+' GROUPE 1: CREATION
+'=================================
+group Création d'un Lot
+
+    Utilisateur -> LotForm : Clic sur "Nouveau"
+    activate LotForm
+    
+    LotForm -> ProjetService : CreerLot()
+    activate ProjetService
+    
+    ProjetService -> IdGeneratorService : GenererProchainLotId(...)
+    activate IdGeneratorService
+    IdGeneratorService --> ProjetService : nouveauLotId
+    deactivate IdGeneratorService
+    
+    ProjetService -> ProjetService : _lots.Add(nouveauLotId, nouveauLot)
+    
+    ProjetService --> LotForm : nouveauLot
+    deactivate ProjetService
+    
+    LotForm -> LotForm : AfficherDetailsLot(nouveauLot)
+    deactivate LotForm
+
+end
+
+group Création d'un Bloc (depuis le formulaire de Tâches)
+
+    Utilisateur -> BlocForm : Ouvre le formulaire en mode création
+    activate BlocForm
+
+    BlocForm -> ProjetService : CreerBloc(lotIdParent, ...)
+    activate ProjetService
+    
+    ProjetService -> ProjetService : ObtenirLotParId(lotIdParent)
+    ProjetService -> IdGeneratorService : GenererProchainBlocId(...)
+    activate IdGeneratorService
+    IdGeneratorService --> ProjetService : nouveauBlocId
+    deactivate IdGeneratorService
+    
+    ProjetService -> ProjetService : lotParent.Blocs.Add(nouveauBloc)
+    
+    ProjetService --> BlocForm : nouveauBloc
+    deactivate ProjetService
+    
+    BlocForm -> BlocForm : AfficherDetailsBloc(nouveauBloc)
+    deactivate BlocForm
+
+end
+
+group Création d'une Tâche
+
+    Utilisateur -> TacheDetailForm : Clic sur "Sauvegarder" (mode création)
+    activate TacheDetailForm
+    
+    TacheDetailForm -> ProjetService : CreerTache(lotId, blocId, ...)
+    activate ProjetService
+    
+    ProjetService -> IdGeneratorService : GenererProchainTacheId(...)
+    activate IdGeneratorService
+    IdGeneratorService --> ProjetService : nouvelleTacheId
+    deactivate IdGeneratorService
+    
+    ProjetService -> ProjetService : _taches.Add(nouvelleTacheId, nouvelleTache)
+    
+    ProjetService --> TacheDetailForm : nouvelleTache
+    deactivate ProjetService
+    
+    TacheDetailForm -> TacheDetailForm : Déclenche l'événement TacheSauvegardee
+    deactivate TacheDetailForm
+
+end
+
+'=================================
+' GROUPE 2: MODIFICATION
+'=================================
+group Modification d'un Bloc
+
+    Utilisateur -> BlocForm : Clic sur "Sauvegarder"
+    activate BlocForm
+    
+    BlocForm -> ProjetService : ModifierBloc(blocModifie)
+    activate ProjetService
+    
+    ProjetService -> ProjetService : ObtenirLotParId(blocModifie.LotId)
+    ProjetService -> ProjetService : lotParent.Blocs[blocIndex] = blocModifie
+    
+    ProjetService --> BlocForm : void
+    deactivate ProjetService
+    
+    BlocForm -> BlocForm : this.Close()
+    deactivate BlocForm
+
+end
+
+'=================================
+' GROUPE 3: SUPPRESSION
+'=================================
+group Suppression d'un Lot
+
+    Utilisateur -> LotForm : Clic sur "Supprimer"
+    activate LotForm
+    
+    LotForm -> ProjetService : SupprimerLot(lotId)
+    activate ProjetService
+    
+    '-- Vérification des dépendances --'
+    ProjetService -> ProjetService : ObtenirTachesParLot(lotId)
+    
+    alt Le lot est utilisé par des tâches
+        ProjetService --> LotForm : throw InvalidOperationException
+        LotForm -> Utilisateur : Affiche message d'erreur
+    else Le lot n'est pas utilisé
+        ProjetService -> ProjetService : _lots.Remove(lotId)
+        ProjetService --> LotForm : void
+    end
+    
+    deactivate ProjetService
+    deactivate LotForm
+
+end
+
+group Suppression d'une Tâche
+
+    Utilisateur -> TacheDetailForm : Clic sur "Supprimer"
+    activate TacheDetailForm
+    
+    TacheDetailForm -> ProjetService : SupprimerTache(tacheId)
+    activate ProjetService
+    
+    '-- Vérification des dépendances --'
+    ProjetService -> ProjetService : Itère sur _taches.Values pour\nchercher des dépendances
+    
+    alt La tâche est une dépendance
+        ProjetService --> TacheDetailForm : throw InvalidOperationException
+        TacheDetailForm -> Utilisateur : Affiche message d'erreur
+    else La tâche n'est pas une dépendance
+        ProjetService -> ProjetService : _taches.Remove(tacheId)
+        ProjetService --> TacheDetailForm : void
+    end
+    
+    deactivate ProjetService
+    deactivate TacheDetailForm
+
+end
+@enduml

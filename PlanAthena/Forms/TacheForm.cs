@@ -22,7 +22,7 @@ namespace PlanAthena.Forms
         private readonly RessourceService _ressourceService;
         private readonly DependanceBuilder _dependanceBuilder;
         private readonly ImportService _importService;
-        private Lot _lotActif = null;
+        private String _lotActifId = null;
         private readonly PertDiagramControl _pertControl;
         private readonly TacheDetailForm _tacheDetailForm;
         private readonly ToolTip _toolTipMetiers = new ToolTip();
@@ -81,11 +81,10 @@ namespace PlanAthena.Forms
         {
             try
             {
-                var idLotActif = _lotActif?.LotId;
                 PeuplerComboBoxLots();
-                if (idLotActif != null)
+                if (_lotActifId != null)
                 {
-                    var itemToReselect = cmbLots.Items.Cast<Lot>().FirstOrDefault(l => l.LotId == idLotActif);
+                    var itemToReselect = cmbLots.Items.Cast<Lot>().FirstOrDefault(l => l.LotId == _lotActifId);
                     cmbLots.SelectedItem = itemToReselect;
                 }
                 if (cmbLots.SelectedItem == null && cmbLots.Items.Count > 0)
@@ -93,9 +92,9 @@ namespace PlanAthena.Forms
                     cmbLots.SelectedIndex = 0;
                 }
                 CreerBoutonsMetiers();
-                _tacheDetailForm?.MettreAJourListesDeroulantes(_lotActif?.LotId);
+                _tacheDetailForm?.MettreAJourListesDeroulantes(_lotActifId);
                 RafraichirDiagrammeEtStatistiques();
-                _tacheDetailForm?.ChargerTache(new Tache { LotId = _lotActif?.LotId, HeuresHommeEstimees = 8, Type = TypeActivite.Tache }, true);
+                _tacheDetailForm?.ChargerTache(new Tache { LotId = _lotActifId, HeuresHommeEstimees = 8, Type = TypeActivite.Tache }, true);
                 lblTacheSelectionnee.Text = "Aucune sélection";
                 AfficherPlanLotActif();
             }
@@ -107,7 +106,7 @@ namespace PlanAthena.Forms
             try
             {
                 var toutesLesTaches = _projetService.ObtenirToutesLesTaches();
-                List<Tache> tachesAffichees = (_lotActif != null) ? toutesLesTaches.Where(t => t.LotId == _lotActif.LotId).ToList() : new List<Tache>();
+                List<Tache> tachesAffichees = (_lotActifId != null) ? toutesLesTaches.Where(t => t.LotId == _lotActifId).ToList() : new List<Tache>();
                 _pertControl?.ChargerDonnees(tachesAffichees, txtRecherche.Text);
                 RafraichirStatistiques(toutesLesTaches);
             }
@@ -136,9 +135,10 @@ namespace PlanAthena.Forms
             try
             {
                 var totalTaches = toutesLesTaches?.Count ?? 0;
-                int tachesLotActif = (_lotActif != null && toutesLesTaches != null) ? toutesLesTaches.Count(t => t.LotId == _lotActif.LotId) : 0;
+                var lotActif = _projetService.ObtenirLotParId(_lotActifId);
+                int tachesLotActif = (_lotActifId != null && toutesLesTaches != null) ? toutesLesTaches.Count(t => t.LotId == _lotActifId) : 0;
                 var zoomPourcentage = Math.Round((_pertControl?.ZoomFacteur ?? 1.0) * 100, 1);
-                lblStatistiques.Text = $"Total: {totalTaches} tâches | Lot '{_lotActif?.Nom ?? "Aucun"}': {tachesLotActif} tâches | Zoom: {zoomPourcentage}%";
+                lblStatistiques.Text = $"Total: {totalTaches} tâches | Lot '{lotActif?.Nom ?? "Aucun"}': {tachesLotActif} tâches | Zoom: {zoomPourcentage}%";
             }
             catch (Exception ex)
             {
@@ -158,10 +158,10 @@ namespace PlanAthena.Forms
                 panelOutilsMetiersDynamiques.Controls.Add(lblBlocTitle);
                 yPos += lblBlocTitle.Height + 5;
 
-                if (_lotActif == null) return;
-
+                if (_lotActifId == null) return;
+                var lotActif = _projetService.ObtenirLotParId(_lotActifId);
                 var metiersTries = _dependanceBuilder.ObtenirMetiersTriesParDependance()
-                    .Where(m => m.MetierId != "JALON" && m.MetierId != "SYNC_0H" && m.Phases.HasFlag(_lotActif.Phases));
+                    .Where(m => m.MetierId != "JALON" && m.MetierId != "SYNC_0H" && m.Phases.HasFlag(lotActif.Phases));
 
                 foreach (var metier in metiersTries)
                 {
@@ -169,7 +169,7 @@ namespace PlanAthena.Forms
                     {
                         var btn = new Button { Text = metier.Nom, Tag = metier, Location = new Point(11, yPos), Size = new Size(160, 30), BackColor = _ressourceService.GetDisplayColorForMetier(metier.MetierId), FlatStyle = FlatStyle.Popup };
                         btn.Click += MetierButton_Click;
-                        var prerequis = _ressourceService.GetPrerequisPourPhase(metier.MetierId, _lotActif.Phases);
+                        var prerequis = _ressourceService.GetPrerequisPourPhase(metier.MetierId, lotActif.Phases);
                         if (prerequis.Any())
                         {
                             var prerequisNoms = prerequis.Select(id => _ressourceService.GetMetierById(id)?.Nom ?? id);
@@ -195,12 +195,12 @@ namespace PlanAthena.Forms
 
         private void MetierButton_Click(object sender, EventArgs e)
         {
-            if (_lotActif == null) { MessageBox.Show("Sélectionnez un lot.", "Action impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+            if (_lotActifId == null) { MessageBox.Show("Sélectionnez un lot.", "Action impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
             if (sender is Button { Tag: Metier metier })
             {
                 using var form = new TacheDetailForm(_projetService, _ressourceService, _dependanceBuilder);
-                var nouvelleTache = new Tache { MetierId = metier.MetierId, LotId = _lotActif.LotId, TacheNom = $"Nouvelle tâche - {metier.Nom}", HeuresHommeEstimees = 8 };
-                form.MettreAJourListesDeroulantes(_lotActif.LotId);
+                var nouvelleTache = new Tache { MetierId = metier.MetierId, LotId = _lotActifId, TacheNom = $"Nouvelle tâche - {metier.Nom}", HeuresHommeEstimees = 8 };
+                form.MettreAJourListesDeroulantes(_lotActifId);
                 form.ChargerTache(nouvelleTache, true);
                 if (form.ShowDialog(this) == DialogResult.OK) RafraichirDiagrammeEtStatistiques();
             }
@@ -208,10 +208,10 @@ namespace PlanAthena.Forms
 
         private void JalonButton_Click(object sender, EventArgs e)
         {
-            if (_lotActif == null) { MessageBox.Show("Sélectionnez un lot.", "Action impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+            if (_lotActifId == null) { MessageBox.Show("Sélectionnez un lot.", "Action impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
             using var form = new TacheDetailForm(_projetService, _ressourceService, _dependanceBuilder);
-            var nouveauJalon = new Tache { Type = TypeActivite.JalonUtilisateur, HeuresHommeEstimees = 24, TacheNom = "Nouveau Jalon d'attente", LotId = _lotActif.LotId };
-            form.MettreAJourListesDeroulantes(_lotActif.LotId);
+            var nouveauJalon = new Tache { Type = TypeActivite.JalonUtilisateur, HeuresHommeEstimees = 24, TacheNom = "Nouveau Jalon d'attente", LotId = _lotActifId };
+            form.MettreAJourListesDeroulantes(_lotActifId);
             form.ChargerTache(nouveauJalon, true);
             if (form.ShowDialog(this) == DialogResult.OK) RafraichirDiagrammeEtStatistiques();
         }
@@ -230,13 +230,16 @@ namespace PlanAthena.Forms
 
         private void btnAjouterBloc_Click(object sender, EventArgs e)
         {
-            if (_lotActif == null) { MessageBox.Show("Sélectionnez un lot.", "Lot requis", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
-            OuvrirGestionBlocs(null, _lotActif);
+            if (_lotActifId == null) { MessageBox.Show("Sélectionnez un lot.", "Lot requis", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+            var lotActif = _projetService.ObtenirLotParId(_lotActifId);
+            OuvrirGestionBlocs(null, lotActif);
         }
 
         private void PertControl_BlocDoubleClicked(object sender, BlocSelectedEventArgs e)
         {
-            OuvrirGestionBlocs(e.BlocId, _lotActif);
+            if (_lotActifId == null) { MessageBox.Show("Sélectionnez un lot.", "Lot requis", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+            var lotActif = _projetService.ObtenirLotParId(_lotActifId);
+            OuvrirGestionBlocs(e.BlocId, lotActif);
         }
 
         private void PertControl_TacheSelected(object sender, TacheSelectedEventArgs e)
@@ -264,11 +267,11 @@ namespace PlanAthena.Forms
             {
                 if (cmbLots.SelectedItem is Lot selectedLot)
                 {
-                    _lotActif = selectedLot;
+                    _lotActifId = selectedLot.LotId;
                     CreerBoutonsMetiers();
                     RafraichirDiagrammeEtStatistiques();
-                    _tacheDetailForm?.MettreAJourListesDeroulantes(_lotActif.LotId);
-                    _tacheDetailForm?.ChargerTache(new Tache { LotId = _lotActif.LotId, HeuresHommeEstimees = 8, Type = TypeActivite.Tache }, true);
+                    _tacheDetailForm?.MettreAJourListesDeroulantes(_lotActifId);
+                    _tacheDetailForm?.ChargerTache(new Tache { LotId = _lotActifId, HeuresHommeEstimees = 8, Type = TypeActivite.Tache }, true);
                     lblTacheSelectionnee.Text = "Aucune sélection";
                     AfficherPlanLotActif();
                 }
@@ -327,8 +330,9 @@ namespace PlanAthena.Forms
             pictureBox1.BackColor = SystemColors.Control;
             pictureBox1.Visible = true;
             _toolTipPlan.SetToolTip(pictureBox1, "");
-            if (_lotActif == null || string.IsNullOrWhiteSpace(_lotActif.CheminFichierPlan)) return;
-            string filePath = _lotActif.CheminFichierPlan;
+            var lotActif = _projetService.ObtenirLotParId(_lotActifId);
+            if (lotActif == null || string.IsNullOrWhiteSpace(lotActif.CheminFichierPlan)) return;
+            string filePath = lotActif.CheminFichierPlan;
             if (!File.Exists(filePath)) { _toolTipPlan.SetToolTip(pictureBox1, $"Fichier introuvable: {filePath}"); return; }
             string extension = Path.GetExtension(filePath).ToLowerInvariant();
             try
@@ -361,9 +365,10 @@ namespace PlanAthena.Forms
 
         private void PictureBox1_ClickForPdf(object sender, EventArgs e)
         {
-            if (_lotActif != null && !string.IsNullOrWhiteSpace(_lotActif.CheminFichierPlan))
+            var lotActif = _projetService.ObtenirLotParId(_lotActifId);
+            if (lotActif != null && !string.IsNullOrWhiteSpace(lotActif.CheminFichierPlan))
             {
-                string filePath = _lotActif.CheminFichierPlan;
+                string filePath = lotActif.CheminFichierPlan;
                 if (File.Exists(filePath) && Path.GetExtension(filePath).ToLowerInvariant() == ".pdf")
                 {
                     try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(filePath) { UseShellExecute = true }); }
@@ -378,11 +383,11 @@ namespace PlanAthena.Forms
         {
             try
             {
-                if (_lotActif == null) { MessageBox.Show("Sélectionnez un lot.", "Lot requis", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+                if (_lotActifId == null) { MessageBox.Show("Sélectionnez un lot.", "Lot requis", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
                 using var openFileDialog = new OpenFileDialog { Title = "Sélectionner le fichier CSV", Filter = "Fichiers CSV (*.csv)|*.csv|Tous les fichiers (*.*)|*.*", DefaultExt = "csv", Multiselect = false };
                 if (openFileDialog.ShowDialog() != DialogResult.OK) return;
                 string filePath = openFileDialog.FileName;
-                using (var importForm = new ImportTacheForm(filePath, _lotActif, _projetService, _ressourceService))
+                using (var importForm = new ImportTacheForm(filePath, _projetService.ObtenirLotParId(_lotActifId), _projetService, _ressourceService))
                 {
                     if (importForm.ShowDialog(this) == DialogResult.OK)
                     {
@@ -400,7 +405,7 @@ namespace PlanAthena.Forms
             {
                 // L'APPEL EST MAINTENANT DIRECT ET SIMPLE.
                 // On passe les informations de l'IHM, et le service fait tout le travail en interne.
-                var resultat = _importService.ImporterTachesCSV(filePath, _lotActif.LotId, mappingConfig, confirmerEcrasement);
+                var resultat = _importService.ImporterTachesCSV(filePath, _lotActifId, mappingConfig, confirmerEcrasement);
 
                 // La logique de gestion du résultat reste la même, elle était déjà correcte.
                 if (resultat.ConfirmationRequise)

@@ -77,54 +77,117 @@ namespace PlanAthena.Services.DataAccess
 
         public int ImporterOuvriersCSV(string filePath, bool remplacerExistants)
         {
-            var lignesOuvrierImportees = _csvDataService.ImportCsv<Ouvrier>(filePath);
+            var lignesCsv = _csvDataService.ImportCsv<OuvrierCsvRecord>(filePath);
+
             if (remplacerExistants)
             {
                 _ressourceService.ViderOuvriers();
             }
 
-            int countAddedOrUpdated = 0;
-            foreach (var ligneOuvrier in lignesOuvrierImportees)
-            {
-                try
-                {
-                    if (ligneOuvrier.Competences == null || !ligneOuvrier.Competences.Any())
-                    {
-                        if (string.IsNullOrWhiteSpace(ligneOuvrier.MetierId)) continue;
-                        ligneOuvrier.Competences = new List<CompetenceOuvrier> { new CompetenceOuvrier { MetierId = ligneOuvrier.MetierId, EstMetierPrincipal = true } };
-                    }
+            var idExterneVersIdInterneMap = new Dictionary<string, string>();
+            var ouvriersUniquesExternes = lignesCsv.GroupBy(l => l.OuvrierId).Select(g => g.First());
 
-                    var ouvrierExistant = _ressourceService.GetOuvrierById(ligneOuvrier.OuvrierId);
-                    if (ouvrierExistant != null)
-                    {
-                        ouvrierExistant.Nom = ligneOuvrier.Nom;
-                        ouvrierExistant.Prenom = ligneOuvrier.Prenom;
-                        ouvrierExistant.CoutJournalier = ligneOuvrier.CoutJournalier;
-                        foreach (var competence in ligneOuvrier.Competences)
-                        {
-                            if (!ouvrierExistant.Competences.Any(c => c.MetierId == competence.MetierId))
-                            {
-                                _ressourceService.AjouterCompetence(ouvrierExistant.OuvrierId, competence.MetierId);
-                            }
-                        }
-                        _ressourceService.ModifierOuvrier(ouvrierExistant);
-                    }
-                    else
-                    {
-                        var nouvelOuvrier = _ressourceService.CreerOuvrier(ligneOuvrier.Prenom, ligneOuvrier.Nom, ligneOuvrier.CoutJournalier);
-                        nouvelOuvrier.Competences = ligneOuvrier.Competences;
-                        _ressourceService.ModifierOuvrier(nouvelOuvrier);
-                    }
-                    countAddedOrUpdated++;
+            foreach (var ligneUnique in ouvriersUniquesExternes)
+            {
+                Ouvrier ouvrierExistant = null;
+                if (!remplacerExistants)
+                {
+                    ouvrierExistant = _ressourceService.GetAllOuvriers()
+                        .FirstOrDefault(o => o.Nom == ligneUnique.Nom && o.Prenom == ligneUnique.Prenom);
                 }
-                catch (Exception) { /* Ignorer les lignes invalides */ }
+
+                if (ouvrierExistant != null)
+                {
+                    idExterneVersIdInterneMap[ligneUnique.OuvrierId] = ouvrierExistant.OuvrierId;
+                }
+                else
+                {
+                    var nouvelOuvrier = _ressourceService.CreerOuvrier(ligneUnique.Prenom, ligneUnique.Nom, ligneUnique.CoutJournalier);
+                    idExterneVersIdInterneMap[ligneUnique.OuvrierId] = nouvelOuvrier.OuvrierId;
+                }
             }
-            return countAddedOrUpdated;
+
+            var ouvriersGroupes = lignesCsv.GroupBy(ligne => ligne.OuvrierId);
+
+            foreach (var groupe in ouvriersGroupes)
+            {
+                string idExterne = groupe.Key;
+                if (!idExterneVersIdInterneMap.TryGetValue(idExterne, out string idInterne))
+                {
+                    continue;
+                }
+
+                var ouvrierAModifier = _ressourceService.GetOuvrierById(idInterne);
+                if (ouvrierAModifier == null) continue;
+
+                var premiereLigne = groupe.First();
+                ouvrierAModifier.Nom = premiereLigne.Nom;
+                ouvrierAModifier.Prenom = premiereLigne.Prenom;
+                ouvrierAModifier.CoutJournalier = premiereLigne.CoutJournalier;
+
+                if (remplacerExistants && idExterneVersIdInterneMap.ContainsKey(idExterne))
+                {
+                    ouvrierAModifier.Competences.Clear();
+                }
+
+                foreach (var ligne in groupe)
+                {
+                    if (!string.IsNullOrWhiteSpace(ligne.MetierId) && !ouvrierAModifier.Competences.Any(c => c.MetierId == ligne.MetierId))
+                    {
+                        // On modifie directement la liste de compétences de l'objet
+                        var estPrincipal = !ouvrierAModifier.Competences.Any();
+                        ouvrierAModifier.Competences.Add(new CompetenceOuvrier { MetierId = ligne.MetierId, EstMetierPrincipal = estPrincipal });
+                    }
+                }
+
+                // CORRECTION : On appelle ModifierOuvrier APRÈS avoir ajouté
+                // toutes les compétences du groupe pour sauvegarder l'état final de l'objet.
+                _ressourceService.ModifierOuvrier(ouvrierAModifier);
+            }
+
+            return idExterneVersIdInterneMap.Count;
         }
 
         public void ExporterOuvriersCSV(string filePath)
         {
-            _csvDataService.ExportCsv(_ressourceService.GetAllOuvriers(), filePath);
+            // 1. Récupérer la liste hiérarchique des ouvriers
+            var tousLesOuvriers = _ressourceService.GetAllOuvriers();
+
+            // 2. Aplatir la structure hiérarchique en une liste de lignes CSV
+            var recordsPourCsv = new List<OuvrierCsvRecord>();
+            foreach (var ouvrier in tousLesOuvriers)
+            {
+                if (ouvrier.Competences.Any())
+                {
+                    // Créer une ligne CSV pour CHAQUE compétence
+                    foreach (var competence in ouvrier.Competences)
+                    {
+                        recordsPourCsv.Add(new OuvrierCsvRecord
+                        {
+                            OuvrierId = ouvrier.OuvrierId,
+                            Nom = ouvrier.Nom,
+                            Prenom = ouvrier.Prenom,
+                            CoutJournalier = ouvrier.CoutJournalier,
+                            MetierId = competence.MetierId
+                        });
+                    }
+                }
+                else
+                {
+                    // Gérer le cas d'un ouvrier sans compétence
+                    recordsPourCsv.Add(new OuvrierCsvRecord
+                    {
+                        OuvrierId = ouvrier.OuvrierId,
+                        Nom = ouvrier.Nom,
+                        Prenom = ouvrier.Prenom,
+                        CoutJournalier = ouvrier.CoutJournalier,
+                        MetierId = "" // Laisse la colonne MetierId vide
+                    });
+                }
+            }
+
+            // 3. Exporter la liste plate nouvellement créée
+            _csvDataService.ExportCsv(recordsPourCsv, filePath);
         }
 
         #endregion

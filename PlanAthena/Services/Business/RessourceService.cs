@@ -19,12 +19,11 @@ namespace PlanAthena.Services.Business
         private readonly Dictionary<string, Metier> _metiers = new();
         private readonly Dictionary<string, Ouvrier> _ouvriers = new();
         private readonly IIdGeneratorService _idGenerator;
-        private readonly ProjetService _projetService;
 
-        public RessourceService(IIdGeneratorService idGenerator, ProjetService projetService)
+
+        public RessourceService(IIdGeneratorService idGenerator)
         {
             _idGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
-            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
         }
 
         #region Cycle de vie des Ressources
@@ -87,10 +86,12 @@ namespace PlanAthena.Services.Business
             _metiers[metierModifie.MetierId] = metierModifie;
         }
 
-        public void SupprimerMetier(string metierId)
+        public void SupprimerMetier(string metierId, ProjetService projetService)
         {
+            if (projetService == null)
+                throw new ArgumentNullException(nameof(projetService));
             if (!_metiers.ContainsKey(metierId)) throw new InvalidOperationException($"Le métier ID '{metierId}' n'a pas été trouvé.");
-            if (_projetService.ObtenirTachesParMetier(metierId).Any()) throw new InvalidOperationException("Impossible de supprimer le métier car il est utilisé par des tâches.");
+            if (projetService.ObtenirTachesParMetier(metierId).Any()) throw new InvalidOperationException("Impossible de supprimer le métier car il est utilisé par des tâches.");
             _metiers.Remove(metierId);
             foreach (var metier in _metiers.Values)
             {
@@ -120,7 +121,35 @@ namespace PlanAthena.Services.Business
             try { graph.TopologicalSort(); }
             catch (NonAcyclicGraphException) { throw new InvalidOperationException($"Dépendance circulaire détectée pour le métier '{metier.Nom}'."); }
         }
+        /// <summary>
+        /// Calcule et retourne la liste des métiers qu'un ouvrier ne possède pas encore.
+        /// Cette méthode est utilisée par l'IHM pour peupler le dialogue d'ajout de compétence,
+        /// en s'assurant de ne pas proposer des compétences que l'ouvrier a déjà.
+        /// </summary>
+        /// <param name="ouvrierId">L'ID de l'ouvrier concerné.</param>
+        /// <returns>Une liste d'objets Metier que l'ouvrier peut apprendre.</returns>
+        public List<Metier> GetMetiersDisponiblesPourOuvrier(string ouvrierId)
+        {
+            // Étape 1 : Valider l'entrée et récupérer l'ouvrier
+            if (!_ouvriers.TryGetValue(ouvrierId, out var ouvrier))
+            {
+                // Si l'ouvrier n'est pas trouvé, retourner une liste vide pour éviter un crash.
+                return new List<Metier>();
+            }
 
+            // Étape 2 : Obtenir la liste des IDs des métiers que l'ouvrier possède déjà.
+            // On utilise un HashSet pour une recherche ultra-rapide (complexité O(1)).
+            var competencesActuellesIds = ouvrier.Competences.Select(c => c.MetierId).ToHashSet();
+
+            // Étape 3 : Filtrer la liste complète de tous les métiers.
+            // On ne garde que ceux dont l'ID n'est PAS dans le HashSet des compétences actuelles.
+            var metiersDisponibles = _metiers.Values
+                .Where(metier => !competencesActuellesIds.Contains(metier.MetierId))
+                .OrderBy(m => m.Nom) // On trie pour un affichage alphabétique dans l'IHM.
+                .ToList();
+
+            return metiersDisponibles;
+        }
         public List<Metier> GetAllMetiers() => _metiers.Values.OrderBy(m => m.Nom).ToList();
         public Metier GetMetierById(string id) => _metiers.GetValueOrDefault(id);
         public Color GetDisplayColorForMetier(string metierId)

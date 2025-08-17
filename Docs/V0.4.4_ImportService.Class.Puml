@@ -1,0 +1,110 @@
+@startuml
+'---------------------------------
+' Titre et Configuration
+'---------------------------------
+title Diagramme de Classe pour ImportService (Vue Étendue)
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam class {
+    BackgroundColor #FFF8DC
+    BorderColor #B8860B
+    ArrowColor #B8860B
+}
+hide empty members
+
+'---------------------------------
+' Package du Service principal
+'---------------------------------
+package "Services Accès Données (Focus)" as DataAccess_Focus {
+    class ImportService {
+        '-- Champs --'
+        - _projetService: ProjetService
+        - _ressourceService: RessourceService
+        - _idGenerator: IIdGeneratorService
+        - _csvDataService: CsvDataService
+
+        '-- Constructeur --'
+        + ImportService(projetService, ressourceService, idGenerator, csvDataService)
+
+        '-- Import Tâches --'
+        + ImporterTachesCSV(filePath, lotIdCible, mappingConfig, confirmerEcrasement): ImportResult
+        - ImporterDonneesInitialTaches(...): (int, int, List<Tache>, List<string>)
+        - RemapperDependancesDesTaches(importedTasks: List<Tache>): List<string>
+
+        '-- Import/Export Ouvriers --'
+        + ImporterOuvriersCSV(filePath: string, remplacerExistants: bool): int
+        + ExporterOuvriersCSV(filePath: string)
+
+        '-- Méthodes Privées Utilitaires --'
+        - LireCsvBrut(...): List<Dictionary<string, string>>
+        - <<static>> GetValueOrDefault(...): string
+        - GetFriendlyFieldName(propertyName: string): string
+    }
+}
+
+'---------------------------------
+' Dépendances Sortantes (Standard)
+'---------------------------------
+package "Services Métier" as Business {
+    class ProjetService {
+        + ObtenirLotParId(lotId): Lot
+        + ViderLot(lotId)
+        + ObtenirTachesParLot(lotId): List<Tache>
+        + CreerBloc(lotId, nom, capacite): Bloc
+        + CreerTache(lotId, blocId, nom, heures): Tache
+        + ModifierTache(Tache)
+    }
+    class RessourceService {
+        + GetMetierById(metierId): Metier
+        + ViderOuvriers()
+        + GetOuvrierById(ouvrierId): Ouvrier
+        + CreerOuvrier(...): Ouvrier
+        + ModifierOuvrier(Ouvrier)
+        + GetAllOuvriers(): List<Ouvrier>
+    }
+}
+
+package "Services Accès Données" as DataAccess {
+    class CsvDataService {
+        + ImportCsv<T>(filePath): List<T>
+        + ExportCsv<T>(data, filePath)
+    }
+    interface IIdGeneratorService
+}
+
+package "DTOs" as DTOs {
+    class ImportResult
+    class ImportMappingConfiguration
+}
+
+'---------------------------------
+' Dépendance Entrante (Appelants)
+'---------------------------------
+package "IHM" as UI {
+    class OuvrierForm {
+        + btnImporter_Click()
+        + btnExporter_Click()
+    }
+    class TacheForm {
+        - ExecuterImportCSV(...)
+    }
+    note bottom of TacheForm : TacheForm utilise ImportTacheForm\npour configurer le mapping, puis\nappelle ImporterTachesCSV.
+}
+
+'---------------------------------
+' Relations
+'---------------------------------
+'-- Dépendances sortantes standard --'
+ImportService *-- ProjetService
+ImportService *-- RessourceService
+ImportService *-- IIdGeneratorService
+ImportService *-- CsvDataService
+ImportService ..> ImportResult : "retourne"
+ImportService ..> ImportMappingConfiguration : "utilise"
+
+
+'-- Dépendances entrantes visualisées --'
+OuvrierForm ..> ImportService : "appelle"
+TacheForm ..> ImportService : "appelle"
+
+@enduml

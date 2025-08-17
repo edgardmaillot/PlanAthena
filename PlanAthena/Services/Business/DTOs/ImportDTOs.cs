@@ -24,7 +24,18 @@ namespace PlanAthena.Services.Business.DTOs
         public string BlocNom { get; set; } = "";
         public int BlocCapaciteMaxOuvriers { get; set; }
     }
-
+    /// <summary>
+    /// DTO représentant une ligne plate du fichier CSV des ouvriers.
+    /// Utilisé comme intermédiaire pour l'import et l'export.
+    /// </summary>
+    public class OuvrierCsvRecord
+    {
+        public string OuvrierId { get; set; }
+        public string Nom { get; set; }
+        public string Prenom { get; set; }
+        public int CoutJournalier { get; set; }
+        public string MetierId { get; set; } // Une seule compétence par ligne
+    }
     /// <summary>
     /// Résultat d'une opération d'import
     /// </summary>

@@ -1,0 +1,159 @@
+@startuml
+'---------------------------------
+' Titre et Configuration
+'---------------------------------
+title Diagramme de Séquence pour RessourceService (CRUD Complet)
+autonumber
+
+actor Utilisateur
+
+'---------------------------------
+' Participants
+'---------------------------------
+participant "form:MetierForm" as MetierForm
+participant "form:OuvrierForm" as OuvrierForm
+participant "dialog:CompetenceDialog" as CompetenceDialog
+participant "service:RessourceService" as RessourceService
+participant "service:IdGeneratorService" as IdGeneratorService
+participant "service:ProjetService" as ProjetService
+
+'=================================
+' GROUPE 1: CRUD Métier
+'=================================
+group CRUD Métier
+
+    '-- CREATE --'
+    Utilisateur -> MetierForm : Clic sur "Créer nouveau métier"
+    activate MetierForm
+    MetierForm -> RessourceService : CreerMetier()
+    activate RessourceService
+    RessourceService -> IdGeneratorService : GenererProchainMetierId(...)
+    RessourceService -> RessourceService : _metiers.Add(...)
+    RessourceService --> MetierForm : nouveauMetier
+    deactivate RessourceService
+    MetierForm -> MetierForm : PopulateDetailsPanel(nouveauMetier)
+    deactivate MetierForm
+    
+    '-- UPDATE --'
+    Utilisateur -> MetierForm : Modifie le nom dans un TextBox
+    activate MetierForm
+    MetierForm -> MetierForm : OnDetailChanged() déclenché
+    MetierForm -> MetierForm : SauvegardeAutomatiqueMetier()
+    MetierForm -> RessourceService : ModifierMetier(metierModifie)
+    activate RessourceService
+    RessourceService -> RessourceService : ValiderCircularite(metierModifie)
+    RessourceService -> RessourceService : _metiers[id] = metierModifie
+    RessourceService --> MetierForm : void
+    deactivate RessourceService
+    MetierForm -> MetierForm : CreerListeMetiers() (rafraîchit l'UI)
+    deactivate MetierForm
+    
+    '-- DELETE --'
+    Utilisateur -> MetierForm : Clic sur "Supprimer"
+    activate MetierForm
+    
+    ' Le MetierForm possède les deux services nécessaires
+    ' et les assemble au moment de l'appel.
+    MetierForm -> RessourceService : SupprimerMetier(metierId, _projetService)
+    activate RessourceService
+    
+    ' RessourceService utilise le service passé en paramètre
+    RessourceService -> ProjetService : ObtenirTachesParMetier(metierId)
+    activate ProjetService
+    ProjetService --> RessourceService : listeTaches
+    deactivate ProjetService
+    
+    alt Le métier est utilisé
+        RessourceService --> MetierForm : throw InvalidOperationException
+        MetierForm -> Utilisateur : Affiche message d'erreur
+    else Le métier n'est pas utilisé
+        RessourceService -> RessourceService : _metiers.Remove(metierId)
+        ' ...
+        RessourceService --> MetierForm : void
+    end
+    deactivate RessourceService
+    deactivate MetierForm
+end
+
+'=================================
+' GROUPE 2: CRUD Ouvrier
+'=================================
+group CRUD Ouvrier
+    
+    '-- CREATE --'
+    Utilisateur -> OuvrierForm : Clic sur "Nouveau"
+    activate OuvrierForm
+    OuvrierForm -> RessourceService : CreerOuvrierParDefaut()
+    activate RessourceService
+    RessourceService -> self : CreerOuvrier(...)
+    RessourceService -> IdGeneratorService : GenererProchainOuvrierId(...)
+    RessourceService -> RessourceService : _ouvriers.Add(...)
+    RessourceService -> RessourceService : Ajoute une compétence par défaut
+    RessourceService --> OuvrierForm : nouvelOuvrier
+    deactivate RessourceService
+    OuvrierForm -> OuvrierForm : ChargerDonnees() & MettreAJourUI()
+    deactivate OuvrierForm
+
+    '-- UPDATE --'
+    Utilisateur -> OuvrierForm : Modifie le prénom dans un TextBox
+    activate OuvrierForm
+    OuvrierForm -> OuvrierForm : DetailOuvrier_Changed() déclenché
+    OuvrierForm -> RessourceService : ModifierOuvrier(ouvrierAModifier)
+    activate RessourceService
+    RessourceService -> RessourceService : _ouvriers[id] = ouvrierModifie
+    RessourceService --> OuvrierForm : void
+    deactivate RessourceService
+    OuvrierForm -> OuvrierForm : Met à jour l'item dans la listView
+    deactivate OuvrierForm
+
+    '-- DELETE --'
+    Utilisateur -> OuvrierForm : Clic sur "Supprimer" & confirme
+    activate OuvrierForm
+    OuvrierForm -> RessourceService : SupprimerOuvrier(ouvrierId)
+    activate RessourceService
+    RessourceService -> RessourceService : _ouvriers.Remove(ouvrierId)
+    RessourceService --> OuvrierForm : void
+    deactivate RessourceService
+    OuvrierForm -> OuvrierForm : ChargerDonnees() & MettreAJourUI()
+    deactivate OuvrierForm
+end
+
+'=================================
+' GROUPE 3: CRUD Compétences
+'=================================
+group CRUD Compétences
+    
+    '-- CREATE --'
+    Utilisateur -> OuvrierForm : Clic sur "Ajouter Compétence"
+    activate OuvrierForm
+    OuvrierForm -> CompetenceDialog : new CompetenceDialog(...)
+    activate CompetenceDialog
+    CompetenceDialog --> Utilisateur : Affiche la boîte de dialogue
+    Utilisateur -> CompetenceDialog : Sélectionne métier & clique "OK"
+    CompetenceDialog --> OuvrierForm : DialogResult.OK
+    deactivate CompetenceDialog
+    OuvrierForm -> RessourceService : AjouterCompetence(ouvrierId, metierId)
+    activate RessourceService
+    RessourceService -> RessourceService : GetOuvrierById(ouvrierId)
+    RessourceService -> RessourceService : ouvrier.Competences.Add(...)
+    RessourceService --> OuvrierForm : void
+    deactivate RessourceService
+    OuvrierForm -> OuvrierForm : MettreAJourUI()
+    deactivate OuvrierForm
+
+    '-- DELETE --'
+    Utilisateur -> OuvrierForm : Clic sur "Supprimer Compétence" & confirme
+    activate OuvrierForm
+    OuvrierForm -> RessourceService : SupprimerCompetence(ouvrierId, metierId)
+    activate RessourceService
+    RessourceService -> RessourceService : GetOuvrierById(ouvrierId)
+    RessourceService -> RessourceService : Vérifie si c'est la dernière compétence
+    RessourceService -> RessourceService : ouvrier.Competences.Remove(...)
+    RessourceService -> RessourceService : Gère le changement de "Métier Principal"
+    RessourceService --> OuvrierForm : void
+    deactivate RessourceService
+    OuvrierForm -> OuvrierForm : MettreAJourUI()
+    deactivate OuvrierForm
+end
+
+@enduml

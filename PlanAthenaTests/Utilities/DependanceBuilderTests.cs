@@ -30,7 +30,7 @@ namespace PlanAthenaTests.Utilities
         {
             _idGenerator = new IdGeneratorService();
             _projetService = new ProjetService(_idGenerator);
-            _ressourceService = new RessourceService(_idGenerator, _projetService);
+            _ressourceService = new RessourceService(_idGenerator);
             _dependanceBuilder = new DependanceBuilder(_projetService, _ressourceService);
         }
 

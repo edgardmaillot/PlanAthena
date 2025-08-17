@@ -26,17 +26,6 @@ namespace PlanAthena.Services.Business.DTOs
         // 🗑️ SUPPRIMÉ : NiveauExpertise, PerformancePct (problèmes RH/légaux identifiés)
     }
 
-    /// <summary>
-    /// DTO pour la création de métiers spécifiques (amiante, nucléaire, QSE).
-    /// Utilisé par MetierForm Concept 1.
-    /// </summary>
-    public class MetierSpecifiqueDto
-    {
-        public string Nom { get; set; } = "";
-        public ChantierPhase Phases { get; set; } = ChantierPhase.None;
-        public string CouleurHex { get; set; } = "";
-        public string Pictogram { get; set; } = "";
-    }
 
     /// <summary>
     /// DTO pour la configuration des prérequis par phase.

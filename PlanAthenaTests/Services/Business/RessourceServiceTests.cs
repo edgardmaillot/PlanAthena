@@ -27,7 +27,7 @@ namespace PlanAthenaTests.Services.Business
             // On le configure pour qu'il soit "lâche" (Loose), n'exigeant pas un setup pour chaque méthode
             _mockProjetService = new Mock<ProjetService>(Mock.Of<IIdGeneratorService>());
 
-            _ressourceService = new RessourceService(_mockIdGenerator.Object, _mockProjetService.Object);
+            _ressourceService = new RessourceService(_mockIdGenerator.Object);
         }
 
         #region Tests Métiers
@@ -70,7 +70,7 @@ namespace PlanAthenaTests.Services.Business
             _mockProjetService.Setup(p => p.ObtenirTachesParMetier("M001")).Returns(new List<Tache>());
 
             // Act
-            _ressourceService.SupprimerMetier(metier.MetierId);
+            _ressourceService.SupprimerMetier(metier.MetierId, _mockProjetService.Object);
 
             // Assert
             Assert.AreEqual(0, _ressourceService.GetAllMetiers().Count);
@@ -89,7 +89,7 @@ namespace PlanAthenaTests.Services.Business
             _mockProjetService.Setup(p => p.ObtenirTachesParMetier("M001")).Returns(new List<Tache> { new Tache() });
 
             // Act
-            _ressourceService.SupprimerMetier(metier.MetierId);
+            _ressourceService.SupprimerMetier(metier.MetierId, _mockProjetService.Object);
         }
 
         [TestMethod]

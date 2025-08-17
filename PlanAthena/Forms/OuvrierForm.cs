@@ -1,14 +1,15 @@
 // Fichier: PlanAthena/Forms/OuvrierForm.cs
-// Version: 0.4.4
+// Version: 0.4.5 (Refactorisation de l'état local)
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
 using PlanAthena.Services.Business;
-using PlanAthena.Services.Business.DTOs;
-using PlanAthena.Services.DataAccess; 
+using PlanAthena.Services.DataAccess;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using PlanAthena.Services.Business.DTOs; // Ajout pour OuvrierInfo DTO
 
 namespace PlanAthena.Forms
 {
@@ -17,22 +18,18 @@ namespace PlanAthena.Forms
         private readonly RessourceService _ressourceService;
         private readonly ProjetService _projetService;
         private readonly IIdGeneratorService _idGeneratorService;
-        private readonly ImportService _importService; 
+        private readonly ImportService _importService;
 
-        // 🔧 CHANGEMENT MAJEUR : La source de vérité est la liste des DTOs uniques pour l'affichage.
-        private List<OuvrierInfo> _ouvriersInfo = new List<OuvrierInfo>();
-        private List<Metier> _metiers = new List<Metier>();
-
-        // 🔧 L'ouvrier sélectionné est un DTO. On ira chercher l'objet complet au besoin.
-        private OuvrierInfo _ouvrierSelectionne = null;
-        private CompetenceOuvrier _competenceSelectionnee = null;
+        // La source de vérité de la sélection est l'ID de l'entité.
+        private string _ouvrierIdSelectionne = null;
+        private string _competenceMetierIdSelectionnee = null;
 
         private bool _isLoading = false;
 
-        public OuvrierForm(RessourceService ouvrierService, ProjetService projetService, IIdGeneratorService idGeneratorService, ImportService importService)
+        public OuvrierForm(RessourceService ressourceService, ProjetService projetService, IIdGeneratorService idGeneratorService, ImportService importService)
         {
             InitializeComponent();
-            _ressourceService = ouvrierService ?? throw new ArgumentNullException(nameof(ouvrierService));
+            _ressourceService = ressourceService ?? throw new ArgumentNullException(nameof(ressourceService));
             _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
             _idGeneratorService = idGeneratorService ?? throw new ArgumentNullException(nameof(idGeneratorService));
             _importService = importService ?? throw new ArgumentNullException(nameof(importService));
@@ -40,38 +37,49 @@ namespace PlanAthena.Forms
 
         private void OuvrierForm_Load(object sender, EventArgs e)
         {
-            ChargerDonnees();
             MettreAJourUI();
         }
 
-        #region Gestion des Données et de l'Affichage
+        #region Helpers d'accès aux données
 
-        private void ChargerDonnees()
+        /// <summary>
+        /// Méthode helper qui récupère l'objet Ouvrier actif à la demande depuis le service.
+        /// C'est le seul point d'accès à l'objet Ouvrier complet.
+        /// </summary>
+        private Ouvrier GetSelectedOuvrier()
         {
-            // 🔧 SIMPLIFIÉ : On récupère directement la liste des DTOs uniques.
-            _ouvriersInfo = _ressourceService.GetAllOuvriers()
-    .Select(ouvrier => new OuvrierInfo
-    {
-        OuvrierId = ouvrier.OuvrierId,
-        Nom = ouvrier.Nom,
-        Prenom = ouvrier.Prenom,
-        CoutJournalier = ouvrier.CoutJournalier,
-        NombreCompetences = ouvrier.Competences.Count
-    })
-    .ToList();
-            _metiers = _ressourceService.GetAllMetiers().ToList();
+            if (string.IsNullOrEmpty(_ouvrierIdSelectionne))
+            {
+                return null;
+            }
+            return _ressourceService.GetOuvrierById(_ouvrierIdSelectionne);
         }
+
+        /// <summary>
+        /// Méthode helper qui récupère la compétence sélectionnée pour l'ouvrier actif.
+        /// </summary>
+        private CompetenceOuvrier GetSelectedCompetence()
+        {
+            var ouvrier = GetSelectedOuvrier();
+            if (ouvrier == null || string.IsNullOrEmpty(_competenceMetierIdSelectionnee))
+            {
+                return null;
+            }
+            return ouvrier.Competences.FirstOrDefault(c => c.MetierId == _competenceMetierIdSelectionnee);
+        }
+
+        #endregion
+
+        #region Gestion de l'Affichage
 
         private void MettreAJourUI()
         {
-            string idSelectionActuelle = _ouvrierSelectionne?.OuvrierId;
-
             RemplirListeOuvriers();
 
             // Tenter de resélectionner l'ouvrier
-            if (idSelectionActuelle != null)
+            if (_ouvrierIdSelectionne != null)
             {
-                var itemToSelect = listViewOuvriers.Items.Cast<ListViewItem>().FirstOrDefault(i => (i.Tag as OuvrierInfo)?.OuvrierId == idSelectionActuelle);
+                var itemToSelect = listViewOuvriers.Items.Cast<ListViewItem>().FirstOrDefault(i => (i.Tag as Ouvrier)?.OuvrierId == _ouvrierIdSelectionne);
                 if (itemToSelect != null)
                 {
                     itemToSelect.Selected = true;
@@ -79,10 +87,9 @@ namespace PlanAthena.Forms
                 }
             }
 
-            // Si la sélection a été perdue, on la vide
             if (listViewOuvriers.SelectedItems.Count == 0)
             {
-                _ouvrierSelectionne = null;
+                _ouvrierIdSelectionne = null;
             }
 
             MettreAJourDetailsOuvrier();
@@ -96,40 +103,44 @@ namespace PlanAthena.Forms
             listViewOuvriers.Items.Clear();
 
             var recherche = txtRechercheOuvrier.Text.ToLower();
-            var ouvriersFiltres = _ouvriersInfo.Where(o =>
+            var tousLesOuvriers = _ressourceService.GetAllOuvriers();
+
+            var ouvriersFiltres = tousLesOuvriers.Where(o =>
                 string.IsNullOrWhiteSpace(recherche) ||
                 o.OuvrierId.ToLower().Contains(recherche) ||
                 o.NomComplet.ToLower().Contains(recherche)
             ).OrderBy(o => o.Nom).ThenBy(o => o.Prenom);
 
-            foreach (var ouvrierInfo in ouvriersFiltres)
+            foreach (var ouvrier in ouvriersFiltres)
             {
                 var item = new ListViewItem(new[] {
-                    ouvrierInfo.OuvrierId,
-                    ouvrierInfo.NomComplet,
-                    ouvrierInfo.CoutJournalier + "€",
-                    ouvrierInfo.NombreCompetences.ToString()
+                    ouvrier.OuvrierId,
+                    ouvrier.NomComplet,
+                    ouvrier.CoutJournalier + "€",
+                    ouvrier.Competences.Count.ToString()
                 })
                 {
-                    Tag = ouvrierInfo // 🔧 Le Tag est maintenant un OuvrierInfo
+                    Tag = ouvrier // Le Tag contient l'objet Ouvrier complet
                 };
                 listViewOuvriers.Items.Add(item);
             }
 
-            lblStatutOuvriers.Text = $"{listViewOuvriers.Items.Count}/{_ouvriersInfo.Count} ouvrier(s)";
+            lblStatutOuvriers.Text = $"{listViewOuvriers.Items.Count}/{tousLesOuvriers.Count} ouvrier(s)";
             _isLoading = false;
         }
 
         private void MettreAJourDetailsOuvrier()
         {
             _isLoading = true;
-            if (_ouvrierSelectionne != null)
+            Ouvrier ouvrierSelectionne = GetSelectedOuvrier();
+
+            if (ouvrierSelectionne != null)
             {
-                txtOuvrierId.Text = _ouvrierSelectionne.OuvrierId;
-                txtNom.Text = _ouvrierSelectionne.Nom;
-                txtPrenom.Text = _ouvrierSelectionne.Prenom;
-                numCoutJournalier.Value = _ouvrierSelectionne.CoutJournalier;
-                txtOuvrierId.ReadOnly = true; // L'ID n'est plus modifiable après création.
+                txtOuvrierId.Text = ouvrierSelectionne.OuvrierId;
+                txtNom.Text = ouvrierSelectionne.Nom;
+                txtPrenom.Text = ouvrierSelectionne.Prenom;
+                numCoutJournalier.Value = ouvrierSelectionne.CoutJournalier;
+                txtOuvrierId.ReadOnly = true;
             }
             else
             {
@@ -145,30 +156,27 @@ namespace PlanAthena.Forms
         {
             listViewCompetences.Items.Clear();
             lblStatutCompetences.Text = "0 compétence(s)";
+            Ouvrier ouvrierSelectionne = GetSelectedOuvrier();
 
-            if (_ouvrierSelectionne != null)
+            if (ouvrierSelectionne != null)
             {
-                var ouvrierComplet = _ressourceService.GetOuvrierById(_ouvrierSelectionne.OuvrierId);
-                if (ouvrierComplet != null)
+                foreach (var competence in ouvrierSelectionne.Competences.OrderBy(c => c.MetierId))
                 {
-                    foreach (var competence in ouvrierComplet.Competences.OrderBy(c => c.MetierId))
-                    {
-                        var metier = _ressourceService.GetMetierById(competence.MetierId);
-                        var nomMetier = metier?.Nom ?? "(Métier inconnu)";
-                        var estPrincipal = competence.EstMetierPrincipal ? " (Principal)" : "";
-                        var item = new ListViewItem(new[] { competence.MetierId, nomMetier + estPrincipal }) { Tag = competence };
-                        if (competence.EstMetierPrincipal) { item.Font = new System.Drawing.Font(listViewCompetences.Font, System.Drawing.FontStyle.Bold); }
-                        listViewCompetences.Items.Add(item);
-                    }
-                    lblStatutCompetences.Text = $"{ouvrierComplet.Competences.Count} compétence(s)";
+                    var metier = _ressourceService.GetMetierById(competence.MetierId);
+                    var nomMetier = metier?.Nom ?? "(Métier inconnu)";
+                    var estPrincipal = competence.EstMetierPrincipal ? " (Principal)" : "";
+                    var item = new ListViewItem(new[] { competence.MetierId, nomMetier + estPrincipal }) { Tag = competence };
+                    if (competence.EstMetierPrincipal) { item.Font = new System.Drawing.Font(listViewCompetences.Font, System.Drawing.FontStyle.Bold); }
+                    listViewCompetences.Items.Add(item);
                 }
+                lblStatutCompetences.Text = $"{ouvrierSelectionne.Competences.Count} compétence(s)";
             }
         }
 
         private void MettreAJourEtatBoutons()
         {
-            bool ouvrierEstSelectionne = _ouvrierSelectionne != null;
-            bool competenceEstSelectionnee = _competenceSelectionnee != null;
+            bool ouvrierEstSelectionne = !string.IsNullOrEmpty(_ouvrierIdSelectionne);
+            bool competenceEstSelectionnee = !string.IsNullOrEmpty(_competenceMetierIdSelectionnee);
 
             groupBoxDetailsOuvrier.Enabled = ouvrierEstSelectionne;
             groupBoxCompetences.Enabled = ouvrierEstSelectionne;
@@ -186,15 +194,18 @@ namespace PlanAthena.Forms
         private void listViewOuvriers_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (_isLoading) return;
+
             if (listViewOuvriers.SelectedItems.Count > 0)
             {
-                _ouvrierSelectionne = listViewOuvriers.SelectedItems[0].Tag as OuvrierInfo;
+                var ouvrierTag = listViewOuvriers.SelectedItems[0].Tag as Ouvrier;
+                _ouvrierIdSelectionne = ouvrierTag?.OuvrierId;
             }
             else
             {
-                _ouvrierSelectionne = null;
+                _ouvrierIdSelectionne = null;
             }
-            _competenceSelectionnee = null;
+
+            _competenceMetierIdSelectionnee = null;
             MettreAJourDetailsOuvrier();
             MettreAJourListeCompetences();
             MettreAJourEtatBoutons();
@@ -204,11 +215,12 @@ namespace PlanAthena.Forms
         {
             if (listViewCompetences.SelectedItems.Count > 0)
             {
-                _competenceSelectionnee = listViewCompetences.SelectedItems[0].Tag as CompetenceOuvrier;
+                var competenceTag = listViewCompetences.SelectedItems[0].Tag as CompetenceOuvrier;
+                _competenceMetierIdSelectionnee = competenceTag?.MetierId;
             }
             else
             {
-                _competenceSelectionnee = null;
+                _competenceMetierIdSelectionnee = null;
             }
             MettreAJourEtatBoutons();
         }
@@ -220,30 +232,22 @@ namespace PlanAthena.Forms
 
         private void DetailOuvrier_Changed(object sender, EventArgs e)
         {
-            if (_isLoading || _ouvrierSelectionne == null) return;
+            if (_isLoading) return;
+            Ouvrier ouvrierAModifier = GetSelectedOuvrier();
+            if (ouvrierAModifier == null) return;
 
-            // Mettre à jour le DTO en mémoire
-            _ouvrierSelectionne.Nom = txtNom.Text.Trim();
-            _ouvrierSelectionne.Prenom = txtPrenom.Text.Trim();
-            _ouvrierSelectionne.CoutJournalier = (int)numCoutJournalier.Value;
-
-            // Créer un objet Ouvrier temporaire pour la mise à jour
-            var ouvrierAModifier = new Ouvrier
-            {
-                OuvrierId = _ouvrierSelectionne.OuvrierId,
-                Nom = _ouvrierSelectionne.Nom,
-                Prenom = _ouvrierSelectionne.Prenom,
-                CoutJournalier = _ouvrierSelectionne.CoutJournalier
-            };
+            ouvrierAModifier.Nom = txtNom.Text.Trim();
+            ouvrierAModifier.Prenom = txtPrenom.Text.Trim();
+            ouvrierAModifier.CoutJournalier = (int)numCoutJournalier.Value;
 
             _ressourceService.ModifierOuvrier(ouvrierAModifier);
 
-            // Mettre à jour l'affichage dans la liste de gauche
-            var itemToUpdate = listViewOuvriers.Items.Cast<ListViewItem>().FirstOrDefault(i => (i.Tag as OuvrierInfo)?.OuvrierId == _ouvrierSelectionne.OuvrierId);
+            // Rafraîchit l'item dans la liste sans recharger toute la liste
+            var itemToUpdate = listViewOuvriers.Items.Cast<ListViewItem>().FirstOrDefault(i => (i.Tag as Ouvrier)?.OuvrierId == _ouvrierIdSelectionne);
             if (itemToUpdate != null)
             {
-                itemToUpdate.SubItems[1].Text = _ouvrierSelectionne.NomComplet;
-                itemToUpdate.SubItems[2].Text = _ouvrierSelectionne.CoutJournalier + "€";
+                itemToUpdate.SubItems[1].Text = ouvrierAModifier.NomComplet;
+                itemToUpdate.SubItems[2].Text = ouvrierAModifier.CoutJournalier + "€";
             }
         }
 
@@ -255,9 +259,8 @@ namespace PlanAthena.Forms
         {
             try
             {
-                // Le formulaire demande simplement la création, sans savoir comment elle se fait.
-                _ressourceService.CreerOuvrierParDefaut();
-                ChargerDonnees();
+                var nouvelOuvrier = _ressourceService.CreerOuvrierParDefaut();
+                _ouvrierIdSelectionne = nouvelOuvrier.OuvrierId; // Sélectionne le nouvel ouvrier
                 MettreAJourUI();
             }
             catch (Exception ex)
@@ -268,13 +271,10 @@ namespace PlanAthena.Forms
 
         private void btnAjouterCompetence_Click(object sender, EventArgs e)
         {
-            if (_ouvrierSelectionne == null) return;
+            if (string.IsNullOrEmpty(_ouvrierIdSelectionne)) return;
 
-            var ouvrierComplet = _ressourceService.GetOuvrierById(_ouvrierSelectionne.OuvrierId);
-            if (ouvrierComplet == null) return;
-
-            var competencesActuelles = ouvrierComplet.Competences.Select(c => c.MetierId).ToList();
-            var metiersDisponibles = _metiers.Where(m => !competencesActuelles.Contains(m.MetierId)).ToList();
+            // Logique de récupération des métiers disponibles déplacée dans le service
+            var metiersDisponibles = _ressourceService.GetMetiersDisponiblesPourOuvrier(_ouvrierIdSelectionne);
             if (!metiersDisponibles.Any())
             {
                 MessageBox.Show("L'ouvrier maîtrise déjà tous les métiers.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -286,9 +286,7 @@ namespace PlanAthena.Forms
             {
                 try
                 {
-                    _ressourceService.AjouterCompetence(_ouvrierSelectionne.OuvrierId, dialog.MetierSelectionne.MetierId);
-                    // Mettre à jour le nombre de compétences dans notre DTO local
-                    _ouvrierSelectionne.NombreCompetences++;
+                    _ressourceService.AjouterCompetence(_ouvrierIdSelectionne, dialog.MetierSelectionne.MetierId);
                     MettreAJourUI();
                 }
                 catch (Exception ex)
@@ -300,15 +298,16 @@ namespace PlanAthena.Forms
 
         private void btnSupprimerOuvrier_Click(object sender, EventArgs e)
         {
-            if (_ouvrierSelectionne == null) return;
+            Ouvrier ouvrierASupprimer = GetSelectedOuvrier();
+            if (ouvrierASupprimer == null) return;
 
-            var result = MessageBox.Show($"Supprimer l'ouvrier '{_ouvrierSelectionne.NomComplet}' ?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var result = MessageBox.Show($"Supprimer l'ouvrier '{ouvrierASupprimer.NomComplet}' ?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.Yes)
             {
                 try
                 {
-                    _ressourceService.SupprimerOuvrier(_ouvrierSelectionne.OuvrierId);
-                    ChargerDonnees();
+                    _ressourceService.SupprimerOuvrier(ouvrierASupprimer.OuvrierId);
+                    _ouvrierIdSelectionne = null; // Désélectionne
                     MettreAJourUI();
                 }
                 catch (Exception ex)
@@ -318,37 +317,35 @@ namespace PlanAthena.Forms
             }
         }
 
-        // La logique des autres boutons (modifier, supprimer compétence, etc.) est similaire et peut être adaptée sur ce modèle.
-        // Je laisse les versions simplifiées pour le moment.
         private void btnModifierCompetence_Click(object sender, EventArgs e)
         {
-            if (_ouvrierSelectionne == null || _competenceSelectionnee == null) return;
+            if (string.IsNullOrEmpty(_ouvrierIdSelectionne) || string.IsNullOrEmpty(_competenceMetierIdSelectionnee)) return;
 
+            var metier = _ressourceService.GetMetierById(_competenceMetierIdSelectionnee);
             var result = MessageBox.Show(
-                $"Définir '{_ressourceService.GetMetierById(_competenceSelectionnee.MetierId)?.Nom}' comme métier principal ?",
+                $"Définir '{metier?.Nom}' comme métier principal ?",
                 "Définir comme principal", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (result == DialogResult.Yes)
             {
-                _ressourceService.DefinirMetierPrincipal(_ouvrierSelectionne.OuvrierId, _competenceSelectionnee.MetierId);
-                MettreAJourListeCompetences();
+                _ressourceService.DefinirMetierPrincipal(_ouvrierIdSelectionne, _competenceMetierIdSelectionnee);
+                MettreAJourListeCompetences(); // Rafraîchissement ciblé
             }
         }
 
         private void btnSupprimerCompetence_Click(object sender, EventArgs e)
         {
-            if (_ouvrierSelectionne == null || _competenceSelectionnee == null) return;
+            if (string.IsNullOrEmpty(_ouvrierIdSelectionne) || string.IsNullOrEmpty(_competenceMetierIdSelectionnee)) return;
 
-            var metier = _ressourceService.GetMetierById(_competenceSelectionnee.MetierId);
+            var metier = _ressourceService.GetMetierById(_competenceMetierIdSelectionnee);
             var result = MessageBox.Show($"Supprimer la compétence '{metier?.Nom}' ?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 
             if (result == DialogResult.Yes)
             {
                 try
                 {
-                    _ressourceService.SupprimerCompetence(_ouvrierSelectionne.OuvrierId, _competenceSelectionnee.MetierId);
-                    _ouvrierSelectionne.NombreCompetences--;
-                    _competenceSelectionnee = null;
+                    _ressourceService.SupprimerCompetence(_ouvrierIdSelectionne, _competenceMetierIdSelectionnee);
+                    _competenceMetierIdSelectionnee = null; // Désélectionne
                     MettreAJourUI();
                 }
                 catch (Exception ex)
@@ -360,7 +357,7 @@ namespace PlanAthena.Forms
 
         private void btnModifierOuvrier_Click(object sender, EventArgs e)
         {
-            if (_ouvrierSelectionne != null)
+            if (!string.IsNullOrEmpty(_ouvrierIdSelectionne))
             {
                 txtNom.Focus();
             }
@@ -371,6 +368,8 @@ namespace PlanAthena.Forms
         #region Import/Export/Fermer
         private void btnImporter_Click(object sender, EventArgs e)
         {
+            // La logique d'import/export reste la même car elle appelle un service externe
+            // qui se charge d'orchestrer. Le rafraîchissement est juste plus simple.
             using var ofd = new OpenFileDialog
             {
                 Filter = "Fichiers CSV (*.csv)|*.csv|Tous les fichiers (*.*)|*.*",
@@ -382,10 +381,7 @@ namespace PlanAthena.Forms
                 try
                 {
                     var result = MessageBox.Show(
-                        "Voulez-vous remplacer tous les ouvriers existants ?\n\n" +
-                        "• Oui : Remplace tous les ouvriers actuels\n" +
-                        "• Non : Ajoute aux ouvriers existants\n" +
-                        "• Annuler : Annule l'import",
+                        "Voulez-vous remplacer tous les ouvriers existants ?",
                         "Mode d'import",
                         MessageBoxButtons.YesNoCancel,
                         MessageBoxIcon.Question);
@@ -393,17 +389,12 @@ namespace PlanAthena.Forms
                     if (result == DialogResult.Cancel) return;
 
                     var nombreImporte = _importService.ImporterOuvriersCSV(ofd.FileName, result == DialogResult.Yes);
-                    ChargerDonnees(); // Recharger depuis le service
 
-                    _ouvrierSelectionne = null;
-                    _competenceSelectionnee = null;
-                    //_enModification = false;
-                    RafraichirAffichage();
+                    _ouvrierIdSelectionne = null; // Désélectionne tout
+                    MettreAJourUI();
 
                     MessageBox.Show(
-                        $"Import terminé avec succès !\n\n" +
-                        $"• {nombreImporte} lignes importées\n" +
-                        $"• {_ouvriersInfo.GroupBy(o => o.OuvrierId).Count()} ouvriers total",
+                        $"Import terminé avec succès ! {nombreImporte} ligne(s) importée(s).",
                         "Import réussi",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Information);
@@ -430,7 +421,7 @@ namespace PlanAthena.Forms
 
         private void btnExporter_Click(object sender, EventArgs e)
         {
-            if (!_ouvriersInfo.Any())
+            if (!_ressourceService.GetAllOuvriers().Any())
             {
                 MessageBox.Show("Aucun ouvrier à exporter.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
@@ -448,13 +439,8 @@ namespace PlanAthena.Forms
                 try
                 {
                     _importService.ExporterOuvriersCSV(sfd.FileName);
-
-                    var nombreOuvriers = _ouvriersInfo.GroupBy(o => o.OuvrierId).Count();
                     MessageBox.Show(
-                        $"Export terminé avec succès !\n\n" +
-                        $"• {_ouvriersInfo.Count} lignes exportées\n" +
-                        $"• {nombreOuvriers} ouvriers\n" +
-                        $"• Fichier : {Path.GetFileName(sfd.FileName)}",
+                        $"Export terminé avec succès !",
                         "Export réussi",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Information);
@@ -470,134 +456,18 @@ namespace PlanAthena.Forms
             }
         }
 
-        private void RafraichirAffichage()
-        {
-            RafraichirListeOuvriers();
-            RafraichirStatutOuvriers();
-            RafraichirDetailsOuvrier();
-            RafraichirCompetences();
-        }
-
-        private void RafraichirListeOuvriers()
-        {
-            listViewOuvriers.Items.Clear();
-
-            var ouvriersUniques = _ouvriersInfo.GroupBy(o => o.OuvrierId)
-                .Select(g => new OuvrierInfo
-                {
-                    OuvrierId = g.Key,
-                    Nom = g.First().Nom,
-                    Prenom = g.First().Prenom,
-                    CoutJournalier = g.First().CoutJournalier,
-                    NombreCompetences = g.Count()
-                }).AsEnumerable();
-
-            // Filtrage par recherche
-            if (!string.IsNullOrWhiteSpace(txtRechercheOuvrier.Text))
-            {
-                var recherche = txtRechercheOuvrier.Text.ToLower();
-                ouvriersUniques = ouvriersUniques.Where(o =>
-                    o.OuvrierId.ToLower().Contains(recherche) ||
-                    o.NomComplet.ToLower().Contains(recherche));
-            }
-
-            foreach (var ouvrier in ouvriersUniques.OrderBy(o => o.Nom).ThenBy(o => o.Prenom))
-            {
-                var item = new ListViewItem(new[] {
-                    ouvrier.OuvrierId,
-                    ouvrier.NomComplet,
-                    ouvrier.CoutJournalier.ToString() + "€",
-                    ouvrier.NombreCompetences.ToString()
-                })
-                {
-                    Tag = ouvrier
-                };
-                listViewOuvriers.Items.Add(item);
-            }
-        }
-
-        private void RafraichirStatutOuvriers()
-        {
-            var totalOuvriers = _ouvriersInfo.GroupBy(o => o.OuvrierId).Count();
-            var afficheOuvriers = listViewOuvriers.Items.Count;
-
-            if (afficheOuvriers == totalOuvriers)
-                lblStatutOuvriers.Text = $"{totalOuvriers} ouvrier(s)";
-            else
-                lblStatutOuvriers.Text = $"{afficheOuvriers}/{totalOuvriers} ouvrier(s) affiché(s)";
-        }
-
-        private void RafraichirDetailsOuvrier()
-        {
-            if (_ouvrierSelectionne == null)
-            {
-                groupBoxDetailsOuvrier.Enabled = false;
-                groupBoxCompetences.Enabled = false;
-                txtOuvrierId.Clear();
-                txtNom.Clear();
-                txtPrenom.Clear();
-                numCoutJournalier.Value = 0;
-                return;
-            }
-
-            groupBoxDetailsOuvrier.Enabled = true;
-            groupBoxCompetences.Enabled = true;
-            btnAjouterCompetence.Enabled = true;
-
-            txtOuvrierId.Text = _ouvrierSelectionne.OuvrierId;
-            txtNom.Text = _ouvrierSelectionne.Nom;
-            txtPrenom.Text = _ouvrierSelectionne.Prenom;
-            numCoutJournalier.Value = _ouvrierSelectionne.CoutJournalier;
-
-            // Gestion du mode modification
-            //txtOuvrierId.ReadOnly = _enModification;
-        }
-
-        private void RafraichirCompetences()
-        {
-            listViewCompetences.Items.Clear();
-            lblStatutCompetences.Text = "0 compétence(s)";
-
-            if (_ouvrierSelectionne == null) return;
-
-            // 🔧 CORRECTION : On demande au service l'objet Ouvrier COMPLET pour l'ID sélectionné.
-            var ouvrierComplet = _ressourceService.GetOuvrierById(_ouvrierSelectionne.OuvrierId);
-
-            // On vérifie que l'ouvrier a bien été trouvé.
-            if (ouvrierComplet == null) return;
-
-            // On itère sur la VRAIE liste de compétences de cet ouvrier.
-            foreach (var competence in ouvrierComplet.Competences.OrderBy(c => c.MetierId))
-            {
-                var metier = _ressourceService.GetMetierById(competence.MetierId);
-                var nomMetier = metier?.Nom ?? "(Métier inconnu)";
-                var estPrincipal = competence.EstMetierPrincipal ? " (Principal)" : "";
-
-                var item = new ListViewItem(new[] {
-            competence.MetierId,
-            nomMetier + estPrincipal
-            // Les colonnes NiveauExpertise et PerformancePct n'existent plus dans le modèle V0.4.2
-            // Il faudra adapter le Designer pour supprimer ces colonnes de listViewCompetences.
-        })
-                {
-                    Tag = competence // Le tag est maintenant l'objet CompetenceOuvrier
-                };
-
-                if (competence.EstMetierPrincipal)
-                {
-                    item.Font = new System.Drawing.Font(listViewCompetences.Font, System.Drawing.FontStyle.Bold);
-                }
-
-                listViewCompetences.Items.Add(item);
-            }
-
-            lblStatutCompetences.Text = $"{ouvrierComplet.Competences.Count} compétence(s)";
-        }
         private void btnFermer_Click(object sender, EventArgs e)
         {
             this.Close();
         }
-        
+
+        // Ces méthodes ne sont plus nécessaires car remplacées par MettreAJourUI
+        private void RafraichirAffichage() { MettreAJourUI(); }
+        private void RafraichirListeOuvriers() { RemplirListeOuvriers(); }
+        private void RafraichirStatutOuvriers() { /* Géré par RemplirListeOuvriers */ }
+        private void RafraichirDetailsOuvrier() { MettreAJourDetailsOuvrier(); }
+        private void RafraichirCompetences() { MettreAJourListeCompetences(); }
+
         #endregion
     }
 }

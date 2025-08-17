@@ -1,0 +1,104 @@
+@startuml
+'---------------------------------
+' Titre et Configuration
+'---------------------------------
+title Diagramme de Séquence - Import de Tâches CSV
+autonumber
+
+actor Utilisateur
+
+'---------------------------------
+' Participants
+'---------------------------------
+participant "form:TacheForm" as TacheForm
+participant "form:ImportTacheForm" as ImportTacheForm
+participant "service:ImportService" as ImportService
+participant "service:CsvDataService" as CsvDataService
+participant "service:ProjetService" as ProjetService
+participant "service:RessourceService" as RessourceService
+
+'=================================
+' GROUPE: Import de Tâches
+'=================================
+group Import de Tâches CSV
+
+    Utilisateur -> TacheForm : Clic sur "Importer"
+    activate TacheForm
+    
+    TacheForm -> ImportTacheForm : new ImportTacheForm(...)
+    activate ImportTacheForm
+    ImportTacheForm --> Utilisateur : Affiche l'interface de mapping
+    
+    Utilisateur -> ImportTacheForm : Configure le mapping et clique "Confirmer"
+    ImportTacheForm --> TacheForm : DialogResult.OK (avec mappingConfig)
+    deactivate ImportTacheForm
+    
+    TacheForm -> ImportService : ImporterTachesCSV(filePath, lotId, mappingConfig)
+    activate ImportService
+    
+    '-- Phase de pré-vérification --'
+    ImportService -> ProjetService : ObtenirLotParId(lotIdCible)
+    ImportService -> ProjetService : ObtenirTachesParLot(lotIdCible)
+    
+    alt Le lot contient déjà des tâches
+        ImportService --> TacheForm : return ImportResult.DemandeConfirmation
+        TacheForm -> Utilisateur : Affiche popup "Confirmer écrasement ?"
+        ' (Le flux s'arrête ici pour cette séquence, un nouvel appel serait fait)
+        TacheForm --> Utilisateur
+        deactivate TacheForm
+        deactivate ImportService
+        return
+    end
+    
+    '-- Phase d'import --'
+    ImportService -> ProjetService : ViderLot(lotIdCible)
+    
+    ImportService -> self : ImporterDonneesInitialTaches(...)
+    activate ImportService
+    
+    ImportService -> self : LireCsvBrut(...)
+    
+    loop pour chaque nom de bloc unique dans le CSV
+        ImportService -> ProjetService : ObtenirBlocsParLot(lotId)
+        alt Le bloc n'existe pas
+            ImportService -> ProjetService : CreerBloc(...)
+            activate ProjetService
+            ProjetService --> ImportService : nouveauBloc
+            deactivate ProjetService
+        end
+    end
+    
+    loop pour chaque ligne de tâche dans le CSV
+        ImportService -> RessourceService : GetMetierById(metierId)
+        
+        ImportService -> ProjetService : CreerTache(...)
+        activate ProjetService
+        ProjetService --> ImportService : nouvelleTache
+        deactivate ProjetService
+        ' (autres affectations sur la tâche...)
+    end
+    
+    ImportService --> ImportService : (nbTaches, nbBlocs, importedTasks, warnings)
+    deactivate ImportService
+    
+    '-- Phase de post-traitement (dépendances) --'
+    ImportService -> self : RemapperDependancesDesTaches(importedTasks)
+    activate ImportService
+    
+    ImportService -> ProjetService : ObtenirToutesLesTaches()
+    
+    loop pour chaque tâche importée avec des dépendances
+        ImportService -> ProjetService : ModifierTache(tache)
+    end
+    
+    ImportService --> ImportService : remappingWarnings
+    deactivate ImportService
+    
+    ImportService --> TacheForm : return ImportResult.Succes(...)
+    deactivate ImportService
+    
+    TacheForm -> Utilisateur : Affiche popup "Import réussi"
+    deactivate TacheForm
+
+end
+@enduml

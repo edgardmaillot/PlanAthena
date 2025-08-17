@@ -30,7 +30,7 @@ namespace PlanAthenaTests.Services.DataAccess
             _idGenerator = new IdGeneratorService();
             _projetService = new ProjetService(_idGenerator);
             _csvDataService = new CsvDataService(); // Utiliser une vraie instance car le service est simple
-            _ressourceService = new RessourceService(_idGenerator, _projetService);
+            _ressourceService = new RessourceService(_idGenerator);
             _importService = new ImportService(_projetService, _ressourceService, _idGenerator, _csvDataService);
 
             // Créer un fichier temporaire pour chaque test
@@ -39,6 +39,7 @@ namespace PlanAthenaTests.Services.DataAccess
             // Pré-charger des métiers pour que les imports de tâches fonctionnent
             _ressourceService.CreerMetier("Maçonnerie"); // M001
             _ressourceService.CreerMetier("Plomberie");  // M002
+            _ressourceService.CreerMetier("Electricité"); // M003
         }
 
         [TestCleanup]
@@ -201,6 +202,100 @@ namespace PlanAthenaTests.Services.DataAccess
             // Assert
             Assert.IsFalse(result.EstSucces);
             Assert.IsTrue(result.MessageErreur.Contains("Erreur lors de l'import"), "Le message d'erreur doit être clair.");
+        }
+
+        #endregion
+
+        #region Tests Import/Export Ouvriers (NOUVEAU)
+
+        [TestMethod]
+        [TestCategory("Import - Ouvriers")]
+        public void ImporterOuvriersCSV_AvecCompetencesMultiples_ReconstruitCorrectementLesOuvriers()
+        {
+            // Arrange
+            var csvContent = "OuvrierId;Nom;Prenom;CoutJournalier;MetierId\n" +
+                             "Ouv001;Durand;Paul;300;M001\n" +
+                             "Ouv001;Durand;Paul;300;M002\n" +
+                             "Ouv002;Martin;Marie;320;M003";
+            File.WriteAllText(_tempFilePath, csvContent);
+
+            // Act
+            int count = _importService.ImporterOuvriersCSV(_tempFilePath, true);
+
+            // Assert
+            Assert.AreEqual(2, count, "Doit rapporter 2 ouvriers uniques traités.");
+
+            var allOuvriers = _ressourceService.GetAllOuvriers();
+            Assert.AreEqual(2, allOuvriers.Count, "Il doit y avoir 2 ouvriers uniques dans le service.");
+
+            // CORRECTION : On cherche l'ouvrier par son nom et prénom, pas par son ID externe.
+            var paul = allOuvriers.FirstOrDefault(o => o.Nom == "Durand" && o.Prenom == "Paul");
+            Assert.IsNotNull(paul, "L'ouvrier Paul Durand n'a pas été trouvé après l'import."); // L'assert passe maintenant
+
+            // Le reste des assertions peut continuer
+            Assert.AreEqual(2, paul.Competences.Count, "Paul Durand doit avoir 2 compétences.");
+            Assert.IsTrue(paul.Competences.Any(c => c.MetierId == "M001"));
+            Assert.IsTrue(paul.Competences.Any(c => c.MetierId == "M002"));
+
+            var marie = allOuvriers.FirstOrDefault(o => o.Nom == "Martin" && o.Prenom == "Marie");
+            Assert.IsNotNull(marie, "L'ouvrier Marie Martin n'a pas été trouvée après l'import.");
+            Assert.AreEqual(1, marie.Competences.Count, "Marie Martin doit avoir 1 compétence.");
+        }
+
+        [TestMethod]
+        [TestCategory("Import - Ouvriers")]
+        public void ImporterOuvriersCSV_ModeNonRemplacement_AjouteEtMetAJourLesOuvriers()
+        {
+            // Arrange
+            // 1. Pré-charger un ouvrier existant
+            var ouvrierExistant = _ressourceService.CreerOuvrier("Paul", "Durand", 280); // ID: W001
+            _ressourceService.AjouterCompetence(ouvrierExistant.OuvrierId, "M001");
+
+            // 2. Préparer un CSV qui met à jour Paul et ajoute un nouvel ouvrier
+            var csvContent = $"OuvrierId;Nom;Prenom;CoutJournalier;MetierId\n" +
+                             $"{ouvrierExistant.OuvrierId};Durand;Paul;290;M002\n" + // Met à jour le coût de Paul et ajoute M002
+                             $"Ouv002;Martin;Marie;320;M003";
+            File.WriteAllText(_tempFilePath, csvContent);
+
+            // Act
+            _importService.ImporterOuvriersCSV(_tempFilePath, false); // NE PAS remplacer
+
+            // Assert
+            var allOuvriers = _ressourceService.GetAllOuvriers();
+            Assert.AreEqual(2, allOuvriers.Count, "Il doit y avoir 2 ouvriers au total.");
+
+            var paul = _ressourceService.GetOuvrierById(ouvrierExistant.OuvrierId);
+            Assert.IsNotNull(paul);
+            Assert.AreEqual(290, paul.CoutJournalier, "Le coût journalier de Paul doit être mis à jour.");
+            Assert.AreEqual(2, paul.Competences.Count, "Paul doit maintenant avoir 2 compétences (M001 et M002).");
+        }
+
+        [TestMethod]
+        [TestCategory("Export - Ouvriers")]
+        public void ExporterOuvriersCSV_AvecCompetencesMultiples_CreeUneLigneParCompetence()
+        {
+            // Arrange
+            var ouvrier1 = _ressourceService.CreerOuvrier("Paul", "Durand", 300); // W001
+            _ressourceService.AjouterCompetence(ouvrier1.OuvrierId, "M001");
+            _ressourceService.AjouterCompetence(ouvrier1.OuvrierId, "M002");
+            var ouvrier2 = _ressourceService.CreerOuvrier("Marie", "Martin", 320); // W002
+            _ressourceService.AjouterCompetence(ouvrier2.OuvrierId, "M003");
+
+            // Act
+            _importService.ExporterOuvriersCSV(_tempFilePath);
+
+            // Assert
+            var lignesCsv = File.ReadAllLines(_tempFilePath);
+            // 1 ligne d'en-tête + 2 lignes pour Paul + 1 ligne pour Marie = 4 lignes
+            Assert.AreEqual(4, lignesCsv.Length, "Le fichier CSV doit contenir 4 lignes au total.");
+
+            // Vérifie que l'ID de Paul apparaît bien 2 fois
+            var countPaul = lignesCsv.Count(l => l.Contains(ouvrier1.OuvrierId));
+            Assert.AreEqual(2, countPaul, "L'ID de Paul Durand doit apparaître sur 2 lignes.");
+
+            // Vérifie que ses deux métiers sont bien présents
+            Assert.IsTrue(lignesCsv.Any(l => l.Contains("M001")));
+            Assert.IsTrue(lignesCsv.Any(l => l.Contains("M002")));
         }
 
         #endregion

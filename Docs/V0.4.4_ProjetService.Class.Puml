@@ -1,0 +1,123 @@
+@startuml
+'---------------------------------
+' Titre et Configuration
+'---------------------------------
+title Diagramme de Classe pour ProjetService (Version Confirmée)
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam class {
+    BackgroundColor #LightCyan
+    BorderColor #333377
+    ArrowColor #333377
+}
+hide empty members
+
+'---------------------------------
+' Package du Service
+'---------------------------------
+package "Services Métier" as Business {
+    class ProjetService {
+        '-- Champs --'
+        - _idGenerator: IIdGeneratorService
+        - _lots: Dictionary<string, Lot>
+        - _taches: Dictionary<string, Tache>
+
+        '-- Constructeur --'
+        + ProjetService(idGenerator: IIdGeneratorService)
+
+        '-- Cycle de vie du projet --'
+        + InitialiserNouveauProjet()
+        + ChargerProjet(projetData: ProjetData)
+        + GetProjetDataPourSauvegarde(): ProjetData
+        + ViderProjet()
+        + ViderLot(lotId: string)
+        - <<static>> ExtraireLotIdDepuisBlocId(blocId: string): string
+
+        '-- Gestion des Lots --'
+        + CreerLot(nom: string, priorite: int, phases: ChantierPhase): Lot
+        + ModifierLot(lotModifie: Lot)
+        + SupprimerLot(lotId: string)
+        + ObtenirTousLesLots(): List<Lot>
+        + ObtenirLotParId(lotId: string): Lot
+
+        '-- Gestion des Blocs --'
+        + CreerBloc(lotIdParent: string, nom: string, capacite: int): Bloc
+        + ModifierBloc(blocModifie: Bloc)
+        + SupprimerBloc(blocId: string)
+        + ObtenirBlocsParLot(lotId: string): List<Bloc>
+        + ObtenirTousLesBlocs(): List<Bloc>
+        + ObtenirBlocParId(string blocId): Bloc
+
+        '-- Gestion des Tâches --'
+        + CreerTache(lotId: string, blocId: string, nom: string, heures: int): Tache
+        + ModifierTache(tacheModifiee: Tache)
+        + SupprimerTache(tacheId: string)
+        + ObtenirToutesLesTaches(): List<Tache>
+        + ObtenirTacheParId(tacheId: string): Tache
+        + ObtenirTachesParLot(lotId: string): List<Tache>
+        + ObtenirTachesParBloc(blocId: string): List<Tache>
+        + <<virtual>> ObtenirTachesParMetier(metierId: string): List<Tache>
+    }
+}
+
+'---------------------------------
+' Dépendances
+'---------------------------------
+package "Services Accès Données" as DataAccess {
+    interface IIdGeneratorService
+    class IdGeneratorService implements IIdGeneratorService {
+        '-- Méthodes utilisées par ProjetService --'
+        + GenererProchainLotId(lotsExistants: IReadOnlyList<Lot>): string
+        + GenererProchainBlocId(lotId: string, blocsExistants: IReadOnlyList<Bloc>): string
+        + GenererProchainTacheId(blocId: string, tachesExistantes: IReadOnlyList<Tache>, type: TypeActivite): string
+    }
+}
+
+package "Données" as Data {
+    class Lot {
+        + LotId: string
+        + Blocs: List<Bloc>
+    }
+    class Bloc {
+        + BlocId: string
+        + LotId: string
+    }
+    class Tache {
+        + TacheId: string
+        + LotId: string
+        + BlocId: string
+    }
+    class ProjetData {
+        + Lots: List<Lot>
+        + Taches: List<Tache>
+        + Blocs: List<Bloc>
+    }
+    enum ChantierPhase
+}
+
+'---------------------------------
+' Relations
+'---------------------------------
+ProjetService "1" *-- "1" IIdGeneratorService : "injecté via constructeur"
+
+ProjetService "1" o-- "*" Lot : "gère"
+ProjetService "1" o-- "*" Tache : "gère"
+ProjetService "1" o-- "*" Bloc : "gère (via Lot)"
+ProjetService ..> ProjetData : "charge/sauvegarde"
+ProjetService ..> ChantierPhase
+
+'---------------------------------
+' Note Explicative
+'---------------------------------
+note right of ProjetService
+  <b>Relation avec RessourceService</b>
+  Ce diagramme est inchangé car la dépendance
+  est unidirectionnelle :
+  `RessourceService` -> `ProjetService`.
+
+  `ProjetService` ne dépend pas de `RessourceService`,
+  il lui fournit simplement la méthode
+  `ObtenirTachesParMetier()`.
+end note
+
+@enduml

@@ -1,0 +1,98 @@
+@startuml
+title Architecture Cible (Post-Refactorisation)
+!define DIRECTION top to bottom direction
+top to bottom direction
+skinparam packageStyle rectangle
+skinparam linetype ortho
+package "⚙️ Services Métier (Refactorisés)" as BUSINESS {
+class ProjetService {
+== Gestion Structure Projet ==
++CreerLot()
++ModifierLot(Lot)
++SupprimerLot(lotId)
++CreerBloc(parentLotId)
++ModifierBloc(Bloc)
++SupprimerBloc(blocId)
+--Dependencies--
+-_tacheServiceFactory: Func<TacheService>
+}
+class RessourceService {
+== Gestion Ressources ==
++CreerMetier()
++ModifierMetier(Metier)
++SupprimerMetier(metierId)
++GetAllMetiers()
++CreerOuvrier()
++ModifierOuvrier(Ouvrier)
++SupprimerOuvrier(ouvrierId)
++ObtenirTousLesOuvriers()
+}
+class TacheService {
+== Gestion Tâches ==
++AjouterTache()
++ModifierTache()
++SupprimerTache()
+--Dependencies--
+-_projetService: ProjetService
+-_ressourceService: RessourceService
+}
+class PlanificationService {
+--Dependencies--
+- DataTransformer
+- ...
+}
+}
+package "🗄️ Accès aux Données (Refactorisé)" as DATA {
+class ProjetRepository {
+== Persistance Projet ==
++Sauvegarder(ProjetData)
++Charger(path): ProjetData
+}
+class ProjetData {
++Lots: List<Lot> (hiérarchique)
++Taches: List<Tache>
++Metiers: List<Metier>
++Ouvriers: List<Ouvrier>
+}
+class Lot {
++Blocs: List<Bloc>
+}
+package "Processing" {
+class DataTransformer {
+--Dependencies--
+-_projetService: ProjetService
+-_ressourceService: RessourceService
+}
+}
+}
+package "IHM (future)" as UI {
+class StructureView {
+--Dependencies--
+- ProjetService
+}
+class MetierView {
+--Dependencies--
+- RessourceService
+}
+}
+UI -down-> BUSINESS
+BUSINESS -down-> DATA
+NewProjetService ..> NewTacheService : "Func<TacheService>\n(pour validation)"
+NewTacheService --> NewProjetService : "Valide existence\nLot/Bloc"
+NewTacheService --> RessourceService : "Valide existence\nMetier"
+NewDataTransformer --> NewProjetService
+NewDataTransformer --> RessourceService
+note right of NewProjetService
+<b>Responsabilité Unique :</b>
+Gère la structure du projet
+(Lots et Blocs).
+Devient une "boîte à outils"
+sans état.
+end note
+note right of RessourceService
+<b>Responsabilité Unique :</b>
+Gère le pool de ressources
+(Métiers et Ouvriers).
+Indépendant du projet.
+end note
+@enduml

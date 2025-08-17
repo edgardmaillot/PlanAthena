@@ -167,7 +167,7 @@
     </TypeIdentifier>
   </Class>
   <Class Name="PlanAthena.Services.Business.ProjetService">
-    <Position X="20.75" Y="5" Width="2" />
+    <Position X="18.75" Y="1.75" Width="3.25" />
     <TypeIdentifier>
       <HashCode>AgAABBCBCACIEAKBBAAAIAAAIAIAAAOICBAQAEACIQA=</HashCode>
       <FileName>Services\Business\ProjetService.cs</FileName>
@@ -209,7 +209,7 @@
     </TypeIdentifier>
   </Class>
   <Class Name="PlanAthena.Services.Business.TacheService">
-    <Position X="18.5" Y="5" Width="2" />
+    <Position X="15.5" Y="3.75" Width="2" />
     <TypeIdentifier>
       <HashCode>AAACABABAAAAAAQBAAAAAQAAIAIAEAYABAAMMEAGEAA=</HashCode>
       <FileName>Services\Business\TacheService.cs</FileName>

@@ -1,0 +1,113 @@
+@startuml
+'---------------------------------
+' Configuration
+'---------------------------------
+!theme toy
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam backgroundColor White
+skinparam componentStyle uml2
+skinparam shadowing false
+
+' Couleurs par couche
+skinparam package {
+  BackgroundColor<<UI>> LightBlue
+  BorderColor<<UI>> DarkBlue
+  BackgroundColor<<Business>> LightGreen
+  BorderColor<<Business>> DarkGreen
+  BackgroundColor<<Data>> LightYellow
+  BorderColor<<Data>> DarkOrange
+  BackgroundColor<<External>> LightGray
+  BorderColor<<External>> Black
+}
+
+title Diagramme d'Architecture de l'Application\n<size:12><i>Architecture en couches avec flux de dépendances</i></size>
+
+'---------------------------------
+' Définition des Couches et Composants (avec descriptions intégrées)
+'---------------------------------
+package "🖥️ **Interface Utilisateur**" <<UI>> as UI {
+  component [MainForm] as MF
+  component [TacheForm] as TF
+  component [OuvrierForm] as OF
+  component [MetierForm] as MetF
+}
+
+package "⚙️ **Services Métier**" <<Business>> as Business {
+  component "<b>ProjetService</b>\n<size:10><i>Gère la structure (Lots, Blocs, Tâches)</i>" as PS
+  component "<b>RessourceService</b>\n<size:10><i>Gère les ressources (Métiers, Ouvriers)</i>" as RS
+  component "<b>PlanificationService</b>\n<size:10><i>Orchestre la planification</i>" as PlanS
+  
+  package "Logique de Traitement" as Processing {
+    component [DataTransformer] as DT
+    component [PreparationSolveur] as PrepS
+    component [ConsolidationResultat] as CR
+    component "<b>DependanceBuilder</b>\n<size:10><i>Logique des règles de précédence</i>" as DB
+  }
+}
+
+package "🔧 **Infrastructure & Accès Données**" <<Data>> as DataLayer {
+  component "<b>ProjetRepository</b>\n<size:10><i>Persistance du projet (JSON)</i>" as PR
+  component "<b>ImportService</b>\n<size:10><i>Orchestre l'import (CSV)</i>" as IS
+  component [ExportServices] as ES
+  component [IdGenerator] as IG
+  component [CsvDataService] as CSV
+}
+
+package "🌍 **Moteur Externe**" <<External>> as External {
+  component "<b>PlanAthenaCore</b>\n<size:10><i>Moteur de calcul (DLL externe)</i>" as PAC
+}
+
+'---------------------------------
+' Relations & Structure
+'---------------------------------
+UI -[hidden]d-> Business
+Business -[hidden]d-> DataLayer
+
+' Flux principal entre couches
+UI ..> Business : "Appels métier"
+Business ..> DataLayer : "Accès données"
+Business --> External : "Calcul externe"
+
+' Relations IHM
+MF ..> PS
+MF ..> RS
+MF ..> PlanS
+MF ..> PR
+MF ..> IS
+TF ..> PS
+TF ..> RS
+TF ..> DB
+OF ..> RS
+OF ..> IS
+MetF ..> RS
+MetF ..> DB
+
+' Relations Couche Métier
+PlanS ..> DT
+PlanS ..> PrepS
+PlanS ..> CR
+PlanS ..> PAC
+DB ..> PS
+DB ..> RS
+
+' Relations Couche Données / Infra
+IS --> PS
+IS --> RS
+IS ..> IG
+IS ..> CSV
+
+'---------------------------------
+' Légende
+'---------------------------------
+legend right
+  <b>Légende</b>
+  ..> Utilisation / Appel
+  --> Dépendance forte
+  
+  <b>Flux Principal</b>
+  IHM → Métier → Données
+  Métier → Moteur Externe
+end legend
+
+@enduml

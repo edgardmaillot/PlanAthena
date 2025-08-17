@@ -1,0 +1,108 @@
+@startuml
+'---------------------------------
+' Titre et Configuration
+'---------------------------------
+title Diagramme de Classe pour RessourceService
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam class {
+    BackgroundColor #E9D8FD
+    BorderColor #4B0082
+    ArrowColor #4B0082
+}
+hide empty members
+
+'---------------------------------
+' Package du Service
+'---------------------------------
+package "Services Métier" as Business {
+    class RessourceService {
+        '-- Champs --'
+        - _metiers: Dictionary<string, Metier>
+        - _ouvriers: Dictionary<string, Ouvrier>
+        - _idGenerator: IIdGeneratorService
+        - _projetService: ProjetService
+
+        '-- Constructeur --'
+        + RessourceService(idGenerator: IIdGeneratorService, projetService: ProjetService)
+
+        '-- Cycle de vie --'
+        + ChargerRessources(metiers: List<Metier>, ouvriers: List<Ouvrier>)
+        + ChargerMetiersParDefaut()
+        + ViderMetiers()
+        + ViderOuvriers()
+
+        '-- Gestion des Métiers --'
+        + CreerMetier(nom: string, phases: ChantierPhase): Metier
+        + ModifierMetier(metierModifie: Metier)
+        + SupprimerMetier(metierId: string)
+        + GetAllMetiers(): List<Metier>
+        + GetMetierById(id: string): Metier
+        - ValiderCircularite(metier: Metier)
+
+        '-- Gestion des Ouvriers --'
+        + CreerOuvrierParDefaut(): Ouvrier
+        + CreerOuvrier(prenom: string, nom: string, cout: int): Ouvrier
+        + ModifierOuvrier(ouvrierModifie: Ouvrier)
+        + SupprimerOuvrier(ouvrierId: string)
+        + GetAllOuvriers(): List<Ouvrier>
+        + GetOuvrierById(id: string): Ouvrier
+
+        '-- Gestion des Compétences --'
+        + AjouterCompetence(ouvrierId: string, metierId: string)
+        + SupprimerCompetence(ouvrierId: string, metierId: string)
+        + DefinirMetierPrincipal(ouvrierId: string, metierId: string)
+        
+        '-- Méthodes utilitaires --'
+        + GetDisplayColorForMetier(metierId: string): Color
+        + GetPrerequisPourPhase(metierId: string, phase: ChantierPhase): List<string>
+        + GetTousPrerequisConfondus(metierId: string): List<string>
+    }
+}
+
+'---------------------------------
+' Dépendances
+'---------------------------------
+
+package "Services Accès Données" as DataAccess {
+    interface IIdGeneratorService
+    class IdGeneratorService implements IIdGeneratorService {
+        '-- Méthodes utilisées par RessourceService --'
+        + GenererProchainMetierId(metiersExistants: IReadOnlyList<Metier>): string
+        + GenererProchainOuvrierId(ouvriersExistants: IReadOnlyList<Ouvrier>): string
+    }
+}
+
+package "Données" as Data {
+    class Metier {
+        + MetierId: string
+        + PrerequisParPhase: Dictionary<ChantierPhase, List<string>>
+    }
+    class Ouvrier {
+        + OuvrierId: string
+        + Competences: List<CompetenceOuvrier>
+    }
+    enum ChantierPhase
+}
+
+package "DTOs" as DTOs {
+    class CompetenceOuvrier {
+        + MetierId: string
+        + EstMetierPrincipal: bool
+    }
+}
+
+'---------------------------------
+' Relations
+'---------------------------------
+RessourceService --( IdGeneratorService : "utilise"
+RessourceService "1" *-- "1" IIdGeneratorService : "injecté"
+
+RessourceService "1" o-- "*" Metier : "gère"
+RessourceService "1" o-- "*" Ouvrier : "gère"
+
+Ouvrier "1" *-- "*" CompetenceOuvrier : "possède"
+CompetenceOuvrier -- Metier : "référence"
+RessourceService ..> ChantierPhase
+
+@enduml
