@@ -437,8 +437,8 @@ namespace PlanAthena.Controls
                     prerequisIds = _ressourceService.GetTousPrerequisConfondus(metierCourant.MetierId);
                 }
 
-                System.Diagnostics.Debug.WriteLine($"🔍 DIAGRAMME - Métier: {metierCourant.Nom}, Phase: {PhaseActuelle}");
-                System.Diagnostics.Debug.WriteLine($"  ✅ Prérequis: [{string.Join(", ", prerequisIds)}]");
+                //System.Diagnostics.Debug.WriteLine($"🔍 DIAGRAMME - Métier: {metierCourant.Nom}, Phase: {PhaseActuelle}");
+                //System.Diagnostics.Debug.WriteLine($"  ✅ Prérequis: [{string.Join(", ", prerequisIds)}]");
 
                 foreach (var prerequisId in prerequisIds)
                 {
@@ -451,7 +451,7 @@ namespace PlanAthena.Controls
                         edge.Attr.LineWidth = _settings.EdgeDefaultWidth;
                         edge.Attr.ArrowheadAtTarget = _settings.EdgeArrowStyle;
 
-                        System.Diagnostics.Debug.WriteLine($"    ➡️ Flèche: {prerequisId} → {metierCourant.MetierId}");
+                        //System.Diagnostics.Debug.WriteLine($"    ➡️ Flèche: {prerequisId} → {metierCourant.MetierId}");
                     }
                 }
             }

@@ -21,37 +21,37 @@ skinparam package {
   BorderColor<<External>> Black
 }
 
-title Diagramme d'Architecture de l'Application\n<size:12><i>Architecture en couches avec flux de dépendances</i></size>
+title Diagramme d'Architecture de l'Application (Final)\n<size:12><i>Architecture en couches avec flux de dépendances</i></size>
 
 '---------------------------------
-' Définition des Couches et Composants (avec descriptions intégrées)
+' Définition des Couches et Composants
 '---------------------------------
 package "🖥️ **Interface Utilisateur**" <<UI>> as UI {
   component [MainForm] as MF
   component [TacheForm] as TF
   component [OuvrierForm] as OF
   component [MetierForm] as MetF
+  component [PrerequisMetierForm] as PMF
 }
 
 package "⚙️ **Services Métier**" <<Business>> as Business {
-  component "<b>ProjetService</b>\n<size:10><i>Gère la structure (Lots, Blocs, Tâches)</i>" as PS
-  component "<b>RessourceService</b>\n<size:10><i>Gère les ressources (Métiers, Ouvriers)</i>" as RS
-  component "<b>PlanificationService</b>\n<size:10><i>Orchestre la planification</i>" as PlanS
+  component "<b>ProjetService</b>\n<size:10><i>Gère la structure du projet</i>" as PS
+  component "<b>RessourceService</b>\n<size:10><i>Gère les ressources</i>" as RS
+  component "<b>PlanificationService</b>\n<size:10><i>Orchestre la planification</i>\n--------\n Use ConfigurationGuilder\n Use DataTransformer\n Use PreparationSolveur\n Use ConsolidationResultat" as PlanS
+  ' ImportService est un processus métier, sa place est ici.
+  component "<b>ImportService</b>\n<size:10><i>Orchestre l'import (CSV)</i>" as IS
   
   package "Logique de Traitement" as Processing {
-    component [DataTransformer] as DT
-    component [PreparationSolveur] as PrepS
-    component [ConsolidationResultat] as CR
     component "<b>DependanceBuilder</b>\n<size:10><i>Logique des règles de précédence</i>" as DB
+    component [IdGenerator] as IG
   }
 }
 
 package "🔧 **Infrastructure & Accès Données**" <<Data>> as DataLayer {
   component "<b>ProjetRepository</b>\n<size:10><i>Persistance du projet (JSON)</i>" as PR
-  component "<b>ImportService</b>\n<size:10><i>Orchestre l'import (CSV)</i>" as IS
   component [ExportServices] as ES
-  component [IdGenerator] as IG
   component [CsvDataService] as CSV
+  component [PlanningExcelExportService] as XLS
 }
 
 package "🌍 **Moteur Externe**" <<External>> as External {
@@ -65,16 +65,18 @@ UI -[hidden]d-> Business
 Business -[hidden]d-> DataLayer
 
 ' Flux principal entre couches
-UI ..> Business : "Appels métier"
-Business ..> DataLayer : "Accès données"
-Business --> External : "Calcul externe"
+UI .down.> Business : "Appels métier"
+Business .down.> DataLayer : "Accès données"
+'Business -l-> External : "Calcul externe"
 
-' Relations IHM
-MF ..> PS
-MF ..> RS
-MF ..> PlanS
-MF ..> PR
-MF ..> IS
+' Note sur MainForm
+note right of MF
+  <b>Composant Hérité (Legacy)</b>
+  Ce formulaire sera supprimé
+  dans la refonte IHM v0.5.0.
+end note
+
+' Relations IHM -> Services Métier
 TF ..> PS
 TF ..> RS
 TF ..> DB
@@ -82,20 +84,22 @@ OF ..> RS
 OF ..> IS
 MetF ..> RS
 MetF ..> DB
+PMF ..> PS
+PMF ..> RS
+PMF ..> DB
 
 ' Relations Couche Métier
-PlanS ..> DT
-PlanS ..> PrepS
-PlanS ..> CR
-PlanS ..> PAC
+PlanS .r.> PAC
 DB ..> PS
 DB ..> RS
-
-' Relations Couche Données / Infra
 IS --> PS
 IS --> RS
-IS ..> IG
-IS ..> CSV
+IS ..> IG 
+PS ..> IG
+RS ..> IG
+
+' Relations Métier -> Couche Données
+IS .d.> CSV
 
 '---------------------------------
 ' Légende

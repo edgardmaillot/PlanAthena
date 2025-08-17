@@ -1,16 +1,13 @@
 // Fichier: PlanAthena/Forms/MetierForm.cs
-// Version: 0.4.4
-// Description: Refactorisation chirurgicale pour s'aligner sur la nouvelle architecture.
-// Les appels liés aux métiers sont redirigés de ProjetService vers RessourceService.
+// Version: 0.5.0
+// Description: Formulaire dédié à la gestion CRUD (Création, Lecture, Mise à jour) des métiers.
+// La logique de configuration des prérequis a été déplacée vers PrerequisMetierForm.
 
-using PlanAthena.Controls;
-using PlanAthena.Controls.Config;
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
 using PlanAthena.Services.Business;
 using PlanAthena.Utilities;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -19,7 +16,7 @@ namespace PlanAthena.Forms
 {
     public partial class MetierForm : Form
     {
-        #region Champs et Services (Corrigés)
+        #region Champs et Services
 
         private readonly RessourceService _ressourceService;
         private readonly IIdGeneratorService _idGeneratorService;
@@ -28,16 +25,12 @@ namespace PlanAthena.Forms
 
         private Metier _metierEnEdition = null;
         private bool _enCoursDeChargement = false;
-        private enum ConceptMode { Concept1_CrudSimple, Concept2_PrecedencesPhase }
-        private ConceptMode _currentMode = ConceptMode.Concept1_CrudSimple;
-        private TabControl _tabControlPhases;
-        private readonly Dictionary<ChantierPhase, MetierDiagramControl> _diagrammesParPhase = new();
-        private Metier _metierSelectionne = null;
-        private ChantierPhase _phaseSelectionnee = ChantierPhase.None;
+
+        private enum MetierFormState { Initial, Editing }
 
         #endregion
 
-        #region Constructeur et Initialisation (Corrigés)
+        #region Constructeur et Initialisation
 
         public MetierForm(
             ProjetService projetService,
@@ -54,26 +47,20 @@ namespace PlanAthena.Forms
 
         private void MetierForm_Load(object sender, EventArgs e)
         {
-            InitialiserConcept1();
+            InitialiserFormulaire();
             SetUIState(MetierFormState.Initial);
         }
 
         #endregion
 
-        #region CONCEPT 1 - CRUD Métiers Simple (Corrigé)
+        #region Gestion CRUD Métiers
 
-        private void InitialiserConcept1()
+        private void InitialiserFormulaire()
         {
-            _currentMode = ConceptMode.Concept1_CrudSimple;
             panelLeft.Controls.Clear();
             CreerListeMetiers();
             groupBoxDetails.Text = "Détails du Métier";
             groupBoxDetails.Visible = true;
-            txtNom.ReadOnly = false;
-            txtPictogram.ReadOnly = false;
-            panelCouleurApercu.Enabled = true;
-            btnChoisirCouleur.Enabled = true;
-            grpPhases.Enabled = true;
         }
 
         private void CreerListeMetiers()
@@ -153,168 +140,12 @@ namespace PlanAthena.Forms
 
         #endregion
 
-        #region CONCEPT 2 - Précédences par Phase (Corrigé)
-
-        private void InitialiserConcept2()
-        {
-            if (_ressourceService.GetAllMetiers().Count < 2)
-            {
-                MessageBox.Show("Il faut au moins 2 métiers pour configurer les prérequis.", "Configuration impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-            _currentMode = ConceptMode.Concept2_PrecedencesPhase;
-            CreerInterfaceConcept2();
-        }
-
-        private void CreerInterfaceConcept2()
-        {
-            _enCoursDeChargement = true;
-            try
-            {
-                panelLeft.Controls.Clear();
-                _tabControlPhases = new TabControl { Dock = DockStyle.Fill, Name = "tabControlPhases" };
-                CreerOngletPhase(ChantierPhase.GrosOeuvre, "Gros Œuvre");
-                CreerOngletPhase(ChantierPhase.SecondOeuvre, "Second Œuvre");
-                CreerOngletPhase(ChantierPhase.Finition, "Finition");
-                panelLeft.Controls.Add(_tabControlPhases);
-                AdapterGroupBoxDetailsPourPrerequisPhase();
-                btnValider.Text = "💾 Sauvegarder Prérequis";
-                btnAnnuler.Text = "⬅️ Retour CRUD";
-                this.Text = "Configuration Prérequis par Phase";
-            }
-            finally { _enCoursDeChargement = false; }
-        }
-
-        private void CreerOngletPhase(ChantierPhase phase, string nomPhase)
-        {
-            var tabPage = new TabPage(nomPhase) { Name = $"tab{phase}" };
-            var diagramme = new MetierDiagramControl { Dock = DockStyle.Fill, Name = $"diagram{phase}" };
-            var settings = new MetierDiagramSettings();
-            diagramme.Initialize(_projetService, _ressourceService, _dependanceBuilder, settings);
-            diagramme.MetierSelected += (sender, args) => DiagrammePhase_MetierSelected(phase, args);
-            _diagrammesParPhase[phase] = diagramme;
-            tabPage.Controls.Add(diagramme);
-            _tabControlPhases.TabPages.Add(tabPage);
-            ChargerMetiersPhase(phase);
-        }
-
-        private void ChargerMetiersPhase(ChantierPhase phase)
-        {
-            if (!_diagrammesParPhase.TryGetValue(phase, out var diagramme)) return;
-            var metiersPhase = _ressourceService.GetAllMetiers()
-                .Where(m => m.MetierId != "JALON" && m.MetierId != "SYNC_0H" && m.Phases.HasFlag(phase))
-                .ToList();
-            diagramme.ChargerDonnees(metiersPhase, phase);
-            diagramme.ZoomToutAjuster();
-        }
-
-        private void AdapterGroupBoxDetailsPourPrerequisPhase()
-        {
-            txtNom.ReadOnly = true;
-            txtPictogram.ReadOnly = true;
-            panelCouleurApercu.Enabled = false;
-            btnChoisirCouleur.Enabled = false;
-            grpPhases.Enabled = false;
-            var oldChkList = groupBoxDetails.Controls.OfType<CheckedListBox>().FirstOrDefault(c => c.Name == "chkListPrerequisPhase");
-            if (oldChkList != null) { groupBoxDetails.Controls.Remove(oldChkList); oldChkList.Dispose(); }
-            var chkListPrerequis = new CheckedListBox { Name = "chkListPrerequisPhase", Location = new Point(16, 200), Size = new Size(300, 200), Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right, CheckOnClick = true };
-            chkListPrerequis.ItemCheck += ChkListPrerequisPhase_ItemCheck;
-            groupBoxDetails.Controls.Add(chkListPrerequis);
-            groupBoxDetails.Text = "Configuration Prérequis";
-            var lblExplication = new Label { Text = "Sélectionnez un métier dans le diagramme\npour configurer ses prérequis pour cette phase.", Location = new Point(16, 170), Size = new Size(300, 30), Name = "lblExplicationPrerequis" };
-            groupBoxDetails.Controls.Add(lblExplication);
-        }
-
-        private void DiagrammePhase_MetierSelected(ChantierPhase phase, PlanAthena.Controls.MetierSelectedEventArgs e)
-        {
-            _enCoursDeChargement = true;
-            try
-            {
-                _phaseSelectionnee = phase;
-                if (e.SelectedMetier == null)
-                {
-                    _metierSelectionne = null;
-                    ViderPrerequisPhase();
-                    return;
-                }
-                _metierSelectionne = e.SelectedMetier;
-                ChargerPrerequisMetierPhase(phase, e.SelectedMetier);
-            }
-            finally { _enCoursDeChargement = false; }
-        }
-
-        private void ChargerPrerequisMetierPhase(ChantierPhase phase, Metier metier)
-        {
-            var chkList = groupBoxDetails.Controls.OfType<CheckedListBox>().FirstOrDefault(c => c.Name == "chkListPrerequisPhase");
-            if (chkList == null) return;
-            chkList.Items.Clear();
-            lblMetierId.Text = metier.MetierId;
-            txtNom.Text = metier.Nom;
-            txtPictogram.Text = metier.Pictogram;
-            panelCouleurApercu.BackColor = _ressourceService.GetDisplayColorForMetier(metier.MetierId);
-            DetachPhaseCheckboxesEvents();
-            chkGrosOeuvre.Checked = metier.Phases.HasFlag(ChantierPhase.GrosOeuvre);
-            chkSecondOeuvre.Checked = metier.Phases.HasFlag(ChantierPhase.SecondOeuvre);
-            chkFinition.Checked = metier.Phases.HasFlag(ChantierPhase.Finition);
-            AttachPhaseCheckboxesEvents();
-            var metiersDisponibles = _ressourceService.GetAllMetiers()
-                .Where(m => m.MetierId != metier.MetierId && m.MetierId != "JALON" && m.MetierId != "SYNC_0H" && m.Phases.HasFlag(phase))
-                .OrderBy(m => m.Nom).ToList();
-            var prerequisActuels = _ressourceService.GetPrerequisPourPhase(metier.MetierId, phase);
-            foreach (var metierDisponible in metiersDisponibles)
-            {
-                bool isChecked = prerequisActuels.Contains(metierDisponible.MetierId);
-                chkList.Items.Add(metierDisponible, isChecked);
-            }
-            chkList.DisplayMember = "Nom";
-            groupBoxDetails.Text = $"Prérequis {metier.Nom} - {phase}";
-            chkList.Tag = new { Metier = metier, Phase = phase };
-        }
-
-        private void ViderPrerequisPhase()
-        {
-            var chkList = groupBoxDetails.Controls.OfType<CheckedListBox>().FirstOrDefault(c => c.Name == "chkListPrerequisPhase");
-            if (chkList != null) { chkList.Items.Clear(); chkList.Tag = null; }
-            groupBoxDetails.Text = "Configuration Prérequis";
-            NettoyerDetails();
-        }
-
-        private void ChkListPrerequisPhase_ItemCheck(object sender, ItemCheckEventArgs e)
-        {
-            if (_enCoursDeChargement) return;
-            if (sender is CheckedListBox chkList && chkList.Tag != null)
-            {
-                dynamic tagData = chkList.Tag;
-                Metier metier = tagData.Metier;
-                ChantierPhase phase = tagData.Phase;
-                BeginInvoke(new Action(() => SauvegarderPrerequisAutomatique(chkList, metier, phase)));
-            }
-        }
-
-        private void SauvegarderPrerequisAutomatique(CheckedListBox chkList, Metier metier, ChantierPhase phase)
-        {
-            if (_enCoursDeChargement) return;
-            try
-            {
-                var prerequisCoches = chkList.CheckedItems.Cast<Metier>().Select(m => m.MetierId).ToList();
-                metier.PrerequisParPhase[phase] = prerequisCoches;
-                _ressourceService.ModifierMetier(metier);
-                foreach (var (phaseKey, diagramme) in _diagrammesParPhase)
-                {
-                    ChargerMetiersPhase(phaseKey);
-                }
-            }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"❌ Erreur sauvegarde automatique prérequis: {ex.Message}"); }
-        }
-
-        #endregion
-
-        #region Sauvegarde Automatique (Corrigé)
+        #region Sauvegarde Automatique
 
         private void OnDetailChanged(object sender, EventArgs e)
         {
             if (_enCoursDeChargement) return;
-            if (_metierEnEdition != null && _currentMode == ConceptMode.Concept1_CrudSimple)
+            if (_metierEnEdition != null)
             {
                 SauvegardeAutomatiqueMetier();
             }
@@ -343,8 +174,6 @@ namespace PlanAthena.Forms
 
         #region Gestion États et Interface
 
-        private enum MetierFormState { Initial, Editing }
-
         private void SetUIState(MetierFormState state)
         {
             switch (state)
@@ -352,11 +181,11 @@ namespace PlanAthena.Forms
                 case MetierFormState.Initial:
                     groupBoxDetails.Enabled = false;
                     NettoyerDetails();
-                    btnValider.Enabled = (_currentMode == ConceptMode.Concept1_CrudSimple);
+                    btnConfigurerPrerequis.Enabled = false;
                     break;
                 case MetierFormState.Editing:
                     groupBoxDetails.Enabled = true;
-                    btnValider.Enabled = true;
+                    btnConfigurerPrerequis.Enabled = true;
                     break;
             }
         }
@@ -415,7 +244,7 @@ namespace PlanAthena.Forms
 
         #endregion
 
-        #region Transitions et Actions
+        #region Actions
 
         private bool EstMetierValide(Metier metier)
         {
@@ -446,69 +275,30 @@ namespace PlanAthena.Forms
             }
         }
 
-        private void btnValider_Click(object sender, EventArgs e)
+        private void btnConfigurerPrerequis_Click(object sender, EventArgs e)
         {
-            if (_currentMode == ConceptMode.Concept1_CrudSimple)
+            if (_metierEnEdition != null && !EstMetierValide(_metierEnEdition))
             {
-                if (_metierEnEdition != null && !EstMetierValide(_metierEnEdition))
-                {
-                    MessageBox.Show("Impossible de passer à la configuration des prérequis :\n\n• Le nom du métier ne peut pas être vide\n• Au moins une phase doit être sélectionnée\n\nVeuillez corriger ces erreurs.", "Métier invalide", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-                InitialiserConcept2();
-            }
-            else { SauvegarderPrerequisConcept2(); }
-        }
-
-        private void SauvegarderPrerequisConcept2()
-        {
-            try
-            {
-                MessageBox.Show("Configuration des prérequis par phase terminée.", "Succès", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                RetournerConcept1();
-            }
-            catch (Exception ex) { MessageBox.Show($"Erreur lors de la finalisation: {ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error); }
-        }
-
-        private void btnAnnuler_Click(object sender, EventArgs e)
-        {
-            if (_currentMode == ConceptMode.Concept2_PrecedencesPhase)
-            {
-                RetournerConcept1();
+                MessageBox.Show("Impossible de passer à la configuration des prérequis :\n\n• Le nom du métier ne peut pas être vide\n• Au moins une phase doit être sélectionnée\n\nVeuillez corriger ces erreurs.", "Métier invalide", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            _metierEnEdition = null;
-            NettoyerDetails();
-            SetUIState(MetierFormState.Initial);
+
+            if (_ressourceService.GetAllMetiers().Count < 2)
+            {
+                MessageBox.Show("Il faut au moins 2 métiers pour configurer les prérequis.", "Configuration impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            using var prerequisForm = new PrerequisMetierForm(_projetService, _ressourceService, _idGeneratorService, _dependanceBuilder);
+            prerequisForm.ShowDialog(this);
+
+            // Rafraîchir la liste car les dépendances peuvent avoir changé l'ordre de tri topologique
+            CreerListeMetiers();
+        }
+
+        private void btnFermer_Click(object sender, EventArgs e)
+        {
             this.Close();
-        }
-
-        private void RetournerConcept1()
-        {
-            _currentMode = ConceptMode.Concept1_CrudSimple;
-            panelLeft.Controls.Clear();
-            _diagrammesParPhase.Clear();
-            _tabControlPhases?.Dispose();
-            _tabControlPhases = null;
-            RestaurerGroupBoxDetailsOriginal();
-            InitialiserConcept1();
-            btnValider.Text = "✅ Valider";
-            btnAnnuler.Text = "❌ Annuler";
-            this.Text = "Gestion des Métiers";
-        }
-
-        private void RestaurerGroupBoxDetailsOriginal()
-        {
-            var chkListToRemove = groupBoxDetails.Controls.OfType<CheckedListBox>().Where(c => c.Name == "chkListPrerequisPhase").ToList();
-            foreach (var control in chkListToRemove) { groupBoxDetails.Controls.Remove(control); control.Dispose(); }
-            var lblToRemove = groupBoxDetails.Controls.OfType<Label>().Where(c => c.Name == "lblExplicationPrerequis").ToList();
-            foreach (var control in lblToRemove) { groupBoxDetails.Controls.Remove(control); control.Dispose(); }
-            txtNom.ReadOnly = false;
-            txtPictogram.ReadOnly = false;
-            panelCouleurApercu.Enabled = true;
-            btnChoisirCouleur.Enabled = true;
-            grpPhases.Enabled = true;
-            groupBoxDetails.Text = "Détails du Métier";
         }
 
         #endregion

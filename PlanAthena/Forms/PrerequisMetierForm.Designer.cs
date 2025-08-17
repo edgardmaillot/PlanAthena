@@ -1,6 +1,6 @@
 namespace PlanAthena.Forms
 {
-    partial class MetierForm
+    partial class PrerequisMetierForm
     {
         /// <summary>
         /// Required designer variable.
@@ -45,8 +45,8 @@ namespace PlanAthena.Forms
             lblNom = new System.Windows.Forms.Label();
             lblMetierId = new System.Windows.Forms.Label();
             groupBoxActions = new System.Windows.Forms.GroupBox();
-            btnFermer = new System.Windows.Forms.Button();
-            btnConfigurerPrerequis = new System.Windows.Forms.Button();
+            btnAnnuler = new System.Windows.Forms.Button();
+            btnOK = new System.Windows.Forms.Button();
             _toolTipMetiers = new System.Windows.Forms.ToolTip(components);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
@@ -70,8 +70,8 @@ namespace PlanAthena.Forms
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.Controls.Add(groupBoxDetails);
-            splitContainer1.Size = new System.Drawing.Size(784, 461);
-            splitContainer1.SplitterDistance = 422;
+            splitContainer1.Size = new System.Drawing.Size(984, 561);
+            splitContainer1.SplitterDistance = 580;
             splitContainer1.TabIndex = 0;
             // 
             // panelLeft
@@ -80,7 +80,7 @@ namespace PlanAthena.Forms
             panelLeft.Dock = System.Windows.Forms.DockStyle.Fill;
             panelLeft.Location = new System.Drawing.Point(0, 0);
             panelLeft.Name = "panelLeft";
-            panelLeft.Size = new System.Drawing.Size(422, 461);
+            panelLeft.Size = new System.Drawing.Size(580, 561);
             panelLeft.TabIndex = 0;
             // 
             // groupBoxDetails
@@ -97,7 +97,7 @@ namespace PlanAthena.Forms
             groupBoxDetails.Dock = System.Windows.Forms.DockStyle.Fill;
             groupBoxDetails.Location = new System.Drawing.Point(0, 0);
             groupBoxDetails.Name = "groupBoxDetails";
-            groupBoxDetails.Size = new System.Drawing.Size(358, 461);
+            groupBoxDetails.Size = new System.Drawing.Size(400, 561);
             groupBoxDetails.TabIndex = 0;
             groupBoxDetails.TabStop = false;
             groupBoxDetails.Text = "Détails du Métier";
@@ -109,7 +109,7 @@ namespace PlanAthena.Forms
             grpPhases.Controls.Add(chkGrosOeuvre);
             grpPhases.Location = new System.Drawing.Point(16, 142);
             grpPhases.Name = "grpPhases";
-            grpPhases.Size = new System.Drawing.Size(324, 50);
+            grpPhases.Size = new System.Drawing.Size(300, 50);
             grpPhases.TabIndex = 13;
             grpPhases.TabStop = false;
             grpPhases.Text = "Phases de chantier";
@@ -150,9 +150,8 @@ namespace PlanAthena.Forms
             | System.Windows.Forms.AnchorStyles.Right)));
             txtPictogram.Location = new System.Drawing.Point(100, 113);
             txtPictogram.Name = "txtPictogram";
-            txtPictogram.Size = new System.Drawing.Size(240, 23);
+            txtPictogram.Size = new System.Drawing.Size(291, 23);
             txtPictogram.TabIndex = 12;
-            txtPictogram.TextChanged += new System.EventHandler(this.OnDetailChanged);
             // 
             // lblPictogram
             // 
@@ -171,7 +170,6 @@ namespace PlanAthena.Forms
             btnChoisirCouleur.TabIndex = 6;
             btnChoisirCouleur.Text = "🎨 Choisir";
             btnChoisirCouleur.UseVisualStyleBackColor = true;
-            btnChoisirCouleur.Click += new System.EventHandler(this.btnChoisirCouleur_Click);
             // 
             // panelCouleurApercu
             // 
@@ -181,7 +179,6 @@ namespace PlanAthena.Forms
             panelCouleurApercu.Name = "panelCouleurApercu";
             panelCouleurApercu.Size = new System.Drawing.Size(111, 23);
             panelCouleurApercu.TabIndex = 5;
-            panelCouleurApercu.Click += new System.EventHandler(this.btnChoisirCouleur_Click);
             // 
             // lblCouleur
             // 
@@ -198,9 +195,8 @@ namespace PlanAthena.Forms
             | System.Windows.Forms.AnchorStyles.Right)));
             txtNom.Location = new System.Drawing.Point(100, 54);
             txtNom.Name = "txtNom";
-            txtNom.Size = new System.Drawing.Size(240, 23);
+            txtNom.Size = new System.Drawing.Size(291, 23);
             txtNom.TabIndex = 3;
-            txtNom.TextChanged += new System.EventHandler(this.OnDetailChanged);
             // 
             // lblNom
             // 
@@ -223,37 +219,37 @@ namespace PlanAthena.Forms
             // 
             // groupBoxActions
             // 
-            groupBoxActions.Controls.Add(btnFermer);
-            groupBoxActions.Controls.Add(btnConfigurerPrerequis);
+            groupBoxActions.Controls.Add(btnAnnuler);
+            groupBoxActions.Controls.Add(btnOK);
             groupBoxActions.Dock = System.Windows.Forms.DockStyle.Bottom;
-            groupBoxActions.Location = new System.Drawing.Point(0, 461);
+            groupBoxActions.Location = new System.Drawing.Point(0, 561);
             groupBoxActions.Name = "groupBoxActions";
-            groupBoxActions.Size = new System.Drawing.Size(784, 50);
+            groupBoxActions.Size = new System.Drawing.Size(984, 50);
             groupBoxActions.TabIndex = 1;
             groupBoxActions.TabStop = false;
             groupBoxActions.Text = "Actions";
             // 
-            // btnFermer
+            // btnAnnuler
             // 
-            btnFermer.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            btnFermer.Location = new System.Drawing.Point(697, 19);
-            btnFermer.Name = "btnFermer";
-            btnFermer.Size = new System.Drawing.Size(75, 23);
-            btnFermer.TabIndex = 0;
-            btnFermer.Text = "Fermer";
-            btnFermer.UseVisualStyleBackColor = true;
-            btnFermer.Click += new System.EventHandler(this.btnFermer_Click);
+            btnAnnuler.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            btnAnnuler.Location = new System.Drawing.Point(897, 19);
+            btnAnnuler.Name = "btnAnnuler";
+            btnAnnuler.Size = new System.Drawing.Size(75, 23);
+            btnAnnuler.TabIndex = 0;
+            btnAnnuler.Text = "Annuler";
+            btnAnnuler.UseVisualStyleBackColor = true;
+            btnAnnuler.Click += new System.EventHandler(this.btnAnnuler_Click);
             // 
-            // btnConfigurerPrerequis
+            // btnOK
             // 
-            btnConfigurerPrerequis.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            btnConfigurerPrerequis.Location = new System.Drawing.Point(525, 19);
-            btnConfigurerPrerequis.Name = "btnConfigurerPrerequis";
-            btnConfigurerPrerequis.Size = new System.Drawing.Size(166, 23);
-            btnConfigurerPrerequis.TabIndex = 1;
-            btnConfigurerPrerequis.Text = "⚙️ Configurer Prérequis";
-            btnConfigurerPrerequis.UseVisualStyleBackColor = true;
-            btnConfigurerPrerequis.Click += new System.EventHandler(this.btnConfigurerPrerequis_Click);
+            btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            btnOK.Location = new System.Drawing.Point(816, 19);
+            btnOK.Name = "btnOK";
+            btnOK.Size = new System.Drawing.Size(75, 23);
+            btnOK.TabIndex = 1;
+            btnOK.Text = "OK";
+            btnOK.UseVisualStyleBackColor = true;
+            btnOK.Click += new System.EventHandler(this.btnOK_Click);
             // 
             // _toolTipMetiers
             // 
@@ -261,17 +257,17 @@ namespace PlanAthena.Forms
             _toolTipMetiers.InitialDelay = 500;
             _toolTipMetiers.ReshowDelay = 100;
             // 
-            // MetierForm
+            // PrerequisMetierForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(784, 511);
+            ClientSize = new System.Drawing.Size(984, 611);
             Controls.Add(splitContainer1);
             Controls.Add(groupBoxActions);
-            Name = "MetierForm";
+            Name = "PrerequisMetierForm";
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            Text = "Gestion des Métiers";
-            Load += new System.EventHandler(this.MetierForm_Load);
+            Text = "Configuration des Prérequis Métiers";
+            Load += new System.EventHandler(this.PrerequisMetierForm_Load);
             splitContainer1.Panel1.ResumeLayout(false);
             splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
@@ -282,7 +278,6 @@ namespace PlanAthena.Forms
             grpPhases.PerformLayout();
             groupBoxActions.ResumeLayout(false);
             ResumeLayout(false);
-
         }
 
         #endregion
@@ -303,8 +298,8 @@ namespace PlanAthena.Forms
         private System.Windows.Forms.CheckBox chkFinition;
         private System.Windows.Forms.CheckBox chkSecondOeuvre;
         private System.Windows.Forms.Panel panelLeft;
-        private System.Windows.Forms.Button btnConfigurerPrerequis;
-        private System.Windows.Forms.Button btnFermer;
+        private System.Windows.Forms.Button btnOK;
+        private System.Windows.Forms.Button btnAnnuler;
         private System.Windows.Forms.ToolTip _toolTipMetiers;
     }
 }
