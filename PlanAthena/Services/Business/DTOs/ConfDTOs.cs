@@ -13,7 +13,7 @@ namespace PlanAthena.Services.Business.DTOs
         public int HeureDebutJournee { get; set; }
         public int HeuresTravailEffectifParJour { get; set; }
         public string TypeDeSortie { get; set; } = "Analyse et Estimation";
-        public string Description { get; set; } = "";
+        public string Description { get; set; } = "Test";
         public DateTime? DateDebutSouhaitee { get; set; }
         public DateTime? DateFinSouhaitee { get; set; }
         public int DureeJournaliereStandardHeures { get; set; }

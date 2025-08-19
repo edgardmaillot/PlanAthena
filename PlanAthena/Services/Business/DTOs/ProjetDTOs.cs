@@ -17,6 +17,10 @@ namespace PlanAthena.Services.Business.DTOs
         public string Description { get; set; } = "";
         public DateTime DateCreation { get; set; }
         public DateTime DateDerniereModification { get; set; }
+        public int HeureOuverture { get; set; } = 8;
+        public int HeureFermeture { get; set; } = 16;
+        public int DureeTravailHeures { get; set; } = 7;
+        public decimal CoutJournalier { get; set; } = 500;
         public string Auteur { get; set; } = "";
     }
 

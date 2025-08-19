@@ -27,5 +27,11 @@ namespace PlanAthena.Data
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public ChantierPhase Phases { get; set; } = ChantierPhase.None;
+
+        public override string ToString()
+        {
+            return this.Nom;
+        }
     }
+
 }

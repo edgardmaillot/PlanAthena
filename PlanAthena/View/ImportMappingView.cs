@@ -4,7 +4,7 @@ using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DataAccess;
 using System.Data;
 using System.Drawing;
-using System.Text;
+using System.Text; 
 
 namespace PlanAthena.Forms
 {
@@ -12,7 +12,7 @@ namespace PlanAthena.Forms
     /// Formulaire interactif pour l'import de tâches depuis un fichier CSV,
     /// permettant à l'utilisateur de mapper les colonnes du CSV aux champs de PlanAthena.
     /// </summary>
-    public partial class ImportTacheForm : Form
+    public partial class ImportMappingView : Form
     {
         private Lot _lotActif;
         private ProjetService _projetService;
@@ -27,19 +27,19 @@ namespace PlanAthena.Forms
 
         // Définition des champs de PlanAthena à mapper, avec leur libellé, leur propriété dans Tache et leur caractère obligatoire/par défaut.
         // L'ordre ici détermine l'ordre d'affichage dans le TableLayoutPanel.
-        private List<TacheMappingField> _tacheFieldsToMap = new List<TacheMappingField>
+        private List<TacheMappingFields> _tacheFieldsToMap = new List<TacheMappingFields>
         {
             // Champs obligatoires
-            new TacheMappingField("Nom de la Tâche", nameof(Tache.TacheNom), true),
-            new TacheMappingField("Heures Estimées", nameof(Tache.HeuresHommeEstimees), true), // Peut avoir une valeur par défaut
-            new TacheMappingField("ID du Métier", nameof(Tache.MetierId), true),
-            new TacheMappingField("ID du Bloc", nameof(Tache.BlocId), true), // Peut avoir une valeur par défaut, et sera toujours assigné à un bloc
+            new TacheMappingFields("Nom de la Tâche", nameof(Tache.TacheNom), true),
+            new TacheMappingFields("Heures Estimées", nameof(Tache.HeuresHommeEstimees), true), // Peut avoir une valeur par défaut
+            new TacheMappingFields("ID du Métier", nameof(Tache.MetierId), true),
+            new TacheMappingFields("ID du Bloc", nameof(Tache.BlocId), true), // Peut avoir une valeur par défaut, et sera toujours assigné à un bloc
 
             // Champs optionnels
-            new TacheMappingField("ID d'origine", nameof(Tache.IdImporte), false),
-            new TacheMappingField("Dépendances (IDs)", nameof(Tache.Dependencies), false),
-            new TacheMappingField("Exclusions Dépendances (IDs)", nameof(Tache.ExclusionsDependances), false),
-            new TacheMappingField("Type d'activité (Est Jalon ?)", nameof(Tache.EstJalon), false)
+            new TacheMappingFields("ID d'origine", nameof(Tache.IdImporte), false),
+            new TacheMappingFields("Dépendances (IDs)", nameof(Tache.Dependencies), false),
+            new TacheMappingFields("Exclusions Dépendances (IDs)", nameof(Tache.ExclusionsDependances), false),
+            new TacheMappingFields("Type d'activité (Est Jalon ?)", nameof(Tache.EstJalon), false)
         };
 
         // Dictionnaire pour stocker les ComboBoxes par nom de propriété PlanAthena
@@ -47,7 +47,7 @@ namespace PlanAthena.Forms
 
         public ImportMappingConfiguration MappingConfiguration => _mappingConfiguration;
 
-        public ImportTacheForm(string filePath, Lot lotActif, ProjetService projetService, RessourceService ressourceService)
+        public ImportMappingView(string filePath, Lot lotActif, ProjetService projetService, RessourceService ressourceService)
         {
             InitializeComponent();
             _filePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
@@ -70,7 +70,7 @@ namespace PlanAthena.Forms
             numHeuresEstimeesDefaut.Value = 2;
             numCapaciteMaxOuvriersDefaut.Value = 3;
             txtNomBlocParDefaut.Text = "Nouveau";
-
+            
             // Configuration du TableLayoutPanel pour le mappage
             tlpMapping.ColumnCount = _tacheFieldsToMap.Count;
             tlpMapping.RowCount = 2; // Labels + ComboBoxes
@@ -134,11 +134,11 @@ namespace PlanAthena.Forms
                 // Détection des en-têtes (heuristique simple pour le POC)
                 string[] firstLineValues = lines[0].Split(separator);
                 bool potentialHeaderDetected = firstLineValues.Any(v => !double.TryParse(v, out _) && !(v.All(char.IsLower) || v.All(char.IsUpper)));
-
+                
                 // On met à jour la checkbox. Si l'état de la checkbox change, cela déclenchera chkHasHeader_CheckedChanged.
                 // Sinon, il faut appeler PopulateHeadersAndPreview directement pour la première initialisation.
-                chkHasHeader.Checked = potentialHeaderDetected;
-
+                chkHasHeader.Checked = potentialHeaderDetected; 
+                
                 // Si le gestionnaire chkHasHeader_CheckedChanged n'a pas été déclenché (parce que l'état de la checkbox n'a pas changé),
                 // il faut appeler PopulateHeadersAndPreview manuellement pour la première initialisation.
                 if (chkHasHeader.Checked == potentialHeaderDetected && dgvCsvPreview.ColumnCount == 0) // Vérifie que le DGV n'est pas encore rempli
@@ -281,8 +281,8 @@ namespace PlanAthena.Forms
         private void RefreshAvailableComboBoxItemsExcludingDuplicates()
         {
             if (_isUpdatingComboBoxes) return; // Éviter la réentrance si un ComboBox a déclenché l'événement pendant son propre rafraîchissement
-                                               // Normalement, ceci ne devrait pas être déclenché si _isUpdatingComboBoxes est géré dans UpdateMappingComboBoxes,
-                                               // mais c'est une sécurité supplémentaire.
+                                            // Normalement, ceci ne devrait pas être déclenché si _isUpdatingComboBoxes est géré dans UpdateMappingComboBoxes,
+                                            // mais c'est une sécurité supplémentaire.
 
             _isUpdatingComboBoxes = true; // Définir le drapeau
 
@@ -298,12 +298,12 @@ namespace PlanAthena.Forms
                         selectedHeaders.Add(selectedHeader);
                     }
                 }
-
+                
                 // Mettre à jour les listes d'items de chaque ComboBox pour n'inclure que les non-sélectionnés (ou sa propre sélection)
                 foreach (var cmbEntry in _fieldComboBoxes)
                 {
                     var currentSelected = cmbEntry.Value.SelectedItem as string; // Garder la sélection actuelle
-
+                    
                     // Désabonner avant de modifier Items
                     cmbEntry.Value.SelectedIndexChanged -= ComboBox_MappingSelectionChanged;
 
@@ -535,7 +535,7 @@ namespace PlanAthena.Forms
             PopulateHeadersAndPreview(File.ReadAllLines(_filePath), separator);
             CheckValidationStatus();
         }
-
+        
         /// <summary>
         /// Enregistre un message dans la zone de log.
         /// </summary>
@@ -572,13 +572,13 @@ namespace PlanAthena.Forms
     /// <summary>
     /// Classe interne pour la définition des champs de tâche pour le mappage UI.
     /// </summary>
-    internal class TacheMappingField
+    internal class TacheMappingFields
     {
         public string DisplayName { get; }
         public string PropertyName { get; } // Nom de la propriété dans Tache.cs
         public bool IsMandatory { get; }
 
-        public TacheMappingField(string displayName, string propertyName, bool isMandatory)
+        public TacheMappingFields(string displayName, string propertyName, bool isMandatory)
         {
             DisplayName = displayName;
             PropertyName = propertyName;

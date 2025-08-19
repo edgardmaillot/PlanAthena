@@ -154,7 +154,7 @@ namespace PlanAthena.Forms
             listViewLots.Size = new Size(367, 325);
             listViewLots.TabIndex = 0;
             listViewLots.UseCompatibleStateImageBehavior = false;
-            listViewLots.View = View.Details;
+            listViewLots.View = System.Windows.Forms.View.Details;
             listViewLots.SelectedIndexChanged += listViewLots_SelectedIndexChanged;
             // 
             // colLotId

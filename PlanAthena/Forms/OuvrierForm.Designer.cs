@@ -186,7 +186,7 @@ namespace PlanAthena.Forms
             listViewOuvriers.Size = new Size(338, 398);
             listViewOuvriers.TabIndex = 0;
             listViewOuvriers.UseCompatibleStateImageBehavior = false;
-            listViewOuvriers.View = View.Details;
+            listViewOuvriers.View = System.Windows.Forms.View.Details;
             listViewOuvriers.SelectedIndexChanged += listViewOuvriers_SelectedIndexChanged;
             // 
             // colOuvrierId
@@ -384,7 +384,7 @@ namespace PlanAthena.Forms
             listViewCompetences.Size = new Size(601, 273);
             listViewCompetences.TabIndex = 0;
             listViewCompetences.UseCompatibleStateImageBehavior = false;
-            listViewCompetences.View = View.Details;
+            listViewCompetences.View = System.Windows.Forms.View.Details;
             listViewCompetences.SelectedIndexChanged += listViewCompetences_SelectedIndexChanged;
             // 
             // colMetierId
