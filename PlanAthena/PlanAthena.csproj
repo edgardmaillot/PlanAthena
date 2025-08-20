@@ -21,6 +21,7 @@
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="33.1.0" />
     <PackageReference Include="EPPlusFree" Version="4.5.3.8" />
+    <PackageReference Include="Krypton.Docking" Version="95.25.6.174" />
     <PackageReference Include="Krypton.Navigator" Version="95.25.6.174" />
     <PackageReference Include="Krypton.Toolkit" Version="95.25.6.174" />
     <PackageReference Include="Microsoft.Msagl" Version="1.1.6" />
@@ -44,10 +45,10 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Update="View\ImportMappingView.cs">
+    <Compile Update="View\Utils\ImportMappingView.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Update="View\ImportWarningsView.cs">
+    <Compile Update="View\Utils\ImportWarningsView.cs">
       <SubType>Form</SubType>
     </Compile>
   </ItemGroup>
@@ -67,6 +68,11 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controls\" />
+    <Folder Include="Controls\Config\" />
   </ItemGroup>
 
 </Project>

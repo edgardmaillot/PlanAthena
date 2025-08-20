@@ -3,17 +3,19 @@
 // Description: Nouveau formulaire dédié à la configuration des prérequis métiers par phase.
 // Contient la logique graphique et la gestion des dépendances (ancien "Concept 2").
 
-using PlanAthena.Controls;
-using PlanAthena.Controls.Config;
+
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
 using PlanAthena.Services.Business;
 using PlanAthena.Utilities;
+using PlanAthena.View;
+using PlanAthena.View.Ressources;
+using PlanAthena.View.Ressources.MetierDiagram;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Windows.Forms;
+
 
 namespace PlanAthena.Forms
 {
@@ -28,7 +30,7 @@ namespace PlanAthena.Forms
 
         private bool _enCoursDeChargement = false;
         private TabControl _tabControlPhases;
-        private readonly Dictionary<ChantierPhase, MetierDiagramControl> _diagrammesParPhase = new();
+        private readonly Dictionary<ChantierPhase, PlanAthena.View.Ressources.MetierDiagram.MetierDiagramControl> _diagrammesParPhase = new();
         private Metier _metierSelectionne = null;
         private ChantierPhase _phaseSelectionnee = ChantierPhase.None;
 

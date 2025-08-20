@@ -1,6 +1,7 @@
 // Fichier: PlanAthena/Forms/TacheForm.cs
-using PlanAthena.Controls;
-using PlanAthena.Controls.Config;
+using PlanAthena.View;
+using PlanAthena.View.TaskManager;
+using PlanAthena.View.TaskManager.PertDiagram;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
