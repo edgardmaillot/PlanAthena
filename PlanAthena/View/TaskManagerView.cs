@@ -1,3 +1,5 @@
+//Fichier : TaskManagerView.cs Version : 0.4.7.18
+
 using Krypton.Toolkit;
 using PlanAthena.Controls;
 using PlanAthena.Controls.Config;
@@ -32,11 +34,6 @@ namespace PlanAthena.View
             _dependanceBuilder = dependanceBuilder;
             _importService = importService;
 
-            this.tacheDetailView1.Dispose();
-            this.tacheDetailView1 = new TacheDetailView(_projetService, _ressourceService, _dependanceBuilder);
-            this.tacheDetailView1.Dock = DockStyle.Fill;
-            this.kryptonSplitContainerRight.Panel2.Controls.Add(this.tacheDetailView1);
-
             this.Load += TaskManagerView_Load;
         }
 
@@ -44,14 +41,15 @@ namespace PlanAthena.View
         {
             if (DesignMode) return;
 
-            InitializeControls();
-            AttachEvents();
-            RefreshAll();
-        }
-
-        private void InitializeControls()
-        {
+            // Étape 1 : Initialiser les contrôles enfants avec leurs dépendances
+            tacheDetailView1.InitializeServices(_projetService, _ressourceService, _dependanceBuilder);
             pertDiagramControl1.Initialize(_projetService, _ressourceService, _dependanceBuilder, new PertDiagramSettings());
+
+            // Étape 2 : S'abonner aux événements
+            AttachEvents();
+
+            // Étape 3 : Charger les données
+            RefreshAll();
         }
 
         private void AttachEvents()
@@ -60,15 +58,16 @@ namespace PlanAthena.View
             creationToolboxView1.AddBlocRequested += OnAddBlocRequested;
             creationToolboxView1.AddTacheRequested += OnAddTacheRequested;
             pertDiagramControl1.TacheSelected += OnTacheSelectedInPert;
-            // pertDiagramControl1.BlocDoubleClicked += OnBlocDoubleClickedInPert; // Gardé pour le futur
-            tacheDetailView1.TacheChanged += OnTacheDetailChanged;
+            pertDiagramControl1.BlocDoubleClicked += OnBlocDoubleClickedInPert;
+            tacheDetailView1.SaveRequested += OnTacheSaveRequested;
             tacheDetailView1.TacheDeleteRequested += OnTacheDeleteRequested;
             btnPlanificator.Click += (s, e) => NavigateToViewRequested?.Invoke(this, typeof(PlanificatorView));
+            tacheDetailView1.Enter += (s, e) => tacheDetailView1.Focus();
         }
 
         #region Logique de rafraîchissement
 
-        private void RefreshAll()
+        public void RefreshAll()
         {
             var allLots = _projetService.ObtenirTousLesLots();
             lotSelectionView1.PopulateLots(allLots);
@@ -157,7 +156,6 @@ namespace PlanAthena.View
 
             RefreshUIForActiveLot();
             tacheDetailView1.LoadTache(nouvelleTache, isNew: true);
-            // pertDiagramControl1.ForceSelection(nouvelleTache.TacheId); // A réactiver plus tard
         }
 
         private void OnTacheSelectedInPert(object sender, TacheSelectedEventArgs e)
@@ -165,13 +163,34 @@ namespace PlanAthena.View
             tacheDetailView1.LoadTache(e.Tache);
         }
 
-        private void OnTacheDetailChanged(object sender, Tache tacheModifiee)
+        private void OnTacheSaveRequested(object sender, Tache tacheASauvegarder)
         {
-            if (tacheModifiee == null) return;
-            _projetService.ModifierTache(tacheModifiee);
-            RefreshUIForActiveLot();
-        }
+            if (tacheASauvegarder == null) return;
 
+            _projetService.ModifierTache(tacheASauvegarder);
+
+            RefreshUIForActiveLot();
+
+            tacheDetailView1.LoadTache(tacheASauvegarder);
+        }
+        private void OnBlocDoubleClickedInPert(object sender, BlocSelectedEventArgs e)
+        {
+            // On s'assure qu'un lot est bien sélectionné
+            if (string.IsNullOrEmpty(_activeLotId)) return;
+
+            var lotActif = _projetService.ObtenirLotParId(_activeLotId);
+            if (lotActif == null) return;
+
+            // On utilise le BlocForm.cs en mode modal pour l'édition
+            using (var form = new PlanAthena.Forms.BlocForm(_projetService, e.BlocId, lotActif))
+            {
+                // Si l'utilisateur clique sur OK/Sauvegarder, on rafraîchit la vue
+                if (form.ShowDialog(this.FindForm()) == DialogResult.OK)
+                {
+                    RefreshUIForActiveLot();
+                }
+            }
+        }
         private void OnTacheDeleteRequested(object sender, Tache tache)
         {
             if (tache == null) return;
@@ -219,7 +238,6 @@ namespace PlanAthena.View
             if (ofd.ShowDialog(this.FindForm()) == DialogResult.OK)
             {
                 var lotActif = _projetService.ObtenirLotParId(_activeLotId);
-                // Note: On utilise le namespace complet pour éviter toute ambiguïté avec PlanAthena.View
                 using (var importView = new PlanAthena.Forms.ImportMappingView(ofd.FileName, lotActif, _projetService, _ressourceService))
                 {
                     if (importView.ShowDialog(this.FindForm()) == DialogResult.OK)
@@ -244,7 +262,7 @@ namespace PlanAthena.View
                     }
                     else
                     {
-                        return; // L'utilisateur a annulé
+                        return;
                     }
                 }
 
@@ -260,7 +278,6 @@ namespace PlanAthena.View
                     if (resultat.Warnings.Any())
                     {
                         sb.AppendLine("\nDes avertissements ont été générés.");
-                        // Note: On utilise le namespace complet pour éviter toute ambiguïté
                         using (var warningsView = new PlanAthena.Forms.ImportWarningsView(resultat.Warnings))
                         {
                             warningsView.ShowDialog(this.FindForm());
@@ -283,7 +300,6 @@ namespace PlanAthena.View
         private void btnExporter_Click(object sender, EventArgs e)
         {
             MessageBox.Show("La fonction d'export des tâches sera implémentée ultérieurement.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            // TODO: Ajouter la logique d'export en appelant une méthode sur ImportService
         }
         #endregion
     }

@@ -13,44 +13,55 @@ namespace PlanAthena.View
 {
     public partial class TacheDetailView : UserControl
     {
-        private readonly ProjetService _projetService;
-        private readonly RessourceService _ressourceService;
-        private readonly DependanceBuilder _dependanceBuilder;
+        // Services
+        private ProjetService _projetService;
+        private RessourceService _ressourceService;
+        private DependanceBuilder _dependanceBuilder;
 
+        // État interne
         private Tache _currentTache;
-        private bool _isNewTacheMode;
         private bool _isLoading = false;
         private List<Bloc> _availableBlocs;
 
-        public event EventHandler<Tache> TacheChanged;
+        // Événements publics
+        public event EventHandler<Tache> SaveRequested;
         public event EventHandler<Tache> TacheDeleteRequested;
 
+        /// <summary>
+        /// Constructeur public vide, nécessaire pour le Designer de Windows Forms.
+        /// </summary>
         public TacheDetailView()
         {
-            // Constructeur pour le Designer de VS
             InitializeComponent();
         }
 
-        public TacheDetailView(ProjetService projetService, RessourceService ressourceService, DependanceBuilder dependanceBuilder)
+        /// <summary>
+        /// Initialise le contrôle avec les services nécessaires après sa création.
+        /// </summary>
+        public void InitializeServices(ProjetService projetService, RessourceService ressourceService, DependanceBuilder dependanceBuilder)
         {
-            InitializeComponent();
             _projetService = projetService;
             _ressourceService = ressourceService;
             _dependanceBuilder = dependanceBuilder;
 
+            // Le dessin personnalisé n'est plus nécessaire avec Krypton
             AttachEvents();
             Clear();
         }
 
         private void AttachEvents()
         {
-            textTacheNom.TextChanged += OnDetailChanged;
-            numHeuresHomme.ValueChanged += OnDetailChanged;
-            cmbMetier.SelectedIndexChanged += OnDetailChanged;
-            cmbBlocNom.SelectedIndexChanged += OnDetailChanged;
-            chkIsJalon.CheckedChanged += OnDetailChanged;
-            chkListDependances.ItemCheck += (s, e) => BeginInvoke(new Action(() => OnDetailChanged(s, e)));
-            btnSupprimer.Click += (s, e) => TacheDeleteRequested?.Invoke(this, _currentTache);
+            // Événements pour les rafraîchissements LOCAUX
+            cmbBlocNom.SelectedIndexChanged += CmbBlocNom_SelectedIndexChanged;
+            cmbMetier.SelectedIndexChanged += CmbMetier_SelectedIndexChanged;
+            chkIsJalon.CheckedChanged += ChkIsJalon_CheckedChanged;
+            numHeuresHomme.ValueChanged += NumHeuresHomme_ValueChanged;
+
+            chkListDependances.ItemCheck += ChkListDependances_ItemCheck;
+
+            // Événements pour les actions explicites
+            btnSauvegarder.Click += BtnSauvegarder_Click;
+            btnSupprimer.Click += (s, e) => { if (_currentTache != null) TacheDeleteRequested?.Invoke(this, _currentTache); };
         }
 
         public void UpdateDropdowns(string lotId)
@@ -79,7 +90,6 @@ namespace PlanAthena.View
         {
             _isLoading = true;
             _currentTache = tache;
-            _isNewTacheMode = isNew;
 
             if (_currentTache == null)
             {
@@ -88,15 +98,15 @@ namespace PlanAthena.View
                 return;
             }
 
-            textTacheNom.Text = _currentTache.TacheNom;
-            numHeuresHomme.Value = Math.Max(numHeuresHomme.Minimum, _currentTache.HeuresHommeEstimees);
+            txtTacheNom.Text = _currentTache.TacheNom;
+            numHeuresHomme.Value = Math.Max(numHeuresHomme.Minimum, Math.Min(numHeuresHomme.Maximum, _currentTache.HeuresHommeEstimees));
             chkIsJalon.Checked = _currentTache.EstJalon;
 
-            cmbBlocNom.Enabled = true;
             cmbBlocNom.SelectedValue = _availableBlocs.Any(b => b.BlocId == _currentTache.BlocId) ? _currentTache.BlocId : "";
             cmbMetier.SelectedValue = !string.IsNullOrEmpty(_currentTache.MetierId) ? _currentTache.MetierId : "";
 
-            this.Enabled = true;
+            cmbMetier.Enabled = !_currentTache.EstJalon;
+
             _isLoading = false;
 
             LoadDependencies();
@@ -106,14 +116,13 @@ namespace PlanAthena.View
         {
             _isLoading = true;
             _currentTache = null;
-            textTacheNom.Clear();
+            txtTacheNom.Clear();
             numHeuresHomme.Value = numHeuresHomme.Minimum;
             chkIsJalon.Checked = false;
-            cmbBlocNom.SelectedIndex = -1;
             cmbMetier.SelectedIndex = -1;
-            numBlocCapacite.Value = numBlocCapacite.Minimum;
+            cmbBlocNom.SelectedIndex = -1;
+            if (numBlocCapacite != null) numBlocCapacite.Value = 3; // Vérification de nullité
             chkListDependances.Items.Clear();
-            this.Enabled = false;
             _isLoading = false;
         }
 
@@ -121,69 +130,152 @@ namespace PlanAthena.View
         {
             _isLoading = true;
             chkListDependances.Items.Clear();
+
             if (_currentTache == null || string.IsNullOrEmpty(_currentTache.LotId) || string.IsNullOrEmpty(_currentTache.BlocId))
             {
                 _isLoading = false;
                 return;
             }
 
-            var lot = _projetService.ObtenirLotParId(_currentTache.LotId);
-            if (lot == null)
+            try
+            {
+                var lot = _projetService.ObtenirLotParId(_currentTache.LotId);
+                if (lot == null) return;
+
+                var tachesDuMemeBloc = _projetService.ObtenirTachesParBloc(_currentTache.BlocId);
+                var etatsDependances = _dependanceBuilder.ObtenirDependancesPourTache(_currentTache, tachesDuMemeBloc, lot.Phases)
+                                                        .OrderBy(d => d.TachePredecesseur.TacheNom)
+                                                        .ToList();
+
+                foreach (var etat in etatsDependances)
+                {
+                    var displayItem = new DependanceDisplayItem(etat);
+                    bool isChecked = etat.Etat == EtatDependance.Stricte || etat.Etat == EtatDependance.Suggeree;
+                    int index = chkListDependances.Items.Add(displayItem);
+                    chkListDependances.SetItemChecked(index, isChecked);
+                }
+            }
+            finally
             {
                 _isLoading = false;
-                return;
             }
-
-            var tachesDuMemeBloc = _projetService.ObtenirTachesParBloc(_currentTache.BlocId);
-            var etatsDependances = _dependanceBuilder.ObtenirDependancesPourTache(_currentTache, tachesDuMemeBloc, lot.Phases);
-
-            etatsDependances = etatsDependances.OrderBy(d => d.TachePredecesseur.TacheNom).ToList();
-
-            foreach (var etat in etatsDependances)
-            {
-                bool isChecked = etat.Etat == EtatDependance.Stricte || etat.Etat == EtatDependance.Suggeree;
-                int index = chkListDependances.Items.Add(etat);
-                chkListDependances.SetItemChecked(index, isChecked);
-            }
-            _isLoading = false;
         }
 
-        private void OnDetailChanged(object sender = null, EventArgs e = null)
+        private void CmbBlocNom_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (_isLoading || _currentTache == null) return;
 
-            _currentTache.TacheNom = textTacheNom.Text;
-            _currentTache.HeuresHommeEstimees = (int)numHeuresHomme.Value;
-            _currentTache.Type = chkIsJalon.Checked ? TypeActivite.JalonUtilisateur : TypeActivite.Tache;
-            _currentTache.MetierId = _currentTache.EstJalon ? "" : (string)cmbMetier.SelectedValue ?? "";
-
-            if (cmbBlocNom.SelectedValue is string blocId)
+            if (cmbBlocNom.SelectedItem is Bloc selectedBloc)
             {
-                _currentTache.BlocId = blocId;
-                var selectedBloc = _availableBlocs.FirstOrDefault(b => b.BlocId == blocId);
-                if (selectedBloc != null) numBlocCapacite.Value = selectedBloc.CapaciteMaxOuvriers;
+                _currentTache.BlocId = selectedBloc.BlocId;
+                if (numBlocCapacite != null) numBlocCapacite.Value = selectedBloc.CapaciteMaxOuvriers;
+                LoadDependencies();
             }
+        }
+
+        private void CmbMetier_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_isLoading || _currentTache == null || _currentTache.EstJalon) return;
+
+            _currentTache.MetierId = cmbMetier.SelectedValue as string ?? "";
+            LoadDependencies();
+        }
+
+        private void ChkIsJalon_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_isLoading || _currentTache == null) return;
+
+            bool estJalon = chkIsJalon.Checked;
+            cmbMetier.Enabled = !estJalon;
+            if (estJalon)
+            {
+                _currentTache.Type = TypeActivite.JalonUtilisateur;
+                cmbMetier.SelectedValue = "";
+            }
+            else
+            {
+                _currentTache.Type = TypeActivite.Tache;
+            }
+            LoadDependencies();
+        }
+
+        private void NumHeuresHomme_ValueChanged(object sender, EventArgs e)
+        {
+            if (chkIsJalon.Checked && (string.IsNullOrEmpty(txtTacheNom.Text) || txtTacheNom.Text.StartsWith("Attente")))
+            {
+                txtTacheNom.Text = $"Attente {numHeuresHomme.Value} heures";
+            }
+        }
+
+        private void ChkListDependances_ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            if (_isLoading) return;
+
+            if (chkListDependances.Items[e.Index] is DependanceDisplayItem item)
+            {
+                item.UpdateIsChecked(e.NewValue == CheckState.Checked);
+                chkListDependances.Items[e.Index] = item;
+            }
+        }
+
+        private void BtnSauvegarder_Click(object sender, EventArgs e)
+        {
+            if (_currentTache == null) return;
+
+            _currentTache.TacheNom = txtTacheNom.Text;
+            _currentTache.HeuresHommeEstimees = (int)numHeuresHomme.Value;
 
             var dependancesStricts = new List<string>();
             var exclusions = new List<string>();
-            foreach (DependanceAffichage item in chkListDependances.Items)
-            {
-                bool estCochee = chkListDependances.CheckedItems.Contains(item);
-                var tacheIdPredecesseur = item.TachePredecesseur.TacheId;
 
-                if (!item.EstHeritee && estCochee) dependancesStricts.Add(tacheIdPredecesseur);
-                else if (item.EstHeritee && !estCochee) exclusions.Add(tacheIdPredecesseur);
-                else if (item.EstHeritee && estCochee) dependancesStricts.Add(tacheIdPredecesseur);
+            for (int i = 0; i < chkListDependances.Items.Count; i++)
+            {
+                var item = (DependanceDisplayItem)chkListDependances.Items[i];
+                bool estCochee = chkListDependances.GetItemChecked(i);
+                var tacheIdPredecesseur = item.OriginalData.TachePredecesseur.TacheId;
+
+                if (!item.OriginalData.EstHeritee && estCochee) dependancesStricts.Add(tacheIdPredecesseur);
+                else if (item.OriginalData.EstHeritee && !estCochee) exclusions.Add(tacheIdPredecesseur);
+                else if (item.OriginalData.EstHeritee && estCochee) dependancesStricts.Add(tacheIdPredecesseur);
             }
+
             _currentTache.Dependencies = string.Join(",", dependancesStricts.Distinct());
             _currentTache.ExclusionsDependances = string.Join(",", exclusions.Distinct());
 
-            if (sender == cmbMetier || sender == cmbBlocNom || sender == chkIsJalon)
+            SaveRequested?.Invoke(this, _currentTache);
+        }
+    }
+
+    public class DependanceDisplayItem
+    {
+        public DependanceAffichage OriginalData { get; }
+        private bool _isChecked;
+
+        public DependanceDisplayItem(DependanceAffichage originalData)
+        {
+            OriginalData = originalData;
+            _isChecked = (originalData.Etat == EtatDependance.Stricte || originalData.Etat == EtatDependance.Suggeree);
+        }
+
+        public void UpdateIsChecked(bool isChecked)
+        {
+            _isChecked = isChecked;
+        }
+
+        public override string ToString()
+        {
+            string prefix = "☐ ";
+
+            if (OriginalData.EstHeritee)
             {
-                LoadDependencies();
+                prefix = _isChecked ? "☑ " : "☒ ";
+            }
+            else if (_isChecked)
+            {
+                prefix = "✅ ";
             }
 
-            TacheChanged?.Invoke(this, _currentTache);
+            return $"{prefix}{OriginalData.TachePredecesseur.TacheNom}";
         }
     }
 }

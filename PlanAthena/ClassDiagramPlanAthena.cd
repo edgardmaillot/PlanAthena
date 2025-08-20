@@ -20,7 +20,7 @@
   <Class Name="PlanAthena.Data.Metier">
     <Position X="2.75" Y="9.5" Width="2" />
     <TypeIdentifier>
-      <HashCode>AAAIAAAAAAAAEAAAAAAAAAAAACAAAAAACAAAAAAABAA=</HashCode>
+      <HashCode>AAAIAAAAAAAAEAAEAAAAAAAAACAAAAAACAAAAAAABAA=</HashCode>
       <FileName>Data\Metier.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -65,14 +65,14 @@
   <Class Name="PlanAthena.Forms.MetierForm" Collapsed="true">
     <Position X="0.5" Y="5.25" Width="2" />
     <TypeIdentifier>
-      <HashCode>KTEE4cAAADERAkYAAADKggmLgABAAUUBIAAAHtAooRA=</HashCode>
+      <HashCode>AaEEoEAAADEQAAYAAACKAgCLgABQAUEBIAAAGoAogZA=</HashCode>
       <FileName>Forms\MetierForm.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="PlanAthena.Forms.OuvrierForm" Collapsed="true">
     <Position X="0.5" Y="2.25" Width="2" />
     <TypeIdentifier>
-      <HashCode>gOGA0IjQBSCQRSNAQASMRQHKAAAKidEIFgABAkSMCpA=</HashCode>
+      <HashCode>hOGA0IDADSCQRSFAQASMRQHKAAAaidEIFgABAkSMCpA=</HashCode>
       <FileName>Forms\OuvrierForm.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -98,7 +98,7 @@
     </TypeIdentifier>
   </Class>
   <Class Name="PlanAthena.Forms.TacheDetailForm">
-    <Position X="10" Y="2.25" Width="2" />
+    <Position X="14.5" Y="0.5" Width="2" />
     <Compartments>
       <Compartment Name="Fields" Collapsed="true" />
     </Compartments>
@@ -113,7 +113,7 @@
       <Compartment Name="Fields" Collapsed="true" />
     </Compartments>
     <TypeIdentifier>
-      <HashCode>AKgAOAyAQSqCHDTxBADHCABjAJKUSkCEqKQUkAB4UIA=</HashCode>
+      <HashCode>AKgAOAyAQSqCHDTxBBDHCABjABKUSkCEqKQUkAB4UIA=</HashCode>
       <FileName>Forms\TacheForm.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -208,13 +208,6 @@
       <FileName>Services\Business\ProjetService.cs</FileName>
     </TypeIdentifier>
   </Class>
-  <Class Name="PlanAthena.Services.Business.TacheService">
-    <Position X="15.5" Y="3.75" Width="2" />
-    <TypeIdentifier>
-      <HashCode>AAACABABAAAAAAQBAAAAAQAAIAIAEAYABAAMMEAGEAA=</HashCode>
-      <FileName>Services\Business\TacheService.cs</FileName>
-    </TypeIdentifier>
-  </Class>
   <Class Name="PlanAthena.Services.Business.BlocInfo" Collapsed="true">
     <Position X="18.5" Y="12.5" Width="2" />
     <TypeIdentifier>
@@ -300,7 +293,7 @@
     </TypeIdentifier>
   </Class>
   <Class Name="PlanAthena.Services.DataAccess.ConfigurationExportGantt">
-    <Position X="16" Y="17.25" Width="2" />
+    <Position X="8.5" Y="17.25" Width="3.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAABAAAAAAAAAAAQgAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Services\DataAccess\GanttExportService.cs</FileName>
@@ -321,7 +314,7 @@
     </TypeIdentifier>
   </Class>
   <Class Name="PlanAthena.Services.DataAccess.RessourceGantt">
-    <Position X="13.75" Y="16" Width="2" />
+    <Position X="10" Y="16" Width="2" />
     <TypeIdentifier>
       <HashCode>AAACAAAAACAAAAAAUAAAgAAAACAAAAAAAIAAAAAABAA=</HashCode>
       <FileName>Services\DataAccess\GanttExportService.cs</FileName>
@@ -367,6 +360,16 @@
     <TypeIdentifier>
       <HashCode>AACACAQSAAAAAAAAABAAAAAAABAAAEUAgAAAAAAIAAA=</HashCode>
       <FileName>Services\DataAccess\ImportService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PlanAthena.View.TacheDetailView">
+    <Position X="16.75" Y="1" Width="3.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>ABACQBEAADCAgEIBwACCAAADAAgACEgAAAAAQEBIQRA=</HashCode>
+      <FileName>View\TacheDetailView.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Enum Name="PlanAthena.Data.TypeActivite" Collapsed="true">
