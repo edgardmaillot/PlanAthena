@@ -41,9 +41,9 @@ namespace PlanAthena.Forms
             {
                 _pertControl = new PertDiagramControl { Dock = DockStyle.Fill };
                 _pertControl.Initialize(_projetService, _ressourceService, _dependanceBuilder, new PertDiagramSettings());
-                _pertControl.TacheSelected += PertControl_TacheSelected;
-                _pertControl.TacheDoubleClicked += PertControl_TacheDoubleClicked;
-                _pertControl.BlocDoubleClicked += PertControl_BlocDoubleClicked;
+                //_pertControl.TacheSelected += PertControl_TacheSelected;
+                //_pertControl.TacheDoubleClicked += PertControl_TacheDoubleClicked;
+                //_pertControl.BlocDoubleClicked += PertControl_BlocDoubleClicked;
                 _pertControl.ZoomChanged += PertControl_ZoomChanged;
                 this.panelDiagrammeCentral.Controls.Add(_pertControl);
                 _tacheDetailForm = new TacheDetailForm(_projetService, _ressourceService, _dependanceBuilder);

@@ -1,4 +1,7 @@
+using Krypton.Docking;
+using Krypton.Navigator;
 using Krypton.Toolkit;
+using Krypton.Workspace;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
@@ -24,6 +27,8 @@ namespace PlanAthena.View.TaskManager
         private string _activeLotId;
         public event EventHandler<Type> NavigateToViewRequested;
 
+        private KryptonPage _detailsPage;
+
         public TaskManagerView(ApplicationService applicationService, ProjetService projetService, RessourceService ressourceService, DependanceBuilder dependanceBuilder, ImportService importService)
         {
             InitializeComponent();
@@ -38,10 +43,87 @@ namespace PlanAthena.View.TaskManager
         private void TaskManagerView_Load(object sender, EventArgs e)
         {
             if (DesignMode) return;
+
+            InitializeDockingLayout();
+
             tacheDetailView1.InitializeServices(_projetService, _ressourceService, _dependanceBuilder);
             pertDiagramControl1.Initialize(_projetService, _ressourceService, _dependanceBuilder, new PertDiagramSettings());
+
             AttachEvents();
             RefreshAll();
+        }
+
+        // Dans TaskManagerView.cs
+
+        private void InitializeDockingLayout()
+        {
+            // Police commune pour les en-têtes de nos panneaux
+            var headerFont = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+
+            // 1. Le manager prend en charge le panel principal.
+            kryptonDockingManager.ManageControl("RootControl", this.kryptonPanelMain);
+
+            // 2. Le diagramme est placé directement dans le panel.
+            pertDiagramControl1.Dock = DockStyle.Fill;
+            this.kryptonPanelMain.Controls.Add(this.pertDiagramControl1);
+
+            // 3. Créer les pages pour les panneaux latéraux.
+
+            // Page "Outils de Création"
+            var toolboxPage = new KryptonPage()
+            {
+                Text = "Création",
+                TextTitle = "Outils de Création",
+                UniqueName = "toolbox",
+                ImageSmall = Properties.Resources.tache, // <-- AJOUT DE L'ICÔNE
+                Dock = DockStyle.Fill
+            };
+            toolboxPage.Controls.Add(this.creationToolboxView1);
+            toolboxPage.StateCommon.HeaderGroup.HeaderPrimary.Content.ShortText.Font = headerFont;
+            toolboxPage.ImageSmall = Properties.Resources.tache; // <-- AJOUT DE L'ICÔNE
+
+
+            // Page "Sélection du Lot"
+            var lotSelectionPage = new KryptonPage()
+            {
+                Text = "Lot",
+                TextTitle = "Lot Actif",
+                UniqueName = "lotselect",
+                ImageSmall = Properties.Resources.tache, // <-- AJOUT DE L'ICÔNE
+                Dock = DockStyle.Fill
+            };
+            lotSelectionPage.Controls.Add(this.lotSelectionView1);
+            lotSelectionPage.StateCommon.HeaderGroup.HeaderPrimary.Content.ShortText.Font = headerFont;
+
+
+            // Page "Détails" (Tâche ou Bloc)
+            _detailsPage = new KryptonPage()
+            {
+                Text = "Gestion",
+                TextTitle = "Gestion",
+                UniqueName = "details",
+                ImageSmall = Properties.Resources.tache, // <-- AJOUT DE L'ICÔNE
+                Dock = DockStyle.Fill
+            };
+            _detailsPage.StateCommon.HeaderGroup.HeaderPrimary.Content.ShortText.Font = headerFont;
+
+
+            // 4. Ajouter les dockspaces au contrôle managé "RootControl".
+
+            var leftDockspace = kryptonDockingManager.AddDockspace("RootControl", DockingEdge.Left, new KryptonPage[] { toolboxPage });
+            leftDockspace.DockspaceControl.Size = new System.Drawing.Size(220, 500);
+
+            var rightDockspace = kryptonDockingManager.AddDockspace("RootControl", DockingEdge.Right, new KryptonPage[] { lotSelectionPage, _detailsPage });
+
+            // 5. CONFIGURATION PRÉCISE BASÉE SUR LE XML
+            if (rightDockspace.DockspaceControl.Root is Krypton.Workspace.KryptonWorkspaceSequence sequence)
+            {
+                sequence.Orientation = System.Windows.Forms.Orientation.Vertical;
+                sequence.StarSize = "33*,67*";
+            }
+
+            // 6. On cache le panneau de détails au démarrage
+            kryptonDockingManager.HidePage(_detailsPage);
         }
 
         private void AttachEvents()
@@ -52,11 +134,10 @@ namespace PlanAthena.View.TaskManager
 
             pertDiagramControl1.TacheClick += PertDiagram_TacheClick;
             pertDiagramControl1.BlocClick += PertDiagram_BlocClick;
-            pertDiagramControl1.TacheDoubleClick += PertDiagram_TacheDoubleClick;
-            pertDiagramControl1.BlocDoubleClick += PertDiagram_BlocDoubleClick;
 
             tacheDetailView1.SaveRequested += OnTacheSaveRequested;
             tacheDetailView1.TacheDeleteRequested += OnTacheDeleteRequested;
+            blocDetailView1.BlocChanged += OnBlocChanged;
 
             btnPlanificator.Click += (s, e) => NavigateToViewRequested?.Invoke(this, typeof(PlanificatorView));
         }
@@ -90,7 +171,7 @@ namespace PlanAthena.View.TaskManager
             {
                 creationToolboxView1.PopulateMetiers(null, null);
                 pertDiagramControl1.ChargerDonnees(null);
-                tacheDetailView1.Clear();
+                ClearDetailsPanel();
                 return;
             }
 
@@ -101,7 +182,7 @@ namespace PlanAthena.View.TaskManager
             pertDiagramControl1.ChargerDonnees(tachesDuLot);
 
             tacheDetailView1.UpdateDropdowns(_activeLotId);
-            tacheDetailView1.Clear();
+            ClearDetailsPanel();
         }
         #endregion
 
@@ -109,37 +190,49 @@ namespace PlanAthena.View.TaskManager
 
         private void PertDiagram_TacheClick(object sender, TacheSelectedEventArgs e)
         {
-            tacheDetailView1.LoadTache(e.Tache);
+            ShowTacheDetails(e.Tache);
         }
 
         private void PertDiagram_BlocClick(object sender, BlocSelectedEventArgs e)
         {
-            // Pour l'instant, un simple clic sur un bloc ne fait qu'effacer le détail de la tâche
-            tacheDetailView1.Clear();
-        }
-
-        private void PertDiagram_TacheDoubleClick(object sender, TacheSelectedEventArgs e)
-        {
-            // Action future possible (ex: ouvrir un popup d'édition "RUN")
-            // Pour l'instant, on s'assure juste que la tâche est sélectionnée.
-            tacheDetailView1.LoadTache(e.Tache);
-        }
-
-        private void PertDiagram_BlocDoubleClick(object sender, BlocSelectedEventArgs e)
-        {
-            var blocToEdit = _projetService.ObtenirBlocParId(e.BlocId);
-            if (blocToEdit == null) return;
-
-            // Il faudra utiliser le nouveau formulaire /View/Structure/BlocDetailView pour éditer les blocs
-            /*using (var form = new PlanAthena.Forms.BlocDetailForm(blocToEdit)) 
+            var bloc = _projetService.ObtenirBlocParId(e.BlocId);
+            if (bloc != null)
             {
-                if (form.ShowDialog(this.FindForm()) == DialogResult.OK)
-                {
-                    _projetService.ModifierBloc(blocToEdit);
-                    RefreshUIForActiveLot();
-                }
-            }*/
+                ShowBlocDetails(bloc);
+            }
         }
+
+        #endregion
+
+        #region Gestion des panneaux de détails dynamiques
+
+        private void ShowTacheDetails(Tache tache)
+        {
+            _detailsPage.SuspendLayout();
+            _detailsPage.Controls.Clear();
+            tacheDetailView1.Dock = DockStyle.Fill;
+            _detailsPage.Controls.Add(tacheDetailView1);
+            tacheDetailView1.LoadTache(tache);
+            _detailsPage.ResumeLayout();
+        }
+
+        private void ShowBlocDetails(Bloc bloc)
+        {
+            _detailsPage.SuspendLayout();
+            _detailsPage.Controls.Clear();
+            blocDetailView1.Dock = DockStyle.Fill;
+            _detailsPage.Controls.Add(blocDetailView1);
+            blocDetailView1.LoadBloc(bloc);
+            _detailsPage.ResumeLayout();
+        }
+
+        private void ClearDetailsPanel()
+        {
+            _detailsPage.Controls.Clear();
+            tacheDetailView1.Clear();
+            blocDetailView1.Clear();
+        }
+
         #endregion
 
         #region Autres Gestionnaires d'événements
@@ -181,7 +274,7 @@ namespace PlanAthena.View.TaskManager
             nouvelleTache.MetierId = metier.MetierId;
             _projetService.ModifierTache(nouvelleTache);
             RefreshUIForActiveLot();
-            tacheDetailView1.LoadTache(nouvelleTache, isNew: true);
+            ShowTacheDetails(nouvelleTache);
         }
 
         private void OnTacheSaveRequested(object sender, Tache tacheASauvegarder)
@@ -189,7 +282,15 @@ namespace PlanAthena.View.TaskManager
             if (tacheASauvegarder == null) return;
             _projetService.ModifierTache(tacheASauvegarder);
             RefreshUIForActiveLot();
-            tacheDetailView1.LoadTache(tacheASauvegarder);
+            ShowTacheDetails(tacheASauvegarder);
+        }
+
+        private void OnBlocChanged(object sender, Bloc blocASauvegarder)
+        {
+            if (blocASauvegarder == null) return;
+            _projetService.ModifierBloc(blocASauvegarder);
+            RefreshUIForActiveLot();
+            ShowBlocDetails(blocASauvegarder);
         }
 
         private void OnTacheDeleteRequested(object sender, Tache tache)

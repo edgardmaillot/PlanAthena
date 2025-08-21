@@ -92,6 +92,7 @@ namespace PlanAthena.View.TaskManager
             kryptonHeader1.Values.Description = "";
             kryptonHeader1.Values.Heading = "Détail de la Tâche";
             kryptonHeader1.Values.Image = Properties.Resources.tache;
+            kryptonHeader1.Visible = false;
             // 
             // kryptonGroup1
             // 

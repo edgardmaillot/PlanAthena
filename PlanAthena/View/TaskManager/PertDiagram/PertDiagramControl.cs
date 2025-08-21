@@ -26,15 +26,19 @@ namespace PlanAthena.View.TaskManager.PertDiagram
         private RessourceService _ressourceService;
         private DependanceBuilder _dependanceBuilder;
         private List<Tache> _taches = new List<Tache>();
+
+        // Logique de Pan réintroduite
         private bool _isPanning = false;
+
         private PrintDocument _printDocument;
 
-        #region Événements Publics (API Claire)
+        #region Événements Publics
 
         public event EventHandler<TacheSelectedEventArgs> TacheClick;
         public event EventHandler<BlocSelectedEventArgs> BlocClick;
         public event EventHandler<TacheSelectedEventArgs> TacheDoubleClick;
         public event EventHandler<BlocSelectedEventArgs> BlocDoubleClick;
+        public event EventHandler<EventArgs> EmptyAreaClick;
         public event EventHandler<ZoomChangedEventArgs> ZoomChanged;
 
         #endregion
@@ -67,10 +71,11 @@ namespace PlanAthena.View.TaskManager.PertDiagram
             _viewer.ZoomF = _settings.DefaultZoom;
             _viewer.OutsideAreaBrush = new SolidBrush(_settings.OutsideAreaColor);
 
+            // Attachement des gestionnaires d'événements souris
             _viewer.MouseClick += Viewer_MouseClick;
             _viewer.MouseDoubleClick += Viewer_MouseDoubleClick;
-            _viewer.MouseDown += (s, e) => { if (e.Button == System.Windows.Forms.MouseButtons.Left) _isPanning = _viewer.ObjectUnderMouseCursor == null; };
-            _viewer.MouseUp += (s, e) => { if (e.Button == System.Windows.Forms.MouseButtons.Left) _isPanning = false; };
+            _viewer.MouseDown += Viewer_MouseDown;
+            _viewer.MouseUp += Viewer_MouseUp;
         }
 
         public void ChargerDonnees(List<Tache> taches, string filtreRecherche = "")
@@ -79,10 +84,44 @@ namespace PlanAthena.View.TaskManager.PertDiagram
             GenererDiagramme(filtreRecherche);
         }
 
-        #region Gestionnaires d'Événements de Souris (Détecteurs)
+        #region Gestionnaires d'Événements de Souris (Logique de Pan Restaurée)
+
+        private void Viewer_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button != System.Windows.Forms.MouseButtons.Left) return;
+
+            // On active le mode PAN interne de GViewer si on ne clique PAS sur un objet (noeud, cluster, etc.)
+            _viewer.PanButtonPressed = (_viewer.ObjectUnderMouseCursor == null);
+
+            // On utilise notre flag pour savoir si un déplacement a commencé
+            _isPanning = _viewer.PanButtonPressed;
+        }
+
+        private void Viewer_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button != System.Windows.Forms.MouseButtons.Left) return;
+
+            // On désactive le mode PAN à la fin du clic
+            _viewer.PanButtonPressed = false;
+
+            // Si on était en train de "panner", on remet le flag à false.
+            // On utilise un petit délai pour éviter que l'événement Click ne se déclenche par erreur juste après un déplacement.
+            if (_isPanning)
+            {
+                var timer = new System.Windows.Forms.Timer { Interval = 50 };
+                timer.Tick += (s, args) =>
+                {
+                    _isPanning = false;
+                    timer.Stop();
+                    timer.Dispose();
+                };
+                timer.Start();
+            }
+        }
 
         private void Viewer_MouseClick(object sender, MouseEventArgs e)
         {
+            // On ne traite le clic que si ce n'est pas la fin d'un déplacement
             if (e.Button != System.Windows.Forms.MouseButtons.Left || _isPanning) return;
             var objectUnderMouse = _viewer.ObjectUnderMouseCursor;
 
@@ -90,6 +129,7 @@ namespace PlanAthena.View.TaskManager.PertDiagram
             {
                 ClearAllHighlights();
                 _viewer.Invalidate();
+                EmptyAreaClick?.Invoke(this, EventArgs.Empty);
                 return;
             }
 

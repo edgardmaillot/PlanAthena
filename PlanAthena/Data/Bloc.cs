@@ -13,6 +13,7 @@ namespace PlanAthena.Data
         public string Nom { get; set; } = "";
         public int CapaciteMaxOuvriers { get; set; }
 
+
         /// <summary>
         /// NOUVEAU: ID du Lot auquel ce bloc appartient.
         /// Permet de retrouver le parent sans avoir à parcourir toute la structure.

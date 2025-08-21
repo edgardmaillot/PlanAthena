@@ -42,6 +42,7 @@ namespace PlanAthena
                 var planificationService = serviceProvider.GetRequiredService<PlanificationService>();
                 var planningExcelExportService = serviceProvider.GetRequiredService<PlanningExcelExportService>();
                 var ganttExportService = serviceProvider.GetRequiredService<GanttExportService>();
+                var userPreferencesService = serviceProvider.GetRequiredService<UserPreferencesService>();
 
                 // L'appel au constructeur est maintenant complet
                 Application.Run(new MainShellForm(
@@ -54,7 +55,8 @@ namespace PlanAthena
                     dependanceBuilder,
                     planificationService,
                     planningExcelExportService,
-                    ganttExportService));
+                    ganttExportService,
+                    userPreferencesService));
             }
             else
             {
@@ -75,6 +77,7 @@ namespace PlanAthena
 
             // Couche DataAccess & Utilitaires (Singletons)
             services.AddSingleton<ProjetRepository>();
+            services.AddSingleton<UserPreferencesService>();
             services.AddSingleton<CsvDataService>();
             services.AddSingleton<ExcelReader>();
             services.AddSingleton<CheminsPrefereService>();

@@ -32,6 +32,7 @@ namespace PlanAthena.View.TaskManager
             // 
             // groupLotActif
             // 
+            groupLotActif.CaptionOverlap = 0D;
             groupLotActif.Dock = DockStyle.Fill;
             groupLotActif.Location = new Point(0, 0);
             groupLotActif.Margin = new Padding(4, 3, 4, 3);

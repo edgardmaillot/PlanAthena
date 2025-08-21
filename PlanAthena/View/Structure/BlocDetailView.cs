@@ -11,7 +11,7 @@ namespace PlanAthena.View.Structure
         private bool _isLoading;
 
         // Événement pour notifier le parent qu'une modification a eu lieu
-        public event EventHandler BlocChanged;
+        public event EventHandler<Bloc> BlocChanged;
 
         public BlocDetailView()
         {
@@ -46,7 +46,8 @@ namespace PlanAthena.View.Structure
                 textId.Text = bloc.BlocId;
                 textName.Text = bloc.Nom;
                 numCapacity.Value = bloc.CapaciteMaxOuvriers;
-                // Les champs X et Y restent vides et désactivés
+                //textLocationX.Text = bloc.Location?.X.ToString() ?? "";
+                //textLocationY.Text = bloc.Location?.Y.ToString() ?? "";
                 this.Enabled = true;
             }
             else
@@ -81,7 +82,7 @@ namespace PlanAthena.View.Structure
             _currentBloc.CapaciteMaxOuvriers = (int)numCapacity.Value;
 
             // Lever l'événement pour notifier le parent (sauvegarde automatique)
-            BlocChanged?.Invoke(this, EventArgs.Empty);
+            BlocChanged?.Invoke(this, _currentBloc);
         }
     }
 }

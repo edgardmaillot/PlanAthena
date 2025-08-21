@@ -129,6 +129,7 @@ namespace PlanAthena.Services.Infrastructure
                 TypeOperation.ImportExcel => "Imports",
                 TypeOperation.ExportGantt => "Exports",
                 TypeOperation.ExportExcel => "Exports",
+                TypeOperation.PreferenceUI => "Ressources\\UIPrefs",
                 _ => ""
             };
 
@@ -167,6 +168,10 @@ namespace PlanAthena.Services.Infrastructure
                 fichiersRecents.RemoveAt(fichiersRecents.Count - 1);
             }
         }
+        /// <summary>
+        /// Obtient le chemin du dossier dédié aux préférences de l'interface utilisateur.
+        /// </summary>
+        public string ObtenirDossierUIPrefs() => ObtenirDernierDossier(TypeOperation.PreferenceUI);
     }
 
     /// <summary>
@@ -179,6 +184,7 @@ namespace PlanAthena.Services.Infrastructure
         ExportGantt,
         ExportExcel,
         ProjetSauvegarde,
-        ProjetChargement
+        ProjetChargement,
+        PreferenceUI
     }
 }

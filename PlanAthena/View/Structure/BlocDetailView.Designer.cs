@@ -19,161 +19,165 @@ namespace PlanAthena.View.Structure
 
         private void InitializeComponent()
         {
-            this.groupDetails = new Krypton.Toolkit.KryptonGroupBox();
-            this.textLocationY = new Krypton.Toolkit.KryptonTextBox();
-            this.labelLocationY = new Krypton.Toolkit.KryptonLabel();
-            this.textLocationX = new Krypton.Toolkit.KryptonTextBox();
-            this.labelLocationX = new Krypton.Toolkit.KryptonLabel();
-            this.labelLocation = new Krypton.Toolkit.KryptonLabel();
-            this.numCapacity = new Krypton.Toolkit.KryptonNumericUpDown();
-            this.labelCapacity = new Krypton.Toolkit.KryptonLabel();
-            this.textName = new Krypton.Toolkit.KryptonTextBox();
-            this.labelName = new Krypton.Toolkit.KryptonLabel();
-            this.textId = new Krypton.Toolkit.KryptonTextBox();
-            this.labelId = new Krypton.Toolkit.KryptonLabel();
-            ((System.ComponentModel.ISupportInitialize)(this.groupDetails)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.groupDetails.Panel)).BeginInit();
-            this.groupDetails.Panel.SuspendLayout();
-            this.groupDetails.SuspendLayout();
-            this.SuspendLayout();
+            groupDetails = new KryptonGroupBox();
+            textLocationY = new KryptonTextBox();
+            labelLocationY = new KryptonLabel();
+            textLocationX = new KryptonTextBox();
+            labelLocationX = new KryptonLabel();
+            labelLocation = new KryptonLabel();
+            numCapacity = new KryptonNumericUpDown();
+            labelCapacity = new KryptonLabel();
+            textName = new KryptonTextBox();
+            labelName = new KryptonLabel();
+            textId = new KryptonTextBox();
+            labelId = new KryptonLabel();
+            ((System.ComponentModel.ISupportInitialize)groupDetails).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)groupDetails.Panel).BeginInit();
+            groupDetails.Panel.SuspendLayout();
+            SuspendLayout();
             // 
             // groupDetails
             // 
-            this.groupDetails.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.groupDetails.Location = new System.Drawing.Point(0, 0);
-            this.groupDetails.Name = "groupDetails";
+            groupDetails.CaptionOverlap = 0D;
+            groupDetails.Dock = DockStyle.Fill;
+            groupDetails.Location = new Point(0, 0);
+            groupDetails.Margin = new Padding(4, 3, 4, 3);
             // 
-            // groupDetails.Panel
             // 
-            this.groupDetails.Panel.Controls.Add(this.textLocationY);
-            this.groupDetails.Panel.Controls.Add(this.labelLocationY);
-            this.groupDetails.Panel.Controls.Add(this.textLocationX);
-            this.groupDetails.Panel.Controls.Add(this.labelLocationX);
-            this.groupDetails.Panel.Controls.Add(this.labelLocation);
-            this.groupDetails.Panel.Controls.Add(this.numCapacity);
-            this.groupDetails.Panel.Controls.Add(this.labelCapacity);
-            this.groupDetails.Panel.Controls.Add(this.textName);
-            this.groupDetails.Panel.Controls.Add(this.labelName);
-            this.groupDetails.Panel.Controls.Add(this.textId);
-            this.groupDetails.Panel.Controls.Add(this.labelId);
-            this.groupDetails.Size = new System.Drawing.Size(700, 500);
-            this.groupDetails.TabIndex = 1;
-            this.groupDetails.Values.Heading = "Édition du Bloc";
+            // 
+            groupDetails.Panel.Controls.Add(textLocationY);
+            groupDetails.Panel.Controls.Add(labelLocationY);
+            groupDetails.Panel.Controls.Add(textLocationX);
+            groupDetails.Panel.Controls.Add(labelLocationX);
+            groupDetails.Panel.Controls.Add(labelLocation);
+            groupDetails.Panel.Controls.Add(numCapacity);
+            groupDetails.Panel.Controls.Add(labelCapacity);
+            groupDetails.Panel.Controls.Add(textName);
+            groupDetails.Panel.Controls.Add(labelName);
+            groupDetails.Panel.Controls.Add(textId);
+            groupDetails.Panel.Controls.Add(labelId);
+            groupDetails.Size = new Size(817, 577);
+            groupDetails.TabIndex = 1;
+            groupDetails.Values.Heading = "Édition du Bloc";
             // 
             // textLocationY
             // 
-            this.textLocationY.Enabled = false;
-            this.textLocationY.Location = new System.Drawing.Point(264, 135);
-            this.textLocationY.Name = "textLocationY";
-            this.textLocationY.Size = new System.Drawing.Size(66, 23);
-            this.textLocationY.TabIndex = 10;
+            textLocationY.Enabled = false;
+            textLocationY.Location = new Point(308, 156);
+            textLocationY.Margin = new Padding(4, 3, 4, 3);
+            textLocationY.Name = "textLocationY";
+            textLocationY.Size = new Size(77, 23);
+            textLocationY.TabIndex = 10;
             // 
             // labelLocationY
             // 
-            this.labelLocationY.Enabled = false;
-            this.labelLocationY.Location = new System.Drawing.Point(240, 135);
-            this.labelLocationY.Name = "labelLocationY";
-            this.labelLocationY.Size = new System.Drawing.Size(22, 20);
-            this.labelLocationY.TabIndex = 9;
-            this.labelLocationY.Values.Text = "Y :";
+            labelLocationY.Enabled = false;
+            labelLocationY.Location = new Point(280, 156);
+            labelLocationY.Margin = new Padding(4, 3, 4, 3);
+            labelLocationY.Name = "labelLocationY";
+            labelLocationY.Size = new Size(23, 20);
+            labelLocationY.TabIndex = 9;
+            labelLocationY.Values.Text = "Y :";
             // 
             // textLocationX
             // 
-            this.textLocationX.Enabled = false;
-            this.textLocationX.Location = new System.Drawing.Point(168, 135);
-            this.textLocationX.Name = "textLocationX";
-            this.textLocationX.Size = new System.Drawing.Size(66, 23);
-            this.textLocationX.TabIndex = 8;
+            textLocationX.Enabled = false;
+            textLocationX.Location = new Point(196, 156);
+            textLocationX.Margin = new Padding(4, 3, 4, 3);
+            textLocationX.Name = "textLocationX";
+            textLocationX.Size = new Size(77, 23);
+            textLocationX.TabIndex = 8;
             // 
             // labelLocationX
             // 
-            this.labelLocationX.Enabled = false;
-            this.labelLocationX.Location = new System.Drawing.Point(144, 135);
-            this.labelLocationX.Name = "labelLocationX";
-            this.labelLocationX.Size = new System.Drawing.Size(22, 20);
-            this.labelLocationX.TabIndex = 7;
-            this.labelLocationX.Values.Text = "X :";
+            labelLocationX.Enabled = false;
+            labelLocationX.Location = new Point(168, 156);
+            labelLocationX.Margin = new Padding(4, 3, 4, 3);
+            labelLocationX.Name = "labelLocationX";
+            labelLocationX.Size = new Size(24, 20);
+            labelLocationX.TabIndex = 7;
+            labelLocationX.Values.Text = "X :";
             // 
             // labelLocation
             // 
-            this.labelLocation.Enabled = false;
-            this.labelLocation.Location = new System.Drawing.Point(15, 135);
-            this.labelLocation.Name = "labelLocation";
-            this.labelLocation.Size = new System.Drawing.Size(127, 20);
-            this.labelLocation.TabIndex = 6;
-            this.labelLocation.Values.Text = "Emplacement / Plan :";
+            labelLocation.Enabled = false;
+            labelLocation.Location = new Point(18, 156);
+            labelLocation.Margin = new Padding(4, 3, 4, 3);
+            labelLocation.Name = "labelLocation";
+            labelLocation.Size = new Size(125, 20);
+            labelLocation.TabIndex = 6;
+            labelLocation.Values.Text = "Emplacement / Plan :";
             // 
             // numCapacity
             // 
-            this.numCapacity.Location = new System.Drawing.Point(130, 100);
-            this.numCapacity.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.numCapacity.Name = "numCapacity";
-            this.numCapacity.Size = new System.Drawing.Size(120, 22);
-            this.numCapacity.TabIndex = 5;
-            this.numCapacity.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
+            numCapacity.Increment = new decimal(new int[] { 1, 0, 0, 0 });
+            numCapacity.Location = new Point(152, 115);
+            numCapacity.Margin = new Padding(4, 3, 4, 3);
+            numCapacity.Maximum = new decimal(new int[] { 100, 0, 0, 0 });
+            numCapacity.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            numCapacity.Name = "numCapacity";
+            numCapacity.Size = new Size(140, 22);
+            numCapacity.TabIndex = 5;
+            numCapacity.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // labelCapacity
             // 
-            this.labelCapacity.Location = new System.Drawing.Point(15, 100);
-            this.labelCapacity.Name = "labelCapacity";
-            this.labelCapacity.Size = new System.Drawing.Size(111, 20);
-            this.labelCapacity.TabIndex = 4;
-            this.labelCapacity.Values.Text = "Capacité Ouvriers :";
+            labelCapacity.Location = new Point(18, 115);
+            labelCapacity.Margin = new Padding(4, 3, 4, 3);
+            labelCapacity.Name = "labelCapacity";
+            labelCapacity.Size = new Size(112, 20);
+            labelCapacity.TabIndex = 4;
+            labelCapacity.Values.Text = "Capacité Ouvriers :";
             // 
             // textName
             // 
-            this.textName.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.textName.Location = new System.Drawing.Point(130, 65);
-            this.textName.Name = "textName";
-            this.textName.Size = new System.Drawing.Size(551, 23);
-            this.textName.TabIndex = 3;
+            textName.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            textName.Location = new Point(152, 75);
+            textName.Margin = new Padding(4, 3, 4, 3);
+            textName.Name = "textName";
+            textName.Size = new Size(644, 23);
+            textName.TabIndex = 3;
             // 
             // labelName
             // 
-            this.labelName.Location = new System.Drawing.Point(15, 65);
-            this.labelName.Name = "labelName";
-            this.labelName.Size = new System.Drawing.Size(44, 20);
-            this.labelName.TabIndex = 2;
-            this.labelName.Values.Text = "Nom :";
+            labelName.Location = new Point(18, 75);
+            labelName.Margin = new Padding(4, 3, 4, 3);
+            labelName.Name = "labelName";
+            labelName.Size = new Size(44, 20);
+            labelName.TabIndex = 2;
+            labelName.Values.Text = "Nom :";
             // 
             // textId
             // 
-            this.textId.Location = new System.Drawing.Point(130, 30);
-            this.textId.Name = "textId";
-            this.textId.ReadOnly = true;
-            this.textId.Size = new System.Drawing.Size(200, 23);
-            this.textId.TabIndex = 1;
+            textId.Location = new Point(152, 35);
+            textId.Margin = new Padding(4, 3, 4, 3);
+            textId.Name = "textId";
+            textId.ReadOnly = true;
+            textId.Size = new Size(233, 23);
+            textId.TabIndex = 1;
             // 
             // labelId
             // 
-            this.labelId.Location = new System.Drawing.Point(15, 30);
-            this.labelId.Name = "labelId";
-            this.labelId.Size = new System.Drawing.Size(28, 20);
-            this.labelId.TabIndex = 0;
-            this.labelId.Values.Text = "ID :";
+            labelId.Location = new Point(18, 35);
+            labelId.Margin = new Padding(4, 3, 4, 3);
+            labelId.Name = "labelId";
+            labelId.Size = new Size(29, 20);
+            labelId.TabIndex = 0;
+            labelId.Values.Text = "ID :";
             // 
             // BlocDetailView
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.groupDetails);
-            this.Name = "BlocDetailView";
-            this.Size = new System.Drawing.Size(700, 500);
-            ((System.ComponentModel.ISupportInitialize)(this.groupDetails.Panel)).EndInit();
-            this.groupDetails.Panel.ResumeLayout(false);
-            this.groupDetails.Panel.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.groupDetails)).EndInit();
-            this.groupDetails.ResumeLayout(false);
-            this.ResumeLayout(false);
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(groupDetails);
+            Margin = new Padding(4, 3, 4, 3);
+            Name = "BlocDetailView";
+            Size = new Size(817, 577);
+            ((System.ComponentModel.ISupportInitialize)groupDetails.Panel).EndInit();
+            groupDetails.Panel.ResumeLayout(false);
+            groupDetails.Panel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)groupDetails).EndInit();
+            ResumeLayout(false);
 
         }
 

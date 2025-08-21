@@ -19,81 +19,82 @@ namespace PlanAthena.View.TaskManager
 
         private void InitializeComponent()
         {
-            this.headerToolbox = new Krypton.Toolkit.KryptonHeaderGroup();
-            this.panelDynamicButtons = new System.Windows.Forms.FlowLayoutPanel();
-            this.panelStaticButtons = new Krypton.Toolkit.KryptonPanel();
-            this.btnAddBloc = new Krypton.Toolkit.KryptonButton();
-            ((System.ComponentModel.ISupportInitialize)(this.headerToolbox)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.headerToolbox.Panel)).BeginInit();
-            this.headerToolbox.Panel.SuspendLayout();
-            this.headerToolbox.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.panelStaticButtons)).BeginInit();
-            this.panelStaticButtons.SuspendLayout();
-            this.SuspendLayout();
+            headerToolbox = new KryptonHeaderGroup();
+            panelDynamicButtons = new FlowLayoutPanel();
+            panelStaticButtons = new KryptonPanel();
+            btnAddBloc = new KryptonButton();
+            ((System.ComponentModel.ISupportInitialize)headerToolbox).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)headerToolbox.Panel).BeginInit();
+            headerToolbox.Panel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)panelStaticButtons).BeginInit();
+            panelStaticButtons.SuspendLayout();
+            SuspendLayout();
             // 
             // headerToolbox
             // 
-            this.headerToolbox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.headerToolbox.HeaderVisibleSecondary = false;
-            this.headerToolbox.Location = new System.Drawing.Point(0, 0);
-            this.headerToolbox.Name = "headerToolbox";
+            headerToolbox.Dock = DockStyle.Fill;
+            headerToolbox.HeaderVisiblePrimary = false;
+            headerToolbox.HeaderVisibleSecondary = false;
+            headerToolbox.Location = new Point(0, 0);
+            headerToolbox.Margin = new Padding(4, 3, 4, 3);
             // 
-            // headerToolbox.Panel
             // 
-            this.headerToolbox.Panel.Controls.Add(this.panelDynamicButtons);
-            this.headerToolbox.Panel.Controls.Add(this.panelStaticButtons);
-            this.headerToolbox.Size = new System.Drawing.Size(200, 600);
-            this.headerToolbox.TabIndex = 0;
-            this.headerToolbox.ValuesPrimary.Heading = "Outils de Création";
-            this.headerToolbox.ValuesPrimary.Image = null;
+            // 
+            headerToolbox.Panel.Controls.Add(panelDynamicButtons);
+            headerToolbox.Panel.Controls.Add(panelStaticButtons);
+            headerToolbox.Size = new Size(233, 692);
+            headerToolbox.TabIndex = 0;
             // 
             // panelDynamicButtons
             // 
-            this.panelDynamicButtons.AutoScroll = true;
-            this.panelDynamicButtons.BackColor = System.Drawing.Color.Transparent;
-            this.panelDynamicButtons.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelDynamicButtons.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
-            this.panelDynamicButtons.Location = new System.Drawing.Point(0, 70);
-            this.panelDynamicButtons.Name = "panelDynamicButtons";
-            this.panelDynamicButtons.Padding = new System.Windows.Forms.Padding(10, 5, 10, 5);
-            this.panelDynamicButtons.Size = new System.Drawing.Size(198, 499);
-            this.panelDynamicButtons.TabIndex = 1;
-            this.panelDynamicButtons.WrapContents = false;
+            panelDynamicButtons.AutoScroll = true;
+            panelDynamicButtons.BackColor = Color.Transparent;
+            panelDynamicButtons.Dock = DockStyle.Fill;
+            panelDynamicButtons.FlowDirection = FlowDirection.TopDown;
+            panelDynamicButtons.Location = new Point(0, 85);
+            panelDynamicButtons.Margin = new Padding(4, 3, 4, 3);
+            panelDynamicButtons.Name = "panelDynamicButtons";
+            panelDynamicButtons.Padding = new Padding(12, 6, 12, 6);
+            panelDynamicButtons.Size = new Size(231, 605);
+            panelDynamicButtons.TabIndex = 1;
+            panelDynamicButtons.WrapContents = false;
             // 
             // panelStaticButtons
             // 
-            this.panelStaticButtons.Controls.Add(this.btnAddBloc);
-            this.panelStaticButtons.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panelStaticButtons.Location = new System.Drawing.Point(0, 0);
-            this.panelStaticButtons.Name = "panelStaticButtons";
-            this.panelStaticButtons.Size = new System.Drawing.Size(198, 70);
-            this.panelStaticButtons.TabIndex = 0;
+            panelStaticButtons.Controls.Add(btnAddBloc);
+            panelStaticButtons.Dock = DockStyle.Top;
+            panelStaticButtons.Location = new Point(0, 0);
+            panelStaticButtons.Margin = new Padding(4, 3, 4, 3);
+            panelStaticButtons.Name = "panelStaticButtons";
+            panelStaticButtons.Size = new Size(231, 85);
+            panelStaticButtons.TabIndex = 0;
             // 
             // btnAddBloc
             // 
-            this.btnAddBloc.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnAddBloc.Location = new System.Drawing.Point(15, 15);
-            this.btnAddBloc.Name = "btnAddBloc";
-            this.btnAddBloc.Size = new System.Drawing.Size(168, 40);
-            this.btnAddBloc.TabIndex = 0;
-            this.btnAddBloc.Values.Text = "Ajouter un Bloc";
-            this.btnAddBloc.Click += new System.EventHandler(this.btnAddBloc_Click);
+            btnAddBloc.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            btnAddBloc.Location = new Point(18, 17);
+            btnAddBloc.Margin = new Padding(4, 3, 4, 3);
+            btnAddBloc.Name = "btnAddBloc";
+            btnAddBloc.Size = new Size(196, 46);
+            btnAddBloc.TabIndex = 0;
+            btnAddBloc.Values.DropDownArrowColor = Color.Empty;
+            btnAddBloc.Values.Text = "Ajouter un Bloc";
+            btnAddBloc.Click += btnAddBloc_Click;
             // 
             // CreationToolboxView
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.headerToolbox);
-            this.Name = "CreationToolboxView";
-            this.Size = new System.Drawing.Size(200, 600);
-            ((System.ComponentModel.ISupportInitialize)(this.headerToolbox.Panel)).EndInit();
-            this.headerToolbox.Panel.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.headerToolbox)).EndInit();
-            this.headerToolbox.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.panelStaticButtons)).EndInit();
-            this.panelStaticButtons.ResumeLayout(false);
-            this.ResumeLayout(false);
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(headerToolbox);
+            Margin = new Padding(4, 3, 4, 3);
+            Name = "CreationToolboxView";
+            Size = new Size(233, 692);
+            ((System.ComponentModel.ISupportInitialize)headerToolbox.Panel).EndInit();
+            headerToolbox.Panel.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)headerToolbox).EndInit();
+            ((System.ComponentModel.ISupportInitialize)panelStaticButtons).EndInit();
+            panelStaticButtons.ResumeLayout(false);
+            ResumeLayout(false);
         }
 
         #endregion

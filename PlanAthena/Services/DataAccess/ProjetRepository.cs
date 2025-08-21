@@ -60,5 +60,41 @@ namespace PlanAthena.Services.DataAccess
 
             return projetData;
         }
+
+        /// <summary>
+        /// Sauvegarde un contenu textuel (XML, JSON simple, etc.) dans un fichier.
+        /// Crée le répertoire si nécessaire.
+        /// </summary>
+        /// <param name="content">Le contenu à écrire dans le fichier.</param>
+        /// <param name="filePath">Le chemin complet du fichier de destination.</param>
+        public void SauvegarderFichierTexte(string content, string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath))
+                throw new ArgumentException("Le chemin du fichier ne peut pas être vide.", nameof(filePath));
+
+            // Assure que le dossier existe avant d'écrire le fichier
+            string directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            File.WriteAllText(filePath, content);
+        }
+
+        /// <summary>
+        /// Charge un contenu textuel depuis un fichier.
+        /// </summary>
+        /// <param name="filePath">Le chemin complet du fichier à lire.</param>
+        /// <returns>Le contenu du fichier, ou null si le fichier n'existe pas.</returns>
+        public string ChargerFichierTexte(string filePath)
+        {
+            if (File.Exists(filePath))
+            {
+                return File.ReadAllText(filePath);
+            }
+            return null;
+        }
+
     }
 }

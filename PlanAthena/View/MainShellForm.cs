@@ -31,6 +31,7 @@ namespace PlanAthena.View
         private readonly PlanificationService _planificationService;
         private readonly PlanningExcelExportService _planningExcelExportService;
         private readonly GanttExportService _ganttExportService;
+        private readonly UserPreferencesService _userPreferencesService;
 
         public MainShellForm(
             IServiceProvider serviceProvider,
@@ -42,12 +43,13 @@ namespace PlanAthena.View
             DependanceBuilder dependanceBuilder,
             PlanificationService planificationService,
             PlanningExcelExportService planningExcelExportService,
-            GanttExportService ganttExportService)
+            GanttExportService ganttExportService,
+            UserPreferencesService userPreferencesService)
         {
-            InitializeComponent();
 
+            InitializeComponent();
             kryptonManager.GlobalPaletteMode = PaletteMode.Microsoft365SilverDarkMode;
-            InitializeThemeSelector();
+            
             _serviceProvider = serviceProvider;
             _applicationService = applicationService;
             _projetService = projetService;
@@ -58,9 +60,13 @@ namespace PlanAthena.View
             _planificationService = planificationService;
             _planningExcelExportService = planningExcelExportService;
             _ganttExportService = ganttExportService;
+            _userPreferencesService = userPreferencesService;
 
+            
+            InitializeThemeSelector();
             // Afficher la vue d'accueil au démarrage
             NavigateToAccueil();
+
         }
 
         #region Logique de Navigation Principale
@@ -80,6 +86,14 @@ namespace PlanAthena.View
             panelContent.Controls.Clear();
             viewToShow.Dock = DockStyle.Fill;
             panelContent.Controls.Add(viewToShow);
+
+            // Tentative de chargement automatique du layout APRÈS que la vue soit ajoutée
+            var manager = FindActiveDockingManager();
+            if (manager != null)
+            {
+                string viewIdentifier = viewToShow.GetType().Name;
+                _userPreferencesService.LoadLayout(manager, viewIdentifier);
+            }
         }
 
         #endregion
@@ -162,6 +176,56 @@ namespace PlanAthena.View
         }
 
         #endregion
+        private void menuSaveLayout_Click(object sender, EventArgs e)
+        {
+            var manager = FindActiveDockingManager();
+            if (manager != null && panelContent.Controls.Count > 0)
+            {
+                string viewIdentifier = panelContent.Controls[0].GetType().Name;
+                _userPreferencesService.SaveLayout(manager, viewIdentifier);
+                MessageBox.Show("Disposition de l'écran sauvegardée.", "Succès", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show("Aucune disposition à sauvegarder pour cet écran.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private void menuLoadLayout_Click(object sender, EventArgs e)
+        {
+            var manager = FindActiveDockingManager();
+            if (manager != null && panelContent.Controls.Count > 0)
+            {
+                string viewIdentifier = panelContent.Controls[0].GetType().Name;
+                _userPreferencesService.LoadLayout(manager, viewIdentifier);
+            }
+            else
+            {
+                MessageBox.Show("Cet écran ne supporte pas le chargement de disposition.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        /// <summary>
+        /// Trouve le KryptonDockingManager dans la vue actuellement affichée.
+        /// </summary>
+        /// <returns>L'instance du manager, ou null si non trouvé.</returns>
+        private Krypton.Docking.KryptonDockingManager FindActiveDockingManager()
+        {
+            if (panelContent.Controls.Count > 0 && panelContent.Controls[0] is UserControl currentView)
+            {
+                // Utilise la réflexion pour trouver un champ privé nommé "kryptonDockingManager"
+                var field = currentView.GetType().GetField("kryptonDockingManager",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+                if (field != null)
+                {
+                    return field.GetValue(currentView) as Krypton.Docking.KryptonDockingManager;
+                }
+            }
+            return null;
+        }
+
+
         private void InitializeThemeSelector()
         {
             var themes = new[]
@@ -182,7 +246,30 @@ namespace PlanAthena.View
 
             toolStripComboBoxThemes.KryptonComboBoxControl.SelectedIndexChanged += ThemeSelector_SelectedIndexChanged;
 
-            ApplyTheme(PaletteMode.SparkleBlueDarkMode);
+            // On ne charge le thème que si le service est disponible.
+            if (_userPreferencesService != null)
+            {
+                string savedThemeName = _userPreferencesService.LoadTheme();
+                if (Enum.TryParse<PaletteMode>(savedThemeName, out var savedTheme))
+                {
+                    ApplyTheme(savedTheme, savePreference: false); // On ajoute un flag pour éviter de réécrire la valeur qu'on vient de lire
+
+                    var themeToSelect = themes.FirstOrDefault(t => t.Value == savedTheme);
+                    if (themeToSelect != null)
+                    {
+                        toolStripComboBoxThemes.KryptonComboBoxControl.SelectedItem = themeToSelect;
+                    }
+                }
+                else
+                {
+                    ApplyTheme(PaletteMode.SparkleBlueDarkMode, savePreference: false);
+                }
+            }
+            else
+            {
+                // Fallback si le service n'a pas été injecté pour une raison quelconque
+                ApplyTheme(PaletteMode.SparkleBlueDarkMode, savePreference: false);
+            }
         }
 
         private void ThemeSelector_SelectedIndexChanged(object sender, EventArgs e)
@@ -194,9 +281,13 @@ namespace PlanAthena.View
             }
         }
 
-        private void ApplyTheme(PaletteMode theme)
+        private void ApplyTheme(PaletteMode theme, bool savePreference = true)
         {
             kryptonManager.GlobalPaletteMode = theme;
+            if (savePreference && _userPreferencesService != null)
+            {
+                _userPreferencesService.SaveTheme(theme.ToString());
+            }
         }
     }
 }

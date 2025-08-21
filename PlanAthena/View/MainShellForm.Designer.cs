@@ -35,6 +35,9 @@ namespace PlanAthena.View
             menuRessourcesOuvriers = new ToolStripMenuItem();
             menuTaches = new ToolStripMenuItem();
             menuTachesDiagramme = new ToolStripMenuItem();
+            menuPreferences = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuSaveLayout = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuLoadLayout = new System.Windows.Forms.ToolStripMenuItem();
             toolStripComboBoxThemes = new KryptonToolStripComboBox();
             kryptonManager = new KryptonManager(components);
             panelContent = new KryptonPanel();
@@ -46,7 +49,7 @@ namespace PlanAthena.View
             // menuStrip
             // 
             menuStrip.Font = new Font("Segoe UI", 9F);
-            menuStrip.Items.AddRange(new ToolStripItem[] { menuAccueil, menuFichier, menuStructure, menuRessources, menuTaches, toolStripComboBoxThemes });
+            menuStrip.Items.AddRange(new ToolStripItem[] { menuAccueil, menuFichier, menuStructure, menuRessources, menuTaches, menuPreferences, toolStripComboBoxThemes });
             menuStrip.Location = new Point(0, 0);
             menuStrip.Name = "menuStrip";
             menuStrip.Padding = new Padding(7, 2, 0, 2);
@@ -141,6 +144,31 @@ namespace PlanAthena.View
             menuTachesDiagramme.Text = "Diagramme";
             menuTachesDiagramme.Click += menuTachesDiagramme_Click;
             // 
+            // menuPreferences
+            // 
+            this.menuPreferences.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+    this.menuSaveLayout,
+    this.menuLoadLayout});
+            this.menuPreferences.Name = "menuPreferences";
+            this.menuPreferences.Size = new System.Drawing.Size(80, 25);
+            this.menuPreferences.Text = "Préférences";
+            // 
+            // menuSaveLayout
+            // 
+            
+            this.menuSaveLayout.Name = "menuSaveLayout";
+            this.menuSaveLayout.Size = new System.Drawing.Size(205, 22);
+            this.menuSaveLayout.Text = "Sauvegarder la disposition";
+            this.menuSaveLayout.Click += new System.EventHandler(this.menuSaveLayout_Click);
+            // 
+            // menuLoadLayout
+            // 
+            
+            this.menuLoadLayout.Name = "menuLoadLayout";
+            this.menuLoadLayout.Size = new System.Drawing.Size(205, 22);
+            this.menuLoadLayout.Text = "Charger la disposition";
+            this.menuLoadLayout.Click += new System.EventHandler(this.menuLoadLayout_Click);
+            // 
             // toolStripComboBoxThemes
             // 
             toolStripComboBoxThemes.AutoSize = false;
@@ -209,6 +237,9 @@ namespace PlanAthena.View
         private System.Windows.Forms.ToolStripMenuItem menuRessourcesMetiers;
         private System.Windows.Forms.ToolStripMenuItem menuRessourcesOuvriers;
         private System.Windows.Forms.ToolStripMenuItem menuTachesDiagramme;
+        private System.Windows.Forms.ToolStripMenuItem menuPreferences;
+        private System.Windows.Forms.ToolStripMenuItem menuSaveLayout;
+        private System.Windows.Forms.ToolStripMenuItem menuLoadLayout;
         private KryptonToolStripComboBox toolStripComboBoxThemes;
     }
 }
