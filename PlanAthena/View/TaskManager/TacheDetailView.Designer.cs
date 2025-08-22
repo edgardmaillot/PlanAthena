@@ -56,7 +56,7 @@ namespace PlanAthena.View.TaskManager
             panelActions.Location = new Point(0, 680);
             panelActions.Margin = new Padding(4, 3, 4, 3);
             panelActions.Name = "panelActions";
-            panelActions.Size = new Size(439, 67);
+            panelActions.Size = new Size(280, 67);
             panelActions.TabIndex = 3;
             // 
             // btnSauvegarder
@@ -65,7 +65,7 @@ namespace PlanAthena.View.TaskManager
             btnSauvegarder.Location = new Point(22, 14);
             btnSauvegarder.Margin = new Padding(4, 3, 4, 3);
             btnSauvegarder.Name = "btnSauvegarder";
-            btnSauvegarder.Size = new Size(259, 40);
+            btnSauvegarder.Size = new Size(100, 40);
             btnSauvegarder.TabIndex = 1;
             btnSauvegarder.Values.DropDownArrowColor = Color.Empty;
             btnSauvegarder.Values.Text = "Sauvegarder";
@@ -73,7 +73,7 @@ namespace PlanAthena.View.TaskManager
             // btnSupprimer
             // 
             btnSupprimer.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnSupprimer.Location = new Point(296, 14);
+            btnSupprimer.Location = new Point(137, 14);
             btnSupprimer.Margin = new Padding(4, 3, 4, 3);
             btnSupprimer.Name = "btnSupprimer";
             btnSupprimer.Size = new Size(122, 40);
@@ -87,7 +87,7 @@ namespace PlanAthena.View.TaskManager
             kryptonHeader1.Location = new Point(0, 0);
             kryptonHeader1.Margin = new Padding(4, 3, 4, 3);
             kryptonHeader1.Name = "kryptonHeader1";
-            kryptonHeader1.Size = new Size(439, 36);
+            kryptonHeader1.Size = new Size(280, 36);
             kryptonHeader1.TabIndex = 21;
             kryptonHeader1.Values.Description = "";
             kryptonHeader1.Values.Heading = "Détail de la Tâche";
@@ -113,7 +113,7 @@ namespace PlanAthena.View.TaskManager
             kryptonGroup1.Panel.Controls.Add(cmbBlocNom);
             kryptonGroup1.Panel.Controls.Add(lblBlocCap);
             kryptonGroup1.Panel.Controls.Add(numBlocCapacite);
-            kryptonGroup1.Size = new Size(439, 217);
+            kryptonGroup1.Size = new Size(280, 217);
             kryptonGroup1.TabIndex = 22;
             // 
             // lblTacheNom
@@ -131,7 +131,7 @@ namespace PlanAthena.View.TaskManager
             txtTacheNom.Location = new Point(93, 16);
             txtTacheNom.Margin = new Padding(4, 3, 4, 3);
             txtTacheNom.Name = "txtTacheNom";
-            txtTacheNom.Size = new Size(337, 23);
+            txtTacheNom.Size = new Size(178, 23);
             txtTacheNom.TabIndex = 14;
             // 
             // chkIsJalon
@@ -139,30 +139,30 @@ namespace PlanAthena.View.TaskManager
             chkIsJalon.Location = new Point(26, 50);
             chkIsJalon.Margin = new Padding(4, 3, 4, 3);
             chkIsJalon.Name = "chkIsJalon";
-            chkIsJalon.Size = new Size(130, 20);
+            chkIsJalon.Size = new Size(86, 20);
             chkIsJalon.TabIndex = 11;
-            chkIsJalon.Values.Text = "Est un jalon/attente";
+            chkIsJalon.Values.Text = "Est un jalon";
             // 
             // lblHeures
             // 
             lblHeures.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            lblHeures.Location = new Point(246, 50);
+            lblHeures.Location = new Point(218, 50);
             lblHeures.Margin = new Padding(4, 3, 4, 3);
             lblHeures.Name = "lblHeures";
-            lblHeures.Size = new Size(67, 20);
+            lblHeures.Size = new Size(47, 20);
             lblHeures.TabIndex = 12;
-            lblHeures.Values.Text = "Durée (h) :";
+            lblHeures.Values.Text = "heures";
             // 
             // numHeuresHomme
             // 
             numHeuresHomme.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             numHeuresHomme.Increment = new decimal(new int[] { 1, 0, 0, 0 });
-            numHeuresHomme.Location = new Point(322, 50);
+            numHeuresHomme.Location = new Point(157, 50);
             numHeuresHomme.Margin = new Padding(4, 3, 4, 3);
             numHeuresHomme.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
             numHeuresHomme.Minimum = new decimal(new int[] { 0, 0, 0, 0 });
             numHeuresHomme.Name = "numHeuresHomme";
-            numHeuresHomme.Size = new Size(108, 22);
+            numHeuresHomme.Size = new Size(59, 22);
             numHeuresHomme.TabIndex = 13;
             numHeuresHomme.Value = new decimal(new int[] { 0, 0, 0, 0 });
             // 
@@ -185,7 +185,7 @@ namespace PlanAthena.View.TaskManager
             cmbMetier.Location = new Point(93, 99);
             cmbMetier.Margin = new Padding(4, 3, 4, 3);
             cmbMetier.Name = "cmbMetier";
-            cmbMetier.Size = new Size(250, 22);
+            cmbMetier.Size = new Size(178, 22);
             cmbMetier.TabIndex = 9;
             cmbMetier.UseMnemonic = false;
             // 
@@ -208,7 +208,7 @@ namespace PlanAthena.View.TaskManager
             cmbBlocNom.Location = new Point(93, 148);
             cmbBlocNom.Margin = new Padding(4, 3, 4, 3);
             cmbBlocNom.Name = "cmbBlocNom";
-            cmbBlocNom.Size = new Size(250, 22);
+            cmbBlocNom.Size = new Size(178, 22);
             cmbBlocNom.TabIndex = 6;
             cmbBlocNom.UseMnemonic = false;
             // 
@@ -229,7 +229,7 @@ namespace PlanAthena.View.TaskManager
             numBlocCapacite.Maximum = new decimal(new int[] { 100, 0, 0, 0 });
             numBlocCapacite.Minimum = new decimal(new int[] { 0, 0, 0, 0 });
             numBlocCapacite.Name = "numBlocCapacite";
-            numBlocCapacite.Size = new Size(140, 22);
+            numBlocCapacite.Size = new Size(47, 22);
             numBlocCapacite.TabIndex = 24;
             numBlocCapacite.Value = new decimal(new int[] { 0, 0, 0, 0 });
             // 
@@ -240,7 +240,7 @@ namespace PlanAthena.View.TaskManager
             kryptonLabel1.Margin = new Padding(4, 3, 4, 3);
             kryptonLabel1.Name = "kryptonLabel1";
             kryptonLabel1.PaletteMode = PaletteMode.Office2007BlueDarkMode;
-            kryptonLabel1.Size = new Size(439, 20);
+            kryptonLabel1.Size = new Size(280, 20);
             kryptonLabel1.TabIndex = 26;
             kryptonLabel1.Values.Text = "Dépendances";
             // 
@@ -250,7 +250,7 @@ namespace PlanAthena.View.TaskManager
             chkListDependances.Location = new Point(0, 273);
             chkListDependances.Margin = new Padding(4, 3, 4, 3);
             chkListDependances.Name = "chkListDependances";
-            chkListDependances.Size = new Size(439, 407);
+            chkListDependances.Size = new Size(280, 407);
             chkListDependances.TabIndex = 20;
             // 
             // TacheDetailView
@@ -264,7 +264,7 @@ namespace PlanAthena.View.TaskManager
             Controls.Add(panelActions);
             Margin = new Padding(4, 3, 4, 3);
             Name = "TacheDetailView";
-            Size = new Size(439, 747);
+            Size = new Size(280, 747);
             ((System.ComponentModel.ISupportInitialize)panelActions).EndInit();
             panelActions.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)kryptonGroup1.Panel).EndInit();

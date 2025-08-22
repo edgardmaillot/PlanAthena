@@ -1,4 +1,3 @@
-// USING UNIQUEMENT LE NAMESPACE DE BASE GARANTI
 using Krypton.Toolkit;
 
 namespace PlanAthena.View
@@ -76,18 +75,21 @@ namespace PlanAthena.View
             menuNouveauProjet.Name = "menuNouveauProjet";
             menuNouveauProjet.Size = new Size(173, 22);
             menuNouveauProjet.Text = "Nouveau Projet";
+            menuNouveauProjet.Click += new System.EventHandler(this.menuNouveauProjet_Click);
             // 
             // menuChargerProjet
             // 
             menuChargerProjet.Name = "menuChargerProjet";
             menuChargerProjet.Size = new Size(173, 22);
             menuChargerProjet.Text = "Charger Projet";
+            menuChargerProjet.Click += new System.EventHandler(this.menuChargerProjet_Click);
             // 
             // menuSauvegarderProjet
             // 
             menuSauvegarderProjet.Name = "menuSauvegarderProjet";
             menuSauvegarderProjet.Size = new Size(173, 22);
             menuSauvegarderProjet.Text = "Sauvegarder Projet";
+            menuSauvegarderProjet.Click += new System.EventHandler(this.menuSauvegarderProjet_Click);
             // 
             // menuStructure
             // 
@@ -155,7 +157,7 @@ namespace PlanAthena.View
             // 
             // menuSaveLayout
             // 
-            
+
             this.menuSaveLayout.Name = "menuSaveLayout";
             this.menuSaveLayout.Size = new System.Drawing.Size(205, 22);
             this.menuSaveLayout.Text = "Sauvegarder la disposition";
@@ -163,7 +165,7 @@ namespace PlanAthena.View
             // 
             // menuLoadLayout
             // 
-            
+
             this.menuLoadLayout.Name = "menuLoadLayout";
             this.menuLoadLayout.Size = new System.Drawing.Size(205, 22);
             this.menuLoadLayout.Text = "Charger la disposition";
@@ -183,7 +185,7 @@ namespace PlanAthena.View
             toolStripComboBoxThemes.KryptonComboBoxControl.TabIndex = 1;
             toolStripComboBoxThemes.KryptonComboBoxControl.Text = "Thème";
             toolStripComboBoxThemes.Name = "toolStripComboBoxThemes";
-            this.toolStripComboBoxThemes.Size = new Size(150, 25); 
+            this.toolStripComboBoxThemes.Size = new Size(150, 25);
 
             // AJOUTE CETTE LIGNE
             this.toolStripComboBoxThemes.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;

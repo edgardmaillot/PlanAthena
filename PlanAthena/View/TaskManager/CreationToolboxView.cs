@@ -1,4 +1,7 @@
 using Krypton.Toolkit;
+using Krypton.Navigator;
+using Krypton.Docking;
+using Krypton.Workspace;
 using PlanAthena.Data;
 using System;
 using System.Collections.Generic;
@@ -40,19 +43,21 @@ namespace PlanAthena.View.TaskManager
             {
                 foreach (var metier in metiers)
                 {
-                    var btn = new KryptonButton
+                    var btn = new KryptonColorButton
                     {
                         Text = metier.Nom,
                         Tag = metier,
                         AutoSize = true,
                         MinimumSize = new Size(150, 35),
+                        MaximumSize = new Size(150, 35),
                         Margin = new Padding(0, 3, 0, 3)
                     };
 
                     // Appliquer la couleur fournie par le service
                     if (colorProvider != null)
                     {
-                        btn.StateCommon.Back.Color1 = colorProvider(metier.MetierId);
+                        //btn.StateCommon.Back.Color1 = colorProvider(metier.MetierId);
+                        btn.SelectedColor = colorProvider(metier.MetierId);
                     }
 
                     // VÉRIFICATION CRUCIALE : L'événement est bien attaché ici

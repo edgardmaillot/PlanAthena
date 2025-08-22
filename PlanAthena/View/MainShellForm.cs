@@ -13,6 +13,7 @@ using PlanAthena.View.Ressources.MetierDiagram;
 using PlanAthena.View.Structure;
 using PlanAthena.View.TaskManager;
 using System;
+using System.IO;
 using System.Windows.Forms;
 using static Krypton.Toolkit.KryptonManager;
 
@@ -49,7 +50,7 @@ namespace PlanAthena.View
 
             InitializeComponent();
             kryptonManager.GlobalPaletteMode = PaletteMode.Microsoft365SilverDarkMode;
-            
+
             _serviceProvider = serviceProvider;
             _applicationService = applicationService;
             _projetService = projetService;
@@ -62,7 +63,7 @@ namespace PlanAthena.View
             _ganttExportService = ganttExportService;
             _userPreferencesService = userPreferencesService;
 
-            
+
             InitializeThemeSelector();
             // Afficher la vue d'accueil au démarrage
             NavigateToAccueil();
@@ -147,13 +148,71 @@ namespace PlanAthena.View
         }
         #endregion
 
-        #region Gestionnaires d'événements
+        #region Gestionnaires d'événements du Menu
 
         private void menuAccueil_Click(object sender, EventArgs e) => NavigateToAccueil();
         private void menuStructureListe_Click(object sender, EventArgs e) => NavigateToStructure();
         private void menuRessourcesMetiers_Click(object sender, EventArgs e) => NavigateToRessourcesMetiers();
         private void menuRessourcesOuvriers_Click(object sender, EventArgs e) => NavigateToRessourcesOuvriers();
         private void menuTachesDiagramme_Click(object sender, EventArgs e) => NavigateToTaskManager();
+
+        private void menuNouveauProjet_Click(object sender, EventArgs e)
+        {
+            _applicationService.CreerNouveauProjet();
+            // Après création, on redirige vers l'accueil qui est le meilleur endroit pour éditer les détails
+            NavigateToAccueil();
+            //MessageBox.Show("Nouveau projet initialisé.", "Nouveau Projet", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void menuChargerProjet_Click(object sender, EventArgs e)
+        {
+            using var ofd = new OpenFileDialog
+            {
+                InitialDirectory = _cheminsPrefereService.ObtenirDernierDossierProjets(),
+                Filter = "Fichiers projet (*.json)|*.json",
+                Title = "Charger un projet"
+            };
+
+            if (ofd.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    _applicationService.ChargerProjetDepuisFichier(ofd.FileName);
+                    // On navigue vers l'accueil pour voir le résumé du projet chargé
+                    NavigateToAccueil();
+                    //MessageBox.Show($"Projet '{Path.GetFileNameWithoutExtension(ofd.FileName)}' chargé.", "Chargement réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Erreur lors du chargement du projet :\n{ex.Message}", "Erreur de Chargement", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void menuSauvegarderProjet_Click(object sender, EventArgs e)
+        {
+            if (_applicationService.ProjetActif == null)
+            {
+                MessageBox.Show("Aucun projet actif à sauvegarder. Veuillez d'abord créer ou charger un projet.", "Action impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                _applicationService.SauvegarderProjetActuel();
+                MessageBox.Show("Projet sauvegardé avec succès !", "Sauvegarde", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // Si la vue actuelle est le dashboard, on la rafraîchit pour mettre à jour le chemin du fichier
+                if (panelContent.Controls.Count > 0 && panelContent.Controls[0] is DashboardView currentDashboard)
+                {
+                    currentDashboard.UpdateDetailsForm(); // Méthode à rendre publique dans DashboardView si nécessaire
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erreur lors de la sauvegarde du projet :\n{ex.Message}", "Erreur de Sauvegarde", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
 
         private void OnNavigateToViewRequested(object sender, Type viewType)
         {
@@ -176,6 +235,9 @@ namespace PlanAthena.View
         }
 
         #endregion
+
+        #region Gestionnaires Layout & Thèmes
+
         private void menuSaveLayout_Click(object sender, EventArgs e)
         {
             var manager = FindActiveDockingManager();
@@ -289,5 +351,6 @@ namespace PlanAthena.View
                 _userPreferencesService.SaveTheme(theme.ToString());
             }
         }
+        #endregion
     }
 }

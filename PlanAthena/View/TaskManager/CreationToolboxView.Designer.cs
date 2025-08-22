@@ -42,7 +42,7 @@ namespace PlanAthena.View.TaskManager
             // 
             headerToolbox.Panel.Controls.Add(panelDynamicButtons);
             headerToolbox.Panel.Controls.Add(panelStaticButtons);
-            headerToolbox.Size = new Size(233, 692);
+            headerToolbox.Size = new Size(180, 700);
             headerToolbox.TabIndex = 0;
             // 
             // panelDynamicButtons
@@ -55,7 +55,7 @@ namespace PlanAthena.View.TaskManager
             panelDynamicButtons.Margin = new Padding(4, 3, 4, 3);
             panelDynamicButtons.Name = "panelDynamicButtons";
             panelDynamicButtons.Padding = new Padding(12, 6, 12, 6);
-            panelDynamicButtons.Size = new Size(231, 605);
+            panelDynamicButtons.Size = new Size(178, 613);
             panelDynamicButtons.TabIndex = 1;
             panelDynamicButtons.WrapContents = false;
             // 
@@ -66,7 +66,7 @@ namespace PlanAthena.View.TaskManager
             panelStaticButtons.Location = new Point(0, 0);
             panelStaticButtons.Margin = new Padding(4, 3, 4, 3);
             panelStaticButtons.Name = "panelStaticButtons";
-            panelStaticButtons.Size = new Size(231, 85);
+            panelStaticButtons.Size = new Size(178, 85);
             panelStaticButtons.TabIndex = 0;
             // 
             // btnAddBloc
@@ -75,7 +75,7 @@ namespace PlanAthena.View.TaskManager
             btnAddBloc.Location = new Point(18, 17);
             btnAddBloc.Margin = new Padding(4, 3, 4, 3);
             btnAddBloc.Name = "btnAddBloc";
-            btnAddBloc.Size = new Size(196, 46);
+            btnAddBloc.Size = new Size(150, 46);
             btnAddBloc.TabIndex = 0;
             btnAddBloc.Values.DropDownArrowColor = Color.Empty;
             btnAddBloc.Values.Text = "Ajouter un Bloc";
@@ -88,7 +88,7 @@ namespace PlanAthena.View.TaskManager
             Controls.Add(headerToolbox);
             Margin = new Padding(4, 3, 4, 3);
             Name = "CreationToolboxView";
-            Size = new Size(233, 692);
+            Size = new Size(180, 700);
             ((System.ComponentModel.ISupportInitialize)headerToolbox.Panel).EndInit();
             headerToolbox.Panel.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)headerToolbox).EndInit();

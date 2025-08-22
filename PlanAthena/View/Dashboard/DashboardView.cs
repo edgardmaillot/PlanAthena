@@ -122,7 +122,7 @@ namespace PlanAthena.View.Dashboard
             }
         }
 
-        private void UpdateDetailsForm()
+        public void UpdateDetailsForm()
         {
             var projet = _applicationService.ProjetActif;
             var chemin = _applicationService.CheminFichierProjetActif;
