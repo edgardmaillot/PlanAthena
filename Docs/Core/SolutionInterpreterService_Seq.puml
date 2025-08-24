@@ -1,49 +1,55 @@
 @startuml
-title Diagramme de Séquence : Interprétation de la Solution du Solveur (Corrigé)
-
+title Diagramme de Séquence : Interprétation de la Solution (Flux Détaillé Cible)
 participant "caller: ProcessChantierUseCase" as Caller
 participant "interpreter:\nISolutionInterpreterService" as Interpreter
 participant "solver:\nCpSolver" as Solver
-
 Caller -> Interpreter : InterpreterLaSolution(solver, modeleCpSat, probleme)
 activate Interpreter
-
+' --- Initialisation des structures de retour ---
 create "affectations: List<AffectationDto>" as AffectationsList
 Interpreter -> AffectationsList : new()
-
+create "planningParOuvrier: Dictionary<...>" as PlanningDict
+Interpreter -> PlanningDict : new()
+' --- Boucle principale sur les assignations du solveur ---
 loop pour chaque (key, assignVar) dans modeleCpSat.TachesAssignables
-    Interpreter -> Solver : BooleanValue(assignVar)
-    activate Solver
-    Solver --> Interpreter : estAssignee
-    deactivate Solver
+Interpreter -> Solver : BooleanValue(assignVar)
+activate Solver
+Solver --> Interpreter : estAssignee
+deactivate Solver
+
+alt estAssignee == true
+    note right of Interpreter
+        1. Récupérer Tache, Ouvrier, IntervalVar
+        2. Lire startSlotIndex et sizeInSlots depuis le solver
+    end note
     
-    alt estAssignee == true
-        note right of Interpreter
-            1. Récupérer TacheId et OuvrierId
-            2. Récupérer l'IntervalVar associé
-        end note
-
-        Interpreter -> Solver : Value(intervalVar.StartExpr())
-        activate Solver
-        Solver --> Interpreter : startSlotIndex
-        deactivate Solver
-
-        Interpreter -> Solver : Value(intervalVar.SizeExpr())
-        activate Solver
-        Solver --> Interpreter : dureeEnSlots
-        deactivate Solver
-        
-        note right of Interpreter
-            3. Traduire startSlotIndex en DateTime
-               via probleme.EchelleTemps
-        end note
-        
-        create "affectation: AffectationDto" as Affectation
-        Interpreter -> Affectation : new()
-        Interpreter -> AffectationsList : Add(affectation)
-    end
+    ' --- Création de l'AffectationDto (logique existante) ---
+    create "affectation: AffectationDto" as Affectation
+    note left of Affectation : Traduire startSlot en DateTime UTC
+    Interpreter -> Affectation : new()
+    Interpreter -> AffectationsList : Add(affectation)
+    
+    ' --- NOUVEAU : Logique de construction des feuilles de temps ---
+    opt si tache.Type == TypeActivite.Tache
+        loop pour chaque slot de l'affectation (de startSlotIndex à startSlotIndex + sizeInSlots-1)
+            note right of Interpreter
+                Calculer jour UTC et heure_index
+                Appliquer le masque de bits :
+                planningParOuvrier[ouvrierId][jour] |= (1L << heure_index)
+            end note
+        end loop
+    end opt
 end
-
-Interpreter --> Caller : affectations
+end
+' --- NOUVEAU : Finalisation des feuilles de temps ---
+create "feuillesDeTemps: List<FeuilleDeTempsOuvrierDto>" as FeuillesList
+Interpreter -> FeuillesList : new()
+loop pour chaque (ouvrierId, planning) dans planningParOuvrier
+create "feuille: FeuilleDeTempsOuvrierDto" as Feuille
+Interpreter -> Feuille : new()
+Interpreter -> FeuillesList : Add(feuille)
+end
+' --- Retour du tuple ---
+Interpreter --> Caller : (affectations, feuillesDeTemps)
 deactivate Interpreter
 @enduml

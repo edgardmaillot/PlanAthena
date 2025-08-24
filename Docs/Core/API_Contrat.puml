@@ -5,7 +5,7 @@ skinparam linetype ortho
 skinparam ranksep 60
 skinparam nodesep 60
 skinparam shadowing false
-title Contrat de Service API - PlanAthena.Core v1.1
+title Contrat de Service API - PlanAthena.Core (Architecture Cible)
 package "Point d'Entrée" {
 class "PlanAthenaCoreFacade" as Facade {
 + ProcessChantierAsync(input): Task<ProcessChantierResultDto>
@@ -13,92 +13,57 @@ class "PlanAthenaCoreFacade" as Facade {
 }
 package "Contrat d'Entrée (Input DTOs)" <<Rectangle>> {
 class ChantierSetupInputDto {
-+ ChantierId: string
-+ Description: string
-+ DateDebutSouhaitee: DateTime?
-+ DateFinSouhaitee: DateTime?
-+ FlexibiliteDebut: FlexibiliteDate
-+ FlexibiliteFin: FlexibiliteDate
-' ... autres collections ...
+' ... propriétés ...
 }
-
-class "<b>OptimizationConfigDto</b>" as OptiConfig <<(M,Lime) Modified>> {
-    + TypeDeSortie: string
-    + DureeJournaliereStandardHeures: int
-    + PenaliteChangementOuvrierPourcentage: decimal
-    --
-    + <b>CoutIndirectJournalier: long <<(N,SkyBlue) New>></b>
-    + <b>DureeCalculMaxSecondes: int <<(N,SkyBlue) New>></b>
-    ..
-    - <strike>CoutIndirectJournalierPourcentage: decimal?</strike> <<(D,Tomato) Deprecated>>
-}
-note right of OptiConfig
-    <b>Modifications Clés :</b>
-    - Remplacement du coût en % par une valeur absolue (long).
-    - Ajout d'un timeout pour le solveur (en secondes).
-end note
-
-class CalendrierTravailDefinitionDto{
-+ JoursOuvres: IReadOnlyList<DayOfWeek>
-+ HeureDebutJournee: int
-+ HeuresTravailEffectifParJour: int
-+ JoursChomes : IReadOnlyList<DateTime>
-}
-class TacheDto{
-+ TacheId: string
-+ Nom: string
-+ Type: TypeActivite
-+ BlocId: string
-+ HeuresHommeEstimees: int
-+ MetierId: string
-+ Dependencies: IReadOnlyList<string>
-}
-class OuvrierDto{
- + OuvrierId: string
- + Nom: string
- + Prenom: string
- + Competences: IReadOnlyList<CompetenceDto>
- + CoutJournalier: int
-}
+class "OptimizationConfigDto" as OptiConfig
+class CalendrierTravailDefinitionDto
+class TacheDto
+class OuvrierDto
 ' ... autres DTOs ...
-
 }
 package "Contrat de Sortie (Output DTOs)" <<Cloud>> {
 class ProcessChantierResultDto {
 + ChantierId: string
 + Etat: EtatTraitementInput
 + Messages: IReadOnlyList<MessageValidationDto>
-' ... autres résultats ...
++ OptimisationResultat: PlanningOptimizationResultDto
 }
 
-class PlanningOptimizationResultDto {
+class "<b>PlanningOptimizationResultDto</b>" as POResult <<(M,Lime) Modified>> {
     + Status: OptimizationStatus
     + Affectations: IReadOnlyList<AffectationDto>
-    + CoutTotalEstime: long?
-    + CoutTotalRhEstime: long?
-    + CoutTotalIndirectEstime: long?
-    ' ...
+    ' ... autres propriétés ...
+    --
+    + <b>FeuillesDeTemps: IReadOnlyList<FeuilleDeTempsOuvrierDto> <<(N,SkyBlue) New>></b>
 }
-note bottom of PlanningOptimizationResultDto
-    Aucune modification du contrat de sortie.
-    La décomposition des coûts existe déjà
-    et reflétera le nouveau calcul.
+
+' --- NOUVEAU DTO ---
+class FeuilleDeTempsOuvrierDto <<(N,SkyBlue) New>> {
+  + OuvrierId: string
+  + OuvrierNom: string
+  + PlanningJournalier: IReadOnlyDictionary<DateTime, long>
+}
+
+note top of POResult
+    <b>Modifications Clés :</b>
+    - Ajout de <b>FeuillesDeTemps</b> pour le planning détaillé.
+    - L'analyse métier est désormais externe à la DLL.
 end note
 
-class AnalyseRessourcesResultatDto
-class PlanningAnalysisReportDto
 class MessageValidationDto
 class AffectationDto
+
 
 }
 ' --- Relations de Contrat ---
 Facade .u.> ChantierSetupInputDto : "<<accepte>>"
 Facade .d.> ProcessChantierResultDto : "<<retourne>>"
-ChantierSetupInputDto "1" *-r- "0..1" OptiConfig : "configure"
+ChantierSetupInputDto "1" *-r- "0..1" OptiConfig
 ChantierSetupInputDto "1" *-l- "1" CalendrierTravailDefinitionDto
 ChantierSetupInputDto "1" -u- "1.." TacheDto
 ChantierSetupInputDto "1" -u- "1.." OuvrierDto
-ProcessChantierResultDto "1" *-r- "0..1" PlanningOptimizationResultDto
-ProcessChantierResultDto "1" *-d- "0..1" AnalyseRessourcesResultatDto
-ProcessChantierResultDto "1" *-d- "0..1" PlanningAnalysisReportDto
+ProcessChantierResultDto "1" *-r- "0..1" POResult
+POResult "1" --> "0.." FeuilleDeTempsOuvrierDto : "contient"
+POResult "1" --> "0.." AffectationDto : "contient"
+ProcessChantierResultDto ..> PlanningAnalysisReportDto : <<supprimé>>
 @enduml

@@ -25,18 +25,15 @@ namespace PlanAthena.Services.Business
         private readonly PlanAthenaCoreFacade _facade;
         private readonly DataTransformer _dataTransformer;
         private readonly PreparationSolveurService _preparationSolveurService;
-        private readonly ResultatConsolidationService _consolidationService;
 
         public PlanificationService(
             PlanAthenaCoreFacade facade,
             DataTransformer dataTransformer,
-            PreparationSolveurService preparationSolveurService,
-            ResultatConsolidationService consolidationService)
+            PreparationSolveurService preparationSolveurService)
         {
             _facade = facade ?? throw new ArgumentNullException(nameof(facade));
             _dataTransformer = dataTransformer ?? throw new ArgumentNullException(nameof(dataTransformer));
             _preparationSolveurService = preparationSolveurService ?? throw new ArgumentNullException(nameof(preparationSolveurService));
-            _consolidationService = consolidationService ?? throw new ArgumentNullException(nameof(consolidationService));
         }
 
         public async Task<PlanificationResultDto> LancerPlanificationAsync(
@@ -57,7 +54,7 @@ namespace PlanAthena.Services.Business
 
             try
             {
-                var preparationResult = _preparationSolveurService.PreparerPourSolveur(projet.Taches, configuration.HeuresTravailEffectifParJour);
+                var preparationResult = _preparationSolveurService.PreparerPourSolveur(projet.Taches, configuration);
 
                 var inputDto = _dataTransformer.TransformToChantierSetupDto(
                     projet,
@@ -69,17 +66,12 @@ namespace PlanAthena.Services.Business
 
                 var resultatBrut = await _facade.ProcessChantierAsync(inputDto);
 
-                var ganttConsolide = _consolidationService.ConsoliderPourGantt(
-                    resultatBrut,
-                    preparationResult.ParentIdParSousTacheId,
-                    projet.Taches,
-                    projet.InformationsProjet.NomProjet ?? "Planning"
-                );
+                
 
                 return new PlanificationResultDto
                 {
                     ResultatBrut = resultatBrut,
-                    GanttConsolide = ganttConsolide
+                    ParentIdParSousTacheId = preparationResult.ParentIdParSousTacheId
                 };
             }
             catch (Exception ex)
@@ -90,55 +82,11 @@ namespace PlanAthena.Services.Business
 
         public StatistiquesSimplifiees ObtenirStatistiquesTraitement(IReadOnlyList<Tache> taches, int heuresTravailEffectifParJour)
         {
-            if (taches == null || !taches.Any())
-            {
                 return new StatistiquesSimplifiees();
-            }
 
-            try
-            {
-                var preparationResult = _preparationSolveurService.PreparerPourSolveur(taches, heuresTravailEffectifParJour);
-                var tachesPourSolveur = preparationResult.TachesPreparees;
-
-                int heureLimiteDecoupage = heuresTravailEffectifParJour + 1;
-                int tachesLonguesDecoupees = taches.Count(t => t.Type == TypeActivite.Tache && t.HeuresHommeEstimees > heureLimiteDecoupage);
-                int jalonsTechniquesCrees = tachesPourSolveur.Count(t => t.Type == TypeActivite.JalonTechnique);
-
-                return new StatistiquesSimplifiees
-                {
-                    TachesChef = taches.Count,
-                    TachesSolveur = tachesPourSolveur.Count,
-                    TachesDecoupees = tachesLonguesDecoupees,
-                    JalonsTechniques = jalonsTechniquesCrees,
-                    Resume = $"Chef: {taches.Count} tâches → Solveur: {tachesPourSolveur.Count} " +
-                            $"({tachesLonguesDecoupees} découpées, {jalonsTechniquesCrees} jalons tech.)"
-                };
-            }
-            catch (Exception)
-            {
-                return new StatistiquesSimplifiees
-                {
-                    TachesChef = taches.Count,
-                    TachesSolveur = taches.Count,
-                    Resume = $"Chef: {taches.Count} tâches (erreur préparation solveur)"
-                };
-            }
         }
 
-        public List<Tache> ObtenirTachesPourSolveur(IReadOnlyList<Tache> taches, int heuresTravailEffectifParJour)
-        {
-            if (taches == null || !taches.Any())
-                return new List<Tache>();
-            try
-            {
-                var preparationResult = _preparationSolveurService.PreparerPourSolveur(taches, heuresTravailEffectifParJour);
-                return preparationResult.TachesPreparees;
-            }
-            catch (Exception)
-            {
-                return taches.ToList();
-            }
-        }
+
     }
 
     

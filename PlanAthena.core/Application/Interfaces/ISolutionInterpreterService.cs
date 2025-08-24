@@ -15,7 +15,7 @@ namespace PlanAthena.Core.Application.Interfaces
         /// <param name="modeleCpSat">L'objet contenant les variables du modèle (intervalles, assignations).</param>
         /// <param name="probleme">Les données de référence du problème (chantier, échelle de temps).</param>
         /// <returns>Une liste d'objets AffectationDto représentant le planning.</returns>
-        IReadOnlyList<AffectationDto> InterpreterLaSolution(
+        (IReadOnlyList<AffectationDto> Affectations, IReadOnlyList<FeuilleDeTempsOuvrierDto> FeuillesDeTemps) InterpreterLaSolution(
             CpSolver solver,
             ModeleCpSat modeleCpSat,
             ProblemeOptimisation probleme);

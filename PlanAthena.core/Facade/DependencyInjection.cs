@@ -31,9 +31,6 @@ public static class DependencyInjection
         // Dans votre fichier d'enregistrement des services (ex: Infrastructure/DependencyInjection.cs)
         services.AddScoped<ISolutionInterpreterService, SolutionInterpreterService>();
 
-        // Dans votre fichier d'enregistrement des services (ex: Application/DependencyInjection.cs)
-        services.AddScoped<IPlanningAnalysisService, PlanningAnalysisService>();
-
         return services;
     }
 }

@@ -23,5 +23,6 @@ namespace PlanAthena.Services.Business.DTOs
         public long CoutIndirectJournalierAbsolu { get; set; }
         //Conserver cette data jusqu'à la mise à jour du Core
         public decimal CoutIndirectJournalierPourcentage { get; set; }
+        public int SeuilJoursDecoupageTache { get; set; } = 2;
     }
 }

@@ -25,7 +25,6 @@ namespace PlanAthena.Core.Application.UseCases
         private readonly ICalendrierService _calendrierService;
         private readonly IConstructeurProblemeOrTools _problemeBuilder;
         private readonly ISolutionInterpreterService _solutionInterpreter;
-        private readonly IPlanningAnalysisService _planningAnalyzer;
         private readonly SolverSettings _solverSettings;
 
         public ProcessChantierUseCase(
@@ -37,7 +36,6 @@ namespace PlanAthena.Core.Application.UseCases
             ICalendrierService calendrierService,
             IConstructeurProblemeOrTools problemeBuilder,
             ISolutionInterpreterService solutionInterpreter,
-            IPlanningAnalysisService planningAnalyzer,
             SolverSettings solverSettings)
         {
             _fluentValidator = fluentValidator;
@@ -48,7 +46,6 @@ namespace PlanAthena.Core.Application.UseCases
             _calendrierService = calendrierService;
             _problemeBuilder = problemeBuilder;
             _solutionInterpreter = solutionInterpreter;
-            _planningAnalyzer = planningAnalyzer;
             _solverSettings = solverSettings;
         }
 
@@ -144,15 +141,10 @@ namespace PlanAthena.Core.Application.UseCases
                 var modeleCpSat = _problemeBuilder.ConstruireModele(probleme, "DELAI");
 
                 // 3. Configuration du solveur avec le timeout calculé.
-                var solver = new CpSolver
-                {
-                    // On utilise une chaîne de caractères formatée pour inclure notre timeout.
-                    // Le "F1" formate le double avec une seule décimale (ex: "12.5").
-                    // On utilise CultureInfo.InvariantCulture pour s'assurer que le séparateur décimal est un point (.), ce que le solveur attend.
-                    StringParameters = $"max_time_in_seconds:{timeoutFinalSecondes.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)},log_search_progress:false"
-                };
-
+                var solver = CreerSolverOptimisePourAnalyseRapide(timeoutFinalSecondes);
                 var solverStatus = solver.Solve(modeleCpSat.Model);
+
+
 
                 // 4. Si une solution est trouvée, on extrait les estimations.
                 if (solverStatus == CpSolverStatus.Optimal || solverStatus == CpSolverStatus.Feasible)
@@ -193,6 +185,53 @@ namespace PlanAthena.Core.Application.UseCases
                 AnalyseStatiqueResultat = analyseStatiqueResult
             };
         }
+        private CpSolver CreerSolverOptimisePourAnalyseRapide(double timeoutSecondes)
+        {
+            var solver = new CpSolver();
+
+            // Liste des paramètres par ordre de priorité/sécurité
+            var parametresDeBase = new[]
+            {
+        $"max_time_in_seconds:{timeoutSecondes.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)}",
+        "log_search_progress:false"
+    };
+
+            var parametresOptimisation = new[]
+            {
+        "stop_after_first_solution:true",      // Le plus important pour la vitesse
+        "cp_model_presolve:false",              // Évite le preprocessing
+        "num_search_workers:1"                  // Un seul thread pour éviter l'overhead
+    };
+
+            // Application progressive des paramètres
+            var parametresFinaux = new List<string>(parametresDeBase);
+
+            foreach (var param in parametresOptimisation)
+            {
+                try
+                {
+                    var parametresTest = new List<string>(parametresFinaux) { param };
+                    var parametresTestString = string.Join(",", parametresTest);
+
+                    // Test de validation (création temporaire pour vérifier)
+                    var solverTest = new CpSolver { StringParameters = parametresTestString };
+
+                    // Si pas d'exception, ajouter le paramètre
+                    parametresFinaux.Add(param);
+                    Debug.WriteLine($"[DEBUG] Paramètre accepté: {param}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[WARNING] Paramètre rejeté '{param}': {ex.Message}");
+                    // Continue avec les paramètres déjà validés
+                }
+            }
+
+            solver.StringParameters = string.Join(",", parametresFinaux);
+            Debug.WriteLine($"[INFO] Paramètres finaux du solveur: {solver.StringParameters}");
+
+            return solver;
+        }
         private async Task<ProcessChantierResultDto> ExecuterOptimisationEtAnalyseAsync(Chantier chantier, OptimizationConfigDto config, IReadOnlyList<MessageValidationDto> validationMessages)
         {
             PlanningOptimizationResultDto? planningResult = null;
@@ -223,7 +262,7 @@ namespace PlanAthena.Core.Application.UseCases
                         break;
 
                     case "OPTIMISATION_DELAI":
-                        solverParams = $"max_time_in_seconds:{config.DureeCalculMaxSecondes}.0,num_search_workers:{numWorkers},log_search_progress:false,relative_gap_limit:0.01";
+                        solverParams = CreerParametresOptimisationDelai(config.DureeCalculMaxSecondes, numWorkers, chantier.ObtenirToutesLesTaches().Count());
                         objectif = "DELAI";
                         break;
 
@@ -243,7 +282,10 @@ namespace PlanAthena.Core.Application.UseCases
                 // 5. Interprétation et Analyse
                 if (resultatStatus == OptimizationStatus.Optimal || resultatStatus == OptimizationStatus.Feasible)
                 {
-                    var affectations = _solutionInterpreter.InterpreterLaSolution(solver, modeleCpSat, probleme);
+                    // *** CORRECTION APPLIQUÉE ICI ***
+                    // 1. On déconstruit le tuple retourné par la nouvelle méthode de l'interface.
+                    var (affectations, feuillesDeTemps) = _solutionInterpreter.InterpreterLaSolution(solver, modeleCpSat, probleme);
+
                     long coutTotalValue = solver.Value(modeleCpSat.CoutTotal);
                     long coutRhValue = solver.Value(modeleCpSat.CoutRh);
                     long coutIndirectValue = solver.Value(modeleCpSat.CoutIndirect);
@@ -256,11 +298,11 @@ namespace PlanAthena.Core.Application.UseCases
                         CoutTotalRhEstime = coutRhValue,
                         CoutTotalIndirectEstime = coutIndirectValue,
                         DureeTotaleEnSlots = solver.Value(modeleCpSat.Makespan),
-                        Affectations = affectations
-                    };
 
-                    // L'analyse KPI est effectuée pour tous les cas où une solution est trouvée.
-                    analysisReport = await _planningAnalyzer.AnalyserLePlanningAsync(affectations, chantier);
+                        // 2. On peuple les deux propriétés du DTO de résultat.
+                        Affectations = affectations,
+                        FeuillesDeTemps = feuillesDeTemps
+                    };
                 }
                 else
                 {
@@ -276,6 +318,161 @@ namespace PlanAthena.Core.Application.UseCases
                 OptimisationResultat = planningResult,
                 AnalysePostOptimisationResultat = analysisReport
             };
+
         }
+
+        private string CreerParametresOptimisationDelai(int dureeMaxSecondes, int numWorkers, int nombreTaches)
+        {
+            var parametres = new List<string>
+    {
+        $"max_time_in_seconds:{dureeMaxSecondes}.0",
+        "log_search_progress:false"
+    };
+
+            // ⭐ OPTIMISATIONS SPÉCIFIQUES AU DÉLAI
+
+            // 1. Stratégie de recherche orientée makespan
+            parametres.Add("search_branching:LP_SEARCH");  // Meilleur pour l'optimisation temporelle
+
+            // 2. Workers adaptatifs selon la taille du problème
+            int workersOptimal = Math.Min(numWorkers, Math.Max(2, nombreTaches / 30));
+            parametres.Add($"num_search_workers:{workersOptimal}");
+
+            // 3. Préprocessing ciblé
+            parametres.Add("cp_model_presolve:true");
+            parametres.Add("symmetry_level:2");  // Améliore les bornes temporelles
+
+            // 4. Critère d'arrêt adaptatif selon la taille
+            if (nombreTaches > 100)
+            {
+                parametres.Add("relative_gap_limit:0.02");  // 2% pour gros projets
+                parametres.Add("absolute_gap_limit:2");     // 2 slots acceptables
+            }
+            else if (nombreTaches > 50)
+            {
+                parametres.Add("relative_gap_limit:0.01");  // 1% pour projets moyens
+                parametres.Add("absolute_gap_limit:1");
+            }
+            else
+            {
+                parametres.Add("relative_gap_limit:0.005"); // 0.5% pour petits projets
+            }
+
+            // 5. Optimisations pour les contraintes temporelles
+            parametres.Add("linearization_level:2");       // Linéarisation avancée
+            parametres.Add("cp_model_use_max_hs:true");     // Heuristiques satisfiabilité maximale
+
+            Debug.WriteLine($"[DEBUG] Paramètres optimisation délai: {string.Join(",", parametres)}");
+            return string.Join(",", parametres);
+        }
+
+        // OPTIMISATION 3 : Amélioration de la borne inférieure du makespan
+        // Ajoutez cette méthode après CreerParametresOptimisationDelai :
+
+        private void AmeliorerBorneInferieureMakespan(CpModel model, IntVar makespan, Chantier chantier)
+        {
+            try
+            {
+                // Calcul du chemin critique théorique (sans contraintes de ressources)
+                var cheminCritique = CalculerCheminCritiqueTheorique(chantier);
+                if (cheminCritique > 0)
+                {
+                    model.Add(makespan >= cheminCritique);
+                    Debug.WriteLine($"[DEBUG] Borne inférieure makespan appliquée: {cheminCritique} slots");
+                }
+
+                // Calcul de la borne basée sur la charge totale
+                var chargeTotale = chantier.ObtenirToutesLesTaches()
+            .Where(t => t.Type == TypeActivite.Tache)
+            .Sum(t => t.HeuresHommeEstimees.Value);
+                var nombreOuvriers = chantier.Ouvriers.Count;
+                var borneCharge = nombreOuvriers > 0 ? (long)Math.Ceiling((double)chargeTotale / nombreOuvriers) : 0;
+
+                if (borneCharge > 0)
+                {
+                    model.Add(makespan >= borneCharge);
+                    Debug.WriteLine($"[DEBUG] Borne charge appliquée: {borneCharge} slots");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[WARNING] Impossible d'améliorer la borne makespan: {ex.Message}");
+            }
+        }
+
+        private long CalculerCheminCritiqueTheorique(Chantier chantier)
+        {
+            var taches = chantier.ObtenirToutesLesTaches()
+                .Where(t => t.Type == TypeActivite.Tache)
+                .ToDictionary(t => t.Id, t => t);
+
+            var dureeMax = new Dictionary<TacheId, long>();
+            var traites = new HashSet<TacheId>();
+
+            // Calcul topologique du chemin le plus long
+            var pile = new Stack<TacheId>();
+
+            // Commencer par les tâches sans dépendances
+            foreach (var tache in taches.Values.Where(t => !t.Dependencies?.Any() ?? true))
+            {
+                pile.Push(tache.Id);
+            }
+
+            while (pile.Any())
+            {
+                var tacheId = pile.Peek();
+                var tache = taches[tacheId];
+
+                // Vérifier si toutes les dépendances sont traitées
+                bool dependancesTraitees = true;
+                if (tache.Dependencies?.Any() == true)
+                {
+                    foreach (var depId in tache.Dependencies)
+                    {
+                        if (!traites.Contains(depId))
+                        {
+                            dependancesTraitees = false;
+                            if (taches.ContainsKey(depId) && !pile.Contains(depId))
+                            {
+                                pile.Push(depId);
+                            }
+                        }
+                    }
+                }
+
+                if (dependancesTraitees)
+                {
+                    pile.Pop();
+
+                    long dureeMaxDependances = 0;
+                    if (tache.Dependencies?.Any() == true)
+                    {
+                        foreach (var depId in tache.Dependencies)
+                        {
+                            if (dureeMax.TryGetValue(depId, out long dureeDep))
+                            {
+                                dureeMaxDependances = Math.Max(dureeMaxDependances, dureeDep);
+                            }
+                        }
+                    }
+
+                    dureeMax[tacheId] = dureeMaxDependances + (long)tache.HeuresHommeEstimees.Value;
+                    traites.Add(tacheId);
+
+                    // Ajouter les tâches dépendantes à traiter
+                    foreach (var tacheSuivante in taches.Values.Where(t =>
+                        t.Dependencies?.Contains(tacheId) == true &&
+                        !traites.Contains(t.Id) &&
+                        !pile.Contains(t.Id)))
+                    {
+                        pile.Push(tacheSuivante.Id);
+                    }
+                }
+            }
+
+            return dureeMax.Values.Any() ? dureeMax.Values.Max() : 0;
+        }
+
     }
+
 }

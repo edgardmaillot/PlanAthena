@@ -2,41 +2,44 @@
 ' --- Configuration ---
 skinparam componentStyle uml2
 skinparam linetype ortho
-
-title Diagramme de Classe : Interprétation de la Solution
-
+title Diagramme de Classe : Interprétation de la Solution (Architecture Cible)
 package "Infrastructure.Services" {
-    class SolutionInterpreterService implements ISolutionInterpreterService {
-        + InterpreterLaSolution(solver, modele, probleme): IReadOnlyList<AffectationDto>
-    }
+class SolutionInterpreterService implements ISolutionInterpreterService {
+' --- SIGNATURE MODIFIÉE ---
++ InterpreterLaSolution(solver, modele, probleme): (IReadOnlyList<AffectationDto>, IReadOnlyList<FeuilleDeTempsOuvrierDto>)
 }
-
+}
 package "Google.OrTools.Sat" <<Librairie Externe>> {
-    class CpSolver {
-        + BooleanValue(var): bool
-        + Value(var): long
-    }
+class CpSolver {
++ BooleanValue(var): bool
++ Value(var): long
 }
-
+}
 package "Application.InternalDto" {
-    class ModeleCpSat
-    class ProblemeOptimisation
+class ModeleCpSat
+class ProblemeOptimisation
 }
-
 package "Facade.Dto.Output" {
-    class AffectationDto {
-      + TacheId: string
-      + OuvrierId: string
-      + DateDebut: DateTime
-      + DureeHeures: double
-      ' ...
-    }
+class AffectationDto {
++ TacheId: string
++ OuvrierId: string
++ DateDebut: DateTime
++ DureeHeures: double
+' ...
 }
 
+' --- NOUVEAU DTO ---
+class FeuilleDeTempsOuvrierDto {
+  + OuvrierId: string
+  + OuvrierNom: string
+  + PlanningJournalier: IReadOnlyDictionary<DateTime, long>
+}
+}
 ' --- Relations ---
 SolutionInterpreterService ..> CpSolver : "<<reads from>>"
 SolutionInterpreterService ..> ModeleCpSat : "<<reads from>>"
 SolutionInterpreterService ..> ProblemeOptimisation : "<<reads from>>"
 SolutionInterpreterService ..> AffectationDto : "<<creates>>"
-
+' --- NOUVELLE RELATION ---
+SolutionInterpreterService ..> FeuilleDeTempsOuvrierDto : "<<creates>>"
 @enduml

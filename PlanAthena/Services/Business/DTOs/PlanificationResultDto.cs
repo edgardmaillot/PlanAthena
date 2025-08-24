@@ -3,7 +3,7 @@
 using PlanAthena.Core.Facade.Dto.Output;
 using PlanAthena.Services.Processing;
 
-namespace PlanAthena.Services.Business
+namespace PlanAthena.Services.Business.DTOs
 {
     /// <summary>
     /// Résultat complet d'une planification incluant les données brutes et consolidées
@@ -15,9 +15,10 @@ namespace PlanAthena.Services.Business
         /// </summary>
         public ProcessChantierResultDto ResultatBrut { get; set; } = new ProcessChantierResultDto();
 
-        /// <summary>
-        /// Données consolidées pour l'export Gantt (structure hiérarchique)
-        /// </summary>
+        // NOUVELLE PROPRIÉTÉ pour transporter la table de mappage
+        public Dictionary<string, string> ParentIdParSousTacheId { get; set; } = new Dictionary<string, string>();
+
+        // La propriété GanttConsolide n'est plus nécessaire ici. 
         public ConsolidatedGanttDto GanttConsolide { get; set; } = new ConsolidatedGanttDto();
     }
 }

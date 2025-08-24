@@ -8,24 +8,23 @@ namespace PlanAthena.Core.Facade.Dto.Output
     {
         public string ChantierId { get; init; }
         public OptimizationStatus Status { get; init; }
-
-        // --- MODIFICATIONS ---
-        // Décomposition des coûts (en centimes)
         public long? CoutTotalEstime { get; init; }
         public long? CoutTotalRhEstime { get; init; }
         public long? CoutTotalIndirectEstime { get; init; }
-
-        // Renommé pour plus de clarté
         public long? DureeTotaleEnSlots { get; init; }
-
-        // Ajout de la liste détaillée des affectations
         public IReadOnlyList<AffectationDto> Affectations { get; init; } = Array.Empty<AffectationDto>();
+
+        // *** NOUVEL AJOUT ***
+        /// <summary>
+        /// Représentation détaillée de l'occupation de chaque ouvrier, jour par jour,
+        /// sous forme de masques de bits.
+        /// </summary>
+        public IReadOnlyList<FeuilleDeTempsOuvrierDto> FeuillesDeTemps { get; init; } = Array.Empty<FeuilleDeTempsOuvrierDto>();
     }
 
     // Ce sous-DTO est ajouté au même fichier pour la simplicité
     public class AffectationDto
     {
-        // *** VOS PROPRIÉTÉS EXISTANTES (ne pas toucher) ***
         public string TacheId { get; set; }
         public string TacheNom { get; set; }
         public string OuvrierId { get; set; }
@@ -55,5 +54,21 @@ namespace PlanAthena.Core.Facade.Dto.Output
         /// Utilisé principalement pour l'export Gantt précis.
         /// </summary>
         public double? DureeOriginaleHeures { get; set; }
+    }
+    /// <summary>
+    /// Représente la feuille de temps consolidée pour un unique ouvrier.
+    /// </summary>
+    public class FeuilleDeTempsOuvrierDto
+    {
+        public string OuvrierId { get; set; }
+        public string OuvrierNom { get; set; }
+
+        /// <summary>
+        /// Dictionnaire contenant le planning d'occupation journalier.
+        /// - Clé : Le jour concerné (DateTime avec Kind=Utc et heure à 00:00:00).
+        /// - Valeur : Masque de bits (long) représentant les slots horaires travaillés. 
+        ///   Le bit 0 correspond à la première heure ouvrée de la journée.
+        /// </summary>
+        public IReadOnlyDictionary<DateTime, long> PlanningJournalier { get; set; }
     }
 }

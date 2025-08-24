@@ -6,12 +6,14 @@ using PlanAthena.Core.Application.Interfaces;
 using PlanAthena.Core.Facade.Dto.Enums; 
 using PlanAthena.Core.Facade.Dto.Output;
 using PlanAthena.Core.Domain.ValueObjects;
+using NodaTime.Extensions; // Pour la conversion DateTime <-> LocalDateTime
+
 
 namespace PlanAthena.Core.Infrastructure.Services
 {
     public class SolutionInterpreterService : ISolutionInterpreterService
     {
-        public IReadOnlyList<AffectationDto> InterpreterLaSolution(
+        public (IReadOnlyList<AffectationDto> Affectations, IReadOnlyList<FeuilleDeTempsOuvrierDto> FeuillesDeTemps) InterpreterLaSolution(
             CpSolver solver,
             ModeleCpSat modeleCpSat,
             ProblemeOptimisation probleme)
@@ -20,37 +22,24 @@ namespace PlanAthena.Core.Infrastructure.Services
             var chantier = probleme.Chantier;
             var echelleTemps = probleme.EchelleTemps;
 
-            // Parcourir toutes les décisions d'assignation possibles
+            // NOUVEAU: Structure temporaire pour construire les masques de bits
+            var planningParOuvrier = new Dictionary<OuvrierId, Dictionary<DateTime, long>>();
+
             foreach (var (key, assignVar) in modeleCpSat.TachesAssignables)
             {
-                // Si le solveur a décidé que cette assignation est VRAIE
                 if (solver.BooleanValue(assignVar))
                 {
                     var (tacheId, ouvrierId) = key;
-
-                    // On doit retrouver l'intervalle "optionnel" spécifique à cette assignation.
-                    // Cette information n'est pas directement dans modeleCpSat, il faut donc adapter
-                    // légèrement la façon dont on récupère l'intervalle.
-                    // Si la structure ne le permet pas, on se base sur l'intervalle principal et on assume que
-                    // le "size" est celui défini dans le modèle.
-                    var intervalVar = modeleCpSat.TachesIntervals[tacheId];
-
-                    // Récupérer les informations du domaine
                     var tache = chantier.ObtenirToutesLesTaches().First(t => t.Id == tacheId);
                     var ouvrier = chantier.Ouvriers[ouvrierId];
-
-                    // 1. Lire le slot de début décidé par le solveur
+                    var intervalVar = modeleCpSat.TachesIntervals[tacheId];
                     var startSlotIndex = solver.Value(intervalVar.StartExpr());
+                    var sizeInSlots = solver.Value(intervalVar.SizeExpr());
 
-                    // 2. *** MODIFICATION CRITIQUE: Calcul intelligent de la durée ***
-                    // Pour les tâches normales: utiliser la durée calculée par le solveur (SizeExpr)
-                    // Pour les jalons: utiliser la durée originale (72h, 24h, etc.) car SizeExpr = 1 (cosmétique)
+                    // 1. Logique pour AffectationDto (quasi-inchangée)
                     var dureeReelle = CalculerDureeReelle(tacheId, intervalVar, modeleCpSat, solver);
+                    var dateDebut = echelleTemps.Slots[(int)startSlotIndex].Debut.InUtc().ToDateTimeUtc(); // Convention UTC
 
-                    // 3. Traduire le slot de début en DateTime
-                    var dateDebut = echelleTemps.Slots[(int)startSlotIndex].Debut.ToDateTimeUnspecified();
-
-                    // 4. Ajouter l'affectation à la liste avec la durée corrigée
                     affectations.Add(new AffectationDto
                     {
                         TacheId = tacheId.Value,
@@ -59,18 +48,61 @@ namespace PlanAthena.Core.Infrastructure.Services
                         OuvrierNom = $"{ouvrier.Prenom} {ouvrier.Nom}",
                         BlocId = tache.BlocParentId.Value,
                         DateDebut = dateDebut,
-                        DureeHeures = dureeReelle, // *** CORRECTION: Durée intelligente au lieu de dureeEnSlots ***
-
-                        // *** AJOUT: Métadonnées pour export Gantt et affichage ***
+                        DureeHeures = dureeReelle,
                         TypeActivite = ObtenirTypeActivite(tacheId, modeleCpSat),
-                        //EstJalon = EstJalon(tacheId, modeleCpSat),
                         DureeOriginaleHeures = ObtenirDureeOriginale(tacheId, modeleCpSat)
                     });
+
+                    // 2. NOUVEAU: Logique pour construire les FeuillesDeTemps (masques de bits)
+                    // On ne construit les feuilles de temps que pour les tâches réelles (pas les jalons/ouvriers virtuels)
+                    if (tache.Type == TypeActivite.Tache)
+                    {
+                        if (!planningParOuvrier.ContainsKey(ouvrierId))
+                        {
+                            planningParOuvrier[ouvrierId] = new Dictionary<DateTime, long>();
+                        }
+
+                        var heureDebutJournee = chantier.Calendrier.HeureDebutTravail.Hour;
+
+                        for (int i = 0; i < sizeInSlots; i++)
+                        {
+                            var currentSlotIndex = startSlotIndex + i;
+                            var slot = echelleTemps.Slots[(int)currentSlotIndex];
+
+                            // Jour UTC normalisé à minuit
+                            var jourNoda = slot.Debut.Date;
+                            var jourUtc = new DateTime(jourNoda.Year, jourNoda.Month, jourNoda.Day, 0, 0, 0, DateTimeKind.Utc);
+
+                            // Index du bit (0 pour la première heure de travail)
+                            var heureIndex = slot.Debut.Hour - heureDebutJournee;
+
+                            if (!planningParOuvrier[ouvrierId].ContainsKey(jourUtc))
+                            {
+                                planningParOuvrier[ouvrierId][jourUtc] = 0L;
+                            }
+
+                            // Application du masque de bits
+                            planningParOuvrier[ouvrierId][jourUtc] |= (1L << heureIndex);
+                        }
+                    }
                 }
             }
 
-            return affectations;
+            // 3. NOUVEAU: Transformation de la structure temporaire en DTO de sortie
+            var feuillesDeTemps = new List<FeuilleDeTempsOuvrierDto>();
+            foreach (var (ouvrierId, planningJournalier) in planningParOuvrier)
+            {
+                var ouvrier = chantier.Ouvriers[ouvrierId];
+                feuillesDeTemps.Add(new FeuilleDeTempsOuvrierDto
+                {
+                    OuvrierId = ouvrierId.Value,
+                    OuvrierNom = $"{ouvrier.Prenom} {ouvrier.Nom}",
+                    PlanningJournalier = planningJournalier
+                });
+            }
+            return (affectations, feuillesDeTemps);
         }
+
 
         // *** NOUVELLE MÉTHODE: Calcul intelligent de la durée selon le type d'activité ***
         /// <summary>
@@ -133,5 +165,7 @@ namespace PlanAthena.Core.Infrastructure.Services
             var typeActivite = ObtenirTypeActivite(tacheId, modeleCpSat);
             return typeActivite != TypeActivite.Tache;
         }
+
+        
     }
 }

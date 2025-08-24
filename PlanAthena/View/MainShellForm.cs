@@ -30,6 +30,7 @@ namespace PlanAthena.View
         private readonly CheminsPrefereService _cheminsPrefereService;
         private readonly DependanceBuilder _dependanceBuilder;
         private readonly PlanificationService _planificationService;
+        private readonly PlanningResultatService _planningResultatService;
         private readonly PlanningExcelExportService _planningExcelExportService;
         private readonly GanttExportService _ganttExportService;
         private readonly UserPreferencesService _userPreferencesService;
@@ -43,6 +44,7 @@ namespace PlanAthena.View
             CheminsPrefereService cheminsPrefereService,
             DependanceBuilder dependanceBuilder,
             PlanificationService planificationService,
+            PlanningResultatService planningResultatService,
             PlanningExcelExportService planningExcelExportService,
             GanttExportService ganttExportService,
             UserPreferencesService userPreferencesService)
@@ -59,6 +61,7 @@ namespace PlanAthena.View
             _cheminsPrefereService = cheminsPrefereService;
             _dependanceBuilder = dependanceBuilder;
             _planificationService = planificationService;
+            _planningResultatService = planningResultatService;
             _planningExcelExportService = planningExcelExportService;
             _ganttExportService = ganttExportService;
             _userPreferencesService = userPreferencesService;
@@ -143,7 +146,7 @@ namespace PlanAthena.View
         }
         private void NavigateToPlanificator()
         {
-            var view = new PlanificatorView(_applicationService, _planificationService, _planningExcelExportService, _ganttExportService, _ressourceService);
+            var view = new PlanificatorView(_applicationService, _planificationService, _planningResultatService, _planningExcelExportService, _ganttExportService, _ressourceService);
             ShowView(view);
         }
         #endregion

@@ -40,6 +40,7 @@ namespace PlanAthena
                 var cheminsPrefereService = serviceProvider.GetRequiredService<CheminsPrefereService>();
                 var dependanceBuilder = serviceProvider.GetRequiredService<DependanceBuilder>();
                 var planificationService = serviceProvider.GetRequiredService<PlanificationService>();
+                var PlanificationResultatService = serviceProvider.GetRequiredService<PlanningResultatService>();
                 var planningExcelExportService = serviceProvider.GetRequiredService<PlanningExcelExportService>();
                 var ganttExportService = serviceProvider.GetRequiredService<GanttExportService>();
                 var userPreferencesService = serviceProvider.GetRequiredService<UserPreferencesService>();
@@ -54,6 +55,7 @@ namespace PlanAthena
                     cheminsPrefereService,
                     dependanceBuilder,
                     planificationService,
+                    PlanificationResultatService,
                     planningExcelExportService,
                     ganttExportService,
                     userPreferencesService));
@@ -88,10 +90,11 @@ namespace PlanAthena
             // Couche Processing (Singletons car sans état)
             services.AddSingleton<DataTransformer>();
             services.AddSingleton<PreparationSolveurService>();
-            services.AddSingleton<ResultatConsolidationService>();
+
 
             // Couche Export (Singletons)
             services.AddSingleton<PlanningExcelExportService>();
+            services.AddSingleton<PlanningResultatService>();
             services.AddSingleton<GanttExportService>();
 
             // Services "Domaine" purs

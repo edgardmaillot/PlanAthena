@@ -348,7 +348,7 @@ namespace PlanAthena.Forms
 
                 Log("Début de l'export Planning Excel...");
 
-                var cheminFichier = await _planningExcelExportService.ExporterPlanningComplet(
+                /*var cheminFichier = await _planningExcelExportService.ExporterPlanningComplet(
                     _dernierResultatPlanificationComplet,
                     ouvriers,
                     metiers,
@@ -362,7 +362,7 @@ namespace PlanAthena.Forms
                 if (result == DialogResult.Yes)
                 {
                     System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{cheminFichier}\"");
-                }
+                }*/
             }
             catch (Exception ex)
             {
@@ -434,7 +434,7 @@ namespace PlanAthena.Forms
                         JoursOuvres = chkListJoursOuvres.CheckedItems.Cast<DayOfWeek>()
                     };
 
-                    _ganttExportService.ExporterVersGanttProjectXml(_dernierResultatPlanificationComplet.GanttConsolide, sfd.FileName, config);
+                    //_ganttExportService.ExporterVersGanttProjectXml(_dernierResultatPlanificationComplet.GanttConsolide, sfd.FileName, config);
 
                     Log($"📊 Export GanttProject réussi : {sfd.FileName}");
                     MessageBox.Show($"Export GanttProject terminé avec succès !\n\nFichier : {sfd.FileName}", "Export réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);

@@ -1,25 +1,21 @@
 // Fichier: Services/Export/PlanningExcelExportService.cs
+// VERSION FINALE CORRIGÉE - Fusion de la structure robuste de l'ancienne version
+// avec la logique de données correcte de la nouvelle architecture.
 
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
+using PlanAthena.Core.Facade.Dto.Output;
+using PlanAthena.Services.Business.DTOs;
+using PlanAthena.Services.Infrastructure;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using OfficeOpenXml;
-using OfficeOpenXml.Style;
-using System.Drawing;
-using PlanAthena.Data;
-using PlanAthena.Services.Business;
-using PlanAthena.Services.Business.DTOs;
-using PlanAthena.Services.DataAccess;
-using PlanAthena.Services.Infrastructure;
 
 namespace PlanAthena.Services.Export
 {
-    /// <summary>
-    /// Service principal pour l'export des plannings en Excel multi-onglets
-    /// Génère 1 fichier avec onglet synthèse + 1 onglet par ouvrier
-    /// </summary>
     public class PlanningExcelExportService
     {
         private readonly CheminsPrefereService _cheminsPrefereService;
@@ -27,395 +23,166 @@ namespace PlanAthena.Services.Export
         public PlanningExcelExportService(CheminsPrefereService cheminsPrefereService)
         {
             _cheminsPrefereService = cheminsPrefereService ?? throw new ArgumentNullException(nameof(cheminsPrefereService));
-
-            // EPPlus 4.x est libre de droits, pas de configuration nécessaire
         }
 
-        /// <summary>
-        /// Point d'entrée principal : exporte un planning complet en Excel
-        /// </summary>
-        public async Task<string> ExporterPlanningComplet(
-            PlanificationResultDto resultat,
-            IReadOnlyList<Ouvrier> ouvriers,
-            IReadOnlyList<Metier> metiers,
-            string nomProjet,
+        public async Task ExporterPlanningComplet(
+            AnalysePlanificationDto rapport,
+            PlanificationResultDto resultatPlanification,
             ConfigurationPlanification configuration,
-            ConfigurationExport config = null)
+            string fullFilePath)
         {
-            if (resultat?.ResultatBrut?.OptimisationResultat?.Affectations == null)
-                throw new ArgumentException("Les résultats de planification sont requis");
+            if (rapport == null) throw new ArgumentNullException(nameof(rapport));
+            if (resultatPlanification?.ResultatBrut?.OptimisationResultat == null) throw new ArgumentNullException(nameof(resultatPlanification));
+            if (string.IsNullOrEmpty(fullFilePath)) throw new ArgumentNullException(nameof(fullFilePath));
 
-            config ??= new ConfigurationExport();
+            await GenererFichierExcel(rapport, resultatPlanification.ResultatBrut.OptimisationResultat, configuration, fullFilePath);
 
-            // 1. Consolidation des données
-            var donneesExport = await ConsoliderDonnees(resultat, ouvriers, metiers, nomProjet, configuration);
-
-            // 2. Génération du fichier Excel
-            var cheminFichier = await GenererFichierExcel(donneesExport, config);
-
-            // 3. Sauvegarder le chemin utilisé
-            _cheminsPrefereService.SauvegarderDernierDossier(TypeOperation.ExportExcel, cheminFichier);
-
-            return cheminFichier;
+            _cheminsPrefereService.SauvegarderDernierDossier(TypeOperation.ExportExcel, Path.GetDirectoryName(fullFilePath));
         }
 
-        /// <summary>
-        /// Consolide les données brutes en DTOs structurés pour l'export
-        /// </summary>
-        private async Task<PlanningExportDto> ConsoliderDonnees(
-            PlanificationResultDto resultat,
-            IReadOnlyList<Ouvrier> ouvriers,
-            IReadOnlyList<Metier> metiers,
-            string nomProjet,
-            ConfigurationPlanification configuration)
+        private async Task GenererFichierExcel(
+            AnalysePlanificationDto rapport,
+            PlanningOptimizationResultDto resultatOptimisation,
+            ConfigurationPlanification configuration,
+            string filePath)
         {
-            var affectations = resultat.ResultatBrut.OptimisationResultat.Affectations;
-
-            // Calcul des dates du projet
-            var dateDebut = affectations.Min(a => a.DateDebut);
-            var dateFin = affectations.Max(a => a.DateDebut.AddHours(a.DureeHeures));
-            var dureeJours = (int)Math.Ceiling((dateFin - dateDebut).TotalDays);
-
-            // Consolidation par métier pour la synthèse (gardé pour référence future)
-            var statistiquesMetiers = ConsoliderStatistiquesMetiers(affectations, ouvriers, metiers);
-
-            // Planning détaillé par ouvrier
-            var planningsOuvriers = ConsoliderPlanningsOuvriers(affectations, ouvriers, metiers, dateDebut, dateFin, configuration);
-
-            // Calcul du coût total
-            var coutTotal = affectations.Sum(a =>
-            {
-                var ouvrier = ouvriers.FirstOrDefault(o => o.OuvrierId == a.OuvrierId);
-                return ouvrier?.CoutJournalier * (decimal)(a.DureeHeures / 8.0) ?? 0;
-            });
-
-            return new PlanningExportDto
-            {
-                NomProjet = nomProjet,
-                TypeSortie = configuration.TypeDeSortie, // NOUVEAU : Type de sortie
-                DateDebut = dateDebut,
-                DateFin = dateFin,
-                DureeJours = dureeJours,
-                CoutTotal = coutTotal,
-                Metiers = statistiquesMetiers,
-                Ouvriers = planningsOuvriers
-            };
-        }
-
-        /// <summary>
-        /// Consolide les statistiques par métier pour l'onglet synthèse
-        /// </summary>
-        private List<SyntheseMetierDto> ConsoliderStatistiquesMetiers(
-            IReadOnlyList<PlanAthena.Core.Facade.Dto.Output.AffectationDto> affectations,
-            IReadOnlyList<Ouvrier> ouvriers,
-            IReadOnlyList<Metier> metiers)
-        {
-            // CORRECTION : Regrouper les ouvriers uniques par métier
-            var ouvriersUniques = ouvriers.GroupBy(o => o.OuvrierId).Select(g => g.First()).ToList();
-
-            return metiers.Select(metier =>
-            {
-                var ouvriersMetier = ouvriers.Where(o => o.MetierId == metier.MetierId).ToList();
-                var ouvriersUniquesMetier = ouvriersMetier.GroupBy(o => o.OuvrierId)
-                    .Select(g => g.First()).ToList();
-
-                var affectationsMetier = affectations.Where(a =>
-                    ouvriersMetier.Any(o => o.OuvrierId == a.OuvrierId)).ToList();
-
-                var heuresTravaillees = affectationsMetier.Sum(a => a.DureeHeures);
-                var heuresTheorique = ouvriersUniquesMetier.Count * 8 *
-                    (affectations.Max(a => a.DateDebut) - affectations.Min(a => a.DateDebut)).Days;
-
-                var tauxOccupation = heuresTheorique > 0 ? (heuresTravaillees / heuresTheorique) * 100 : 0;
-
-                return new SyntheseMetierDto
-                {
-                    NomMetier = metier.Nom,
-                    TauxOccupation = Math.Round(tauxOccupation, 1),
-                    HeuresTravaillees = heuresTravaillees,
-                    NomsOuvriers = ouvriersUniquesMetier.Select(o => $"{o.Prenom} {o.Nom}").Distinct().ToList(),
-                    CouleurHex = metier.CouleurHex ?? "#CCCCCC"
-                };
-            }).Where(s => s.HeuresTravaillees > 0).ToList();
-        }
-
-        /// <summary>
-        /// Consolide le planning détaillé par ouvrier
-        /// </summary>
-        private List<PlanningOuvrierDto> ConsoliderPlanningsOuvriers(
-            IReadOnlyList<PlanAthena.Core.Facade.Dto.Output.AffectationDto> affectations,
-            IReadOnlyList<Ouvrier> ouvriers,
-            IReadOnlyList<Metier> metiers,
-            DateTime dateDebut,
-            DateTime dateFin,
-            ConfigurationPlanification configuration)
-        {
-            // CORRECTION : Regrouper par ouvrier unique (même OuvrierId = même personne)
-            var ouvriersUniques = ouvriers.GroupBy(o => o.OuvrierId)
-                .Select(g => g.First()) // Prendre le premier ouvrier de chaque groupe
-                .ToList();
-
-            return ouvriersUniques.Select(ouvrier =>
-            {
-                var affectationsOuvrier = affectations
-                    .Where(a => a.OuvrierId == ouvrier.OuvrierId)
-                    .ToList();
-
-                // CORRECTION : Récupérer tous les métiers de cet ouvrier pour l'affichage
-                var metiersOuvrier = ouvriers
-                    .Where(o => o.OuvrierId == ouvrier.OuvrierId)
-                    .Select(o => metiers.FirstOrDefault(m => m.MetierId == o.MetierId)?.Nom)
-                    .Where(nom => !string.IsNullOrEmpty(nom))
-                    .Distinct()
-                    .ToList();
-
-                var metierPrincipal = metiersOuvrier.FirstOrDefault() ?? "Non défini";
-                var metiersAffiches = metiersOuvrier.Count > 1
-                    ? $"{metierPrincipal} (+{metiersOuvrier.Count - 1} autres)"
-                    : metierPrincipal;
-
-                // CORRECTION : Nouveaux calculs KPI selon spécifications
-                var heuresTravaillees = affectationsOuvrier.Sum(a => a.DureeHeures);
-                var dureeJourneeStandard = configuration.DureeJournaliereStandardHeures;
-
-                // Calcul Taux d'Occupation : Heures travaillées / (Jours travaillés × Durée standard)
-                var joursTravailles = affectationsOuvrier.Select(a => a.DateDebut.Date).Distinct().Count();
-                var tauxOccupation = joursTravailles > 0 && dureeJourneeStandard > 0
-                    ? (heuresTravaillees / (joursTravailles * dureeJourneeStandard)) * 100
-                    : 0;
-
-                // Calcul Taux de Fragmentation : 1 - (Heures travaillées / (Jours ouvrés période × Durée standard))
-                var tauxFragmentation = 0.0;
-                if (affectationsOuvrier.Any())
-                {
-                    var premiereTache = affectationsOuvrier.Min(a => a.DateDebut.Date);
-                    var derniereTache = affectationsOuvrier.Max(a => a.DateDebut.Date);
-                    var joursOuvresPeriode = CalculerJoursOuvres(premiereTache, derniereTache, configuration.JoursOuvres);
-
-                    if (joursOuvresPeriode > 0 && dureeJourneeStandard > 0)
-                    {
-                        var efficience = heuresTravaillees / (joursOuvresPeriode * dureeJourneeStandard);
-                        tauxFragmentation = (1 - efficience) * 100;
-
-                        // CORRECTION : Fragmentation ne peut pas être négative (si plus de 100% d'efficience)
-                        if (tauxFragmentation < 0) tauxFragmentation = 0;
-                    }
-                }
-
-                // Générer tous les créneaux (avec jours vides)
-                var creneaux = GenererCreneauxComplets(affectationsOuvrier, dateDebut, dateFin);
-
-                return new PlanningOuvrierDto
-                {
-                    Nom = ouvrier.Nom,
-                    Prenom = ouvrier.Prenom,
-                    Metier = metiersAffiches, // Afficher le métier principal + nombre d'autres
-                    TauxOccupation = Math.Round(tauxOccupation, 1),
-                    TauxFragmentation = Math.Round(tauxFragmentation, 1), // NOUVEAU KPI
-                    HeuresTravaillees = heuresTravaillees,
-                    Creneaux = creneaux
-                };
-            }).Where(p => p.Creneaux.Any()).ToList();
-        }
-
-        /// <summary>
-        /// Génère tous les créneaux (travaillés + vides) pour un ouvrier
-        /// CORRECTION : Supporte plusieurs tâches par jour
-        /// </summary>
-        private List<CreneauTravailDto> GenererCreneauxComplets(
-            IReadOnlyList<PlanAthena.Core.Facade.Dto.Output.AffectationDto> affectationsOuvrier,
-            DateTime dateDebut,
-            DateTime dateFin)
-        {
-            var creneaux = new List<CreneauTravailDto>();
-            var dateActuelle = dateDebut.Date;
-
-            while (dateActuelle <= dateFin.Date)
-            {
-                // CORRECTION : Récupérer TOUTES les affectations du jour
-                var affectationsJour = affectationsOuvrier
-                    .Where(a => a.DateDebut.Date == dateActuelle)
-                    .OrderBy(a => a.DateDebut) // Trier par heure de début
-                    .ToList();
-
-                if (affectationsJour.Any())
-                {
-                    // CORRECTION : Ajouter UNE LIGNE par tâche du jour
-                    foreach (var affectation in affectationsJour)
-                    {
-                        creneaux.Add(new CreneauTravailDto
-                        {
-                            Date = dateActuelle,
-                            TacheNom = affectation.TacheNom,
-                            BlocId = affectation.BlocId ?? "",
-                            DureeHeures = (int)affectation.DureeHeures,
-                            EstJourVide = false
-                        });
-                    }
-                }
-                else
-                {
-                    // Jour sans affectation
-                    creneaux.Add(new CreneauTravailDto
-                    {
-                        Date = dateActuelle,
-                        TacheNom = "---------------",
-                        BlocId = "",
-                        DureeHeures = 0,
-                        EstJourVide = true
-                    });
-                }
-
-                dateActuelle = dateActuelle.AddDays(1);
-            }
-
-            return creneaux;
-        }
-
-        /// <summary>
-        /// Génère le fichier Excel multi-onglets
-        /// </summary>
-        private async Task<string> GenererFichierExcel(PlanningExportDto donnees, ConfigurationExport config)
-        {
-            var dossierSortie = _cheminsPrefereService.ObtenirDernierDossierExport();
-            var nomFichier = string.IsNullOrEmpty(config.NomFichier)
-                ? ConfigurationExport.GenererNomFichierDefaut(donnees.NomProjet)
-                : config.NomFichier;
-
-            var cheminComplet = Path.Combine(dossierSortie, nomFichier);
-
             using var package = new ExcelPackage();
 
-            // Créer l'onglet synthèse
-            await CreerOngletSynthese(package, donnees);
+            CreerOngletSynthese(package, rapport, configuration);
 
-            // Créer un onglet par ouvrier
-            foreach (var ouvrier in donnees.Ouvriers)
+            foreach (var ouvrierAnalyse in rapport.AnalyseOuvriers)
             {
-                await CreerOngletOuvrier(package, ouvrier, donnees.NomProjet);
+                var feuilleOuvrier = resultatOptimisation.FeuillesDeTemps.FirstOrDefault(f => f.OuvrierId == ouvrierAnalyse.OuvrierId);
+                var affectationsOuvrier = resultatOptimisation.Affectations
+                    .Where(a => a.OuvrierId == ouvrierAnalyse.OuvrierId)
+                    .ToList();
+
+                CreerOngletOuvrier(
+                    package,
+                    ouvrierAnalyse,
+                    feuilleOuvrier,
+                    affectationsOuvrier,
+                    rapport.SyntheseProjet.DateDebut,
+                    rapport.SyntheseProjet.DateFin,
+                    configuration);
             }
 
-            // Sauvegarder le fichier (EPPlus 4.x - version synchrone)
-            package.SaveAs(new FileInfo(cheminComplet));
-
-            return cheminComplet;
+            await Task.Run(() => package.SaveAs(new FileInfo(filePath)));
         }
 
-        /// <summary>
-        /// Crée l'onglet synthèse du projet
-        /// </summary>
-        private async Task CreerOngletSynthese(ExcelPackage package, PlanningExportDto donnees)
+        private void CreerOngletSynthese(ExcelPackage package, AnalysePlanificationDto rapport, ConfigurationPlanification configuration)
         {
             var worksheet = package.Workbook.Worksheets.Add("SYNTHESE");
             var row = 1;
+            var synthese = rapport.SyntheseProjet;
 
-            // Section projet
-            worksheet.Cells[row, 1].Value = "PROJET";
-            FormatAsHeader(worksheet.Cells[row, 1], Color.DarkBlue);
-            row += 2;
+            worksheet.Cells[row, 1, row, 6].Value = "PROJET";
+            FormatAsHeader(worksheet.Cells[row, 1, row, 6], Color.DarkBlue);
+            row++;
 
             worksheet.Cells[row, 1].Value = "Nom";
-            worksheet.Cells[row, 2].Value = donnees.NomProjet;
-            row++;
-
+            worksheet.Cells[row, 2].Value = synthese.NomProjet; row++;
             worksheet.Cells[row, 1].Value = "Type optimisation";
-            worksheet.Cells[row, 2].Value = donnees.TypeSortie;
-            row++;
-
+            worksheet.Cells[row, 2].Value = configuration.TypeDeSortie; row++;
             worksheet.Cells[row, 1].Value = "Date début";
-            worksheet.Cells[row, 2].Value = donnees.DateDebut.ToString("dd/MM/yyyy");
-            row++;
-
+            worksheet.Cells[row, 2].Value = synthese.DateDebut.ToString("dd/MM/yyyy"); row++;
             worksheet.Cells[row, 1].Value = "Date fin";
-            worksheet.Cells[row, 2].Value = donnees.DateFin.ToString("dd/MM/yyyy");
-            row++;
-
+            worksheet.Cells[row, 2].Value = synthese.DateFin.ToString("dd/MM/yyyy"); row++;
             worksheet.Cells[row, 1].Value = "Durée";
-            worksheet.Cells[row, 2].Value = $"{donnees.DureeJours} jours";
-            row++;
+            worksheet.Cells[row, 2].Value = $"{synthese.DureeJoursCalendaires} jours"; row++;
 
             worksheet.Cells[row, 1].Value = "Coût total";
-            worksheet.Cells[row, 2].Value = $"{donnees.CoutTotal:N2}€";
-            row += 3;
+            worksheet.Cells[row, 2].Value = (synthese.CoutTotalEstime / 100.0m) ?? 0;
+            worksheet.Cells[row, 2].Style.Numberformat.Format = "#,##0.00 €"; row++;
+            worksheet.Cells[row, 1].Value = "Coût Main d'Oeuvre (RH)";
+            worksheet.Cells[row, 2].Value = (synthese.CoutTotalRhEstime / 100.0m) ?? 0;
+            worksheet.Cells[row, 2].Style.Numberformat.Format = "#,##0.00 €"; row++;
+            worksheet.Cells[row, 1].Value = "Coût Indirect";
+            worksheet.Cells[row, 2].Value = (synthese.CoutTotalIndirectEstime / 100.0m) ?? 0;
+            worksheet.Cells[row, 2].Style.Numberformat.Format = "#,##0.00 €"; row++;
 
-            // NOUVEAU : Section ouvriers au lieu des métiers
-            worksheet.Cells[row, 1].Value = "OUVRIER";
-            worksheet.Cells[row, 2].Value = "T% OCCUPATION";
-            worksheet.Cells[row, 3].Value = "T% FRAGMENTATION";
-            worksheet.Cells[row, 4].Value = "HEURES TOTALES";
+            worksheet.Cells[row, 1].Value = "Total Jours-Homme";
+            worksheet.Cells[row, 2].Value = synthese.TotalJoursHommeTravailles; row += 2;
 
-            var headerRange = worksheet.Cells[row, 1, row, 4];
-            FormatAsHeader(headerRange, Color.LightBlue);
+            worksheet.Cells[row, 1, row, 6].Value = "SYNTHESE OUVRIERS";
+            FormatAsHeader(worksheet.Cells[row, 1, row, 6], Color.FromArgb(0, 112, 192));
             row++;
 
-            // NOUVEAU : Trier par taux d'occupation décroissant pour repérer les surchargés
-            var ouvriersTriés = donnees.Ouvriers.OrderByDescending(o => o.TauxOccupation).ToList();
+            worksheet.Cells[row, 1].Value = "Nom Complet";
+            worksheet.Cells[row, 2].Value = "T% Occupation";
+            worksheet.Cells[row, 3].Value = "T% Fragmentation";
+            worksheet.Cells[row, 4].Value = "Heures Totales";
+            worksheet.Cells[row, 5].Value = "Jours Travaillés";
+            worksheet.Cells[row, 6].Value = "Taux Journalier";
+            FormatAsSubHeader(worksheet.Cells[row, 1, row, 6]);
+            row++;
 
-            foreach (var ouvrier in ouvriersTriés)
+            foreach (var ouvrier in rapport.AnalyseOuvriers.OrderBy(o => o.NomComplet))
             {
                 worksheet.Cells[row, 1].Value = ouvrier.NomComplet;
-                worksheet.Cells[row, 2].Value = $"{ouvrier.TauxOccupation:F1}%";
-                worksheet.Cells[row, 3].Value = $"{ouvrier.TauxFragmentation:F1}%";
+                worksheet.Cells[row, 2].Value = ouvrier.TauxOccupation / 100;
+                worksheet.Cells[row, 2].Style.Numberformat.Format = "0.0%";
+                worksheet.Cells[row, 3].Value = ouvrier.TauxFragmentation / 100;
+                worksheet.Cells[row, 3].Style.Numberformat.Format = "0.0%";
                 worksheet.Cells[row, 4].Value = $"{ouvrier.HeuresTravaillees:F0}h";
+                worksheet.Cells[row, 5].Value = ouvrier.JoursTravaillesUniques;
+                worksheet.Cells[row, 6].Value = ouvrier.CoutJournalier;
+                worksheet.Cells[row, 6].Style.Numberformat.Format = "#,##0.00 €";
                 row++;
             }
-
-            // Auto-ajustement des colonnes
-            worksheet.Cells.AutoFitColumns();
+            worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
         }
 
-        /// <summary>
-        /// Crée l'onglet détaillé d'un ouvrier
-        /// </summary>
-        private async Task CreerOngletOuvrier(ExcelPackage package, PlanningOuvrierDto ouvrier, string nomProjet)
+        private void CreerOngletOuvrier(
+            ExcelPackage package,
+            AnalyseOuvrierDto ouvrier,
+            FeuilleDeTempsOuvrierDto feuilleOuvrier,
+            List<AffectationDto> affectationsOuvrier,
+            DateTime dateDebutProjet,
+            DateTime dateFinProjet,
+            ConfigurationPlanification configuration)
         {
             var nomOnglet = NettoyerNomOnglet(ouvrier.NomComplet);
             var worksheet = package.Workbook.Worksheets.Add(nomOnglet);
             var row = 1;
 
-            // En-tête ouvrier
-            worksheet.Cells[row, 1].Value = $"Planning - {ouvrier.NomComplet}";
+            worksheet.Cells[row, 1, row, 5].Value = $"Planning - {ouvrier.NomComplet}";
             FormatAsHeader(worksheet.Cells[row, 1, row, 5], Color.DarkGreen);
             row += 2;
-
-            // Info ouvrier
-            worksheet.Cells[row, 1].Value = "Métier";
-            worksheet.Cells[row, 2].Value = ouvrier.Metier;
-            row++;
-
+            worksheet.Cells[row, 1].Value = "Métier Principal";
+            worksheet.Cells[row, 2].Value = ouvrier.MetierPrincipal; row++;
             worksheet.Cells[row, 1].Value = "Occupation";
-            worksheet.Cells[row, 2].Value = $"{ouvrier.TauxOccupation:F1}%";
-            row++;
-
+            worksheet.Cells[row, 2].Value = $"{ouvrier.TauxOccupation:F1}%"; row++;
             worksheet.Cells[row, 1].Value = "Fragmentation";
-            worksheet.Cells[row, 2].Value = $"{ouvrier.TauxFragmentation:F1}%";
+            worksheet.Cells[row, 2].Value = $"{ouvrier.TauxFragmentation:F1}%"; row++;
+            worksheet.Cells[row, 1].Value = "Heures Totales";
+            worksheet.Cells[row, 2].Value = $"{ouvrier.HeuresTravaillees:F0}h"; row++;
+            worksheet.Cells[row, 1].Value = "Taux Journalier";
+            worksheet.Cells[row, 2].Value = ouvrier.CoutJournalier;
+            worksheet.Cells[row, 2].Style.Numberformat.Format = "#,##0.00 €"; row++;
             row++;
-
-            worksheet.Cells[row, 1].Value = "Heures";
-            worksheet.Cells[row, 2].Value = $"{ouvrier.HeuresTravaillees:F0}h";
-            row += 2;
-
-            // Headers planning
+            worksheet.Cells[row, 1, row, 5].Value = "PLANNING DETAILLE";
+            FormatAsHeader(worksheet.Cells[row, 1, row, 5], Color.FromArgb(0, 112, 192));
+            row++;
             worksheet.Cells[row, 1].Value = "DATE";
             worksheet.Cells[row, 2].Value = "JOUR";
             worksheet.Cells[row, 3].Value = "TÂCHE";
             worksheet.Cells[row, 4].Value = "BLOC";
             worksheet.Cells[row, 5].Value = "DURÉE";
-
-            var planningHeaderRange = worksheet.Cells[row, 1, row, 5];
-            FormatAsHeader(planningHeaderRange, Color.LightBlue);
+            FormatAsSubHeader(worksheet.Cells[row, 1, row, 5]);
             row++;
 
-            // Créneaux de travail
-            foreach (var creneau in ouvrier.Creneaux)
-            {
-                worksheet.Cells[row, 1].Value = creneau.Date.ToString("dd/MM/yyyy");
-                worksheet.Cells[row, 2].Value = creneau.NomJour;
-                worksheet.Cells[row, 3].Value = creneau.TacheFormatee;
-                worksheet.Cells[row, 4].Value = creneau.BlocId;
-                worksheet.Cells[row, 5].Value = creneau.DureeFormatee;
+            var creneaux = GenererCreneauxDepuisFeuilleDeTemps(feuilleOuvrier, affectationsOuvrier, dateDebutProjet, dateFinProjet, configuration);
 
-                // Formatage spécial pour les jours vides
+            foreach (var creneau in creneaux)
+            {
+                worksheet.Cells[row, 1].Value = creneau.Date;
+                worksheet.Cells[row, 1].Style.Numberformat.Format = "dd/mm/yyyy";
+                worksheet.Cells[row, 2].Value = creneau.Date.ToString("dddd", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"));
+                worksheet.Cells[row, 3].Value = creneau.TacheNom;
+                worksheet.Cells[row, 4].Value = creneau.BlocId;
+                worksheet.Cells[row, 5].Value = creneau.DureeHeures > 0 ? $"{creneau.DureeHeures}h" : "";
+
                 if (creneau.EstJourVide)
                 {
                     var rowRange = worksheet.Cells[row, 1, row, 5];
@@ -423,68 +190,139 @@ namespace PlanAthena.Services.Export
                     rowRange.Style.Fill.BackgroundColor.SetColor(Color.LightGray);
                     rowRange.Style.Font.Color.SetColor(Color.DarkGray);
                 }
-
                 row++;
             }
-
-            // Auto-ajustement des colonnes
-            worksheet.Cells.AutoFitColumns();
+            worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
         }
 
-        /// <summary>
-        /// Applique le formatage header (gras + couleur de fond)
-        /// </summary>
-        private void FormatAsHeader(ExcelRange range, Color couleurFond)
+        private List<CreneauTravailDto> GenererCreneauxDepuisFeuilleDeTemps(
+            FeuilleDeTempsOuvrierDto feuilleOuvrier,
+            List<AffectationDto> affectationsOuvrier,
+            DateTime dateDebutProjet,
+            DateTime dateFinProjet,
+            ConfigurationPlanification configuration)
         {
+            var creneaux = new List<CreneauTravailDto>();
+            if (feuilleOuvrier == null) return creneaux;
+            // 1. Initialiser la variable de suivi pour le dernier travail connu
+            AffectationDto derniereAffectationConnue = null;
+            var tacheParHeureUtc = new Dictionary<DateTime, AffectationDto>();
+            foreach (var affectation in affectationsOuvrier)
+            {
+                // On utilise DureeOriginaleHeures pour les jalons, et DureeHeures pour les tâches
+                var dureeReelle = affectation.EstJalon ? (affectation.DureeOriginaleHeures ?? affectation.DureeHeures) : affectation.DureeHeures;
+                for (int i = 0; i < dureeReelle; i++)
+                {
+                    tacheParHeureUtc[affectation.DateDebut.AddHours(i)] = affectation;
+                }
+            }
+
+            for (var dateActuelle = dateDebutProjet.Date; dateActuelle <= dateFinProjet.Date; dateActuelle = dateActuelle.AddDays(1))
+            {
+                var jourUtc = new DateTime(dateActuelle.Year, dateActuelle.Month, dateActuelle.Day, 0, 0, 0, DateTimeKind.Utc);
+
+                if (feuilleOuvrier.PlanningJournalier.TryGetValue(jourUtc, out var masque))
+                {
+                    var tachesDuJour = new List<(AffectationDto affectation, int duree)>();
+
+                    // CORRECTION: La boucle doit couvrir toutes les heures potentielles de travail, y compris les heures supplémentaires
+                    for (int heureIndex = 0; heureIndex < 24; heureIndex++)
+                    {
+                        if ((masque & (1L << heureIndex)) != 0)
+                        {
+                            var heureDebutSlotUtc = jourUtc.AddHours(configuration.HeureDebutJournee + heureIndex);
+
+                            if (tacheParHeureUtc.TryGetValue(heureDebutSlotUtc, out var affectation))
+                            {
+                                if (tachesDuJour.Any() && tachesDuJour.Last().affectation.TacheId == affectation.TacheId)
+                                {
+                                    // Cas où un masque existe mais aucune tâche n'est trouvée
+                                    string nomTacheFallback = "Travail non identifié";
+                                    string blocIdFallback = "";
+
+                                    // 1. Utiliser la dernière tâche connue si elle existe
+                                    if (derniereAffectationConnue != null)
+                                    {
+                                        nomTacheFallback = derniereAffectationConnue.TacheNom + " (suite)";
+                                        blocIdFallback = derniereAffectationConnue.BlocId;
+                                    }
+
+                                    creneaux.Add(new CreneauTravailDto
+                                    {
+                                        Date = dateActuelle,
+                                        TacheNom = nomTacheFallback,
+                                        BlocId = blocIdFallback,
+                                        EstJourVide = false,
+                                        DureeHeures = (int)System.Numerics.BitOperations.PopCount((ulong)masque)
+                                    });
+                                    // 2. Mettre à jour la dernière tâche connue
+                                    derniereAffectationConnue = affectation;
+                                }
+                                else
+                                {
+                                    tachesDuJour.Add((affectation, 1));
+                                }
+                            }
+                        }
+                    }
+
+                    if (!tachesDuJour.Any() && masque != 0) // Cas où un masque existe mais aucune tâche n'est trouvée, c'est le reliquat de la tâche de la veille
+                    {
+                        creneaux.Add(new CreneauTravailDto { Date = dateActuelle, TacheNom = "Travail non identifié", EstJourVide = false, DureeHeures = (int)System.Numerics.BitOperations.PopCount((ulong)masque) });
+                    }
+                    else if (tachesDuJour.Any())
+                    {
+                        foreach (var (affectation, duree) in tachesDuJour)
+                        {
+                            creneaux.Add(new CreneauTravailDto
+                            {
+                                Date = dateActuelle,
+                                TacheNom = affectation.TacheNom,
+                                BlocId = affectation.BlocId,
+                                DureeHeures = duree,
+                                EstJourVide = false
+                            });
+                        }
+                    }
+                    else // Masque est 0
+                    {
+                        creneaux.Add(new CreneauTravailDto { Date = dateActuelle, TacheNom = "---", EstJourVide = true });
+                    }
+                }
+                else
+                {
+                    creneaux.Add(new CreneauTravailDto { Date = dateActuelle, TacheNom = "---", EstJourVide = true });
+                }
+            }
+            return creneaux;
+        }
+
+
+private void FormatAsHeader(ExcelRange range, Color couleurFond)
+        {
+            range.Merge = true;
             range.Style.Font.Bold = true;
             range.Style.Fill.PatternType = ExcelFillStyle.Solid;
             range.Style.Fill.BackgroundColor.SetColor(couleurFond);
             range.Style.Font.Color.SetColor(Color.White);
-            range.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+            range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            range.Style.VerticalAlignment = ExcelVerticalAlignment.Center;
         }
 
-        /// <summary>
-        /// Calcule le nombre de jours ouvrés entre deux dates (incluses)
-        /// TODO v0.5 : Intégrer le vrai CalendrierTravail avec jours fériés/roulements/3x8
-        /// Actuellement : Basé sur chkListJoursOuvres de MainForm (principe 5j/7)
-        /// </summary>
-        private int CalculerJoursOuvres(DateTime dateDebut, DateTime dateFin, List<DayOfWeek> joursOuvres)
+        private void FormatAsSubHeader(ExcelRange range)
         {
-            if (dateDebut > dateFin) return 0;
-            if (!joursOuvres.Any()) return 0; // Éviter division par zéro
-
-            int compteur = 0;
-            var dateActuelle = dateDebut.Date;
-
-            while (dateActuelle <= dateFin.Date)
-            {
-                if (joursOuvres.Contains(dateActuelle.DayOfWeek))
-                {
-                    compteur++;
-                }
-                dateActuelle = dateActuelle.AddDays(1);
-            }
-
-            return compteur;
+            range.Style.Font.Bold = true;
+            range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+            range.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(221, 235, 247));
+            range.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
         }
 
-        /// <summary>
-        /// Nettoie un nom d'onglet pour Excel (31 chars max, pas de caractères spéciaux)
-        /// </summary>
         private string NettoyerNomOnglet(string nom)
         {
-            if (string.IsNullOrEmpty(nom))
-                return "Ouvrier";
-
+            if (string.IsNullOrEmpty(nom)) return "Ouvrier";
             var caracteresInterdits = new char[] { '/', '\\', ':', '*', '?', '[', ']' };
-            var nomNettoye = nom;
-
-            foreach (var c in caracteresInterdits)
-            {
-                nomNettoye = nomNettoye.Replace(c, '_');
-            }
-
-            return nomNettoye.Length > 31 ? nomNettoye.Substring(0, 31) : nomNettoye;
+            foreach (var c in caracteresInterdits) nom = nom.Replace(c, '_');
+            return nom.Length > 31 ? nom.Substring(0, 31) : nom;
         }
     }
 }
