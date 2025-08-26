@@ -25,7 +25,6 @@ namespace PlanAthena.Core.Application.UseCases
         private readonly ICalendrierService _calendrierService;
         private readonly IConstructeurProblemeOrTools _problemeBuilder;
         private readonly ISolutionInterpreterService _solutionInterpreter;
-        private readonly IPlanningAnalysisService _planningAnalyzer;
         private readonly SolverSettings _solverSettings;
 
         public ProcessChantierUseCase(
@@ -37,7 +36,6 @@ namespace PlanAthena.Core.Application.UseCases
             ICalendrierService calendrierService,
             IConstructeurProblemeOrTools problemeBuilder,
             ISolutionInterpreterService solutionInterpreter,
-            IPlanningAnalysisService planningAnalyzer,
             SolverSettings solverSettings)
         {
             _fluentValidator = fluentValidator;
@@ -48,7 +46,6 @@ namespace PlanAthena.Core.Application.UseCases
             _calendrierService = calendrierService;
             _problemeBuilder = problemeBuilder;
             _solutionInterpreter = solutionInterpreter;
-            _planningAnalyzer = planningAnalyzer;
             _solverSettings = solverSettings;
         }
 
@@ -196,7 +193,6 @@ namespace PlanAthena.Core.Application.UseCases
         private async Task<ProcessChantierResultDto> ExecuterOptimisationEtAnalyseAsync(Chantier chantier, OptimizationConfigDto config, IReadOnlyList<MessageValidationDto> validationMessages)
         {
             PlanningOptimizationResultDto? planningResult = null;
-            PlanningAnalysisReportDto? analysisReport = null;
 
             await Task.Run(async () =>
             {
@@ -258,9 +254,6 @@ namespace PlanAthena.Core.Application.UseCases
                         DureeTotaleEnSlots = solver.Value(modeleCpSat.Makespan),
                         Affectations = affectations
                     };
-
-                    // L'analyse KPI est effectuée pour tous les cas où une solution est trouvée.
-                    analysisReport = await _planningAnalyzer.AnalyserLePlanningAsync(affectations, chantier);
                 }
                 else
                 {
@@ -274,7 +267,6 @@ namespace PlanAthena.Core.Application.UseCases
                 Etat = EtatTraitementInput.Succes,
                 Messages = validationMessages,
                 OptimisationResultat = planningResult,
-                AnalysePostOptimisationResultat = analysisReport
             };
         }
     }

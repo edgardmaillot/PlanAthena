@@ -102,24 +102,59 @@ namespace PlanAthena.Services.Business
             }
         }
 
-        private void ValiderCircularite(Metier metier)
+
+        private void ValiderCircularite(Metier metierModifie)
         {
-            var graph = new AdjacencyGraph<string, Edge<string>>();
+            // Crée une liste à jour des métiers, incluant la modification en cours
             var tousLesMetiers = _metiers.Values.ToList();
-            var metierExistant = tousLesMetiers.FirstOrDefault(m => m.MetierId == metier.MetierId);
-            if (metierExistant != null) tousLesMetiers.Remove(metierExistant);
-            tousLesMetiers.Add(metier);
-            graph.AddVertexRange(tousLesMetiers.Select(m => m.MetierId));
-            foreach (var m in tousLesMetiers)
+            var metierExistant = tousLesMetiers.FirstOrDefault(m => m.MetierId == metierModifie.MetierId);
+            if (metierExistant != null)
             {
-                var prerequis = m.PrerequisParPhase?.Values.SelectMany(p => p).Distinct() ?? Enumerable.Empty<string>();
-                foreach (var prereqId in prerequis)
+                tousLesMetiers.Remove(metierExistant);
+            }
+            tousLesMetiers.Add(metierModifie);
+
+            // Obtenir toutes les phases possibles pour itérer dessus
+            var phasesAValider = Enum.GetValues(typeof(ChantierPhase))
+                                     .Cast<ChantierPhase>()
+                                     .Where(p => p != ChantierPhase.None);
+
+            // Itérer sur chaque phase et valider les dépendances de manière isolée
+            foreach (var phase in phasesAValider)
+            {
+                var graph = new AdjacencyGraph<string, Edge<string>>();
+
+                // N'ajouter au graphe que les métiers concernés par cette phase
+                var metiersDeLaPhase = tousLesMetiers.Where(m => m.Phases.HasFlag(phase)).ToList();
+                graph.AddVertexRange(metiersDeLaPhase.Select(m => m.MetierId));
+
+                foreach (var m in metiersDeLaPhase)
                 {
-                    if (graph.ContainsVertex(prereqId)) graph.AddEdge(new Edge<string>(prereqId, m.MetierId));
+                    // Récupérer les prérequis UNIQUEMENT pour la phase en cours de validation
+                    if (m.PrerequisParPhase.TryGetValue(phase, out var prerequisPourPhase))
+                    {
+                        foreach (var prereqId in prerequisPourPhase)
+                        {
+                            // S'assurer que le prérequis est aussi un métier de cette phase avant d'ajouter la dépendance
+                            if (graph.ContainsVertex(prereqId))
+                            {
+                                graph.AddEdge(new Edge<string>(prereqId, m.MetierId));
+                            }
+                        }
+                    }
+                }
+
+                try
+                {
+                    // Tenter le tri topologique sur le graphe de la phase actuelle
+                    graph.TopologicalSort();
+                }
+                catch (NonAcyclicGraphException)
+                {
+                    // L'exception est plus précise : elle indique dans quelle phase se trouve le cycle
+                    throw new InvalidOperationException($"Dépendance circulaire détectée pour la phase '{phase}' impliquant le métier '{metierModifie.Nom}'.");
                 }
             }
-            try { graph.TopologicalSort(); }
-            catch (NonAcyclicGraphException) { throw new InvalidOperationException($"Dépendance circulaire détectée pour le métier '{metier.Nom}'."); }
         }
         /// <summary>
         /// Calcule et retourne la liste des métiers qu'un ouvrier ne possède pas encore.
@@ -149,6 +184,22 @@ namespace PlanAthena.Services.Business
                 .ToList();
 
             return metiersDisponibles;
+        }
+        /// <summary>
+        /// Calcule et retourne un ensemble de tous les MetierId pour lesquels au moins un ouvrier possède la compétence.
+        /// Optimisé pour des vérifications rapides de type "existe-t-il une compétence pour ce métier ?".
+        /// </summary>
+        /// <returns>Un HashSet<string> contenant les IDs des métiers avec des compétences assignées.</returns>
+        public HashSet<string> GetMetierIdsAvecCompetences()
+        {
+            // Utilise LINQ pour parcourir tous les ouvriers,
+            // aplatir (SelectMany) toutes leurs listes de compétences en une seule grande liste,
+            // extraire (Select) juste le MetierId de chaque compétence,
+            // et finalement, convertir le tout en un HashSet pour des performances optimales et une déduplication automatique.
+            return _ouvriers.Values
+                .SelectMany(ouvrier => ouvrier.Competences)
+                .Select(competence => competence.MetierId)
+                .ToHashSet();
         }
         public List<Metier> GetAllMetiers() => _metiers.Values.OrderBy(m => m.Nom).ToList();
         public Metier GetMetierById(string id) => _metiers.GetValueOrDefault(id);

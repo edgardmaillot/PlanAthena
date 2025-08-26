@@ -78,6 +78,7 @@ namespace PlanAthena.View.TaskManager
                 ImageSmall = Properties.Resources.tache, // <-- AJOUT DE L'ICÔNE
                 Dock = DockStyle.Fill
             };
+            this.creationToolboxView1.Dock = DockStyle.Fill;
             toolboxPage.Controls.Add(this.creationToolboxView1);
             toolboxPage.StateCommon.HeaderGroup.HeaderPrimary.Content.ShortText.Font = headerFont;
             toolboxPage.ImageSmall = Properties.Resources.tache; // <-- AJOUT DE L'ICÔNE
@@ -169,14 +170,21 @@ namespace PlanAthena.View.TaskManager
             var lot = _projetService.ObtenirLotParId(_activeLotId);
             if (lot == null)
             {
-                creationToolboxView1.PopulateMetiers(null, null);
+                // On passe null pour vider la toolbox
+                creationToolboxView1.PopulateMetiers(null, null, null);
                 pertDiagramControl1.ChargerDonnees(null);
                 ClearDetailsPanel();
                 return;
             }
 
+            // 1. Obtenir les métiers pertinents pour le lot (votre code existant)
             var metiersPourLot = _ressourceService.GetAllMetiers().Where(m => m.Phases.HasFlag(lot.Phases));
-            creationToolboxView1.PopulateMetiers(metiersPourLot, _ressourceService.GetDisplayColorForMetier);
+
+            // 2. NOUVEAU : Obtenir l'ensemble des métiers avec des compétences
+            var metiersActifs = _ressourceService.GetMetierIdsAvecCompetences();
+
+            // 3. MODIFIÉ : Passer cet ensemble à la toolbox
+            creationToolboxView1.PopulateMetiers(metiersPourLot, _ressourceService.GetDisplayColorForMetier, metiersActifs);
 
             var tachesDuLot = _projetService.ObtenirTachesParLot(_activeLotId);
             pertDiagramControl1.ChargerDonnees(tachesDuLot);

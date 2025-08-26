@@ -16,7 +16,6 @@ namespace PlanAthena.Core.Facade.Dto.Output
 
         public PlanningOptimizationResultDto? OptimisationResultat { get; init; }
 
-        // Ajout du nouveau rapport d'analyse post-optimisation
-        public PlanningAnalysisReportDto? AnalysePostOptimisationResultat { get; init; }
+
     }
 }

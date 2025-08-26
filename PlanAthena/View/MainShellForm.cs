@@ -63,7 +63,7 @@ namespace PlanAthena.View
             _ganttExportService = ganttExportService;
             _userPreferencesService = userPreferencesService;
 
-
+            InitializeMenuHoverOpening();
             InitializeThemeSelector();
             // Afficher la vue d'accueil au démarrage
             NavigateToAccueil();
@@ -96,7 +96,40 @@ namespace PlanAthena.View
                 _userPreferencesService.LoadLayout(manager, viewIdentifier);
             }
         }
+        private void InitializeMenuHoverOpening()
+        {
+            // On parcourt tous les items du MenuStrip
+            foreach (ToolStripItem item in menuStrip.Items)
+            {
+                // On vérifie si l'item est bien un menu déroulant
+                if (item is ToolStripMenuItem menuItem)
+                {
+                    // On s'abonne à l'événement MouseEnter
+                    menuItem.MouseEnter += MenuItem_MouseEnter_OpenOnHover;
+                }
+            }
+        }
 
+        private void MenuItem_MouseEnter_OpenOnHover(object sender, EventArgs e)
+        {
+            ToolStripMenuItem hoveredItem = sender as ToolStripMenuItem;
+
+            // Si l'item survolé a un sous-menu et qu'il n'est pas déjà ouvert
+            if (hoveredItem != null && hoveredItem.HasDropDown && !hoveredItem.IsOnDropDown)
+            {
+                // On ferme tous les autres sous-menus qui pourraient être ouverts
+                foreach (ToolStripItem item in menuStrip.Items)
+                {
+                    if (item is ToolStripMenuItem menuItem && menuItem != hoveredItem && menuItem.IsOnDropDown)
+                    {
+                        menuItem.HideDropDown();
+                    }
+                }
+
+                // On ouvre le sous-menu de l'item survolé
+                hoveredItem.ShowDropDown();
+            }
+        }
         #endregion
 
         #region Méthodes de Navigation (appelées par les menus et les CTA)

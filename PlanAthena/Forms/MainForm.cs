@@ -636,16 +636,7 @@ namespace PlanAthena.Forms
                 if (optimResult.CoutTotalEstime.HasValue) Log($"Coût Total Estimé : {optimResult.CoutTotalEstime / 100.0m:C}");
                 if (optimResult.DureeTotaleEnSlots.HasValue) Log($"Durée Totale (en slots de 1h): {optimResult.DureeTotaleEnSlots}");
             }
-            if (resultat.AnalysePostOptimisationResultat != null)
-            {
-                var analysisResult = resultat.AnalysePostOptimisationResultat;
-                Log("\n--- Analyse Post-Planning (KPIs) ---");
-                Log($"Taux d'Occupation Moyen Pondéré: {analysisResult.KpisGlobaux.TauxOccupationMoyenPondere:F2}%");
-                foreach (var kpi in analysisResult.KpisParOuvrier)
-                {
-                    Log($"  - {kpi.OuvrierNom} ({kpi.OuvrierId}): Taux d'Occupation: {kpi.TauxOccupation:F2}% ({kpi.HeuresTravaillees:F1}h travaillées)");
-                }
-            }
+            
         }
         #endregion
     }

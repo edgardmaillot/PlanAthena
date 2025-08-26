@@ -56,21 +56,108 @@ namespace PlanAthena.View.Structure
         {
             lotDetailView1.LotChanged += (s, e) => {
                 _projetService.ModifierLot((Lot)_selectedObject);
-                RefreshAll();
             };
             blocDetailView1.BlocChanged += (s, e) => {
                 _projetService.ModifierBloc((Bloc)_selectedObject);
-                RefreshAll();
             };
         }
+        private void LotDetailView_LotChanged(object sender, EventArgs e)
+        {
+            // S'assurer que l'objet sélectionné est bien un Lot et qu'on n'est pas en chargement
+            if (_isLoading || !(_selectedObject is Lot lot)) return;
 
+            // 1. La mise à jour de l'objet 'lot' est déjà faite dans LotDetailView,
+            //    il ne reste qu'à sauvegarder.
+            _projetService.ModifierLot(lot);
+
+            // 2. Mettre à jour UNIQUEMENT la ligne concernée dans la grille (la partie cruciale)
+            if (gridStructure.CurrentRow != null && gridStructure.CurrentRow.DataBoundItem is StructureDisplayItem displayItem)
+            {
+                // Mettre à jour l'objet qui est lié à la grille
+                displayItem.Name = lot.Nom;
+                displayItem.Phase = lot.Phases.ToString();
+                displayItem.Priority = lot.Priorite.ToString();
+
+                // Rafraîchir l'affichage de la grille pour que les changements soient visibles
+                // sans tout reconstruire.
+                gridStructure.Refresh();
+            }
+        }
+
+
+        private void BlocDetailView_BlocChanged(object sender, Bloc bloc)
+        {
+            // Le bloc modifié est directement passé en argument, c'est encore plus simple.
+            if (_isLoading) return;
+
+            // 1. Sauvegarder les modifications via le service
+            _projetService.ModifierBloc(bloc);
+
+            // 2. Mettre à jour UNIQUEMENT la ligne concernée dans la grille
+            if (gridStructure.CurrentRow != null && gridStructure.CurrentRow.DataBoundItem is StructureDisplayItem displayItem)
+            {
+                // Mettre à jour l'objet qui est lié à la grille
+                displayItem.Name = $"  ↳ {bloc.Nom}";
+                // Pas d'autres colonnes à mettre à jour pour un bloc
+
+                // Rafraîchir l'affichage
+                gridStructure.Refresh();
+            }
+        }
         #region Logique de rafraîchissement
 
         private void RefreshAll()
         {
+            // On conserve l'ID de l'objet sélectionné pour le restaurer après
+            string selectedId = null;
+            if (_selectedObject is Lot l) selectedId = l.LotId;
+            if (_selectedObject is Bloc b) selectedId = b.BlocId;
+
             BuildStructureList();
             ApplyFilter();
-            UpdateDetailUI();
+
+            // Tenter de resélectionner l'élément
+            if (selectedId != null)
+            {
+                SelectObjectInGrid(selectedId);
+            }
+
+            // S'assurer que le détail est à jour si la sélection a changé (ou a été perdue)
+            if (GetSelectedObjectId() != selectedId)
+            {
+                UpdateDetailUI();
+            }
+        }
+        // Nouvelle méthode helper pour la sélection
+        private void SelectObjectInGrid(string idToSelect)
+        {
+            foreach (DataGridViewRow row in gridStructure.Rows)
+            {
+                if (row.DataBoundItem is StructureDisplayItem displayItem)
+                {
+                    string currentId = null;
+                    if (displayItem.Data is Lot lot) currentId = lot.LotId;
+                    else if (displayItem.Data is Bloc bloc) currentId = bloc.BlocId;
+
+                    if (currentId == idToSelect)
+                    {
+                        row.Selected = true;
+                        gridStructure.CurrentCell = row.Cells[0];
+                        return;
+                    }
+                }
+            }
+        }
+
+        // Nouvelle méthode helper pour obtenir l'ID sélectionné
+        private string GetSelectedObjectId()
+        {
+            if (gridStructure.SelectedRows.Count > 0 && gridStructure.SelectedRows[0].DataBoundItem is StructureDisplayItem displayItem)
+            {
+                if (displayItem.Data is Lot lot) return lot.LotId;
+                if (displayItem.Data is Bloc bloc) return bloc.BlocId;
+            }
+            return null;
         }
 
         private void BuildStructureList()

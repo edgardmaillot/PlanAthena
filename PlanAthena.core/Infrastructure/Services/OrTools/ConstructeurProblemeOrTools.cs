@@ -3,6 +3,7 @@
 using Google.OrTools.Sat;
 using PlanAthena.core.Application.InternalDto;
 using PlanAthena.Core.Application.Interfaces;
+using System.Diagnostics;
 
 namespace PlanAthena.Core.Infrastructure.Services.OrTools
 {
@@ -33,10 +34,10 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
             switch (objectif)
             {
                 case "DELAI":
+                default:
                     model.Minimize(makespan);
                     break;
                 case "COUT":
-                default:
                     model.Minimize(coutTotal);
                     break;
             }

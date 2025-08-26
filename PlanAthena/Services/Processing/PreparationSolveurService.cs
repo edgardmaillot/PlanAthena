@@ -22,14 +22,12 @@ namespace PlanAthena.Services.Processing
         /// </summary>
         /// <param name="tachesDuProjet">Liste des tâches originales du projet</param>
         /// <returns>Résultat contenant les tâches préparées et la table de mappage parent/enfant</returns>
-        public PreparationResult PreparerPourSolveur(IReadOnlyList<Tache> tachesDuProjet, int heuresTravailEffectifParJour)
+        public PreparationResult PreparerPourSolveur(IReadOnlyList<Tache> tachesDuProjet, ConfigurationPlanification configuration)
         {
             if (tachesDuProjet == null || !tachesDuProjet.Any())
                 return new PreparationResult();
-            int maxHeuresParSousTache = heuresTravailEffectifParJour / 2;
-            if (maxHeuresParSousTache < 1) maxHeuresParSousTache = 1;
-
-            int heureLimiteDecoupage = (maxHeuresParSousTache * 2) + 1;
+            int maxHeuresParSousTache = configuration.HeuresTravailEffectifParJour;
+            int heureLimiteDecoupage = (maxHeuresParSousTache * configuration.SeuilJoursDecoupageTache) + 1;
 
             var tachesDeTravail = tachesDuProjet.Select(CopierTache).ToList();
             var (tachesDecoupees, tableDecoupage) = DecouperTachesLongues(tachesDeTravail, heureLimiteDecoupage, maxHeuresParSousTache);

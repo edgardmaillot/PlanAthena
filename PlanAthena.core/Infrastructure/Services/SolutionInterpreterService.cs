@@ -6,6 +6,7 @@ using PlanAthena.Core.Application.Interfaces;
 using PlanAthena.Core.Facade.Dto.Enums; 
 using PlanAthena.Core.Facade.Dto.Output;
 using PlanAthena.Core.Domain.ValueObjects;
+using System.Diagnostics;
 
 namespace PlanAthena.Core.Infrastructure.Services
 {
@@ -41,6 +42,8 @@ namespace PlanAthena.Core.Infrastructure.Services
 
                     // 1. Lire le slot de début décidé par le solveur
                     var startSlotIndex = solver.Value(intervalVar.StartExpr());
+                    var dureeEnSlots = solver.Value(intervalVar.SizeExpr());
+                    var endSlotIndex = startSlotIndex + dureeEnSlots - 1;
 
                     // 2. *** MODIFICATION CRITIQUE: Calcul intelligent de la durée ***
                     // Pour les tâches normales: utiliser la durée calculée par le solveur (SizeExpr)
@@ -49,6 +52,7 @@ namespace PlanAthena.Core.Infrastructure.Services
 
                     // 3. Traduire le slot de début en DateTime
                     var dateDebut = echelleTemps.Slots[(int)startSlotIndex].Debut.ToDateTimeUnspecified();
+                    var dateFin = echelleTemps.Slots[(int)endSlotIndex].Fin.ToDateTimeUnspecified();
 
                     // 4. Ajouter l'affectation à la liste avec la durée corrigée
                     affectations.Add(new AffectationDto
@@ -59,7 +63,8 @@ namespace PlanAthena.Core.Infrastructure.Services
                         OuvrierNom = $"{ouvrier.Prenom} {ouvrier.Nom}",
                         BlocId = tache.BlocParentId.Value,
                         DateDebut = dateDebut,
-                        DureeHeures = dureeReelle, // *** CORRECTION: Durée intelligente au lieu de dureeEnSlots ***
+                        DateFin = dateFin,
+                        DureeHeures = dureeReelle, 
 
                         // *** AJOUT: Métadonnées pour export Gantt et affichage ***
                         TypeActivite = ObtenirTypeActivite(tacheId, modeleCpSat),

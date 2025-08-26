@@ -4,6 +4,7 @@ using Google.OrTools.Sat;
 using NodaTime;
 using PlanAthena.core.Application.InternalDto;
 using PlanAthena.Core.Domain.ValueObjects;
+using System.Diagnostics;
 
 namespace PlanAthena.Core.Infrastructure.Services.OrTools
 {
@@ -39,7 +40,7 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
             model.Add(coutIndirect == LinearExpr.Sum(coutsIndirectsExpr));
             model.Add(coutTotal == coutRh + coutIndirect);
 
-            Console.WriteLine($"[DEBUG] Modèle de coût optimisé construit. Bornes: RH={borneCoutRh}, Indirect={borneCoutIndirect}");
+            Debug.WriteLine($"[DEBUG] Modèle de coût optimisé construit. Bornes: RH={borneCoutRh}, Indirect={borneCoutIndirect}");
 
             return (coutTotal, coutRh, coutIndirect);
         }
@@ -91,7 +92,7 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
                 .Where(o => assignationsParOuvrier.ContainsKey(o.Id) && assignationsParOuvrier[o.Id].Any())
                 .ToList();
 
-            Console.WriteLine($"[DEBUG] Calcul optimisé pour {ouvriersActifs.Count} ouvriers actifs sur {chantier.Ouvriers.Count} total");
+            Debug.WriteLine($"[DEBUG] Calcul optimisé pour {ouvriersActifs.Count} ouvriers actifs sur {chantier.Ouvriers.Count} total");
 
             var ouvrierTravailleLeJour = new Dictionary<(OuvrierId, LocalDate), BoolVar>();
 
