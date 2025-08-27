@@ -1,3 +1,4 @@
+//Version 0.4.7.5
 using Krypton.Navigator;
 using Krypton.Docking;
 using Krypton.Workspace;

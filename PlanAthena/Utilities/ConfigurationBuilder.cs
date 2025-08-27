@@ -29,7 +29,8 @@ namespace PlanAthena.Utilities
                 JoursOuvres = joursOuvres,
                 HeureDebutJournee = heureDebut,
                 HeuresTravailEffectifParJour = heuresTravail,
-                TypeDeSortie = ConvertirTypeDeSortie(typeSortie),
+                //TypeDeSortie = ConvertirTypeDeSortie(typeSortie),
+                TypeDeSortie = typeSortie,
                 Description = description,
                 DateDebutSouhaitee = dateDebut,
                 DateFinSouhaitee = dateFin,
@@ -60,7 +61,7 @@ namespace PlanAthena.Utilities
             {
                 "Optimisation Coût" => "OPTIMISATION_COUT",
                 "Optimisation Délai" => "OPTIMISATION_DELAI",
-                _ => "Analyse et Estimation"
+                _ => "ANALYSE_RAPIDE"
             };
         }
     }

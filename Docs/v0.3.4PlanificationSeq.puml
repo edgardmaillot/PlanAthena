@@ -13,7 +13,7 @@ participant "PlanificationService" as PlanSvc
 participant "PreparationSolveurService" as PrepSvc
 participant "DataTransformer" as Transfo
 participant "PlanAthenaCoreFacade\n(Le Solveur)" as Solver
-participant "<b>ResultatConsolidationService</b>\n(Nouveau composant)" as ConsolSvc
+participant "PlanningResultatService" as ConsolSvc
 User -> UI : Clique "Lancer la planification"
 activate UI
 UI -> PlanSvc : LancerPlanificationAsync(configurationUI)

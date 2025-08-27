@@ -1,0 +1,54 @@
+@startuml
+' --- Configuration ---
+!theme toy
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+' --- Définition des classes ---
+package "Use Cases" {
+class PlanificationOrchestrator {
++ ExecuteAsync(config: ConfigurationPlanification): Task<PlanificationRunResult>
+}
+}
+package "Business (Sources de Vérité)" {
+class PlanningService {
+- _currentPlanning: ConsolidatedPlanning
++ GetCurrentPlanning(): ConsolidatedPlanning
++ UpdatePlanning(newPlanning: ConsolidatedPlanning)
++ ClearPlanning()
+}
+class TaskStatusService {
+- _taskStatuses: Dictionary<string, Status>
++ GetAllTasksStatusInfo(): IReadOnlyList<TaskStatusInfo>
++ UpdateTasksStatus(tacheIds: IEnumerable<string>, newStatus: Status)
++ ResetAllTasksStatusToPlanned()
+}
+class ProjetService
+class RessourceService
+}
+package "Utilities" {
+class PlanningConsolidationService {
++ Process(rawResult: PlanificationResultDto, config: ConfigurationPlanification): ConsolidatedPlanning
+}
+class AnalysisService {
++ GenerateReport(planning: ConsolidatedPlanning, allOuvriers: IReadOnlyList<Ouvrier>, config: ConfigurationPlanification): AnalysisReport
+}
+}
+' --- Relations de Dépendance (Injection) ---
+PlanificationOrchestrator ..> PlanningConsolidationService : "utilise"
+PlanificationOrchestrator ..> AnalysisService : "utilise"
+PlanificationOrchestrator ..> PlanningService : "met à jour"
+PlanificationOrchestrator ..> TaskStatusService : "met à jour"
+PlanificationOrchestrator ..> ProjetService : "lit"
+PlanificationOrchestrator ..> RessourceService : "lit"
+TaskStatusService ..> ProjetService : "lit"
+TaskStatusService ..> PlanningService : "lit"
+TaskStatusService ..> RessourceService : "lit"
+' --- Note explicative ---
+note top of PlanificationOrchestrator
+<b>Chef d'Orchestre</b>
+Appelle les services utilitaires pour traiter les données.
+Met à jour les sources de vérité.
+end note
+@enduml

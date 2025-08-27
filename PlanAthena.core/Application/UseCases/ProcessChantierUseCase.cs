@@ -70,8 +70,16 @@ namespace PlanAthena.Core.Application.UseCases
             {
                 return await AnalyserUniquementAsync(chantier, validationMessages);
             }
+            else
+            {
+                if (inputDto.OptimizationConfig.TypeDeSortie == "ANALYSE_RAPIDE")
+                {
+                    // On impose une limite maximale de 30 secondes pour l'analyse rapide
+                    return await AnalyserUniquementAsync(chantier, validationMessages);
+                }
+            }
 
-            return await ExecuterOptimisationEtAnalyseAsync(chantier, inputDto.OptimizationConfig, validationMessages);
+                return await ExecuterOptimisationEtAnalyseAsync(chantier, inputDto.OptimizationConfig, validationMessages);
         }
 
         private async Task<(Chantier? chantier, IReadOnlyList<MessageValidationDto> messages)> ValiderEtCreerChantierAsync(ChantierSetupInputDto inputDto)
@@ -209,13 +217,13 @@ namespace PlanAthena.Core.Application.UseCases
 
                 // 3. Aiguillage de la stratégie avec PARAMÉTRAGE DYNAMIQUE
                 string solverParams;
-                string objectif = "COUT"; // Par défaut
+                string objectif = "DELAI"; // Par défaut
 
                 switch (config.TypeDeSortie)
                 {
                     case "ANALYSE_RAPIDE":
                         solverParams = $"max_time_in_seconds:{config.DureeCalculMaxSecondes}.0,log_search_progress:false,cp_model_presolve:true";
-                        objectif = "COUT";
+                        objectif = "DELAI";
                         break;
 
                     case "OPTIMISATION_DELAI":
