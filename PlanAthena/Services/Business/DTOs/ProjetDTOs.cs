@@ -34,15 +34,4 @@ namespace PlanAthena.Services.Business.DTOs
         public List<string> Avertissements { get; set; } = new List<string>();
         public InformationsProjet InformationsProjet { get; set; }
     }
-
-    /// <summary>
-    /// Résumé complet d'un projet pour affichage.
-    /// </summary>
-    public class ResumeProjet
-    {
-        public int NombreMetiers { get; set; }
-        public StatistiquesOuvriers StatistiquesOuvriers { get; set; } = new StatistiquesOuvriers();
-        public StatistiquesTaches StatistiquesTaches { get; set; } = new StatistiquesTaches();
-        public StatistiquesMappingMetiers StatistiquesMappingMetiers { get; set; } = new StatistiquesMappingMetiers();
-    }
 }

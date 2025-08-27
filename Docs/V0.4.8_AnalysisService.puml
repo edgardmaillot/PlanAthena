@@ -1,0 +1,64 @@
+@startuml
+' --- Configuration ---
+!theme toy
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+package "DTOs (Entrée & Sortie)" {
+class ConsolidatedPlanning {
++ SegmentsParOuvrierId: Dictionary<string, List<SegmentDeTravail>>
+}
+class Ouvrier
+class ConfigurationPlanification
+
+' --- Nouveaux DTOs de sortie ---
+package "Rapports d'Analyse" <<Folder>> {
+    class AnalysisReport <<(N,SkyBlue)>> {
+      + SyntheseProjet: SyntheseProjetReport
+      + AnalysesOuvriers: List<AnalyseOuvrierReport>
+      + ChargeJournaliere: Dictionary<DateTime, int>
+    }
+    class SyntheseProjetReport <<(N,SkyBlue)>> {
+      + CoutTotalRh: decimal
+      + CoutTotalIndirect: decimal
+      + ...
+    }
+    class AnalyseOuvrierReport <<(N,SkyBlue)>> {
+      + OuvrierId: string
+      + TauxOccupation: double
+      + ...
+    }
+    class MetierTensionReport <<(N,SkyBlue)>> {
+        + Conclusion: string
+        + Repartition: List<MetierCount>
+    }
+    class MetierCount <<(N,SkyBlue)>>
+}
+}
+package "Utilities" {
+class AnalysisService {
+' --- Points d'Entrée Publics ---
++ GenerateReport(planning, allOuvriers, config, joursOuvresCalculator): AnalysisReport
++ AnalyzeMetierTension(ouvrierClesIds, allOuvriers): MetierTensionReport
+--
+' --- Logique Privée ---
+- _CalculerSyntheseProjet(...): SyntheseProjetReport
+- _CalculerAnalysesOuvriers(...): List<AnalyseOuvrierReport>
+- _CalculerChargeJournaliere(...): Dictionary<DateTime, int>
+}
+}
+' --- Relations ---
+AnalysisService ..> ConsolidatedPlanning : "lit"
+AnalysisService ..> Ouvrier : "lit"
+AnalysisService ..> ConfigurationPlanification : "lit"
+AnalysisService ..> AnalysisReport : "crée"
+AnalysisService ..> MetierTensionReport : "crée"
+AnalysisReport o-- SyntheseProjetReport
+AnalysisReport o-- AnalyseOuvrierReport
+MetierTensionReport o-- MetierCount
+note top of AnalysisService
+<b>Service d'Analyse (Stateless)</b>
+Fournit des KPIs et des analyses
+à partir de données brutes.
+Ne dépend d'aucun autre service.
+end note
+@enduml

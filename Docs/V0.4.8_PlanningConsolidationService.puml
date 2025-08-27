@@ -1,0 +1,66 @@
+@startuml
+' --- Configuration ---
+!theme toy
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+package "DTOs (Entrée & Sortie)" {
+class ProcessChantierResultDto
+class ConfigurationPlanification
+
+class "ConsolidatedPlanning" as CP <<(N,SkyBlue)>> {
+    + DateDebutProjet: DateTime
+    + DateFinProjet: DateTime
+    + SegmentsParOuvrierId: Dictionary<string, List<SegmentDeTravail>>
+}
+
+class "SegmentDeTravail" as ST <<(N,SkyBlue)>> {
+    + OuvrierId: string
+    + TacheId: string
+    + ParentTacheId: string
+    + TacheNom: string
+    + BlocId: string
+    + Jour: DateTime
+    + HeuresTravaillees: double
+}
+}
+package "Utilities" {
+class "PlanningConsolidationService" as PCS {
+' --- Méthode Publique (Contrat) ---
++ Process(rawResult: ProcessChantierResultDto, config: ConfigurationPlanification): ConsolidatedPlanning
+--
+' --- Logique Interne ---
+- _DecouperAffectationEnSegments(affectation, config): List<SegmentDeTravail>
+- _DecouperEnTempsOuvre(affectation, config): List<SegmentDeTravail>
+- _DecouperEnTempsCalendaire(affectation): List<SegmentDeTravail>
+- _ObtenirParentIdDepuisId(tacheId): string
+}
+}
+' --- Relations ---
+PCS ..> ProcessChantierResultDto : "lit"
+PCS ..> ConfigurationPlanification : "lit"
+PCS ..> CP : "crée et retourne"
+CP "1" o-- "0..*" ST
+note top of PCS
+<b>Règles de Consolidation Clés</b>
+<b>Filtrage :</b> Ignore les jalons techniques ("JT_...").
+Conserve les jalons utilisateur (ex: séchage) et leurs ouvriers virtuels.
+<b>Aiguillage de Découpage :</b> La méthode principale
+<i>_DecouperAffectationEnSegments</i> redirige vers deux logiques
+distinctes en fonction du <i>TypeActivite</i> de la tâche.
+end note
+note right of PCS::_DecouperEnTempsOuvre
+<b>Découpage pour Tâches Humaines</b>
+Respecte les jours ouvrés et les heures de travail
+définis dans <i>ConfigurationPlanification</i>.
+Gère correctement les chevauchements de week-ends.
+Gère les fuseaux horaires lors de la conversion
+initiale de <i>DateDebut</i>.
+end note
+note right of PCS::_DecouperEnTempsCalendaire
+<b>Découpage pour Jalons Utilisateur</b>
+Découpage en temps continu (24/7).
+Ignore les jours ouvrés et les heures de travail.
+Essentiel pour les durées de processus passifs
+(ex: temps de séchage).
+end note
+@enduml

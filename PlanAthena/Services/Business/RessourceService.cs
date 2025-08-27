@@ -301,7 +301,7 @@ namespace PlanAthena.Services.Business
         }
 
         public List<Ouvrier> GetAllOuvriers() => _ouvriers.Values.OrderBy(o => o.Nom).ThenBy(o => o.Prenom).ToList();
-        public Ouvrier GetOuvrierById(string id) => _ouvriers.GetValueOrDefault(id);
+        public virtual Ouvrier GetOuvrierById(string id) => _ouvriers.GetValueOrDefault(id);
 
         #endregion
     }

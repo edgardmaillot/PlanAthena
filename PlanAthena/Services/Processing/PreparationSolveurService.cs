@@ -22,7 +22,7 @@ namespace PlanAthena.Services.Processing
         /// </summary>
         /// <param name="tachesDuProjet">Liste des tâches originales du projet</param>
         /// <returns>Résultat contenant les tâches préparées et la table de mappage parent/enfant</returns>
-        public PreparationResult PreparerPourSolveur(IReadOnlyList<Tache> tachesDuProjet, ConfigurationPlanification configuration)
+        public virtual PreparationResult PreparerPourSolveur(IReadOnlyList<Tache> tachesDuProjet, ConfigurationPlanification configuration)
         {
             if (tachesDuProjet == null || !tachesDuProjet.Any())
                 return new PreparationResult();

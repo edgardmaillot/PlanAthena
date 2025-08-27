@@ -204,8 +204,8 @@ namespace PlanAthena.Services.Business
             _taches.Remove(tacheId);
         }
 
-        public List<Tache> ObtenirToutesLesTaches() => _taches.Values.ToList();
-        public Tache ObtenirTacheParId(string tacheId) => _taches.GetValueOrDefault(tacheId);
+        public virtual List<Tache> ObtenirToutesLesTaches() => _taches.Values.ToList();
+        public virtual Tache ObtenirTacheParId(string tacheId) => _taches.GetValueOrDefault(tacheId);
         public List<Tache> ObtenirTachesParLot(string lotId) => _taches.Values.Where(t => t.LotId == lotId).ToList();
         public List<Tache> ObtenirTachesParBloc(string blocId) => _taches.Values.Where(t => t.BlocId == blocId).ToList();
         public virtual List<Tache> ObtenirTachesParMetier(string metierId) => _taches.Values.Where(t => t.MetierId == metierId).ToList();

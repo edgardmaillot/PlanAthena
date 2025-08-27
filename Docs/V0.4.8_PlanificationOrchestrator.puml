@@ -1,0 +1,67 @@
+@startuml
+' --- Configuration ---
+'!theme toy
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+package "DTOs" {
+class ConfigurationPlanification
+class "PlanificationRunResult" as RunResult <<(N,SkyBlue)>> {
++ RawResult: ProcessChantierResultDto
++ AnalysisReport: AnalysisReport?
++ MetierTensionReport: MetierTensionReport?
+}
+}
+package "Use Cases" {
+class PlanificationOrchestrator {
+' --- Dépendances Injectées ---
+- _projetService: ProjetService
+- _ressourceService: RessourceService
+- _preparationService: PreparationSolveurService
+- _transformerService: DataTransformer
+- _facade: PlanAthenaCoreFacade
+- _consolidationService: PlanningConsolidationService
+- _planningService: PlanningService
+- _taskStatusService: TaskStatusService
+- _analysisService: AnalysisService
+--
+' --- Méthode Publique ---
++ ExecuteAsync(config: ConfigurationPlanification): Task<PlanificationRunResult>
+}
+}
+package "Dépendances" {
+package "Sources de Vérité" <<Folder>> {
+class ProjetService
+class RessourceService
+class PlanningService
+class TaskStatusService
+}
+package "Utilitaires" <<Folder>> {
+class PreparationSolveurService
+class DataTransformer
+class PlanningConsolidationService
+class AnalysisService
+}
+package "Facade Externe" <<Cloud>> {
+class PlanAthenaCoreFacade
+}
+}
+' --- Relations ---
+PlanificationOrchestrator --> ProjetService
+PlanificationOrchestrator --> RessourceService
+PlanificationOrchestrator --> PreparationSolveurService
+PlanificationOrchestrator --> DataTransformer
+PlanificationOrchestrator --> PlanAthenaCoreFacade
+PlanificationOrchestrator --> PlanningConsolidationService
+PlanificationOrchestrator --> PlanningService
+PlanificationOrchestrator --> TaskStatusService
+PlanificationOrchestrator --> AnalysisService
+PlanificationOrchestrator ..> ConfigurationPlanification : "utilise en entrée"
+PlanificationOrchestrator ..> RunResult : "crée et retourne"
+note top of PlanificationOrchestrator
+<b>Chef d'Orchestre du Use Case "Planifier"</b>
+Coordination pure, sans logique métier interne.
+Appelle les services experts dans le bon ordre
+et met à jour l'état de l'application.
+end note
+@enduml
