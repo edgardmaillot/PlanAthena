@@ -4,6 +4,7 @@ using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.Export;
 using PlanAthena.Services.Infrastructure;
+using PlanAthena.Services.UseCases;
 using PlanAthena.Utilities;
 using PlanAthena.View;
 using PlanAthena.View.Dashboard;
@@ -29,10 +30,13 @@ namespace PlanAthena.View
         private readonly ImportService _importService;
         private readonly CheminsPrefereService _cheminsPrefereService;
         private readonly DependanceBuilder _dependanceBuilder;
-        private readonly PlanificationService _planificationService;
+        private readonly PlanningService _planningService;
+        private readonly TaskStatusService _taskStatusService;
         private readonly PlanningExcelExportService _planningExcelExportService;
         private readonly GanttExportService _ganttExportService;
         private readonly UserPreferencesService _userPreferencesService;
+        private readonly PlanificationOrchestrator _planificationOrchestrator;
+
 
         public MainShellForm(
             IServiceProvider serviceProvider,
@@ -41,8 +45,10 @@ namespace PlanAthena.View
             RessourceService ressourceService,
             ImportService importService,
             CheminsPrefereService cheminsPrefereService,
-            DependanceBuilder dependanceBuilder,
-            PlanificationService planificationService,
+            DependanceBuilder dependanceBuilder, 
+            PlanificationOrchestrator planificationOrchestrator, 
+            PlanningService planningService,
+            TaskStatusService taskStatusService,
             PlanningExcelExportService planningExcelExportService,
             GanttExportService ganttExportService,
             UserPreferencesService userPreferencesService)
@@ -58,7 +64,9 @@ namespace PlanAthena.View
             _importService = importService;
             _cheminsPrefereService = cheminsPrefereService;
             _dependanceBuilder = dependanceBuilder;
-            _planificationService = planificationService;
+            _planificationOrchestrator = planificationOrchestrator;
+            _planningService = planningService;
+            _taskStatusService= taskStatusService;
             _planningExcelExportService = planningExcelExportService;
             _ganttExportService = ganttExportService;
             _userPreferencesService = userPreferencesService;
@@ -176,7 +184,7 @@ namespace PlanAthena.View
         }
         private void NavigateToPlanificator()
         {
-            var view = new PlanificatorView(_applicationService, _planificationService, _planningExcelExportService, _ganttExportService, _ressourceService);
+            var view = new PlanificatorView(_applicationService, _planificationOrchestrator, _planningService, _projetService, _ressourceService, _taskStatusService, _planningExcelExportService, _ganttExportService);
             ShowView(view);
         }
         #endregion

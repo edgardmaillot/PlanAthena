@@ -80,5 +80,14 @@ namespace PlanAthena.Services.Business.DTOs
         /// Calcul : 1 - (Nombre Jours Travaillés / Nombre Jours Ouvrés entre sa première et sa dernière affectation).
         /// </summary>
         public double TauxFragmentation { get; init; }
+        /// <summary>
+        /// L'identifiant du métier principal de l'ouvrier.
+        /// </summary>
+        public string MetierPrincipalId { get; init; } = string.Empty;
+
+        /// <summary>
+        /// Le nom du métier principal de l'ouvrier.
+        /// </summary>
+        public string MetierPrincipalNom { get; init; } = string.Empty;
     }
 }

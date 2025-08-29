@@ -154,7 +154,66 @@ namespace PlanAthena.Services.Business
 
             return _ConstruireTaskStatusInfo(tache, infosParTacheDepuisPlanning);
         }
+        /// <summary>
+        /// NOUVEAU: Construit une structure de données détaillée du planning, groupée par jour puis par ouvrier,
+        /// optimisée pour un affichage séquentiel comme dans un fichier de log.
+        /// </summary>
+        /// <returns>Une liste d'objets représentant chaque journée de travail du planning.</returns>
+        public IReadOnlyList<LogPlanningJournalier> RetournePlanningDetailleParJour()
+        {
+            var planning = _planningService.GetCurrentPlanning();
+            if (planning == null || !planning.SegmentsParOuvrierId.Any())
+            {
+                return new List<LogPlanningJournalier>();
+            }
 
+            // Étape 1: Aplatir tous les segments et les grouper par jour.
+            var segmentsParJour = planning.SegmentsParOuvrierId
+                .SelectMany(kvp => kvp.Value) // Prend tous les segments de tous les ouvriers
+                .GroupBy(segment => segment.Jour.Date); // Groupe par jour
+
+            var resultatFinal = new List<LogPlanningJournalier>();
+
+            // Étape 2: Pour chaque jour, grouper les segments par ouvrier.
+            foreach (var groupeJour in segmentsParJour.OrderBy(g => g.Key))
+            {
+                var jour = groupeJour.Key;
+
+                var ouvriersDuJour = groupeJour
+                    .GroupBy(segment => segment.OuvrierId) // Dans un jour, groupe par ouvrier
+                    .Select(groupeOuvrier =>
+                    {
+                        var ouvrierId = groupeOuvrier.Key;
+                        var nomOuvrier = _ressourceService.GetOuvrierById(ouvrierId)?.NomComplet ?? ouvrierId;
+
+                        // Crée la liste des affectations pour cet ouvrier, ce jour-là.
+                        var affectations = groupeOuvrier
+                            .Select(segment => new LogAffectationDuJour
+                            {
+                                TacheNom = segment.TacheNom,
+                                BlocId = segment.BlocId,
+                                DureeHeures = segment.HeuresTravaillees
+                            })
+                            .ToList();
+
+                        return new LogOuvrierDuJour
+                        {
+                            NomOuvrier = nomOuvrier,
+                            Affectations = affectations
+                        };
+                    })
+                    .OrderBy(o => o.NomOuvrier)
+                    .ToList();
+
+                resultatFinal.Add(new LogPlanningJournalier
+                {
+                    Jour = jour,
+                    Ouvriers = ouvriersDuJour
+                });
+            }
+
+            return resultatFinal;
+        }
         #endregion
 
         #region Logique Privée d'Agrégation

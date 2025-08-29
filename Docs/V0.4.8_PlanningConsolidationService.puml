@@ -6,33 +6,34 @@ skinparam classAttributeIconSize 0
 package "DTOs (Entrée & Sortie)" {
 class ProcessChantierResultDto
 class ConfigurationPlanification
-
-class "ConsolidatedPlanning" as CP <<(N,SkyBlue)>> {
-    + DateDebutProjet: DateTime
-    + DateFinProjet: DateTime
-    + SegmentsParOuvrierId: Dictionary<string, List<SegmentDeTravail>>
+class "ConsolidatedPlanning" as CP <<(M,Lime) Modified>> {
++ DateDebutProjet: DateTime
++ DateFinProjet: DateTime
++ SegmentsParOuvrierId: Dictionary<string, List<SegmentDeTravail>>
 }
-
-class "SegmentDeTravail" as ST <<(N,SkyBlue)>> {
-    + OuvrierId: string
-    + TacheId: string
-    + ParentTacheId: string
-    + TacheNom: string
-    + BlocId: string
-    + Jour: DateTime
-    + HeuresTravaillees: double
+class "SegmentDeTravail" as ST <<(M,Lime) Modified>> {
++ OuvrierId: string
++ TacheId: string
++ ParentTacheId: string
++ TacheNom: string
++ BlocId: string
++ Jour: DateTime
++ HeuresTravaillees: double
+--
++ HeureDebut: TimeSpan
++ HeureFin: TimeSpan
 }
 }
 package "Utilities" {
 class "PlanningConsolidationService" as PCS {
 ' --- Méthode Publique (Contrat) ---
-+ Process(rawResult: ProcessChantierResultDto, config: ConfigurationPlanification): ConsolidatedPlanning
+Process(rawResult: ProcessChantierResultDto, config: ConfigurationPlanification): ConsolidatedPlanning
 --
 ' --- Logique Interne ---
-- _DecouperAffectationEnSegments(affectation, config): List<SegmentDeTravail>
-- _DecouperEnTempsOuvre(affectation, config): List<SegmentDeTravail>
-- _DecouperEnTempsCalendaire(affectation): List<SegmentDeTravail>
-- _ObtenirParentIdDepuisId(tacheId): string
+_DecouperAffectationEnSegments(affectation, config): List<SegmentDeTravail>
+_DecouperEnTempsOuvre(affectation, config): List<SegmentDeTravail>
+_DecouperEnTempsCalendaire(affectation): List<SegmentDeTravail>
+ObtenirParentIdDepuisId(tacheId): string
 }
 }
 ' --- Relations ---
@@ -42,7 +43,7 @@ PCS ..> CP : "crée et retourne"
 CP "1" o-- "0..*" ST
 note top of PCS
 <b>Règles de Consolidation Clés</b>
-<b>Filtrage :</b> Ignore les jalons techniques ("JT_...").
+<b>Filtrage :</b> Ignore les jalons techniques ("JT...").
 Conserve les jalons utilisateur (ex: séchage) et leurs ouvriers virtuels.
 <b>Aiguillage de Découpage :</b> La méthode principale
 <i>_DecouperAffectationEnSegments</i> redirige vers deux logiques
@@ -53,14 +54,14 @@ note right of PCS::_DecouperEnTempsOuvre
 Respecte les jours ouvrés et les heures de travail
 définis dans <i>ConfigurationPlanification</i>.
 Gère correctement les chevauchements de week-ends.
-Gère les fuseaux horaires lors de la conversion
-initiale de <i>DateDebut</i>.
+<b>✅ Nouveau : Calcule les HeureDebut et HeureFin
+précises (TimeSpan) de chaque segment journalier.</b>
 end note
 note right of PCS::_DecouperEnTempsCalendaire
 <b>Découpage pour Jalons Utilisateur</b>
 Découpage en temps continu (24/7).
 Ignore les jours ouvrés et les heures de travail.
-Essentiel pour les durées de processus passifs
+Essentiel pour les processus passifs
 (ex: temps de séchage).
 end note
 @enduml

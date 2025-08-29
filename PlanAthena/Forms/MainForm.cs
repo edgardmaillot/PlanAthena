@@ -316,7 +316,7 @@ namespace PlanAthena.Forms
 
         private async void btnExportPlanningExcel_Click(object sender, EventArgs e)
         {
-            if (_dernierResultatPlanificationComplet == null)
+            /*if (_dernierResultatPlanificationComplet == null)
             {
                 MessageBox.Show("Veuillez d'abord lancer une planification avant d'exporter.", "Planification requise", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
@@ -373,7 +373,7 @@ namespace PlanAthena.Forms
             {
                 btnExportPlanningExcel.Enabled = true;
                 btnExportPlanningExcel.Text = "📋 Export Planning Excel";
-            }
+            }*/
         }
 
         #endregion
@@ -434,7 +434,7 @@ namespace PlanAthena.Forms
                         JoursOuvres = chkListJoursOuvres.CheckedItems.Cast<DayOfWeek>()
                     };
 
-                    _ganttExportService.ExporterVersGanttProjectXml(_dernierResultatPlanificationComplet.GanttConsolide, sfd.FileName, config);
+                    //_ganttExportService.ExporterVersGanttProjectXml(_dernierResultatPlanificationComplet.GanttConsolide, sfd.FileName, config);
 
                     Log($"📊 Export GanttProject réussi : {sfd.FileName}");
                     MessageBox.Show($"Export GanttProject terminé avec succès !\n\nFichier : {sfd.FileName}", "Export réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);

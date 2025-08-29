@@ -2,7 +2,7 @@
 
 using PlanAthena.Core.Facade;
 using PlanAthena.Services.Business;
-using PlanAthena.Services.Business.DTOs;
+using PlanAthena.Services.Business.DTOs; // AJOUTÉ : Pour accéder aux DTOs officiels
 using PlanAthena.Services.Processing;
 using PlanAthena.Utilities;
 using System;
@@ -66,7 +66,7 @@ namespace PlanAthena.Services.UseCases
             var preparationResult = _preparationService.PreparerPourSolveur(tachesOriginales, config);
 
             var inputDto = _transformerService.TransformToChantierSetupDto(
-                projetData, poolOuvriers, poolMetiers, preparationResult.TachesPreparees, config);
+                 projetData, poolOuvriers, poolMetiers, preparationResult.TachesPreparees, config);
 
             // --- PHASE 2 : APPEL AU MOTEUR DE CALCUL ---
             var rawResult = await _facade.ProcessChantierAsync(inputDto);
@@ -78,31 +78,34 @@ namespace PlanAthena.Services.UseCases
                 var tensionReport = _analysisService.AnalyzeMetierTension(
                     rawResult.AnalyseStatiqueResultat.OuvriersClesSuggereIds, poolOuvriers);
 
+                // CORRECTION 1: On s'assure d'utiliser le type `MetierTensionReport` du namespace DTOs.
                 return new PlanificationRunResult { RawResult = rawResult, MetierTensionReport = tensionReport };
             }
             else if (rawResult.OptimisationResultat != null)
             {
                 // --- CAS B : OPTIMISATION ---
-                // *** LIGNE CORRIGÉE CI-DESSOUS ***
-                // Le service de consolidation prend l'objet rawResult complet.
                 var consolidatedPlanning = _consolidationService.Process(rawResult, config);
 
                 _planningService.UpdatePlanning(consolidatedPlanning, config);
 
                 var plannedTaskIds = consolidatedPlanning.SegmentsParOuvrierId
                     .SelectMany(kvp => kvp.Value)
-                    // **AMÉLIORATION**: On doit remonter à la tâche mère pour mettre à jour son statut
                     .Select(s => s.ParentTacheId ?? s.TacheId)
                     .Distinct()
                     .ToList();
                 _taskStatusService.ModifierTachePlanifiee(plannedTaskIds);
 
-                var joursOuvresCalculator = (DateTime start, DateTime end) => _planningService.GetNombreJoursOuvres(start, end);
+                // CORRECTION 2: L'expression lambda est explicitement castée vers le type de délégué attendu par AnalysisService.
+                // Cela résout l'ambiguïté de type pour le compilateur.
+                var joursOuvresCalculator = new AnalysisService.JoursOuvresCalculator((start, end) =>
+                    _planningService.GetNombreJoursOuvres(start, end));
+
                 var analysisReport = _analysisService.GenerateReport(
-    consolidatedPlanning,
-    poolOuvriers,
-    config,
-    (start, end) => _planningService.GetNombreJoursOuvres(start, end));
+                    consolidatedPlanning,
+                    poolOuvriers,
+                    poolMetiers,
+                    config,
+                    joursOuvresCalculator);
 
                 return new PlanificationRunResult { RawResult = rawResult, AnalysisReport = analysisReport };
             }
@@ -113,4 +116,9 @@ namespace PlanAthena.Services.UseCases
             }
         }
     }
+
+    // SUPPRIMÉ : La définition locale de `PlanificationRunResult` a été retirée pour utiliser
+    // une version officielle qui sera définie dans son propre fichier (par exemple, DTOs/PlanificationRunResult.cs)
+    // Idem pour MetierTensionReport et MetierCount, qui utilisent maintenant les records du namespace DTOs.
+
 }

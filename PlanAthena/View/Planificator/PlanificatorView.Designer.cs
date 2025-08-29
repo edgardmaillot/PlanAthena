@@ -1,4 +1,4 @@
-//Version 0.4.7.5
+//Version 0.4.8
 using Krypton.Navigator;
 using Krypton.Docking;
 using Krypton.Workspace;
@@ -36,6 +36,8 @@ namespace PlanAthena.View.Planificator
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
             System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
             System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
             System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
@@ -55,6 +57,8 @@ namespace PlanAthena.View.Planificator
             kryptonLabel3 = new KryptonLabel();
             kryptonHeaderGroup1 = new KryptonHeaderGroup();
             lblCoutTotalValue = new KryptonLabel();
+            khgStatutSolveur = new KryptonHeaderGroup();
+            lblStatutExplication = new KryptonLabel();
             tabPageRessources = new KryptonPage();
             kryptonSplitContainer1 = new KryptonSplitContainer();
             dgvAnalyseOuvriers = new KryptonDataGridView();
@@ -112,6 +116,9 @@ namespace PlanAthena.View.Planificator
             ((System.ComponentModel.ISupportInitialize)kryptonHeaderGroup1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)kryptonHeaderGroup1.Panel).BeginInit();
             kryptonHeaderGroup1.Panel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)khgStatutSolveur).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)khgStatutSolveur.Panel).BeginInit();
+            khgStatutSolveur.Panel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)tabPageRessources).BeginInit();
             tabPageRessources.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)kryptonSplitContainer1).BeginInit();
@@ -152,7 +159,7 @@ namespace PlanAthena.View.Planificator
             SolverProgressBar.StateDisabled.Back.ColorStyle = PaletteColorStyle.OneNote;
             SolverProgressBar.StateNormal.Back.ColorStyle = PaletteColorStyle.OneNote;
             SolverProgressBar.TabIndex = 3;
-            SolverProgressBar.Text = "";
+            SolverProgressBar.Text = "Calcul en cours";
             SolverProgressBar.Values.Text = "Calcul en cours";
             SolverProgressBar.Visible = false;
             // 
@@ -188,6 +195,7 @@ namespace PlanAthena.View.Planificator
             tabPageSynthese.Controls.Add(kryptonHeaderGroup3);
             tabPageSynthese.Controls.Add(kryptonHeaderGroup2);
             tabPageSynthese.Controls.Add(kryptonHeaderGroup1);
+            tabPageSynthese.Controls.Add(khgStatutSolveur);
             tabPageSynthese.Flags = 65534;
             tabPageSynthese.LastVisibleSet = true;
             tabPageSynthese.MinimumSize = new Size(50, 50);
@@ -234,7 +242,7 @@ namespace PlanAthena.View.Planificator
             kryptonHeaderGroup3.TabIndex = 2;
             kryptonHeaderGroup3.ValuesPrimary.Heading = "Durée Chantier";
             kryptonHeaderGroup3.ValuesPrimary.Image = null;
-            kryptonHeaderGroup3.ValuesSecondary.Heading = "(jours calendaires)";
+            kryptonHeaderGroup3.ValuesSecondary.Heading = "(jours ouvrés)";
             // 
             // lblDureeValue
             // 
@@ -300,7 +308,7 @@ namespace PlanAthena.View.Planificator
             // 
             // kryptonHeaderGroup1
             // 
-            kryptonHeaderGroup1.Location = new Point(20, 13);
+            kryptonHeaderGroup1.Location = new Point(21, 13);
             // 
             // 
             // 
@@ -322,6 +330,34 @@ namespace PlanAthena.View.Planificator
             lblCoutTotalValue.StateCommon.ShortText.TextV = PaletteRelativeAlign.Center;
             lblCoutTotalValue.TabIndex = 0;
             lblCoutTotalValue.Values.Text = "N/A";
+            // 
+            // khgStatutSolveur
+            // 
+            khgStatutSolveur.Location = new Point(824, 13);
+            // 
+            // 
+            // 
+            khgStatutSolveur.Panel.Controls.Add(lblStatutExplication);
+            khgStatutSolveur.Size = new Size(195, 120);
+            khgStatutSolveur.TabIndex = 4;
+            khgStatutSolveur.ValuesPrimary.Heading = "Qualité de la Solution";
+            khgStatutSolveur.ValuesPrimary.Image = null;
+            khgStatutSolveur.ValuesSecondary.Heading = "";
+            // 
+            // lblStatutExplication
+            // 
+            lblStatutExplication.Dock = DockStyle.Fill;
+            lblStatutExplication.Location = new Point(0, 0);
+            lblStatutExplication.Name = "lblStatutExplication";
+            lblStatutExplication.Size = new Size(193, 85);
+            lblStatutExplication.StateCommon.LongText.MultiLine = InheritBool.True;
+            lblStatutExplication.StateCommon.LongText.Prefix = PaletteTextHotkeyPrefix.None;
+            lblStatutExplication.StateCommon.ShortText.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblStatutExplication.StateCommon.ShortText.MultiLine = InheritBool.True;
+            lblStatutExplication.StateCommon.ShortText.TextH = PaletteRelativeAlign.Center;
+            lblStatutExplication.StateCommon.ShortText.TextV = PaletteRelativeAlign.Center;
+            lblStatutExplication.TabIndex = 1;
+            lblStatutExplication.Values.Text = "En attente de planification...";
             // 
             // tabPageRessources
             // 
@@ -380,7 +416,7 @@ namespace PlanAthena.View.Planificator
             // 
             // colMetierPrincipal
             // 
-            colMetierPrincipal.DataPropertyName = "MetierPrincipal";
+            colMetierPrincipal.DataPropertyName = "MetierPrincipalNom";
             colMetierPrincipal.HeaderText = "Métier Principal";
             colMetierPrincipal.Name = "colMetierPrincipal";
             colMetierPrincipal.ReadOnly = true;
@@ -388,6 +424,8 @@ namespace PlanAthena.View.Planificator
             // colTauxOccupation
             // 
             colTauxOccupation.DataPropertyName = "TauxOccupation";
+            dataGridViewCellStyle1.Format = "P1";
+            colTauxOccupation.DefaultCellStyle = dataGridViewCellStyle1;
             colTauxOccupation.HeaderText = "Taux Occupation (%)";
             colTauxOccupation.Name = "colTauxOccupation";
             colTauxOccupation.ReadOnly = true;
@@ -395,6 +433,8 @@ namespace PlanAthena.View.Planificator
             // colTauxFragmentation
             // 
             colTauxFragmentation.DataPropertyName = "TauxFragmentation";
+            dataGridViewCellStyle2.Format = "P1";
+            colTauxFragmentation.DefaultCellStyle = dataGridViewCellStyle2;
             colTauxFragmentation.HeaderText = "Taux Fragmentation (%)";
             colTauxFragmentation.Name = "colTauxFragmentation";
             colTauxFragmentation.ReadOnly = true;
@@ -408,7 +448,7 @@ namespace PlanAthena.View.Planificator
             // 
             // colJours
             // 
-            colJours.DataPropertyName = "JoursTravaillesUniques";
+            colJours.DataPropertyName = "JoursTravailles";
             colJours.HeaderText = "Jours Trav.";
             colJours.Name = "colJours";
             colJours.ReadOnly = true;
@@ -800,6 +840,10 @@ namespace PlanAthena.View.Planificator
             kryptonHeaderGroup1.Panel.ResumeLayout(false);
             kryptonHeaderGroup1.Panel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)kryptonHeaderGroup1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)khgStatutSolveur.Panel).EndInit();
+            khgStatutSolveur.Panel.ResumeLayout(false);
+            khgStatutSolveur.Panel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)khgStatutSolveur).EndInit();
             ((System.ComponentModel.ISupportInitialize)tabPageRessources).EndInit();
             tabPageRessources.ResumeLayout(false);
             (kryptonSplitContainer1.Panel1).EndInit();
@@ -852,6 +896,8 @@ namespace PlanAthena.View.Planificator
         private Krypton.Navigator.KryptonPage tabPageRessources;
         private Krypton.Navigator.KryptonPage tabPageJournal;
         private KryptonRichTextBox rtbLog;
+        private KryptonHeaderGroup khgStatutSolveur;
+        private KryptonLabel lblStatutExplication;
         private KryptonHeaderGroup kryptonHeaderGroup1;
         private KryptonLabel lblCoutTotalValue;
         private KryptonHeaderGroup kryptonHeaderGroup2;

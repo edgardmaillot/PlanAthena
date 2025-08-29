@@ -1,4 +1,4 @@
-// Fichier: PlanningConsolidationService.cs
+// Emplacement: PlanAthena/Utilities/PlanningConsolidationService.cs
 using NodaTime;
 using PlanAthena.Core.Facade.Dto.Output;
 using PlanAthena.Services.Business.DTOs;
@@ -11,7 +11,7 @@ namespace PlanAthena.Utilities
 {
     /// <summary>
     /// Service utilitaire stateless chargé de transformer le résultat brut du solveur
-    /// en un planning consolidé propre, avec des affectations découpées en segments journaliers.
+    /// en un planning consolidé propre, avec des affectations découpées en segments journaliers horaires.
     /// </summary>
     public class PlanningConsolidationService
     {
@@ -27,57 +27,60 @@ namespace PlanAthena.Utilities
         /// <returns>Un objet ConsolidatedPlanning contenant les segments de travail journaliers.</returns>
         public virtual ConsolidatedPlanning Process(ProcessChantierResultDto rawResult, ConfigurationPlanification config)
         {
+            var planning = new ConsolidatedPlanning();
             if (rawResult?.OptimisationResultat?.Affectations == null || !rawResult.OptimisationResultat.Affectations.Any())
             {
-                return new ConsolidatedPlanning();
+                return planning;
             }
 
             var allSegments = new List<SegmentDeTravail>();
+            var allJalons = new List<JalonPlanifie>();
+            var allDates = new List<DateTime>();
 
             foreach (var affectation in rawResult.OptimisationResultat.Affectations)
             {
                 if (IsTechnicalConvergenceMilestone(affectation.TacheId))
                 {
-                    continue; // On ignore les jalons techniques de convergence
+                    continue; // On ignore les jalons techniques
                 }
-                
-                var segmentsForAffectation = DecouperAffectationEnSegments(affectation, config);
-                allSegments.AddRange(segmentsForAffectation);
+
+                // --- AIGUILLAGE CORRIGÉ ---
+                if (affectation.TypeActivite == CoreEnums.TypeActivite.JalonUtilisateur)
+                {
+                    // C'est un jalon d'attente. On NE le découpe PAS.
+                    // On le stocke comme un bloc de temps unique.
+                    allJalons.Add(new JalonPlanifie
+                    {
+                        TacheId = affectation.TacheId,
+                        TacheNom = affectation.TacheNom,
+                        BlocId = affectation.BlocId,
+                        DateDebut = affectation.DateDebut,
+                        DateFin = affectation.DateFin,
+                        DureeHeures = affectation.DureeHeures
+                    });
+                    allDates.Add(affectation.DateDebut);
+                    allDates.Add(affectation.DateFin);
+                }
+                else // C'est une tâche de travail normale
+                {
+                    // On la découpe en segments de travail journaliers.
+                    var segmentsForAffectation = DecouperEnTempsOuvre(affectation, config);
+                    if (segmentsForAffectation.Any())
+                    {
+                        allSegments.AddRange(segmentsForAffectation);
+                        allDates.Add(segmentsForAffectation.First().Jour);
+                        allDates.Add(segmentsForAffectation.Last().Jour);
+                    }
+                }
             }
-            
-            return AggregateSegmentsIntoPlanning(allSegments);
+
+            planning.JalonsPlanifies = allJalons;
+            return AggregateSegmentsIntoPlanning(planning, allSegments, allDates);
         }
-        
-        /// <summary>
-        /// Aiguille le découpage d'une affectation en fonction de son type (travail humain vs. processus passif).
-        /// </summary>
-        private List<SegmentDeTravail> DecouperAffectationEnSegments(AffectationDto affectation, ConfigurationPlanification config)
-        {
-            // Valider que la durée est cohérente, conformément à la Règle #4
-            var dureeHeuresCalculee = (affectation.DateFin - affectation.DateDebut).TotalHours;
-            // Note : Ce check est simpliste et ne prend pas en compte les jours non-ouvrés.
-            // Une validation plus poussée nécessiterait de simuler le décompte du temps.
-            // Pour l'instant, on se contente d'un check de base. Si DureeHeures est très différente de l'intervalle, on lève une exception.
-            if (Math.Abs(dureeHeuresCalculee - affectation.DureeHeures) > config.HeuresTravailEffectifParJour)
-            {
-                 // L'écart est plus grand qu'une journée de travail, ce qui est suspect.
-                 // NOTE : Cette condition est une heuristique et pourrait être affinée.
-                 // throw new InvalidOperationException($"Incohérence de durée pour l'affectation de la tâche '{affectation.TacheId}'. Durée annoncée: {affectation.DureeHeures}h, durée calculée: {dureeHeuresCalculee}h.");
-            }
-
-
-            // Les jalons utilisateur (séchage, attente...) suivent un temps calendaire continu.
-            if (affectation.TypeActivite == CoreEnums.TypeActivite.JalonUtilisateur)
-            {
-                return DecouperEnTempsCalendaire(affectation);
-            }
-            
-            // Les tâches standard suivent les horaires de travail définis.
-            return DecouperEnTempsOuvre(affectation, config);
-        }
 
         /// <summary>
-        /// Découpe une affectation en segments journaliers en respectant le temps de travail effectif.
+        /// Découpe une affectation en segments journaliers en respectant le temps de travail effectif
+        /// et en calculant les horaires précis pour chaque segment.
         /// </summary>
         private List<SegmentDeTravail> DecouperEnTempsOuvre(AffectationDto affectation, ConfigurationPlanification config)
         {
@@ -85,32 +88,36 @@ namespace PlanAthena.Utilities
             var parentId = ObtenirParentIdDepuisId(affectation.TacheId);
             var joursOuvresSet = new HashSet<DayOfWeek>(config.JoursOuvres);
 
-            double heuresRestantes = affectation.DureeHeures;
+            // Utilisation de NodaTime pour une gestion robuste des fuseaux horaires et du temps
             var timeZone = DateTimeZoneProviders.Tzdb.GetSystemDefault();
             var localDebut = LocalDateTime.FromDateTime(affectation.DateDebut);
             var instantCourant = localDebut.InZoneLeniently(timeZone).ToInstant();
 
+            double heuresRestantes = affectation.DureeHeures;
 
             while (heuresRestantes > DURATION_TOLERANCE)
             {
                 var zonedDateTime = instantCourant.InZone(timeZone);
                 var dateCourante = zonedDateTime.Date;
 
-                // **CORRECTIF APPLIQUÉ ICI**
+                // 1. Si jour non-ouvré, sauter au début du prochain jour ouvré
                 if (!joursOuvresSet.Contains(ToSystemDayOfWeek(dateCourante.DayOfWeek)))
                 {
                     instantCourant = GetDebutProchainJourOuvre(dateCourante, joursOuvresSet, config.HeureDebutJournee, timeZone);
                     continue;
                 }
 
+                // 2. Définir les bornes de la journée de travail
                 var debutJourneeTravail = dateCourante.At(new LocalTime(config.HeureDebutJournee, 0)).InZoneLeniently(timeZone).ToInstant();
                 var finJourneeTravail = debutJourneeTravail.Plus(Duration.FromHours(config.HeuresTravailEffectifParJour));
 
+                // 3. Ajuster l'instant courant s'il est avant le début de la journée
                 if (instantCourant < debutJourneeTravail)
                 {
                     instantCourant = debutJourneeTravail;
                 }
-                
+
+                // 4. Si on a déjà dépassé la fin de journée, sauter au lendemain
                 var dureeRestanteJournee = finJourneeTravail - instantCourant;
                 if (dureeRestanteJournee <= Duration.Zero)
                 {
@@ -118,9 +125,12 @@ namespace PlanAthena.Utilities
                     continue;
                 }
 
+                // 5. Calculer les heures à affecter pour ce segment
                 var heuresDisponiblesCeJour = dureeRestanteJournee.TotalHours;
                 double heuresPourCeSegment = Math.Min(heuresRestantes, heuresDisponiblesCeJour);
-                
+
+                // 6. Créer le segment avec les nouvelles informations horaires
+                var instantFinSegment = instantCourant.Plus(Duration.FromHours(heuresPourCeSegment));
                 segments.Add(new SegmentDeTravail
                 {
                     OuvrierId = affectation.OuvrierId,
@@ -129,51 +139,23 @@ namespace PlanAthena.Utilities
                     TacheNom = affectation.TacheNom,
                     BlocId = affectation.BlocId,
                     Jour = dateCourante.ToDateTimeUnspecified(),
-                    HeuresTravaillees = heuresPourCeSegment
+                    HeuresTravaillees = heuresPourCeSegment,
+                    // CORRECTION: NodaTime.LocalTime n'a pas de méthode ToTimeSpan().
+                    // La conversion correcte se fait via la propriété TickOfDay qui représente
+                    // le nombre de ticks depuis minuit, ce qui est équivalent à un TimeSpan.
+                    HeureDebut = new TimeSpan(instantCourant.InZone(timeZone).TimeOfDay.TickOfDay),
+                    HeureFin = new TimeSpan(instantFinSegment.InZone(timeZone).TimeOfDay.TickOfDay)
                 });
-                
+
+                // 7. Mettre à jour les compteurs pour la prochaine itération
                 heuresRestantes -= heuresPourCeSegment;
-                instantCourant = instantCourant.Plus(Duration.FromHours(heuresPourCeSegment));
+                instantCourant = instantFinSegment;
             }
-            
+
             return segments;
         }
+
         
-        /// <summary>
-        /// Découpe une affectation (typiquement un jalon) en segments journaliers en temps calendaire continu (24/7).
-        /// </summary>
-        private List<SegmentDeTravail> DecouperEnTempsCalendaire(AffectationDto affectation)
-        {
-            var segments = new List<SegmentDeTravail>();
-            var parentId = ObtenirParentIdDepuisId(affectation.TacheId);
-
-            double heuresRestantes = affectation.DureeHeures;
-            var instantCourant = affectation.DateDebut;
-
-            while (heuresRestantes > DURATION_TOLERANCE)
-            {
-                var finDuJourCourant = instantCourant.Date.AddDays(1);
-                double heuresDisponiblesCeJour = (finDuJourCourant - instantCourant).TotalHours;
-
-                double heuresPourCeSegment = Math.Min(heuresRestantes, heuresDisponiblesCeJour);
-
-                segments.Add(new SegmentDeTravail
-                {
-                    OuvrierId = affectation.OuvrierId,
-                    TacheId = affectation.TacheId,
-                    ParentTacheId = parentId,
-                    TacheNom = affectation.TacheNom,
-                    BlocId = affectation.BlocId,
-                    Jour = instantCourant.Date,
-                    HeuresTravaillees = heuresPourCeSegment
-                });
-
-                heuresRestantes -= heuresPourCeSegment;
-                instantCourant = instantCourant.AddHours(heuresPourCeSegment);
-            }
-
-            return segments;
-        }
 
         private bool IsTechnicalConvergenceMilestone(string tacheId)
         {
@@ -192,18 +174,20 @@ namespace PlanAthena.Utilities
             }
             return null;
         }
-        
-        private ConsolidatedPlanning AggregateSegmentsIntoPlanning(List<SegmentDeTravail> allSegments)
+
+        private ConsolidatedPlanning AggregateSegmentsIntoPlanning(ConsolidatedPlanning planning, List<SegmentDeTravail> allSegments, List<DateTime> allDates)
         {
-            var planning = new ConsolidatedPlanning();
-            if (!allSegments.Any()) return planning;
+            if (!allDates.Any()) return planning;
 
-            planning.DateDebutProjet = allSegments.Min(s => s.Jour);
-            planning.DateFinProjet = allSegments.Max(s => s.Jour);
+            planning.DateDebutProjet = allDates.Min();
+            planning.DateFinProjet = allDates.Max();
 
-            planning.SegmentsParOuvrierId = allSegments
-                .GroupBy(s => s.OuvrierId)
-                .ToDictionary(g => g.Key, g => g.OrderBy(s => s.Jour).ToList());
+            if (allSegments.Any())
+            {
+                planning.SegmentsParOuvrierId = allSegments
+                    .GroupBy(s => s.OuvrierId)
+                    .ToDictionary(g => g.Key, g => g.OrderBy(s => s.Jour).ToList());
+            }
 
             return planning;
         }
@@ -211,7 +195,6 @@ namespace PlanAthena.Utilities
         private Instant GetDebutProchainJourOuvre(LocalDate dateActuelle, HashSet<DayOfWeek> joursOuvres, int heureDebut, DateTimeZone timeZone)
         {
             var prochainJour = dateActuelle.PlusDays(1);
-            // **CORRECTIF APPLIQUÉ ICI**
             while (!joursOuvres.Contains(ToSystemDayOfWeek(prochainJour.DayOfWeek)))
             {
                 prochainJour = prochainJour.PlusDays(1);
@@ -224,10 +207,9 @@ namespace PlanAthena.Utilities
         /// </summary>
         private DayOfWeek ToSystemDayOfWeek(IsoDayOfWeek isoDayOfWeek)
         {
-            // NodaTime: 1 (Lundi) -> 7 (Dimanche). System: 0 (Dimanche) -> 6 (Samedi).
             if (isoDayOfWeek == IsoDayOfWeek.None)
                 throw new ArgumentException("IsoDayOfWeek.None n'est pas convertible.");
-            
+
             return (DayOfWeek)(((int)isoDayOfWeek) % 7);
         }
     }

@@ -120,17 +120,20 @@ namespace PlanAthenaTests.Utilities
         }
 
         [TestMethod]
-        public void Process_JalonUtilisateurTempsCalendaire_DecoupeSurDeuxJoursSansPause()
+        public void Process_JalonUtilisateur_EstAjouteCommeBlocUniqueNonDecoupe()
         {
             // Arrange
-            // Jalon de 30h commençant à 10h. 14h le premier jour, 16h le second.
+            // Jalon de 30h commençant à 10h le lundi et se terminant le lendemain à 16h.
+            var dateDebut = new DateTime(2025, 9, 22, 10, 0, 0);
+            var dateFin = new DateTime(2025, 9, 23, 16, 0, 0);
+
             var affectation = new AffectationDto
             {
-                OuvrierId = "VIRTUAL_JALON_1",
+                OuvrierId = "VIRTUAL_JALON_1", // L'ouvrier virtuel n'est plus utilisé pour le regroupement
                 TacheId = "J1",
                 TacheNom = "Séchage",
-                DateDebut = new DateTime(2025, 9, 22, 10, 0, 0), // Lundi 10h
-                DateFin = new DateTime(2025, 9, 23, 16, 0, 0),
+                DateDebut = dateDebut,
+                DateFin = dateFin,
                 DureeHeures = 30,
                 TypeActivite = CoreEnums.TypeActivite.JalonUtilisateur
             };
@@ -140,14 +143,20 @@ namespace PlanAthenaTests.Utilities
             var result = _service.Process(rawResult, _config);
 
             // Assert
-            var segments = result.SegmentsParOuvrierId["VIRTUAL_JALON_1"];
-            Assert.AreEqual(2, segments.Count, "Le jalon devrait être découpé en deux segments.");
+            // 1. Vérifier qu'AUCUN segment de travail n'a été créé pour cet "ouvrier"
+            Assert.IsFalse(result.SegmentsParOuvrierId.ContainsKey("VIRTUAL_JALON_1"),
+                "Les jalons ne doivent pas créer de segments de travail.");
 
-            Assert.AreEqual(14, segments[0].HeuresTravaillees, 0.001, "14h le premier jour (de 10h à minuit).");
-            Assert.AreEqual(new DateTime(2025, 9, 22), segments[0].Jour);
+            // 2. Vérifier qu'UN SEUL jalon a été ajouté à la liste dédiée
+            Assert.AreEqual(1, result.JalonsPlanifies.Count, "Un seul jalon planifié devrait exister.");
 
-            Assert.AreEqual(16, segments[1].HeuresTravaillees, 0.001, "16h le deuxième jour (de minuit à 16h).");
-            Assert.AreEqual(new DateTime(2025, 9, 23), segments[1].Jour);
+            // 3. Vérifier que les propriétés du jalon sont correctes et NON découpées
+            var jalon = result.JalonsPlanifies.First();
+            Assert.AreEqual("J1", jalon.TacheId);
+            Assert.AreEqual("Séchage", jalon.TacheNom);
+            Assert.AreEqual(dateDebut, jalon.DateDebut, "La date de début doit être conservée intacte.");
+            Assert.AreEqual(dateFin, jalon.DateFin, "La date de fin doit être conservée intacte.");
+            Assert.AreEqual(30, jalon.DureeHeures, 0.001, "La durée totale doit être conservée intacte.");
         }
 
         [TestMethod]

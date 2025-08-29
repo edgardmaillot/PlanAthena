@@ -44,5 +44,14 @@ namespace PlanAthena.Services.Business.DTOs
         /// Nombre d'heures travaillées sur cette tâche, par cet ouvrier, pour ce jour spécifique.
         /// </summary>
         public double HeuresTravaillees { get; set; }
+        /// <summary>
+        /// L'heure de début du segment de travail dans la journée.
+        /// </summary>
+        public TimeSpan HeureDebut { get; set; }
+
+        /// <summary>
+        /// L'heure de fin du segment de travail dans la journée.
+        /// </summary>
+        public TimeSpan HeureFin { get; set; }
     }
 }

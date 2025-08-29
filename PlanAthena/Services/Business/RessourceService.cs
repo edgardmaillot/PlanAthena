@@ -201,7 +201,7 @@ namespace PlanAthena.Services.Business
                 .Select(competence => competence.MetierId)
                 .ToHashSet();
         }
-        public List<Metier> GetAllMetiers() => _metiers.Values.OrderBy(m => m.Nom).ToList();
+        public virtual List<Metier> GetAllMetiers() => _metiers.Values.OrderBy(m => m.Nom).ToList();
         public Metier GetMetierById(string id) => _metiers.GetValueOrDefault(id);
         public Color GetDisplayColorForMetier(string metierId)
         {

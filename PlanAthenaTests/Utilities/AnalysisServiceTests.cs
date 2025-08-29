@@ -15,6 +15,7 @@ namespace PlanAthena.Tests.Utilities
     {
         private AnalysisService _analysisService;
         private List<Ouvrier> _sampleOuvriers;
+        private List<Metier> _sampleMetiers;
         private ConfigurationPlanification _sampleConfig;
 
         // "Calculateur" simple qui compte tous les jours sauf les week-ends.
@@ -38,9 +39,15 @@ namespace PlanAthena.Tests.Utilities
 
             _sampleOuvriers = new List<Ouvrier>
             {
-                new Ouvrier { OuvrierId = "O1", Nom = "Durand", Prenom = "Paul", CoutJournalier = 100, MetierId = "ELEC" },
-                new Ouvrier { OuvrierId = "O2", Nom = "Martin", Prenom = "Alice", CoutJournalier = 120, MetierId = "PLOM" },
-                new Ouvrier { OuvrierId = "O3", Nom = "Petit", Prenom = "Thomas", CoutJournalier = 100, MetierId = "ELEC" }
+                new Ouvrier { OuvrierId = "O1", Nom = "Durand", Prenom = "Paul", CoutJournalier = 100, Competences = new List<CompetenceOuvrier> { new CompetenceOuvrier { MetierId = "ELEC", EstMetierPrincipal = true } } },
+                new Ouvrier { OuvrierId = "O2", Nom = "Martin", Prenom = "Alice", CoutJournalier = 120, Competences = new List<CompetenceOuvrier> { new CompetenceOuvrier { MetierId = "PLOM", EstMetierPrincipal = true } } },
+                new Ouvrier { OuvrierId = "O3", Nom = "Petit", Prenom = "Thomas", CoutJournalier = 100, Competences = new List<CompetenceOuvrier> { new CompetenceOuvrier { MetierId = "ELEC", EstMetierPrincipal = true } } }
+            };
+
+            _sampleMetiers = new List<Metier>
+            {
+                new Metier { MetierId = "ELEC", Nom = "Électricien" },
+                new Metier { MetierId = "PLOM", Nom = "Plombier" }
             };
 
             _sampleConfig = new ConfigurationPlanification
@@ -75,7 +82,7 @@ namespace PlanAthena.Tests.Utilities
             };
 
             // Act
-            var report = _analysisService.GenerateReport(planning, _sampleOuvriers, _sampleConfig, _joursOuvresCalculatorSimple);
+            var report = _analysisService.GenerateReport(planning, _sampleOuvriers, _sampleMetiers, _sampleConfig, _joursOuvresCalculatorSimple);
             var synthese = report.SyntheseProjet;
 
             // Assert
@@ -98,15 +105,12 @@ namespace PlanAthena.Tests.Utilities
                     {
                         new SegmentDeTravail { Jour = new DateTime(2023, 10, 2), HeuresTravaillees = 7 }, // Lundi
                         new SegmentDeTravail { Jour = new DateTime(2023, 10, 4), HeuresTravaillees = 3.5 } // Mercredi
-                    },
-                    ["O3"] = new List<SegmentDeTravail> // Pas d'affectation
-                    {
                     }
                 }
             };
 
             // Act
-            var report = _analysisService.GenerateReport(planning, _sampleOuvriers, _sampleConfig, _joursOuvresCalculatorSimple);
+            var report = _analysisService.GenerateReport(planning, _sampleOuvriers, _sampleMetiers, _sampleConfig, _joursOuvresCalculatorSimple);
             var analyseO1 = report.AnalysesOuvriers.First(r => r.OuvrierId == "O1");
             var analyseO2 = report.AnalysesOuvriers.First(r => r.OuvrierId == "O2");
 
@@ -138,7 +142,7 @@ namespace PlanAthena.Tests.Utilities
             };
 
             // Act
-            var report = _analysisService.GenerateReport(planning, _sampleOuvriers, _sampleConfig, _joursOuvresCalculatorSimple);
+            var report = _analysisService.GenerateReport(planning, _sampleOuvriers, _sampleMetiers, _sampleConfig, _joursOuvresCalculatorSimple);
             var charge = report.ChargeJournaliere;
 
             // Assert
@@ -154,7 +158,7 @@ namespace PlanAthena.Tests.Utilities
             var planning = new ConsolidatedPlanning(); // Planning vide
 
             // Act
-            var report = _analysisService.GenerateReport(planning, _sampleOuvriers, _sampleConfig, _joursOuvresCalculatorSimple);
+            var report = _analysisService.GenerateReport(planning, _sampleOuvriers, _sampleMetiers, _sampleConfig, _joursOuvresCalculatorSimple);
 
             // Assert
             Assert.AreEqual(0, report.SyntheseProjet.CoutTotalProjet);
@@ -166,24 +170,72 @@ namespace PlanAthena.Tests.Utilities
 
         #endregion
 
+        #region NOUVEAU: Tests pour l'enrichissement du Métier Principal
+
+        [TestMethod]
+        public void GenerateReport_WithValidData_ShouldEnrichReportWithMetierPrincipal()
+        {
+            // Arrange
+            var planning = new ConsolidatedPlanning(); // Pas besoin de planning pour ce test
+
+            // Act
+            var report = _analysisService.GenerateReport(planning, _sampleOuvriers, _sampleMetiers, _sampleConfig, _joursOuvresCalculatorSimple);
+            var analyseO1 = report.AnalysesOuvriers.First(r => r.OuvrierId == "O1");
+            var analyseO2 = report.AnalysesOuvriers.First(r => r.OuvrierId == "O2");
+
+            // Assert
+            Assert.AreEqual("ELEC", analyseO1.MetierPrincipalId, "L'ID du métier principal pour O1 doit être correct.");
+            Assert.AreEqual("Électricien", analyseO1.MetierPrincipalNom, "Le nom du métier principal pour O1 doit être correct.");
+            Assert.AreEqual("PLOM", analyseO2.MetierPrincipalId, "L'ID du métier principal pour O2 doit être correct.");
+            Assert.AreEqual("Plombier", analyseO2.MetierPrincipalNom, "Le nom du métier principal pour O2 doit être correct.");
+        }
+
+        [TestMethod]
+        public void GenerateReport_WithoutExplicitPrincipalMetier_ShouldUseFirstCompetenceAsFallback()
+        {
+            // Arrange
+            var planning = new ConsolidatedPlanning();
+            var ouvrierMultiCompetence = new List<Ouvrier>
+            {
+                new Ouvrier
+                {
+                    OuvrierId = "O4",
+                    Competences = new List<CompetenceOuvrier>
+                    {
+                        new CompetenceOuvrier { MetierId = "PLOM", EstMetierPrincipal = false }, // Premier dans la liste
+                        new CompetenceOuvrier { MetierId = "ELEC", EstMetierPrincipal = false }
+                    }
+                }
+            };
+
+            // Act
+            var report = _analysisService.GenerateReport(planning, ouvrierMultiCompetence, _sampleMetiers, _sampleConfig, _joursOuvresCalculatorSimple);
+            var analyseO4 = report.AnalysesOuvriers.First(r => r.OuvrierId == "O4");
+
+            // Assert
+            Assert.AreEqual("PLOM", analyseO4.MetierPrincipalId, "Doit utiliser le premier métier de la liste comme fallback.");
+            Assert.AreEqual("Plombier", analyseO4.MetierPrincipalNom, "Le nom du métier de fallback doit être correct.");
+        }
+
+        #endregion
+
         #region Tests pour AnalyzeMetierTension
 
         [TestMethod]
         [DataRow(new[] { "O1", "O3", "O2", "O1" }, "Un métier en tension forte")] // 3 ELEC, 1 PLOM
         [DataRow(new[] { "O1", "O3", "O2", "O2" }, "Deux métiers en tension")]     // 2 ELEC, 2 PLOM
         [DataRow(new[] { "O1", "O1", "O2", "O3" }, "Un métier en tension forte")] // Répétition O1, 3 ELEC, 1 PLOM
-        // -- LIGNES CORRIGÉES CI-DESSOUS --
-        [DataRow(new[] { "O1", "O2", "O3", "O3" }, "Un métier en tension forte")]  // CAS CORRIGÉ: 3 ELEC, 1 PLOM -> "Un métier en tension forte"
-        [DataRow(new[] { "O1", "O2", "O3", "O2" }, "Deux métiers en tension")]      // CAS CORRIGÉ: 2 ELEC, 2 PLOM -> "Deux métiers en tension"
+        [DataRow(new[] { "O1", "O2", "O3", "O3" }, "Un métier en tension forte")]
+        [DataRow(new[] { "O1", "O2", "O3", "O2" }, "Deux métiers en tension")]
         public void AnalyzeMetierTension_VariousCases_ShouldReturnCorrectConclusion(string[] ouvrierIds, string expectedConclusion)
         {
             // Arrange
             var sampleOuvriers = new List<Ouvrier>
             {
-                new Ouvrier { OuvrierId = "O1", MetierId = "ELEC" },
-                new Ouvrier { OuvrierId = "O2", MetierId = "PLOM" },
-                new Ouvrier { OuvrierId = "O3", MetierId = "ELEC" },
-                new Ouvrier { OuvrierId = "O4", MetierId = "MACO" }
+                new Ouvrier { OuvrierId = "O1", Competences = new List<CompetenceOuvrier>{ new CompetenceOuvrier { MetierId = "ELEC"} } },
+                new Ouvrier { OuvrierId = "O2", Competences = new List<CompetenceOuvrier>{ new CompetenceOuvrier { MetierId = "PLOM"} } },
+                new Ouvrier { OuvrierId = "O3", Competences = new List<CompetenceOuvrier>{ new CompetenceOuvrier { MetierId = "ELEC"} } },
+                new Ouvrier { OuvrierId = "O4", Competences = new List<CompetenceOuvrier>{ new CompetenceOuvrier { MetierId = "MACO"} } }
             };
 
             // Act

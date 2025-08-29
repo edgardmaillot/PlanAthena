@@ -3,7 +3,7 @@
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
-using PlanAthena.Core.Application.Interfaces; // Ajout du using pour l'interface
+using PlanAthena.Core.Application.Interfaces;
 using PlanAthena.Core.Facade;
 using PlanAthena.Core.Facade.Dto.Input;
 using PlanAthena.Core.Facade.Dto.Output;
@@ -13,6 +13,7 @@ using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.Processing;
 using PlanAthena.Services.UseCases;
 using PlanAthena.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -48,10 +49,7 @@ namespace PlanAthena.Tests.Services.UseCases
             _mockTaskStatusService = new Mock<TaskStatusService>(_mockProjetService.Object, _mockPlanningService.Object, _mockRessourceService.Object) { CallBase = true };
             _mockAnalysisService = new Mock<AnalysisService>() { CallBase = true };
 
-            // --- CORRECTION PRINCIPALE ICI ---
-            // 1. Mocker la dépendance de la façade
             var mockProcessChantierUseCase = new Mock<IProcessChantierUseCase>();
-            // 2. Passer le mock dans le constructeur de la façade
             _mockFacade = new Mock<PlanAthenaCoreFacade>(mockProcessChantierUseCase.Object) { CallBase = true };
 
             // Création de l'instance de l'orchestrateur avec les mocks
@@ -69,19 +67,19 @@ namespace PlanAthena.Tests.Services.UseCases
         }
 
         [TestMethod]
-        public async Task ExecuteAsync_WhenOptimisationSucceeds_ShouldCallFullWorkflow()
+        public async Task ExecuteAsync_WhenOptimisationSucceeds_ShouldCallFullWorkflowAndPassMetiers()
         {
             // --- ARRANGE ---
             var config = new ConfigurationPlanification();
+            var sampleMetiers = new List<Metier> { new Metier { MetierId = "TEST" } };
+            _mockRessourceService.Setup(r => r.GetAllMetiers()).Returns(sampleMetiers);
 
-            // Simuler un résultat d'optimisation de la DLL
             var rawResult = new ProcessChantierResultDto
             {
                 OptimisationResultat = new PlanningOptimizationResultDto()
             };
             _mockFacade.Setup(f => f.ProcessChantierAsync(It.IsAny<ChantierSetupInputDto>())).ReturnsAsync(rawResult);
 
-            // Simuler les retours des services appelés
             _mockPreparationService.Setup(p => p.PreparerPourSolveur(It.IsAny<IReadOnlyList<Tache>>(), It.IsAny<ConfigurationPlanification>()))
                 .Returns(new PreparationResult { TachesPreparees = new List<Tache>(), ParentIdParSousTacheId = new Dictionary<string, string>() });
 
@@ -90,20 +88,31 @@ namespace PlanAthena.Tests.Services.UseCases
                 .Returns(consolidatedPlanning);
 
             var analysisReport = new AnalysisReport();
-            _mockAnalysisService.Setup(a => a.GenerateReport(It.IsAny<ConsolidatedPlanning>(), It.IsAny<IReadOnlyList<Ouvrier>>(), It.IsAny<ConfigurationPlanification>(), It.IsAny<AnalysisService.JoursOuvresCalculator>()))
-                .Returns(analysisReport);
+            _mockAnalysisService.Setup(a => a.GenerateReport(
+                It.IsAny<ConsolidatedPlanning>(),
+                It.IsAny<IReadOnlyList<Ouvrier>>(),
+                It.IsAny<IReadOnlyList<Metier>>(),
+                It.IsAny<ConfigurationPlanification>(),
+                It.IsAny<AnalysisService.JoursOuvresCalculator>()
+            )).Returns(analysisReport);
 
             // --- ACT ---
             var result = await _orchestrator.ExecuteAsync(config);
 
             // --- ASSERT ---
-            // Vérifier que les services clés ont été appelés
             _mockConsolidationService.Verify(c => c.Process(rawResult, config), Times.Once);
             _mockPlanningService.Verify(p => p.UpdatePlanning(consolidatedPlanning, config), Times.Once);
             _mockTaskStatusService.Verify(t => t.ModifierTachePlanifiee(It.IsAny<IEnumerable<string>>()), Times.Once);
-            _mockAnalysisService.Verify(a => a.GenerateReport(It.IsAny<ConsolidatedPlanning>(), It.IsAny<IReadOnlyList<Ouvrier>>(), It.IsAny<ConfigurationPlanification>(), It.IsAny<AnalysisService.JoursOuvresCalculator>()), Times.Once);
 
-            // Vérifier que le bon rapport est dans le résultat
+            // On s'assure que la liste de métiers provenant du RessourceService est bien celle passée à l'AnalysisService.
+            _mockAnalysisService.Verify(a => a.GenerateReport(
+                consolidatedPlanning,
+                It.IsAny<IReadOnlyList<Ouvrier>>(),
+                sampleMetiers, // On vérifie que la liste `sampleMetiers` est bien passée
+                config,
+                It.IsAny<AnalysisService.JoursOuvresCalculator>()
+            ), Times.Once);
+
             Assert.IsNotNull(result.AnalysisReport);
             Assert.IsNull(result.MetierTensionReport);
             Assert.AreSame(rawResult, result.RawResult);
@@ -115,12 +124,13 @@ namespace PlanAthena.Tests.Services.UseCases
             // --- ARRANGE ---
             var config = new ConfigurationPlanification();
 
-            // Simuler un résultat d'analyse rapide de la DLL
             var rawResult = new ProcessChantierResultDto
             {
                 AnalyseStatiqueResultat = new AnalyseRessourcesResultatDto { OuvriersClesSuggereIds = new List<string> { "O1" } }
             };
             _mockFacade.Setup(f => f.ProcessChantierAsync(It.IsAny<ChantierSetupInputDto>())).ReturnsAsync(rawResult);
+            _mockPreparationService.Setup(p => p.PreparerPourSolveur(It.IsAny<IReadOnlyList<Tache>>(), It.IsAny<ConfigurationPlanification>()))
+               .Returns(new PreparationResult { TachesPreparees = new List<Tache>(), ParentIdParSousTacheId = new Dictionary<string, string>() });
 
             var tensionReport = new MetierTensionReport();
             _mockAnalysisService.Setup(a => a.AnalyzeMetierTension(It.IsAny<IReadOnlyList<string>>(), It.IsAny<IReadOnlyList<Ouvrier>>()))
@@ -130,15 +140,18 @@ namespace PlanAthena.Tests.Services.UseCases
             var result = await _orchestrator.ExecuteAsync(config);
 
             // --- ASSERT ---
-            // Vérifier que seul le service d'analyse de tension est appelé
             _mockAnalysisService.Verify(a => a.AnalyzeMetierTension(rawResult.AnalyseStatiqueResultat.OuvriersClesSuggereIds, It.IsAny<IReadOnlyList<Ouvrier>>()), Times.Once);
 
-            // Vérifier que les services de mise à jour et d'analyse complète ne sont PAS appelés
             _mockPlanningService.Verify(p => p.UpdatePlanning(It.IsAny<ConsolidatedPlanning>(), It.IsAny<ConfigurationPlanification>()), Times.Never);
             _mockTaskStatusService.Verify(t => t.ModifierTachePlanifiee(It.IsAny<IEnumerable<string>>()), Times.Never);
-            _mockAnalysisService.Verify(a => a.GenerateReport(It.IsAny<ConsolidatedPlanning>(), It.IsAny<IReadOnlyList<Ouvrier>>(), It.IsAny<ConfigurationPlanification>(), It.IsAny<AnalysisService.JoursOuvresCalculator>()), Times.Never);
+            _mockAnalysisService.Verify(a => a.GenerateReport(
+                It.IsAny<ConsolidatedPlanning>(),
+                It.IsAny<IReadOnlyList<Ouvrier>>(),
+                It.IsAny<IReadOnlyList<Metier>>(),
+                It.IsAny<ConfigurationPlanification>(),
+                It.IsAny<AnalysisService.JoursOuvresCalculator>()
+            ), Times.Never);
 
-            // Vérifier que le bon rapport est dans le résultat
             Assert.IsNotNull(result.MetierTensionReport);
             Assert.IsNull(result.AnalysisReport);
             Assert.AreSame(rawResult, result.RawResult);
@@ -150,24 +163,29 @@ namespace PlanAthena.Tests.Services.UseCases
             // --- ARRANGE ---
             var config = new ConfigurationPlanification();
 
-            // Simuler un résultat vide ou inattendu de la DLL
             var rawResult = new ProcessChantierResultDto
             {
                 OptimisationResultat = null,
                 AnalyseStatiqueResultat = null
             };
             _mockFacade.Setup(f => f.ProcessChantierAsync(It.IsAny<ChantierSetupInputDto>())).ReturnsAsync(rawResult);
+            _mockPreparationService.Setup(p => p.PreparerPourSolveur(It.IsAny<IReadOnlyList<Tache>>(), It.IsAny<ConfigurationPlanification>()))
+               .Returns(new PreparationResult { TachesPreparees = new List<Tache>(), ParentIdParSousTacheId = new Dictionary<string, string>() });
 
             // --- ACT ---
             var result = await _orchestrator.ExecuteAsync(config);
 
             // --- ASSERT ---
-            // Vérifier qu'aucun service de traitement post-DLL n'est appelé
             _mockConsolidationService.Verify(c => c.Process(It.IsAny<ProcessChantierResultDto>(), It.IsAny<ConfigurationPlanification>()), Times.Never);
             _mockAnalysisService.Verify(a => a.AnalyzeMetierTension(It.IsAny<IReadOnlyList<string>>(), It.IsAny<IReadOnlyList<Ouvrier>>()), Times.Never);
-            _mockAnalysisService.Verify(a => a.GenerateReport(It.IsAny<ConsolidatedPlanning>(), It.IsAny<IReadOnlyList<Ouvrier>>(), It.IsAny<ConfigurationPlanification>(), It.IsAny<AnalysisService.JoursOuvresCalculator>()), Times.Never);
+            _mockAnalysisService.Verify(a => a.GenerateReport(
+                It.IsAny<ConsolidatedPlanning>(),
+                It.IsAny<IReadOnlyList<Ouvrier>>(),
+                It.IsAny<IReadOnlyList<Metier>>(),
+                It.IsAny<ConfigurationPlanification>(),
+                It.IsAny<AnalysisService.JoursOuvresCalculator>()
+            ), Times.Never);
 
-            // Vérifier que le résultat contient uniquement le résultat brut
             Assert.IsNull(result.AnalysisReport);
             Assert.IsNull(result.MetierTensionReport);
             Assert.AreSame(rawResult, result.RawResult);
