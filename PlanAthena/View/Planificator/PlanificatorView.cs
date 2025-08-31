@@ -35,7 +35,6 @@ namespace PlanAthena.View.Planificator
         private int _elapsedSeconds = 0;
         private Timer _solverTimer;
         private int _solverMaxSeconds;
-        private int _solverElapsedSeconds;
 
         public PlanificatorView(
             ApplicationService applicationService,
@@ -168,7 +167,6 @@ namespace PlanAthena.View.Planificator
             _elapsedSeconds = 0;
             progressBar.Style = ProgressBarStyle.Marquee;
             progressBar.Visible = true;
-            planningTimer.Start();
             StartSolverProgress();
 
             Log("Lancement de la planification...");
@@ -187,7 +185,6 @@ namespace PlanAthena.View.Planificator
             }
             finally
             {
-                planningTimer.Stop();
                 StopSolverProgress();
                 progressBar.Visible = false;
                 btnLaunch.Enabled = true;
@@ -544,32 +541,37 @@ namespace PlanAthena.View.Planificator
             Log(sb.ToString());
         }
 
-        private void planningTimer_Tick(object sender, EventArgs e)
-        {
-            _elapsedSeconds++;
-            var delay = TimeSpan.FromSeconds(_elapsedSeconds);
-            SolverProgressBar.Text = $"Planification en cours... {delay:g}";
-        }
 
         private void SolverTimer_Tick(object sender, EventArgs e)
         {
             _elapsedSeconds++;
-            if (_solverMaxSeconds <= 0) return;
 
-            double progressPercentage = ((double)_solverElapsedSeconds / _solverMaxSeconds) * 100;
-            if (progressPercentage > 100) progressPercentage = 100;
-            SolverProgressBar.Value = (int)progressPercentage;
+            // Affichage du temps global (ancien job du planningTimer)
+            var delay = TimeSpan.FromSeconds(_elapsedSeconds);
+            // Choisir selon votre UI : soit mettre à jour un label global, soit directement la barre
 
-            int remainingSeconds = Math.Max(0, _solverMaxSeconds - _solverElapsedSeconds);
-            int remainingMinutes = remainingSeconds / 60;
-            int remainingSecondsDisplay = remainingSeconds % 60;
-            SolverProgressBar.Values.Text = $"Calcul en cours ({remainingMinutes}:{remainingSecondsDisplay:D2} restant)";
+            // Calcul de la progression de la barre
+            if (_solverMaxSeconds > 0)
+            {
+                double progressPercentage = ((double)_elapsedSeconds / _solverMaxSeconds) * 100;
+                if (progressPercentage > 100) progressPercentage = 100;
+                SolverProgressBar.Value = (int)progressPercentage;
+
+                int remainingSeconds = Math.Max(0, _solverMaxSeconds - _elapsedSeconds);
+                int remainingMinutes = remainingSeconds / 60;
+                int remainingSecondsDisplay = remainingSeconds % 60;
+                SolverProgressBar.Values.Text = $"Calcul en cours ({remainingMinutes}:{remainingSecondsDisplay:D2} restant)";
+            }
+            else
+            {
+                SolverProgressBar.Values.Text = $"Planification en cours... {delay:g}";
+            }
         }
 
         private void StartSolverProgress()
         {
             _solverMaxSeconds = (int)cmbCalculMax.SelectedItem * 60;
-            _solverElapsedSeconds = 0;
+            _elapsedSeconds = 0;
             SolverProgressBar.Minimum = 0;
             SolverProgressBar.Maximum = 100;
             SolverProgressBar.Value = 0;

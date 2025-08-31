@@ -806,11 +806,6 @@ namespace PlanAthena.View.Planificator
             numSeuilDecoupage.TabIndex = 26;
             numSeuilDecoupage.Value = new decimal(new int[] { 2, 0, 0, 0 });
             // 
-            // planningTimer
-            // 
-            planningTimer.Interval = 1000;
-            planningTimer.Tick += planningTimer_Tick;
-            // 
             // PlanificatorView
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
