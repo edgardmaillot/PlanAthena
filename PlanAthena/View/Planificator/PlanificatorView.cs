@@ -1,11 +1,12 @@
-// PlanAthena Version 0.4.8 - Version finale corrigée
+// PlanAthena Version 0.5.1 - Refactoring persistance
 using Krypton.Toolkit;
+using PlanAthena.Data; // Ajout pour InformationsProjet
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
-using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.DTOs.ImportExport;
 using PlanAthena.Services.Export;
 using PlanAthena.Services.Infrastructure;
+using PlanAthena.Services.Usecases; // Note : Le nom du namespace était incorrect dans le fichier d'origine
 using PlanAthena.Services.UseCases;
 using System;
 using System.Data;
@@ -30,7 +31,7 @@ namespace PlanAthena.View.Planificator
         private readonly TaskStatusService _taskStatusService;
         private readonly PlanningExcelExportService _planningExcelExportService;
         private readonly GanttExportService _ganttExportService;
-        private readonly CheminsPrefereService _cheminsPrefereService = new CheminsPrefereService();
+        private readonly CheminsPrefereService _cheminsPrefereService; // Retiré l'initialisation directe
         private PlanificationRunResult _lastRunResult = null;
         private int _elapsedSeconds = 0;
         private Timer _solverTimer;
@@ -44,7 +45,8 @@ namespace PlanAthena.View.Planificator
             RessourceService ressourceService,
             TaskStatusService taskStatusService,
             PlanningExcelExportService planningExcelExportService,
-            GanttExportService ganttExportService)
+            GanttExportService ganttExportService,
+            CheminsPrefereService cheminsPrefereService) // Dépendance injectée
         {
             InitializeComponent();
             _applicationService = applicationService;
@@ -55,12 +57,12 @@ namespace PlanAthena.View.Planificator
             _taskStatusService = taskStatusService;
             _planningExcelExportService = planningExcelExportService;
             _ganttExportService = ganttExportService;
+            _cheminsPrefereService = cheminsPrefereService; // Assignation par injection
             _solverTimer = new Timer { Interval = 1000 };
             _solverTimer.Tick += SolverTimer_Tick;
-            this.Load += PlanificatorView_Load; // Ligne correcte
+            this.Load += PlanificatorView_Load;
         }
 
-        // --- MÉTHODE RÉINTRODUITE ---
         private void PlanificatorView_Load(object sender, EventArgs e)
         {
             if (DesignMode) return;
@@ -89,7 +91,7 @@ namespace PlanAthena.View.Planificator
             chkDateDebut.Checked = true;
             chkDateFin.Checked = true;
 
-            dgvAnalyseOuvriers.AutoGenerateColumns = false; // CORRIGÉ : dgvAnalyseOuvriers
+            dgvAnalyseOuvriers.AutoGenerateColumns = false;
         }
 
         private void PopulateFormFromSessionConfig()
@@ -109,7 +111,7 @@ namespace PlanAthena.View.Planificator
             numPenaliteChangement.Value = config.PenaliteChangementOuvrierPourcentage;
             numCoutIndirect.Value = config.CoutIndirectJournalierAbsolu;
             cmbCalculMax.SelectedItem = config.DureeCalculMaxMinutes > 0 ? (object)config.DureeCalculMaxMinutes : 5;
-            cmbTypeDeSortie.SelectedItem = config.TypeDeSortie;
+            cmbTypeDeSortie.SelectedItem = config.TypeDeSortie ?? "Optimisation Délai";
 
             if (config.DateDebutSouhaitee.HasValue) dtpDateDebut.Value = config.DateDebutSouhaitee.Value;
             if (config.DateFinSouhaitee.HasValue) dtpDateFin.Value = config.DateFinSouhaitee.Value;
@@ -123,7 +125,6 @@ namespace PlanAthena.View.Planificator
             config.HeureDebutJournee = (int)numHeureDebut.Value;
             config.DureeJournaliereStandardHeures = (int)numDureeOuverture.Value;
             config.HeuresTravailEffectifParJour = (int)numHeuresTravail.Value;
-            config.TypeDeSortie = cmbTypeDeSortie.SelectedItem.ToString();
             config.PenaliteChangementOuvrierPourcentage = numPenaliteChangement.Value;
             config.CoutIndirectJournalierAbsolu = (long)numCoutIndirect.Value;
             config.DureeCalculMaxMinutes = (int)cmbCalculMax.SelectedItem;
@@ -132,9 +133,12 @@ namespace PlanAthena.View.Planificator
             config.DateDebutSouhaitee = chkDateDebut.Checked ? dtpDateDebut.Value.Date : DateTime.Today;
             config.DateFinSouhaitee = chkDateFin.Checked ? dtpDateFin.Value.Date : DateTime.Today.AddYears(5);
 
-            config.Description = _applicationService.ProjetActif?.InformationsProjet?.NomProjet ?? "Nouveau Projet";
+            // --- CORRECTION ---
+            // On récupère les informations du projet depuis le service source de vérité.
+            InformationsProjet infosProjet = _projetService.ObtenirInformationsProjet();
+            config.Description = infosProjet?.NomProjet ?? "Nouveau Projet";
 
-            switch (cmbTypeDeSortie.SelectedItem.ToString())
+            switch (cmbTypeDeSortie.SelectedItem?.ToString())
             {
                 case "Analyse et Estimation":
                     config.TypeDeSortie = "ANALYSE_RAPIDE";
@@ -155,7 +159,9 @@ namespace PlanAthena.View.Planificator
         #region Logique Principale et Barre de Progression
         private async void btnLaunch_Click(object sender, EventArgs e)
         {
-            if (_applicationService.ProjetActif == null)
+            // --- CORRECTION ---
+            // La vérification se fait sur l'état du ProjetService.
+            if (_projetService.ObtenirInformationsProjet() == null)
             {
                 MessageBox.Show("Veuillez charger un projet avant de lancer la planification.", "Projet requis", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
@@ -194,7 +200,7 @@ namespace PlanAthena.View.Planificator
         #endregion
 
         #region Affichage des Résultats
-
+        // ... (Aucun changement dans cette région, elle est déjà correcte)
         private void AfficherResultats(PlanificationRunResult runResult)
         {
             if (runResult == null) return;
@@ -202,48 +208,38 @@ namespace PlanAthena.View.Planificator
             navigatorResultats.Visible = true;
             var culture = CultureInfo.GetCultureInfo("fr-FR");
 
-            // Traitement du statut du solveur en premier, car il est présent dans plusieurs cas.
             string solverStatus = runResult.RawResult?.OptimisationResultat?.Status.ToString();
             UpdateSolverStatusDisplay(solverStatus);
 
             if (runResult.AnalysisReport != null)
             {
-                // Cas d'un run d'optimisation (coût ou délai)
                 var synthese = runResult.AnalysisReport.SyntheseProjet;
                 lblCoutTotalValue.Text = synthese.CoutTotalProjet.ToString("C", culture);
                 lblCoutRhValue.Text = synthese.CoutTotalRh.ToString("C", culture);
                 lblCoutIndirectValue.Text = synthese.CoutTotalIndirect.ToString("C", culture);
                 lblJoursHommeValue.Text = synthese.EffortTotalJoursHomme.ToString("0.0");
                 lblDureeValue.Text = synthese.DureeJoursOuvres.ToString();
-
                 AfficherAnalyseRessources(runResult.AnalysisReport);
             }
             else if (runResult.RawResult?.AnalyseStatiqueResultat != null)
             {
-                // Cas d'une analyse rapide (estimation)
                 var estimation = runResult.RawResult.AnalyseStatiqueResultat;
-
                 decimal coutRhEstime = (estimation.CoutTotalEstime ?? 0) / 100.0m;
                 long coutIndirectJournalier = (long)numCoutIndirect.Value;
                 decimal heuresTravailParJour = numHeuresTravail.Value > 0 ? numHeuresTravail.Value : 8.0m;
-
                 decimal dureeEstimeeEnJours = Math.Ceiling((decimal)(estimation.DureeTotaleEstimeeEnSlots ?? 0) / heuresTravailParJour);
                 decimal coutIndirectEstime = dureeEstimeeEnJours * coutIndirectJournalier;
-
                 decimal coutTotalEstimeBrut = coutRhEstime + coutIndirectEstime;
                 decimal coutTotalFinal = Math.Ceiling(coutTotalEstimeBrut / 1000) * 1000;
-
                 lblCoutTotalValue.Text = coutTotalFinal.ToString("C", culture);
                 lblCoutIndirectValue.Text = coutIndirectEstime.ToString("C", culture);
                 lblDureeValue.Text = $"{estimation.DureeTotaleEstimeeEnSlots ?? 0} heures";
                 lblCoutRhValue.Text = "N/A";
                 lblJoursHommeValue.Text = "N/A";
-
                 NettoyerAnalyseRessources();
             }
             else
             {
-                // Cas d'erreur ou de résultat inattendu
                 NettoyerAffichageKpis();
             }
 
@@ -255,13 +251,10 @@ namespace PlanAthena.View.Planificator
         {
             khgStatutSolveur.Visible = !string.IsNullOrEmpty(status);
             if (string.IsNullOrEmpty(status)) return;
-
-            // Palette de couleurs pour les headers
-            var defaultBackColor = SystemColors.ControlDark; // Couleur par défaut
-            var optimalColor = Color.FromArgb(0, 150, 0); // Vert foncé
-            var feasibleColor = Color.FromArgb(204, 132, 0); // Orange foncé
-            var infeasibleColor = Color.FromArgb(192, 0, 0); // Rouge foncé
-
+            var defaultBackColor = SystemColors.ControlDark;
+            var optimalColor = Color.FromArgb(0, 150, 0);
+            var feasibleColor = Color.FromArgb(204, 132, 0);
+            var infeasibleColor = Color.FromArgb(192, 0, 0);
             switch (status.ToUpperInvariant())
             {
                 case "OPTIMAL":
@@ -269,19 +262,16 @@ namespace PlanAthena.View.Planificator
                     khgStatutSolveur.StateCommon.HeaderPrimary.Back.Color1 = optimalColor;
                     lblStatutExplication.Text = "La meilleure solution\npossible a été trouvée.";
                     break;
-
                 case "FEASIBLE":
                     khgStatutSolveur.ValuesPrimary.Heading = "FAISABLE";
                     khgStatutSolveur.StateCommon.HeaderPrimary.Back.Color1 = feasibleColor;
                     lblStatutExplication.Text = "Une solution a été trouvée,\nmais elle n'est peut-être pas la meilleure.\nLe temps de calcul était peut-être insuffisant.";
                     break;
-
                 case "INFEASIBLE":
                     khgStatutSolveur.ValuesPrimary.Heading = "IMPOSSIBLE";
                     khgStatutSolveur.StateCommon.HeaderPrimary.Back.Color1 = infeasibleColor;
                     lblStatutExplication.Text = "Aucune solution possible.\nAccordez plus de délai à l'IA.";
                     break;
-
                 default:
                     khgStatutSolveur.ValuesPrimary.Heading = status.ToUpperInvariant();
                     khgStatutSolveur.StateCommon.HeaderPrimary.Back.Color1 = defaultBackColor;
@@ -289,12 +279,11 @@ namespace PlanAthena.View.Planificator
                     break;
             }
         }
-
         private void AfficherAnalyseRessources(AnalysisReport report)
         {
-            dgvAnalyseOuvriers.DataSource = null; // CORRIGÉ
-            dgvAnalyseOuvriers.DataSource = report.AnalysesOuvriers; // CORRIGÉ
-            foreach (DataGridViewRow row in dgvAnalyseOuvriers.Rows) // CORRIGÉ
+            dgvAnalyseOuvriers.DataSource = null;
+            dgvAnalyseOuvriers.DataSource = report.AnalysesOuvriers;
+            foreach (DataGridViewRow row in dgvAnalyseOuvriers.Rows)
             {
                 if (row.Cells["colTauxFragmentation"].Value != null)
                 {
@@ -303,7 +292,6 @@ namespace PlanAthena.View.Planificator
                     else if (fragValue > 50) row.Cells["colTauxFragmentation"].Style.BackColor = Color.LightSalmon;
                 }
             }
-
             chartChargeJournaliere.Series.Clear();
             var series = new Series("Charge") { ChartType = SeriesChartType.Column, XValueType = ChartValueType.Date };
             foreach (var chargeJour in report.ChargeJournaliere.OrderBy(kvp => kvp.Key))
@@ -314,7 +302,6 @@ namespace PlanAthena.View.Planificator
             chartChargeJournaliere.ChartAreas[0].AxisX.LabelStyle.Format = "dd/MM";
             chartChargeJournaliere.ChartAreas[0].RecalculateAxesScale();
         }
-
         private void NettoyerAffichageKpis()
         {
             lblCoutTotalValue.Text = "N/A";
@@ -324,10 +311,9 @@ namespace PlanAthena.View.Planificator
             lblDureeValue.Text = "N/A";
             NettoyerAnalyseRessources();
         }
-
         private void NettoyerAnalyseRessources()
         {
-            dgvAnalyseOuvriers.DataSource = null; // CORRIGÉ
+            dgvAnalyseOuvriers.DataSource = null;
             chartChargeJournaliere.Series.Clear();
         }
 
@@ -336,8 +322,6 @@ namespace PlanAthena.View.Planificator
         #region Exports et États
         private void UpdateExportButtonsState()
         {
-            // L'export est possible uniquement si un run d'optimisation a été effectué
-            // et a produit un rapport d'analyse complet.
             bool canExport = _lastRunResult?.AnalysisReport != null;
             btnExportPlanningExcel.Enabled = canExport;
             btnExportGantt.Enabled = canExport;
@@ -351,12 +335,16 @@ namespace PlanAthena.View.Planificator
                 return;
             }
 
+            // --- CORRECTION ---
+            InformationsProjet infosProjet = _projetService.ObtenirInformationsProjet();
+            string nomProjet = infosProjet?.NomProjet ?? "Projet";
+
             using (var saveFileDialog = new SaveFileDialog
             {
                 Filter = "Fichiers Excel (*.xlsx)|*.xlsx",
                 Title = "Exporter le planning au format Excel",
                 InitialDirectory = _cheminsPrefereService.ObtenirDernierDossierExport(),
-                FileName = $"Planning_{_applicationService.ProjetActif.InformationsProjet.NomProjet}_{DateTime.Now:yyyyMMdd_HHmm}.xlsx"
+                FileName = $"Planning_{nomProjet}_{DateTime.Now:yyyyMMdd_HHmm}.xlsx"
             })
             {
                 if (saveFileDialog.ShowDialog() == DialogResult.OK)
@@ -364,26 +352,16 @@ namespace PlanAthena.View.Planificator
                     try
                     {
                         btnExportPlanningExcel.Enabled = false;
-
-                        var projetStructure = _projetService.GetProjetDataPourSauvegarde();
-                        var currentPlanning = _planningService.GetCurrentPlanning();
-                        var currentReport = _lastRunResult.AnalysisReport;
-                        var currentConfig = _applicationService.ConfigPlanificationActuelle;
-                        // NOUVEAU : Récupération de la liste complète des ouvriers depuis la source de vérité.
-                        var poolOuvriers = _ressourceService.GetAllOuvriers();
-
                         var exportData = new ExportDataProjetDto
                         {
-                            NomProjet = _applicationService.ProjetActif.InformationsProjet.NomProjet,
-                            Configuration = currentConfig,
-                            Planning = currentPlanning,
-                            Report = currentReport,
-                            ProjetStructure = projetStructure,
-                            PoolOuvriers = poolOuvriers // Remplissage de la nouvelle propriété.
+                            NomProjet = nomProjet,
+                            Configuration = _applicationService.ConfigPlanificationActuelle,
+                            Planning = _planningService.GetCurrentPlanning(),
+                            Report = _lastRunResult.AnalysisReport,
+                            ProjetStructure = _projetService.GetProjetDataPourSauvegarde(),
+                            PoolOuvriers = _ressourceService.GetAllOuvriers()
                         };
-
                         await Task.Run(() => _planningExcelExportService.ExporterPlanningComplet(exportData, saveFileDialog.FileName));
-
                         MessageBox.Show($"Le planning a été exporté avec succès vers :\n{saveFileDialog.FileName}", "Export réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     catch (Exception ex)
@@ -407,12 +385,16 @@ namespace PlanAthena.View.Planificator
                 return;
             }
 
+            // --- CORRECTION ---
+            InformationsProjet infosProjet = _projetService.ObtenirInformationsProjet();
+            string nomProjet = infosProjet?.NomProjet ?? "Projet";
+
             using (var saveFileDialog = new SaveFileDialog
             {
                 Filter = "Fichiers GanttProject (*.gan)|*.gan",
                 Title = "Exporter vers GanttProject",
                 InitialDirectory = _cheminsPrefereService.ObtenirDernierDossierExport(),
-                FileName = $"Gantt_{_applicationService.ProjetActif.InformationsProjet.NomProjet}_{DateTime.Now:yyyyMMdd_HHmm}.gan"
+                FileName = $"Gantt_{nomProjet}_{DateTime.Now:yyyyMMdd_HHmm}.gan"
             })
             {
                 if (saveFileDialog.ShowDialog() == DialogResult.OK)
@@ -420,25 +402,15 @@ namespace PlanAthena.View.Planificator
                     try
                     {
                         btnExportGantt.Enabled = false;
-
-                        // La collecte des données est identique à celle de l'export Excel.
-                        var projetStructure = _projetService.GetProjetDataPourSauvegarde();
-                        var currentPlanning = _planningService.GetCurrentPlanning();
-                        var currentReport = _lastRunResult.AnalysisReport;
-                        var currentConfig = _applicationService.ConfigPlanificationActuelle;
-
                         var exportData = new ExportDataProjetDto
                         {
-                            NomProjet = _applicationService.ProjetActif.InformationsProjet.NomProjet,
-                            Configuration = currentConfig,
-                            Planning = currentPlanning,
-                            Report = currentReport,
-                            ProjetStructure = projetStructure
+                            NomProjet = nomProjet,
+                            Configuration = _applicationService.ConfigPlanificationActuelle,
+                            Planning = _planningService.GetCurrentPlanning(),
+                            Report = _lastRunResult.AnalysisReport,
+                            ProjetStructure = _projetService.GetProjetDataPourSauvegarde()
                         };
-
-                        // L'appel au service d'export est asynchrone pour ne pas geler l'UI.
                         await Task.Run(() => _ganttExportService.ExporterVersGanttProjectXml(exportData, saveFileDialog.FileName));
-
                         MessageBox.Show($"Le projet a été exporté avec succès vers :\n{saveFileDialog.FileName}", "Export Gantt réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     catch (Exception ex)
@@ -456,7 +428,7 @@ namespace PlanAthena.View.Planificator
         #endregion
 
         #region Log Helpers & Barre de Progression
-
+        // ... (Aucun changement dans cette région)
         private void Log(string message)
         {
             if (this.IsDisposed || !this.IsHandleCreated) return;
@@ -468,7 +440,6 @@ namespace PlanAthena.View.Planificator
             rtbLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}");
             rtbLog.ScrollToCaret();
         }
-
         private void AfficherResultatDansLog(PlanificationRunResult runResult)
         {
             if (runResult?.RawResult == null)
@@ -476,18 +447,14 @@ namespace PlanAthena.View.Planificator
                 Log("Le résultat de la planification est invalide.");
                 return;
             }
-
             var sb = new StringBuilder();
             var rawResult = runResult.RawResult;
-
             sb.AppendLine($"--- Résultat pour le Chantier ID: {rawResult.ChantierId} ---");
             sb.AppendLine($"État du Traitement: {rawResult.Etat}");
-
             if (rawResult.OptimisationResultat != null)
             {
                 sb.AppendLine($"Statut du Solveur: {rawResult.OptimisationResultat.Status}");
             }
-
             if (rawResult.Messages.Any())
             {
                 sb.AppendLine("\nMessages de validation et suggestions :");
@@ -497,7 +464,6 @@ namespace PlanAthena.View.Planificator
                     sb.AppendLine($"  [{msg.Type}] ({msg.CodeMessage}) {msg.Message}{details}");
                 }
             }
-
             if (runResult.MetierTensionReport != null)
             {
                 sb.AppendLine("\n--- Analyse Rapide des Tensions ---");
@@ -512,7 +478,6 @@ namespace PlanAthena.View.Planificator
                     }
                 }
             }
-
             if (runResult.AnalysisReport != null)
             {
                 sb.AppendLine("\n--- Planning Détaillé ---");
@@ -537,26 +502,17 @@ namespace PlanAthena.View.Planificator
                     sb.AppendLine("Aucune affectation générée.");
                 }
             }
-
             Log(sb.ToString());
         }
-
-
         private void SolverTimer_Tick(object sender, EventArgs e)
         {
             _elapsedSeconds++;
-
-            // Affichage du temps global (ancien job du planningTimer)
             var delay = TimeSpan.FromSeconds(_elapsedSeconds);
-            // Choisir selon votre UI : soit mettre à jour un label global, soit directement la barre
-
-            // Calcul de la progression de la barre
             if (_solverMaxSeconds > 0)
             {
                 double progressPercentage = ((double)_elapsedSeconds / _solverMaxSeconds) * 100;
                 if (progressPercentage > 100) progressPercentage = 100;
                 SolverProgressBar.Value = (int)progressPercentage;
-
                 int remainingSeconds = Math.Max(0, _solverMaxSeconds - _elapsedSeconds);
                 int remainingMinutes = remainingSeconds / 60;
                 int remainingSecondsDisplay = remainingSeconds % 60;
@@ -567,7 +523,6 @@ namespace PlanAthena.View.Planificator
                 SolverProgressBar.Values.Text = $"Planification en cours... {delay:g}";
             }
         }
-
         private void StartSolverProgress()
         {
             _solverMaxSeconds = (int)cmbCalculMax.SelectedItem * 60;
@@ -579,7 +534,6 @@ namespace PlanAthena.View.Planificator
             SolverProgressBar.Visible = true;
             _solverTimer.Start();
         }
-
         private void StopSolverProgress()
         {
             _solverTimer.Stop();

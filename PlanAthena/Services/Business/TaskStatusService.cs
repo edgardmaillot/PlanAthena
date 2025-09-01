@@ -44,7 +44,7 @@ namespace PlanAthena.Services.Business
         /// <summary>
         /// Charge un dictionnaire de statuts, typiquement au chargement d'un projet.
         /// </summary>
-        public void ChargerStatuts(Dictionary<string, Status> statuses)
+        public virtual void ChargerStatuts(Dictionary<string, Status> statuses)
         {
             _taskStatuses = new Dictionary<string, Status>(statuses ?? new Dictionary<string, Status>());
         }
@@ -93,7 +93,7 @@ namespace PlanAthena.Services.Business
         /// Initialise les statuts de toutes les tâches d'un projet à "NonPlanifiee".
         /// Utile lors de la création d'un nouveau projet.
         /// </summary>
-        public void InitialiserStatutsPourNouveauProjet()
+        public virtual void InitialiserStatutsPourNouveauProjet()
         {
             _taskStatuses.Clear();
             var toutesLesTaches = _projetService.ObtenirToutesLesTaches();

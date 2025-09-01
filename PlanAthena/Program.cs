@@ -2,14 +2,14 @@ using Microsoft.Extensions.DependencyInjection;
 using PlanAthena.Core.Application;
 using PlanAthena.Core.Facade;
 using PlanAthena.Core.Infrastructure;
-using PlanAthena.Forms;
 using PlanAthena.Interfaces;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.Export;
 using PlanAthena.Services.Infrastructure;
 using PlanAthena.Services.Processing;
-using PlanAthena.Services.UseCases; // Important: using pour le nouvel Orchestrateur
+using PlanAthena.Services.Usecases;
+using PlanAthena.Services.UseCases;
 using PlanAthena.Utilities;
 using PlanAthena.View;
 using System;
@@ -29,7 +29,6 @@ namespace PlanAthena
             ConfigureServices(services);
             var serviceProvider = services.BuildServiceProvider();
 
-            // L'application utilisera le nouveau Shell
             var mainShell = serviceProvider.GetRequiredService<MainShellForm>();
             Application.Run(mainShell);
         }
@@ -44,20 +43,19 @@ namespace PlanAthena
 
             // --- Services de l'application principale ---
 
-            // --- ARCHITECTURE v0.4.8 : NOUVELLE ORGANISATION ---
-            // Note : Pour une application de bureau WinForms, enregistrer les services stateful
-            // en tant que Singleton est une approche standard pour partager l'état.
-
             // 1. Sources de Vérité (Stateful, Singletons)
             services.AddSingleton<ProjetService>();
             services.AddSingleton<RessourceService>();
-            services.AddSingleton<PlanningService>();     
-            services.AddSingleton<TaskStatusService>();   
+            services.AddSingleton<PlanningService>();
+            services.AddSingleton<TaskStatusService>();
 
-            // 2. Use Cases / Orchestrateurs (Stateless)
-            services.AddSingleton<ApplicationService>(); // Rôle à clarifier, mais gardé pour l'instant
+            // 2. Use Cases / Orchestrateurs (Stateless/Stateful selon le rôle)
+            // ApplicationService est gardé pour la configuration de session
+            services.AddSingleton<ApplicationService>();
             services.AddSingleton<ImportService>();
             services.AddSingleton<PlanificationOrchestrator>();
+            // --- NOUVEAU USE CASE DE PERSISTANCE ---
+            services.AddSingleton<ProjectPersistenceUseCase>();
 
             // 3. Utilitaires (Stateless, Singletons)
             services.AddSingleton<IIdGeneratorService, IdGeneratorService>();
@@ -70,22 +68,22 @@ namespace PlanAthena
             services.AddSingleton<PlanningExcelExportService>();
             services.AddSingleton<GanttExportService>();
 
-            // 5. Infrastructure & Dépôts (Singletons)
-            services.AddSingleton<ProjetRepository>();
+            // 5. Infrastructure & Accès aux Données (Singletons)
+            // --- NOUVELLE COUCHE D'ACCÈS AUX DONNÉES ---
+            services.AddSingleton<ProjetServiceDataAccess>();
             services.AddSingleton<UserPreferencesService>();
             services.AddSingleton<CsvDataService>();
             services.AddSingleton<ExcelReader>();
             services.AddSingleton<CheminsPrefereService>();
 
-            // --- SERVICES OBSOLÈTES ou à revoir ---
+            // --- SERVICE OBSOLÈTE SUPPRIMÉ ---
+            // services.AddSingleton<ProjetRepository>(); // SUPPRIMÉ
+
             // Le DependanceBuilder est probablement encore utilisé par l'UI, on le garde pour l'instant.
             services.AddSingleton<DependanceBuilder>();
 
             // Enregistrement des formulaires et vues
-            // Le Shell principal est enregistré pour être résolu avec toutes ses dépendances.
             services.AddSingleton<MainShellForm>();
-            // L'ancien MainForm est gardé si nécessaire, mais non utilisé dans le flux principal.
-            services.AddTransient<MainForm>();
         }
     }
 }

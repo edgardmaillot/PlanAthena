@@ -1,29 +1,39 @@
 using Krypton.Toolkit;
+using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
-using PlanAthena.Services.Infrastructure;
+using PlanAthena.Services.DTOs.ProjectPersistence;
+using PlanAthena.Services.Usecases;
 using PlanAthena.View.TaskManager;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace PlanAthena.View.Dashboard
-
 {
     public partial class DashboardView : UserControl
     {
+        private readonly ProjectPersistenceUseCase _persistenceUseCase;
+        private readonly ProjetService _projetService;
         private readonly ApplicationService _applicationService;
-        private readonly CheminsPrefereService _cheminsPrefereService;
+
         public event EventHandler<Type> NavigateToViewRequested;
 
-        public DashboardView(ApplicationService applicationService, CheminsPrefereService cheminsPrefereService)
+        public DashboardView(
+            ProjectPersistenceUseCase persistenceUseCase,
+            ProjetService projetService,
+            ApplicationService applicationService)
         {
             InitializeComponent();
+            _persistenceUseCase = persistenceUseCase;
+            _projetService = projetService;
             _applicationService = applicationService;
-            _cheminsPrefereService = cheminsPrefereService;
 
             textFilePath.ReadOnly = true;
             this.Load += DashboardView_Load;
-
             this.panelProjectList.Resize += new System.EventHandler(this.panelProjectList_Resize);
-
         }
 
         private void DashboardView_Load(object sender, EventArgs e)
@@ -42,13 +52,12 @@ namespace PlanAthena.View.Dashboard
             {
                 panelProjectList.Controls[1].Dispose();
             }
-            var recentFiles = _cheminsPrefereService.ObtenirFichiersRecents(TypeOperation.ProjetChargement);
-            foreach (var filePath in recentFiles)
+            var recentProjectSummaries = _persistenceUseCase.ObtenirSummariesProjetsRecents();
+            foreach (var summary in recentProjectSummaries)
             {
-                var summary = _applicationService.GetProjetSummary(filePath);
                 AddProjectControlToList(summary);
             }
-            panelProjectList.ResumeLayout();
+            panelProjectList.ResumeLayout(true);
         }
 
         private void AddProjectControlToList(ProjetSummaryDto summary)
@@ -62,73 +71,64 @@ namespace PlanAthena.View.Dashboard
                 Margin = new Padding(3),
                 StateCommon = { Content = { ShortText = { TextH = PaletteRelativeAlign.Near, TextV = PaletteRelativeAlign.Center, MultiLine = InheritBool.True } } }
             };
+
+            if (summary.ErreurLecture)
+            {
+                projectButton.StateCommon.Back.Color1 = Color.LightCoral;
+            }
+
             projectButton.Click += ProjectControl_Click;
             panelProjectList.Controls.Add(projectButton);
         }
+
         private void panelProjectList_Resize(object sender, EventArgs e)
         {
-            // Cette méthode est appelée chaque fois que la taille du panel de gauche change.
-            // On ajuste la largeur de chaque bouton pour qu'il remplisse l'espace.
             foreach (Control control in panelProjectList.Controls)
             {
-                if (control is KryptonButton)
+                if (control is KryptonButton button)
                 {
-                    // On soustrait les marges pour un ajustement parfait
-                    control.Width = panelProjectList.ClientSize.Width - control.Margin.Left - control.Margin.Right;
+                    button.Width = panelProjectList.ClientSize.Width - button.Margin.Left - button.Margin.Right;
                 }
             }
         }
+
         private void ProjectControl_Click(object sender, EventArgs e)
         {
-            var control = sender as Control;
-            if (control?.Tag is string filePath)
+            if (sender is Control { Tag: string filePath })
             {
-                try
-                {
-                    _applicationService.ChargerProjetDepuisFichier(filePath);
-                    UpdateDetailsForm();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Erreur lors du chargement du projet:\n{ex.Message}", "Erreur de Chargement", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                _persistenceUseCase.ChargerProjetDepuisChemin(filePath);
+                UpdateDetailsForm();
+                RefreshRecentProjects(); // Pour actualiser l'ordre
             }
         }
 
         private void btnNewProject_Click(object sender, EventArgs e)
         {
-            _applicationService.CreerNouveauProjet();
+            _persistenceUseCase.CreerNouveauProjet();
             UpdateDetailsForm();
             textName.Focus();
         }
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            if (_applicationService.ProjetActif == null) return;
+            if (_projetService.ObtenirInformationsProjet() == null) return;
 
             UpdateProjectFromForm();
 
-            try
-            {
-                _applicationService.SauvegarderProjetActuel();
-                MessageBox.Show("Projet sauvegardé avec succès !", "Sauvegarde", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            _persistenceUseCase.SauvegarderProjet();
+            MessageBox.Show("Projet sauvegardé avec succès !", "Sauvegarde", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                RefreshRecentProjects();
-                UpdateDetailsForm();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Erreur lors de la sauvegarde du projet:\n{ex.Message}", "Erreur de Sauvegarde", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            RefreshRecentProjects();
+            UpdateDetailsForm();
         }
 
         public void UpdateDetailsForm()
         {
-            var projet = _applicationService.ProjetActif;
-            var chemin = _applicationService.CheminFichierProjetActif;
+            var info = _projetService.ObtenirInformationsProjet();
+            var chemin = _persistenceUseCase.GetCurrentProjectPath();
             var config = _applicationService.ConfigPlanificationActuelle;
 
-            if (projet == null)
+            if (info == null)
             {
                 ClearDetailsForm();
                 return;
@@ -137,13 +137,11 @@ namespace PlanAthena.View.Dashboard
             groupDetails.Enabled = true;
             panelActions.Enabled = true;
 
-            var info = projet.InformationsProjet;
             groupDetails.Values.Heading = $"Édition du Projet : {info.NomProjet}";
             textFilePath.Text = chemin ?? "(Nouveau projet - non sauvegardé)";
             textName.Text = info.NomProjet;
             textDescription.Text = info.Description;
 
-            // -- Champs de configuration --
             numOpeningTime.Value = config.HeureDebutJournee;
             numClosingTime.Value = config.HeureDebutJournee + config.DureeJournaliereStandardHeures;
             numWorkDuration.Value = config.HeuresTravailEffectifParJour;
@@ -162,10 +160,9 @@ namespace PlanAthena.View.Dashboard
 
         private void UpdateProjectFromForm()
         {
-            if (_applicationService.ProjetActif == null) return;
-
-            var info = _applicationService.ProjetActif.InformationsProjet;
+            var info = _projetService.ObtenirInformationsProjet();
             var config = _applicationService.ConfigPlanificationActuelle;
+            if (info == null) return;
 
             info.NomProjet = textName.Text;
             info.Description = textDescription.Text;
@@ -184,6 +181,8 @@ namespace PlanAthena.View.Dashboard
             if (chkFriday.Checked) config.JoursOuvres.Add(DayOfWeek.Friday);
             if (chkSaturday.Checked) config.JoursOuvres.Add(DayOfWeek.Saturday);
             if (chkSunday.Checked) config.JoursOuvres.Add(DayOfWeek.Sunday);
+
+            _persistenceUseCase.SetProjectAsDirty();
         }
 
         private void ClearDetailsForm()
@@ -212,6 +211,8 @@ namespace PlanAthena.View.Dashboard
             groupDetails.Values.Heading = "Édition du Projet";
         }
 
+
+
         private void OnTimeChanged(object sender, EventArgs e)
         {
             UpdateCalculatedDuration();
@@ -223,9 +224,10 @@ namespace PlanAthena.View.Dashboard
             if (duration < 0) duration = 0;
             labelCalculatedDuration.Text = $"{duration}h";
         }
+
         private void btnManage_Click(object sender, EventArgs e)
         {
-            if (_applicationService.ProjetActif != null)
+            if (_projetService.ObtenirInformationsProjet() != null && _projetService.ObtenirTousLesLots().Any())
             {
                 NavigateToViewRequested?.Invoke(this, typeof(TaskManagerView));
             }

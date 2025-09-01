@@ -1,7 +1,6 @@
-// Fichier: PlanAthena/Services/Business/ProjetService.cs
-// Version: 0.4.4 (Refactorisation Finale)
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
+using PlanAthena.Services.Business.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,23 +13,32 @@ namespace PlanAthena.Services.Business
         private readonly Dictionary<string, Lot> _lots = new();
         private readonly Dictionary<string, Tache> _taches = new();
 
+        // NOUVEAU: Le ProjetService est maintenant la source de vérité pour les informations du projet.
+        private InformationsProjet _informationsProjet;
+
         public ProjetService(IIdGeneratorService idGenerator)
         {
             _idGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
+            // On initialise un projet vide par défaut au démarrage
+            //InitialiserNouveauProjet();
         }
 
         #region Cycle de vie du projet
 
-        public void InitialiserNouveauProjet()
+        public virtual void InitialiserNouveauProjet()
         {
             ViderProjet();
+            _informationsProjet = new InformationsProjet { NomProjet = "Nouveau Projet" };
             CreerLot("Lot Principal", 50, ChantierPhase.SecondOeuvre);
         }
 
-        public void ChargerProjet(ProjetData projetData)
+        public virtual void ChargerProjet(ProjetData projetData)
         {
             ViderProjet();
             if (projetData == null) return;
+
+            // MISE À JOUR: Charger les informations du projet depuis les données persistées
+            _informationsProjet = projetData.InformationsProjet ?? new InformationsProjet { NomProjet = "Projet sans nom" };
 
             projetData.Lots?.ForEach(lot => _lots.TryAdd(lot.LotId, lot));
             projetData.Taches?.ForEach(tache => _taches.TryAdd(tache.TacheId, tache));
@@ -52,19 +60,23 @@ namespace PlanAthena.Services.Business
             }
         }
 
-        public ProjetData GetProjetDataPourSauvegarde()
+        public virtual ProjetData GetProjetDataPourSauvegarde()
         {
             return new ProjetData
             {
                 Lots = this.ObtenirTousLesLots(),
                 Taches = this.ObtenirToutesLesTaches(),
+                // MISE À JOUR: Inclure les informations du projet dans la sauvegarde
+                InformationsProjet = this._informationsProjet
             };
         }
 
-        public void ViderProjet()
+        public virtual void ViderProjet()
         {
             _lots.Clear();
             _taches.Clear();
+            // MISE À JOUR: Réinitialiser aussi les informations du projet
+            _informationsProjet = null;
         }
 
         public void ViderLot(string lotId)
@@ -90,8 +102,18 @@ namespace PlanAthena.Services.Business
 
         #endregion
 
-        #region Gestion des Lots
+        #region Accesseurs pour l'IHM
 
+        // NOUVELLE MÉTHODE: Expose les informations du projet à l'IHM
+        public InformationsProjet ObtenirInformationsProjet()
+        {
+            return _informationsProjet;
+        }
+
+        #endregion
+
+        #region Gestion des Lots
+        // ... (Le reste des méthodes de gestion des Lots, Blocs, Tâches reste inchangé) ...
         public Lot CreerLot(string nom = "Nouveau Lot", int priorite = 99, ChantierPhase phases = ChantierPhase.SecondOeuvre)
         {
             if (string.IsNullOrWhiteSpace(nom)) throw new ArgumentException("Le nom du lot ne peut pas être vide.", nameof(nom));

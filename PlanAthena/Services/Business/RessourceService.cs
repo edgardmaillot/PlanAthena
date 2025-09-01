@@ -28,7 +28,7 @@ namespace PlanAthena.Services.Business
 
         #region Cycle de vie des Ressources
 
-        public void ChargerRessources(List<Metier> metiers, List<Ouvrier> ouvriers)
+        public virtual void ChargerRessources(List<Metier> metiers, List<Ouvrier> ouvriers)
         {
             ViderMetiers();
             ViderOuvriers();
@@ -36,7 +36,7 @@ namespace PlanAthena.Services.Business
             ouvriers?.ForEach(o => _ouvriers.TryAdd(o.OuvrierId, o));
         }
 
-        public void ChargerMetiersParDefaut()
+        public virtual void ChargerMetiersParDefaut()
         {
             // Cette méthode commence par vider pour assurer un état prédictible
             ViderMetiers();
@@ -58,8 +58,8 @@ namespace PlanAthena.Services.Business
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Erreur chargement métiers par défaut: {ex.Message}"); }
         }
 
-        public void ViderMetiers() => _metiers.Clear();
-        public void ViderOuvriers() => _ouvriers.Clear();
+        public virtual void ViderMetiers() => _metiers.Clear();
+        public virtual void ViderOuvriers() => _ouvriers.Clear();
 
         #endregion
 

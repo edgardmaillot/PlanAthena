@@ -1,0 +1,91 @@
+@startuml
+' Titre et style
+title Diagramme de Classe - Architecture de Persistance v1.0
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+
+' Définition des acteurs
+
+
+package "Couche Use Case" {
+    class ProjectPersistenceUseCase {
+        + SauvegarderProjet()
+        + SauvegarderProjetSous()
+        + ChargerProjet()
+        + ChargerProjetDepuisChemin(filePath)
+        + CreerNouveauProjet()
+        + ObtenirSummariesProjetsRecents()
+        + SetProjectAsDirty()
+        + GetCurrentProjectPath()
+    }
+}
+
+package "Couche Accès aux Données" {
+    class ProjetServiceDataAccess {
+        + Sauvegarder(projetData, filePath)
+        + Charger(filePath)
+        + ShowSaveDialog(defaultFileName)
+        + ShowOpenDialog()
+        + SauvegarderFichierTexte(content, filePath)
+        + ChargerFichierTexte(filePath)
+    }
+}
+
+package "Services Métier (Sources de Vérité)" {
+    class ProjetService {
+        + GetProjetDataPourSauvegarde()
+        + ChargerProjet(data)
+        + ViderProjet()
+    }
+    class RessourceService {
+        + GetAllMetiers() / GetAllOuvriers()
+        + ChargerRessources(data)
+        + ViderMetiers() / ViderOuvriers()
+    }
+    class PlanningService {
+         + GetCurrentPlanning()
+         + UpdatePlanning(data)
+         + ClearPlanning()
+    }
+    class TaskStatusService {
+        + RetourneTousLesStatuts()
+        + ChargerStatuts(data)
+    }
+}
+
+package "Services d'Infrastructure" {
+    class CheminsPrefereService {
+        + ObtenirDernierDossierProjets()
+        + ObtenirFichiersRecents()
+    }
+}
+
+' Définition des relations de dépendance (utilise)
+IHM ..> ProjectPersistenceUseCase : utilise
+
+ProjectPersistenceUseCase ..> ProjetServiceDataAccess
+ProjectPersistenceUseCase ..> ProjetService
+ProjectPersistenceUseCase ..> RessourceService
+ProjectPersistenceUseCase ..> PlanningService
+ProjectPersistenceUseCase ..> TaskStatusService
+ProjectPersistenceUseCase ..> CheminsPrefereService
+
+ProjetServiceDataAccess ..> CheminsPrefereService
+
+' Notes explicatives
+note right of ProjectPersistenceUseCase
+  **Chef d'Orchestre (Use Case)**
+  Seul point de contact pour l'IHM.
+  Coordonne les services.
+  Ne contient aucune logique technique.
+end note
+
+note top of ProjetServiceDataAccess
+  **Technicien (Data Access)**
+  Gère les fichiers JSON et
+  les boîtes de dialogue.
+  Ne connaît pas la logique métier.
+end note
+
+@enduml

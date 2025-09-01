@@ -48,7 +48,7 @@ namespace PlanAthena.Services.Business
         /// Réinitialise l'état du service, effaçant le planning et la configuration actuels.
         /// À appeler lors du déchargement d'un projet, par exemple.
         /// </summary>
-        public void ClearPlanning()
+        public virtual void ClearPlanning()
         {
             _currentPlanning = null;
             _currentConfig = null;
