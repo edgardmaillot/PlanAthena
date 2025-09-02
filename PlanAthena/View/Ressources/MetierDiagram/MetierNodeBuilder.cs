@@ -1,6 +1,5 @@
 using Microsoft.Msagl.Drawing;
 using PlanAthena.Data; // Pour Metier
-using PlanAthena.Services.Business; // Pour ProjetService
 using MsaglColor = Microsoft.Msagl.Drawing.Color;
 
 namespace PlanAthena.View.Ressources.MetierDiagram

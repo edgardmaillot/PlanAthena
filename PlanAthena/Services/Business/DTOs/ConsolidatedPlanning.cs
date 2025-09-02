@@ -1,7 +1,4 @@
 // 0.4.8 : Fichier: ConsolidatedPlanning.cs
-using System;
-using System.Collections.Generic;
-
 namespace PlanAthena.Services.Business.DTOs
 {
     /// <summary>

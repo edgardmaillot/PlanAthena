@@ -3,9 +3,6 @@
 // Description: Fichier nettoyé, ajout des 'using' nécessaires pour référencer
 // les DTOs de statistiques qui ont été déplacés dans leurs propres fichiers.
 
-using System;
-using System.Collections.Generic;
-
 namespace PlanAthena.Services.Business.DTOs
 {
     /// <summary>

@@ -1,8 +1,5 @@
 // Fichier: Services/Export/DTOs/PlanningExportDTOs.cs
 
-using System;
-using System.Collections.Generic;
-
 namespace PlanAthena.Services.Business.DTOs
 {
     /// <summary>

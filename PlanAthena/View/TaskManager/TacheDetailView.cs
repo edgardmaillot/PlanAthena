@@ -1,13 +1,7 @@
-using Krypton.Toolkit;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
 
 namespace PlanAthena.View.TaskManager
 {
@@ -15,6 +9,7 @@ namespace PlanAthena.View.TaskManager
     {
         // Services
         private ProjetService _projetService;
+        private TaskManagerService _taskManagerService;
         private RessourceService _ressourceService;
         private DependanceBuilder _dependanceBuilder;
 
@@ -38,9 +33,10 @@ namespace PlanAthena.View.TaskManager
         /// <summary>
         /// Initialise le contrôle avec les services nécessaires après sa création.
         /// </summary>
-        public void InitializeServices(ProjetService projetService, RessourceService ressourceService, DependanceBuilder dependanceBuilder)
+        public void InitializeServices(ProjetService projetService, TaskManagerService taskManagerService, RessourceService ressourceService, DependanceBuilder dependanceBuilder)
         {
             _projetService = projetService;
+            _taskManagerService = taskManagerService;
             _ressourceService = ressourceService;
             _dependanceBuilder = dependanceBuilder;
 
@@ -142,7 +138,7 @@ namespace PlanAthena.View.TaskManager
                 var lot = _projetService.ObtenirLotParId(_currentTache.LotId);
                 if (lot == null) return;
 
-                var tachesDuMemeBloc = _projetService.ObtenirTachesParBloc(_currentTache.BlocId);
+                var tachesDuMemeBloc = _taskManagerService.ObtenirToutesLesTaches(blocId: _currentTache.BlocId);
                 var etatsDependances = _dependanceBuilder.ObtenirDependancesPourTache(_currentTache, tachesDuMemeBloc, lot.Phases)
                                                         .OrderBy(d => d.TachePredecesseur.TacheNom)
                                                         .ToList();

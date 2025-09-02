@@ -4,8 +4,6 @@
 // Isole les opérations de lecture/écriture de fichiers de la logique métier.
 
 using PlanAthena.Data;
-using System;
-using System.IO;
 using System.Text.Json;
 
 namespace PlanAthena.Services.DataAccess

@@ -1,21 +1,13 @@
 // PlanAthena Version 0.5.1 - Refactoring persistance
-using Krypton.Toolkit;
-using PlanAthena.Data; // Ajout pour InformationsProjet
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DTOs.ImportExport;
 using PlanAthena.Services.Export;
 using PlanAthena.Services.Infrastructure;
-using PlanAthena.Services.Usecases; // Note : Le nom du namespace était incorrect dans le fichier d'origine
 using PlanAthena.Services.UseCases;
-using System;
 using System.Data;
-using System.Drawing;
 using System.Globalization;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using Timer = System.Windows.Forms.Timer;
 
@@ -28,7 +20,6 @@ namespace PlanAthena.View.Planificator
         private readonly PlanningService _planningService;
         private readonly ProjetService _projetService;
         private readonly RessourceService _ressourceService;
-        private readonly TaskStatusService _taskStatusService;
         private readonly PlanningExcelExportService _planningExcelExportService;
         private readonly GanttExportService _ganttExportService;
         private readonly CheminsPrefereService _cheminsPrefereService; // Retiré l'initialisation directe
@@ -43,7 +34,6 @@ namespace PlanAthena.View.Planificator
             PlanningService planningService,
             ProjetService projetService,
             RessourceService ressourceService,
-            TaskStatusService taskStatusService,
             PlanningExcelExportService planningExcelExportService,
             GanttExportService ganttExportService,
             CheminsPrefereService cheminsPrefereService) // Dépendance injectée
@@ -54,7 +44,6 @@ namespace PlanAthena.View.Planificator
             _planningService = planningService;
             _projetService = projetService;
             _ressourceService = ressourceService;
-            _taskStatusService = taskStatusService;
             _planningExcelExportService = planningExcelExportService;
             _ganttExportService = ganttExportService;
             _cheminsPrefereService = cheminsPrefereService; // Assignation par injection
@@ -481,7 +470,7 @@ namespace PlanAthena.View.Planificator
             if (runResult.AnalysisReport != null)
             {
                 sb.AppendLine("\n--- Planning Détaillé ---");
-                var planningParJour = _taskStatusService.RetournePlanningDetailleParJour();
+                var planningParJour = _planningService.RetournePlanningDetailleParJour();
                 if (planningParJour.Any())
                 {
                     foreach (var jour in planningParJour)

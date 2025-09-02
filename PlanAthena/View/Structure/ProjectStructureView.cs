@@ -2,12 +2,7 @@ using Krypton.Toolkit;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.View.TaskManager;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
 
 namespace PlanAthena.View.Structure
 {
@@ -54,10 +49,12 @@ namespace PlanAthena.View.Structure
 
         private void AttachEvents()
         {
-            lotDetailView1.LotChanged += (s, e) => {
+            lotDetailView1.LotChanged += (s, e) =>
+            {
                 _projetService.ModifierLot((Lot)_selectedObject);
             };
-            blocDetailView1.BlocChanged += (s, e) => {
+            blocDetailView1.BlocChanged += (s, e) =>
+            {
                 _projetService.ModifierBloc((Bloc)_selectedObject);
             };
         }

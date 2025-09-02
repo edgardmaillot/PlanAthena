@@ -12,9 +12,6 @@ using PlanAthena.View.Ressources;
 using PlanAthena.View.Ressources.MetierDiagram;
 using PlanAthena.View.Structure;
 using PlanAthena.View.TaskManager;
-using System;
-using System.Linq;
-using System.Windows.Forms;
 
 namespace PlanAthena.View
 {
@@ -27,12 +24,12 @@ namespace PlanAthena.View
         private readonly IServiceProvider _serviceProvider;
         private readonly ApplicationService _applicationService;
         private readonly ProjetService _projetService;
+        private readonly TaskManagerService _taskManagerService;
         private readonly RessourceService _ressourceService;
         private readonly ImportService _importService;
         private readonly CheminsPrefereService _cheminsPrefereService;
         private readonly DependanceBuilder _dependanceBuilder;
         private readonly PlanningService _planningService;
-        private readonly TaskStatusService _taskStatusService;
         private readonly PlanningExcelExportService _planningExcelExportService;
         private readonly GanttExportService _ganttExportService;
         private readonly UserPreferencesService _userPreferencesService;
@@ -44,13 +41,13 @@ namespace PlanAthena.View
             ProjectPersistenceUseCase persistenceUseCase,
             ApplicationService applicationService,
             ProjetService projetService,
+            TaskManagerService taskManagerService,
             RessourceService ressourceService,
             ImportService importService,
             CheminsPrefereService cheminsPrefereService,
             DependanceBuilder dependanceBuilder,
             PlanificationOrchestrator planificationOrchestrator,
             PlanningService planningService,
-            TaskStatusService taskStatusService,
             PlanningExcelExportService planningExcelExportService,
             GanttExportService ganttExportService,
             UserPreferencesService userPreferencesService)
@@ -63,13 +60,13 @@ namespace PlanAthena.View
             _persistenceUseCase = persistenceUseCase;
             _applicationService = applicationService;
             _projetService = projetService;
+            _taskManagerService = taskManagerService;
             _ressourceService = ressourceService;
             _importService = importService;
             _cheminsPrefereService = cheminsPrefereService;
             _dependanceBuilder = dependanceBuilder;
             _planificationOrchestrator = planificationOrchestrator;
             _planningService = planningService;
-            _taskStatusService = taskStatusService;
             _planningExcelExportService = planningExcelExportService;
             _ganttExportService = ganttExportService;
             _userPreferencesService = userPreferencesService;
@@ -169,14 +166,14 @@ namespace PlanAthena.View
         private void NavigateToTaskManager()
         {
             // Note: TaskManagerView devra aussi être mis à jour
-            var view = new TaskManagerView(_applicationService, _projetService, _ressourceService, _dependanceBuilder, _importService);
+            var view = new TaskManagerView(_applicationService, _projetService, _taskManagerService, _ressourceService, _dependanceBuilder, _importService);
             view.NavigateToViewRequested += OnNavigateToViewRequested;
             ShowView(view);
         }
         private void NavigateToPlanificator()
         {
             // --- CORRECTION: Le constructeur de PlanificatorView est mis à jour ---
-            var view = new PlanificatorView(_applicationService, _planificationOrchestrator, _planningService, _projetService, _ressourceService, _taskStatusService, _planningExcelExportService, _ganttExportService, _cheminsPrefereService);
+            var view = new PlanificatorView(_applicationService, _planificationOrchestrator, _planningService, _projetService, _ressourceService, _planningExcelExportService, _ganttExportService, _cheminsPrefereService);
             ShowView(view);
         }
         #endregion

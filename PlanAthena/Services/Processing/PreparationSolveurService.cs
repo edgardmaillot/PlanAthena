@@ -1,6 +1,6 @@
 // Fichier: Services/Processing/PreparationSolveurService.cs
-using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Data;
+using PlanAthena.Services.Business.DTOs;
 
 namespace PlanAthena.Services.Processing
 {
@@ -11,7 +11,7 @@ namespace PlanAthena.Services.Processing
     /// </summary>
     public class PreparationSolveurService
     {
-        
+
         private const string JALON_TECHNIQUE_PREFIX = "JT_";
         private const string DECOUPAGE_SUFFIX = "_P";
 
@@ -125,7 +125,7 @@ namespace PlanAthena.Services.Processing
                 string idJalon = $"{JALON_TECHNIQUE_PREFIX}{originalId}";
                 var sousTachesIds = tableDecoupage[originalId];
                 var tacheRef = taches.First(t => t.TacheId == sousTachesIds[0]);
-                
+
                 var jalon = new Tache
                 {
                     TacheId = idJalon,

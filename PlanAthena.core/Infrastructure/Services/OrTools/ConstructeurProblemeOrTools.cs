@@ -3,7 +3,6 @@
 using Google.OrTools.Sat;
 using PlanAthena.core.Application.InternalDto;
 using PlanAthena.Core.Application.Interfaces;
-using System.Diagnostics;
 
 namespace PlanAthena.Core.Infrastructure.Services.OrTools
 {

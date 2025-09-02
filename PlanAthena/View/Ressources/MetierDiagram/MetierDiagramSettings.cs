@@ -15,7 +15,7 @@ namespace PlanAthena.View.Ressources.MetierDiagram
 
         public double DefaultZoom { get; set; } = 0.9; // Zoom un peu plus grand pour les métiers
         public SystemColor OutsideAreaColor { get; set; } = SystemColor.LightYellow; // Couleur de fond du diagramme
-        public LayerDirection LayoutDirection { get; set; } = LayerDirection.TB; 
+        public LayerDirection LayoutDirection { get; set; } = LayerDirection.TB;
         public double LayoutAspectRatio { get; set; } = 0.5; // Plus large que haut
         public double LayoutNodeSeparation { get; set; } = 40;
         public double LayoutLayerSeparation { get; set; } = 100;

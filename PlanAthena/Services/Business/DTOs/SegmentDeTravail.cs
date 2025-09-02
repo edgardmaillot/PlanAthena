@@ -1,6 +1,4 @@
 // 0.4.8 : Fichier: SegmentDeTravail.cs
-using System;
-
 namespace PlanAthena.Services.Business.DTOs
 {
     /// <summary>

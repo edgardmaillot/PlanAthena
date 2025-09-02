@@ -5,13 +5,8 @@ using Microsoft.Msagl.Layout.Layered;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
 using System.Drawing.Printing;
-using System.Linq;
 using System.Reflection;
-using System.Windows.Forms;
 using DrawingNode = Microsoft.Msagl.Drawing.Node;
 
 namespace PlanAthena.View.TaskManager.PertDiagram

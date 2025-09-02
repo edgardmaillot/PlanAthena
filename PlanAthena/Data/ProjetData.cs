@@ -1,6 +1,4 @@
 using PlanAthena.Services.Business.DTOs; // Pour ConsolidatedPlanning et ConfigurationPlanification
-using System.Collections.Generic; // Pour Dictionary
-using System; // Pour DateTime
 
 namespace PlanAthena.Data
 {

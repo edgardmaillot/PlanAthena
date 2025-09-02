@@ -1,5 +1,3 @@
-using System;
-
 namespace PlanAthena.Data
 {
     [Flags]

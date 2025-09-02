@@ -1,0 +1,100 @@
+@startuml
+' --- Configuration ---
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam class {
+    BackgroundColor #F0F8FF
+    BorderColor #4682B4
+    ArrowColor #4682B4
+}
+hide empty members
+
+title Structure v0.5.0 : TaskManagerService (Source de Vérité des Tâches)
+
+package "Services Métier" {
+    class "<b>TaskManagerService</b>" as TaskSvc {
+        '-- Champs --'
+        - _idGenerator: IIdGeneratorService
+        - _planningService: PlanningService
+        - _taches: Dictionary<string, Tache>
+        --
+        '-- Constructeur --'
+        + TaskManagerService(planningService, idGenerator)
+        --
+        '-- Cycle de vie & Persistance --'
+        + ChargerTaches(taches: List<Tache>)
+        + ViderTaches()
+        + ObtenirToutesLesTachesPourSauvegarde(): List<Tache>
+        --
+        '-- CRUD & Requêtes --'
+        + CreerTache(lotId, blocId, nom, heures): Tache
+        + ModifierTache(tacheModifiee: Tache)
+        + SupprimerTache(tacheId: string)
+        + ObtenirToutesLesTaches(lotId, blocId): List<Tache>
+        + ObtenirTachesParMetier(metierId): List<Tache>
+        + ObtenirTachesEnfants(parentId): List<Tache>
+        + ObtenirTache(tacheId): Tache
+        --
+        '-- Logique Métier --'
+        + SynchroniserStatutsTaches()
+        + MettreAJourDecompositionTaches(tachesCalc, parentMap)
+        + MarquerTachesTerminees(tacheIds: List<string>)
+    }
+}
+
+package "Services Dépendants" {
+    interface IIdGeneratorService {
+        + GenererProchainTacheId(...): string
+    }
+    class PlanningService {
+        + ObtenirInfosPlanificationPourToutesLesTaches(): Dictionary<string, PlanningInfoPourTache>
+        + InvaliderTache(tacheId: string)
+    }
+}
+
+package "Données & DTOs" as Data {
+    class Tache {
+        + TacheId: string
+        + TacheNom: string
+        + HeuresHommeEstimees: int
+        + ParentId: string
+        -- Propriétés Enrichies --
+        + Statut: Statut
+        + EstConteneur: bool
+        + DateDebutPlanifiee: DateTime?
+        + Affectations: List<AffectationOuvrier>
+    }
+    class AffectationOuvrier <<record>> {
+        + OuvrierId: string
+        + NomOuvrier: string
+        + HeuresTravaillees: int
+    }
+    enum Statut {
+        Estimée
+        Planifiee
+        EnCours
+        Terminee
+        EnRetard
+    }
+    class PlanningInfoPourTache <<DTO>>
+}
+
+' --- Relations ---
+TaskSvc "1" *-- "1" IIdGeneratorService : "dépend de"
+TaskSvc "1" *-- "1" PlanningService : "dépend de"
+
+TaskSvc "1" o-- "*" Tache : "gère"
+Tache "1" o-- "*" AffectationOuvrier : "contient"
+Tache --> Statut : "a un"
+
+TaskSvc ..> PlanningInfoPourTache : "utilise"
+
+note bottom of TaskSvc
+  <b>Responsabilités de TaskManagerService (v0.5.0)</b>
+  - Source de vérité unique pour <b>toutes les tâches</b> (mères et enfants).
+  - Gère le <b>cycle de vie complet</b> : CRUD, état, hiérarchie.
+  - S'appuie sur <b>PlanningService</b> pour enrichir ses données.
+  - Expose des méthodes de requête pour les autres services et l'IHM.
+end note
+
+@enduml

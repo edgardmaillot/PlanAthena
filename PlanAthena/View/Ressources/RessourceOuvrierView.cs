@@ -2,11 +2,7 @@ using Krypton.Toolkit;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Windows.Forms;
 
 namespace PlanAthena.View.Ressources.MetierDiagram
 {

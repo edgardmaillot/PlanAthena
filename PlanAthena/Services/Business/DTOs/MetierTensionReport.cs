@@ -1,7 +1,5 @@
 // Emplacement: /Services/Business/DTOs/MetierTensionReport.cs
 
-using System.Collections.Generic;
-
 namespace PlanAthena.Services.Business.DTOs
 {
     /// <summary>

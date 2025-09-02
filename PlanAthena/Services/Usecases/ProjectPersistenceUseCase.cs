@@ -1,15 +1,11 @@
-// --- USING CORRIGÉS ---
+// /Services/Usecases/ProjectPersistenceUseCase.cs V0.4.8
+
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
-using PlanAthena.Services.Business.DTOs; // Conservé pour ConsolidatedPlanning, ConfigurationPlanification, etc.
 using PlanAthena.Services.DataAccess;
-using PlanAthena.Services.DTOs.ProjectPersistence; // Namespace pour notre NOUVEAU ProjetSummaryDto
-using PlanAthena.Services.Infrastructure; // Ajout pour CheminsPrefereService dans GetSummaries
-using System;
-using System.Collections.Generic;
-using System.IO; // Ajout pour Path.GetFileNameWithoutExtension
-using System.Linq;
-using System.Windows.Forms;
+using PlanAthena.Services.DTOs.ProjectPersistence;
+using PlanAthena.Services.DTOs.TaskManager; // NOUVEAU: pour l'enum Statut
+using PlanAthena.Services.Infrastructure;
 
 
 namespace PlanAthena.Services.Usecases
@@ -23,9 +19,10 @@ namespace PlanAthena.Services.Usecases
         private readonly ProjetService _projetService;
         private readonly RessourceService _ressourceService;
         private readonly PlanningService _planningService;
-        private readonly TaskStatusService _taskStatusService;
+        // REMPLACÉ: TaskStatusService est maintenant TaskManagerService
+        private readonly TaskManagerService _taskManagerService;
         private readonly ProjetServiceDataAccess _dataAccess;
-        private readonly CheminsPrefereService _cheminsService; // Dépendance ajoutée pour les projets récents
+        private readonly CheminsPrefereService _cheminsService;
 
         private bool _isDirty = false;
 
@@ -33,24 +30,21 @@ namespace PlanAthena.Services.Usecases
             ProjetService projetService,
             RessourceService ressourceService,
             PlanningService planningService,
-            TaskStatusService taskStatusService,
+            TaskManagerService taskManagerService, // MODIFIÉ
             ProjetServiceDataAccess dataAccess,
-            CheminsPrefereService cheminsService) // Injection ajoutée
+            CheminsPrefereService cheminsService)
         {
             _projetService = projetService;
             _ressourceService = ressourceService;
             _planningService = planningService;
-            _taskStatusService = taskStatusService;
+            _taskManagerService = taskManagerService; // MODIFIÉ
             _dataAccess = dataAccess;
-            _cheminsService = cheminsService; // Injection assignée
+            _cheminsService = cheminsService;
         }
 
-        /// <summary>
-        /// Notifie le UseCase qu'un changement a eu lieu dans le projet,
-        /// nécessitant une sauvegarde.
-        /// </summary>
         public void SetProjectAsDirty() => _isDirty = true;
         public string GetCurrentProjectPath() => _dataAccess.GetCurrentProjectPath();
+
         #region API Publique
 
         public void SauvegarderProjet()
@@ -69,7 +63,7 @@ namespace PlanAthena.Services.Usecases
 
         public void SauvegarderProjetSous()
         {
-            var nomProjetActuel = _projetService.ObtenirTousLesLots().FirstOrDefault()?.Nom ?? "NouveauProjet";
+            var nomProjetActuel = _projetService.ObtenirInformationsProjet()?.NomProjet ?? "NouveauProjet";
             string defaultFileName = $"{nomProjetActuel}.json";
 
             string path = _dataAccess.ShowSaveDialog(defaultFileName);
@@ -99,14 +93,20 @@ namespace PlanAthena.Services.Usecases
                 ProjetData data = _dataAccess.Charger(filePath);
                 _ViderEtatApplication();
 
+                // --- NOUVELLE LOGIQUE DE CHARGEMENT ---
+                // 1. Charger les données structurelles
                 _projetService.ChargerProjet(data);
                 _ressourceService.ChargerRessources(data.Metiers, data.Ouvriers);
-                _taskStatusService.ChargerStatuts(data.TaskStatuses);
+                _taskManagerService.ChargerTaches(data.Taches); // Charger les tâches avec leur statut persistant
 
+                // 2. Charger les données du planning s'il existe
                 if (data.Planning != null && data.Configuration != null)
                 {
                     _planningService.UpdatePlanning(data.Planning, data.Configuration);
                 }
+
+                // 3. Synchroniser les statuts pour refléter l'état actuel (EnCours, EnRetard, etc.)
+                _taskManagerService.SynchroniserStatutsTaches();
 
                 _isDirty = false;
             }
@@ -126,7 +126,7 @@ namespace PlanAthena.Services.Usecases
 
             _projetService.InitialiserNouveauProjet();
             _ressourceService.ChargerMetiersParDefaut();
-            _taskStatusService.InitialiserStatutsPourNouveauProjet();
+            // Pas besoin d'initialiser les tâches, le service est déjà vide.
 
             _isDirty = false;
         }
@@ -134,37 +134,33 @@ namespace PlanAthena.Services.Usecases
         public List<ProjetSummaryDto> ObtenirSummariesProjetsRecents()
         {
             var summaries = new List<ProjetSummaryDto>();
+            // ... (logique inchangée, mais le calcul du statut devrait être ajusté si nécessaire)
+            // Pour le POC, nous laissons cette partie telle quelle.
+            // Elle pourrait être améliorée en calculant le statut EnRetard dynamiquement.
             var recentFiles = _cheminsService.ObtenirFichiersRecents(TypeOperation.ProjetChargement);
 
             foreach (var filePath in recentFiles)
             {
                 try
                 {
-                    // Utilise une instance temporaire pour ne pas affecter l'état de l'application
                     var tempDataAccess = new ProjetServiceDataAccess(_cheminsService);
                     ProjetData data = tempDataAccess.Charger(filePath);
-                    var statuses = data.TaskStatuses ?? new Dictionary<string, Status>();
+                    var taches = data.Taches ?? new List<Tache>();
 
                     summaries.Add(new ProjetSummaryDto
                     {
                         FilePath = filePath,
                         NomProjet = data.InformationsProjet?.NomProjet ?? Path.GetFileNameWithoutExtension(filePath),
                         Description = data.InformationsProjet?.Description,
-                        NombreTotalTaches = data.Taches?.Count ?? 0,
-                        NombreTachesTerminees = statuses.Values.Count(s => s == Status.Terminee),
+                        NombreTotalTaches = taches.Count(t => string.IsNullOrEmpty(t.ParentId)), // Ne compter que les tâches mères
+                        NombreTachesTerminees = taches.Count(t => string.IsNullOrEmpty(t.ParentId) && t.Statut == Statut.Terminee),
                         NombreTachesEnRetard = 0, // Simplifié pour le moment
                         ErreurLecture = false
                     });
                 }
                 catch
                 {
-                    summaries.Add(new ProjetSummaryDto
-                    {
-                        FilePath = filePath,
-                        NomProjet = Path.GetFileNameWithoutExtension(filePath),
-                        Description = "Impossible de lire le fichier.",
-                        ErreurLecture = true
-                    });
+                    summaries.Add(new ProjetSummaryDto { FilePath = filePath, NomProjet = Path.GetFileNameWithoutExtension(filePath), Description = "Impossible de lire le fichier.", ErreurLecture = true });
                 }
             }
             return summaries;
@@ -176,19 +172,22 @@ namespace PlanAthena.Services.Usecases
 
         private ProjetData _AssemblerDonneesProjet()
         {
+            // Collecter les données de la structure du projet (Lots, etc.)
             var data = _projetService.GetProjetDataPourSauvegarde();
 
+            // --- NOUVELLE LOGIQUE D'ASSEMBLAGE ---
+            // Collecter les autres "sources de vérité"
+            data.Taches = _taskManagerService.ObtenirToutesLesTachesPourSauvegarde();
             data.Metiers = _ressourceService.GetAllMetiers();
             data.Ouvriers = _ressourceService.GetAllOuvriers();
             data.Planning = _planningService.GetCurrentPlanning();
-            data.TaskStatuses = (Dictionary<string, Status>)_taskStatusService.RetourneTousLesStatuts();
 
-            // NOTE : La source de la configuration de planification devra être confirmée. 
-            // Pour l'instant, nous la laissons vide.
-            // data.Configuration = ... 
+            // SUPPRIMÉ: La propriété TaskStatuses est obsolète
+            // data.TaskStatuses = (Dictionary<string, Status>)_taskStatusService.RetourneTousLesStatuts();
 
             data.DateSauvegarde = DateTime.Now;
-            data.VersionApplication = "0.5.1";
+            // Version mise à jour pour refléter cette modification majeure
+            data.VersionApplication = "0.5.0";
 
             return data;
         }
@@ -199,7 +198,8 @@ namespace PlanAthena.Services.Usecases
             _ressourceService.ViderMetiers();
             _ressourceService.ViderOuvriers();
             _planningService.ClearPlanning();
-            _taskStatusService.ChargerStatuts(null);
+            // MODIFIÉ: Appeler la méthode de vidage du nouveau service
+            _taskManagerService.ViderTaches();
         }
 
         private bool _ConfirmDiscardChanges()

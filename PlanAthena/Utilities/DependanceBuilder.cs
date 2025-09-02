@@ -2,10 +2,7 @@ using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
 using QuikGraph;
-using QuikGraph.Algorithms; 
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using QuikGraph.Algorithms;
 
 namespace PlanAthena.Utilities
 {
@@ -30,12 +27,10 @@ namespace PlanAthena.Utilities
     /// </summary>
     public class DependanceBuilder
     {
-        private readonly ProjetService _projetService; 
-        private readonly RessourceService _ressourceService; 
+        private readonly RessourceService _ressourceService;
 
-        public DependanceBuilder(ProjetService projetService, RessourceService ressourceService) 
+        public DependanceBuilder(RessourceService ressourceService)
         {
-            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
             _ressourceService = ressourceService ?? throw new ArgumentNullException(nameof(ressourceService));
         }
 

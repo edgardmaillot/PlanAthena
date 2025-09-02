@@ -1,7 +1,8 @@
-﻿Structure du Projet - GÃ©nÃ©rÃ© le 09/01/2025 08:44:17
+﻿Structure du Projet - GÃ©nÃ©rÃ© le 09/02/2025 09:03:06
 D:.
 
     +--- Data
+            AffectationOuvrier.cs
             Bloc.cs
             ChantierPhase.cs
             Lot.cs
@@ -10,41 +11,6 @@ D:.
             ProjetData.cs
             Tache.cs
             TypeActivite.cs
-    +--- Forms
-            BlocForm.cs
-            BlocForm.Designer.cs
-            BlocForm.resx
-            CompetenceDialog.cs
-            ImportTacheForm.cs
-            ImportTacheForm.Designer.cs
-            ImportTacheForm.resx
-            ImportWarningsDialog.cs
-            ImportWarningsDialog.Designer.cs
-            ImportWarningsDialog.resx
-            LotForm.cs
-            LotForm.Designer.cs
-            LotForm.resx
-            MainForm.cs
-            MainForm.Designer.cs
-            MainForm.resx
-            MetierForm.cs
-            MetierForm.Designer.cs
-            MetierForm.resx
-            OuvrierForm.cs
-            OuvrierForm.Designer.cs
-            OuvrierForm.resx
-            PrerequisMetierForm.cs
-            PrerequisMetierForm.Designer.cs
-            PrerequisMetierForm.resx
-            ProjectDialogs.cs
-            SelectionMetierDialog.cs
-            SelectionMetierDialog.resx
-            TacheDetailForm.cs
-            TacheDetailForm.Designer.cs
-            TacheDetailForm.resx
-            TacheForm.cs
-            TacheForm.Designer.cs
-            TacheForm.resx
     +--- Interfaces
             IIdGeneratorService.cs
     +--- Properties
@@ -103,15 +69,13 @@ D:.
                     ProjetDTOs.cs
                     SegmentDeTravail.cs
                     Status.cs
-                    TaskStatusInfo.cs
                     UIDTOs.cs
                 ApplicationService.cs
                 PlanificationResultDto.cs
-                PlanificationService.cs
                 PlanningService.cs
                 ProjetService.cs
                 RessourceService.cs
-                TaskStatusService.cs
+                TaskManagerService.cs
                 UserPreferencesService.cs
         +--- DataAccess
                 CsvDataService.cs
@@ -124,6 +88,9 @@ D:.
                     ExportDataProjetDto.cs
             +--- ProjectPersistence
                     ProjetSummaryDto.cs
+            +--- TaskManager
+                    PlanningInfoPourTache.cs
+                    Statut.cs
         +--- Export
                 GanttExportService.cs
                 PlanningExcelExportService.cs

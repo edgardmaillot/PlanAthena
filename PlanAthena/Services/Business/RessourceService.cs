@@ -1,19 +1,15 @@
-// Fichier: PlanAthena/Services/Business/RessourceService.cs
-// Version: 0.4.4 (Refactorisation Finale)
+// Fichier: PlanAthena/Services/Business/RessourceService.cs V0.4.8
+
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
 using PlanAthena.Services.Business.DTOs;
 using QuikGraph;
 using QuikGraph.Algorithms;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
 using System.Text.Json;
 
 namespace PlanAthena.Services.Business
 {
+    public delegate bool MetierEstUtilisePredicate(string metierId);
     public class RessourceService
     {
         private readonly Dictionary<string, Metier> _metiers = new();
@@ -21,17 +17,19 @@ namespace PlanAthena.Services.Business
         private readonly IIdGeneratorService _idGenerator;
 
 
+
         public RessourceService(IIdGeneratorService idGenerator)
         {
             _idGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
+            //ChargerMetiersParDefaut();
         }
 
         #region Cycle de vie des Ressources
 
         public virtual void ChargerRessources(List<Metier> metiers, List<Ouvrier> ouvriers)
         {
-            ViderMetiers();
-            ViderOuvriers();
+            //ViderMetiers();
+            //ViderOuvriers();
             metiers?.ForEach(m => _metiers.TryAdd(m.MetierId, m));
             ouvriers?.ForEach(o => _ouvriers.TryAdd(o.OuvrierId, o));
         }
@@ -39,7 +37,7 @@ namespace PlanAthena.Services.Business
         public virtual void ChargerMetiersParDefaut()
         {
             // Cette méthode commence par vider pour assurer un état prédictible
-            ViderMetiers();
+            //ViderMetiers();
             try
             {
                 string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "DefaultMetiersConfig.json");
@@ -65,7 +63,7 @@ namespace PlanAthena.Services.Business
 
         #region Gestion des Métiers
 
-        public Metier CreerMetier(string nom = "Nouveau Métier", ChantierPhase phases = ChantierPhase.SecondOeuvre)
+        public virtual Metier CreerMetier(string nom = "Nouveau Métier", ChantierPhase phases = ChantierPhase.SecondOeuvre)
         {
             if (string.IsNullOrWhiteSpace(nom)) throw new ArgumentException("Le nom du métier ne peut pas être vide.", nameof(nom));
             var nouveauMetier = new Metier
@@ -78,7 +76,7 @@ namespace PlanAthena.Services.Business
             return nouveauMetier;
         }
 
-        public void ModifierMetier(Metier metierModifie)
+        public virtual void ModifierMetier(Metier metierModifie)
         {
             if (metierModifie == null) throw new ArgumentNullException(nameof(metierModifie));
             if (!_metiers.ContainsKey(metierModifie.MetierId)) throw new InvalidOperationException($"Le métier ID '{metierModifie.MetierId}' n'existe pas.");
@@ -86,20 +84,11 @@ namespace PlanAthena.Services.Business
             _metiers[metierModifie.MetierId] = metierModifie;
         }
 
-        public void SupprimerMetier(string metierId, ProjetService projetService)
+        public virtual void SupprimerMetier(string metierId)
         {
-            if (projetService == null)
-                throw new ArgumentNullException(nameof(projetService));
-            if (!_metiers.ContainsKey(metierId)) throw new InvalidOperationException($"Le métier ID '{metierId}' n'a pas été trouvé.");
-            if (projetService.ObtenirTachesParMetier(metierId).Any()) throw new InvalidOperationException("Impossible de supprimer le métier car il est utilisé par des tâches.");
+            if (_ouvriers.Values.Any(o => o.Competences.Any(c => c.MetierId == metierId)))
+                throw new InvalidOperationException("Impossible de supprimer le métier car il est assigné à des ouvriers.");
             _metiers.Remove(metierId);
-            foreach (var metier in _metiers.Values)
-            {
-                foreach (var phase in metier.PrerequisParPhase.Keys.ToList())
-                {
-                    metier.PrerequisParPhase[phase].RemoveAll(id => id == metierId);
-                }
-            }
         }
 
 
@@ -163,7 +152,7 @@ namespace PlanAthena.Services.Business
         /// </summary>
         /// <param name="ouvrierId">L'ID de l'ouvrier concerné.</param>
         /// <returns>Une liste d'objets Metier que l'ouvrier peut apprendre.</returns>
-        public List<Metier> GetMetiersDisponiblesPourOuvrier(string ouvrierId)
+        public virtual List<Metier> GetMetiersDisponiblesPourOuvrier(string ouvrierId)
         {
             // Étape 1 : Valider l'entrée et récupérer l'ouvrier
             if (!_ouvriers.TryGetValue(ouvrierId, out var ouvrier))
@@ -190,7 +179,7 @@ namespace PlanAthena.Services.Business
         /// Optimisé pour des vérifications rapides de type "existe-t-il une compétence pour ce métier ?".
         /// </summary>
         /// <returns>Un HashSet<string> contenant les IDs des métiers avec des compétences assignées.</returns>
-        public HashSet<string> GetMetierIdsAvecCompetences()
+        public virtual HashSet<string> GetMetierIdsAvecCompetences()
         {
             // Utilise LINQ pour parcourir tous les ouvriers,
             // aplatir (SelectMany) toutes leurs listes de compétences en une seule grande liste,

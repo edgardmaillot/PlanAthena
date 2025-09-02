@@ -1,17 +1,10 @@
-// Fichier: PlanAthena/Services/DataAccess/ImportService.cs
-// Version: 0.4.4 (Refactorisation Finale et Complète)
-// Description: Version finale et "stateful" du service. Gère l'import/export
-// des tâches et des ouvriers en interagissant directement avec les services métier.
+// PlanAthena/Services/DataAccess/ImportService.cs V0.4.8
 
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 
 namespace PlanAthena.Services.DataAccess
 {
@@ -19,17 +12,20 @@ namespace PlanAthena.Services.DataAccess
     {
         private readonly ProjetService _projetService;
         private readonly RessourceService _ressourceService;
+        private readonly TaskManagerService _taskManagerService; // NOUVELLE DÉPENDANCE
         private readonly IIdGeneratorService _idGenerator;
         private readonly CsvDataService _csvDataService;
 
         public ImportService(
             ProjetService projetService,
             RessourceService ressourceService,
+            TaskManagerService taskManagerService, // NOUVELLE DÉPENDANCE
             IIdGeneratorService idGenerator,
             CsvDataService csvDataService)
         {
             _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
             _ressourceService = ressourceService ?? throw new ArgumentNullException(nameof(ressourceService));
+            _taskManagerService = taskManagerService ?? throw new ArgumentNullException(nameof(taskManagerService)); // NOUVELLE DÉPENDANCE
             _idGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
             _csvDataService = csvDataService ?? throw new ArgumentNullException(nameof(csvDataService));
         }
@@ -47,13 +43,26 @@ namespace PlanAthena.Services.DataAccess
                 if (lot == null)
                     return ImportResult.Echec($"Le lot cible avec l'ID '{lotIdCible}' n'a pas été trouvé.");
 
-                if (!confirmerEcrasement && _projetService.ObtenirTachesParLot(lotIdCible).Any())
+                if (!confirmerEcrasement && _taskManagerService.ObtenirToutesLesTaches(lotId: lotIdCible).Any())
                 {
                     var message = $"⚠️ ATTENTION : L'import dans le lot '{lot.Nom}' écrasera les tâches existantes.\n\nCette action est irréversible.\n\nConfirmer l'import ?";
                     return ImportResult.DemandeConfirmation(message);
                 }
 
-                _projetService.ViderLot(lotIdCible);
+                // Orchestration de la suppression : récupérer les tâches puis les supprimer une par une.
+                // 1. Vider les tâches du lot (logique existante)
+                var tachesASupprimer = _taskManagerService.ObtenirToutesLesTaches(lotId: lotIdCible);
+                foreach (var tache in tachesASupprimer)
+                {
+                    _taskManagerService.SupprimerTache(tache.TacheId);
+                }
+
+                // 2. Vider les blocs du lot (NOUVELLE LOGIQUE D'ORCHESTRATION)
+                var blocsASupprimer = _projetService.ObtenirBlocsParLot(lotIdCible);
+                foreach (var bloc in blocsASupprimer)
+                {
+                    _projetService.SupprimerBloc(bloc.BlocId);
+                }
 
                 var (nbTaches, nbBlocs, importedTasks, importWarnings) = ImporterDonneesInitialTaches(filePath, lotIdCible, mappingConfig);
                 allWarnings.AddRange(importWarnings);
@@ -89,7 +98,7 @@ namespace PlanAthena.Services.DataAccess
 
             foreach (var ligneUnique in ouvriersUniquesExternes)
             {
-                Ouvrier ouvrierExistant = null;
+                Ouvrier? ouvrierExistant = null;
                 if (!remplacerExistants)
                 {
                     ouvrierExistant = _ressourceService.GetAllOuvriers()
@@ -112,7 +121,7 @@ namespace PlanAthena.Services.DataAccess
             foreach (var groupe in ouvriersGroupes)
             {
                 string idExterne = groupe.Key;
-                if (!idExterneVersIdInterneMap.TryGetValue(idExterne, out string idInterne))
+                if (!idExterneVersIdInterneMap.TryGetValue(idExterne, out string? idInterne))
                 {
                     continue;
                 }
@@ -134,14 +143,11 @@ namespace PlanAthena.Services.DataAccess
                 {
                     if (!string.IsNullOrWhiteSpace(ligne.MetierId) && !ouvrierAModifier.Competences.Any(c => c.MetierId == ligne.MetierId))
                     {
-                        // On modifie directement la liste de compétences de l'objet
                         var estPrincipal = !ouvrierAModifier.Competences.Any();
                         ouvrierAModifier.Competences.Add(new CompetenceOuvrier { MetierId = ligne.MetierId, EstMetierPrincipal = estPrincipal });
                     }
                 }
 
-                // CORRECTION : On appelle ModifierOuvrier APRÈS avoir ajouté
-                // toutes les compétences du groupe pour sauvegarder l'état final de l'objet.
                 _ressourceService.ModifierOuvrier(ouvrierAModifier);
             }
 
@@ -150,16 +156,13 @@ namespace PlanAthena.Services.DataAccess
 
         public void ExporterOuvriersCSV(string filePath)
         {
-            // 1. Récupérer la liste hiérarchique des ouvriers
             var tousLesOuvriers = _ressourceService.GetAllOuvriers();
-
-            // 2. Aplatir la structure hiérarchique en une liste de lignes CSV
             var recordsPourCsv = new List<OuvrierCsvRecord>();
+
             foreach (var ouvrier in tousLesOuvriers)
             {
                 if (ouvrier.Competences.Any())
                 {
-                    // Créer une ligne CSV pour CHAQUE compétence
                     foreach (var competence in ouvrier.Competences)
                     {
                         recordsPourCsv.Add(new OuvrierCsvRecord
@@ -174,19 +177,17 @@ namespace PlanAthena.Services.DataAccess
                 }
                 else
                 {
-                    // Gérer le cas d'un ouvrier sans compétence
                     recordsPourCsv.Add(new OuvrierCsvRecord
                     {
                         OuvrierId = ouvrier.OuvrierId,
                         Nom = ouvrier.Nom,
                         Prenom = ouvrier.Prenom,
                         CoutJournalier = ouvrier.CoutJournalier,
-                        MetierId = "" // Laisse la colonne MetierId vide
+                        MetierId = ""
                     });
                 }
             }
 
-            // 3. Exporter la liste plate nouvellement créée
             _csvDataService.ExportCsv(recordsPourCsv, filePath);
         }
 
@@ -245,7 +246,7 @@ namespace PlanAthena.Services.DataAccess
                 string estJalonStr = GetValueOrDefault(ligne, mappingConfig.CsvColumn_EstJalon);
                 TypeActivite typeActivite = (bool.TryParse(estJalonStr, out bool j) && j) || (estJalonStr?.Contains("Jalon", StringComparison.OrdinalIgnoreCase) ?? false) ? TypeActivite.JalonUtilisateur : TypeActivite.Tache;
 
-                var tache = _projetService.CreerTache(lotIdCible, blocIdAthena, tacheNom, heuresHommeEstimees);
+                var tache = _taskManagerService.CreerTache(lotIdCible, blocIdAthena, tacheNom, heuresHommeEstimees);
                 tache.IdImporte = GetValueOrDefault(ligne, mappingConfig.CsvColumn_IdImporte);
                 tache.MetierId = metierId;
                 tache.Type = typeActivite;
@@ -263,7 +264,7 @@ namespace PlanAthena.Services.DataAccess
             var warnings = new List<string>();
             var nameOrIdToPlanAthenaIdMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (var tache in _projetService.ObtenirToutesLesTaches())
+            foreach (var tache in _taskManagerService.ObtenirToutesLesTaches())
             {
                 if (!string.IsNullOrWhiteSpace(tache.TacheNom) && !nameOrIdToPlanAthenaIdMap.ContainsKey(tache.TacheNom))
                     nameOrIdToPlanAthenaIdMap[tache.TacheNom] = tache.TacheId;
@@ -280,7 +281,7 @@ namespace PlanAthena.Services.DataAccess
                     var newDependencies = new List<string>();
                     foreach (var oldDep in oldDependencies)
                     {
-                        if (nameOrIdToPlanAthenaIdMap.TryGetValue(oldDep, out string newId)) newDependencies.Add(newId);
+                        if (nameOrIdToPlanAthenaIdMap.TryGetValue(oldDep, out string? newId)) newDependencies.Add(newId);
                         else { newDependencies.Add(oldDep); warnings.Add($"Dépendance '{oldDep}' pour la tâche '{tache.TacheNom}' non trouvée."); }
                     }
                     var newDependenciesString = string.Join(",", newDependencies.Distinct());
@@ -296,7 +297,7 @@ namespace PlanAthena.Services.DataAccess
                     var newExclusions = new List<string>();
                     foreach (var oldExcl in oldExclusions)
                     {
-                        if (nameOrIdToPlanAthenaIdMap.TryGetValue(oldExcl, out string newId)) newExclusions.Add(newId);
+                        if (nameOrIdToPlanAthenaIdMap.TryGetValue(oldExcl, out string? newId)) newExclusions.Add(newId);
                         else { newExclusions.Add(oldExcl); warnings.Add($"Exclusion '{oldExcl}' pour la tâche '{tache.TacheNom}' non trouvée."); }
                     }
                     var newExclusionsString = string.Join(",", newExclusions.Distinct());
@@ -308,7 +309,7 @@ namespace PlanAthena.Services.DataAccess
                 }
                 if (tacheModifiee)
                 {
-                    _projetService.ModifierTache(tache);
+                    _taskManagerService.ModifierTache(tache);
                 }
             }
             return warnings;
@@ -349,25 +350,9 @@ namespace PlanAthena.Services.DataAccess
         private static string GetValueOrDefault(Dictionary<string, string> dict, string mappedColumnName, string defaultValue = "")
         {
             if (string.IsNullOrWhiteSpace(mappedColumnName)) return defaultValue;
-            return dict.TryGetValue(mappedColumnName, out string value) ? value : defaultValue;
+            return dict.TryGetValue(mappedColumnName, out string? value) ? value : defaultValue;
         }
-
-        private string GetFriendlyFieldName(string propertyName)
-        {
-            return propertyName switch
-            {
-                nameof(ImportMappingConfiguration.CsvColumn_IdImporte) => "ID d'origine",
-                nameof(ImportMappingConfiguration.CsvColumn_TacheNom) => "Nom de la Tâche",
-                nameof(ImportMappingConfiguration.CsvColumn_HeuresHommeEstimees) => "Heures Homme Estimées",
-                nameof(ImportMappingConfiguration.CsvColumn_MetierId) => "ID Métier",
-                nameof(ImportMappingConfiguration.CsvColumn_BlocId) => "ID Bloc",
-                nameof(ImportMappingConfiguration.CsvColumn_Dependencies) => "Dépendances",
-                nameof(ImportMappingConfiguration.CsvColumn_ExclusionsDependances) => "Exclusions de Dépendances",
-                nameof(ImportMappingConfiguration.CsvColumn_EstJalon) => "Est un Jalon",
-                _ => propertyName.Replace("CsvColumn_", ""),
-            };
-        }
-
         #endregion
     }
+
 }

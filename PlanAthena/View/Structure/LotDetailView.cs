@@ -1,8 +1,4 @@
-using Krypton.Toolkit;
 using PlanAthena.Data;
-using System;
-using System.Linq;
-using System.Windows.Forms;
 
 namespace PlanAthena.View.Structure
 {

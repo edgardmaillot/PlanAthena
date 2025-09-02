@@ -1,12 +1,7 @@
 // NOUVEL EMPLACEMENT : PlanAthena/Services/Export/GanttExportService.cs
-using PlanAthena.Data;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DTOs.ImportExport;
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
-using System.Linq;
 using System.Security;
 using System.Text;
 

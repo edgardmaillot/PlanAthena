@@ -1,0 +1,90 @@
+@startuml
+' --- Configuration ---
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam class {
+    BackgroundColor #LightCyan
+    BorderColor #333377
+    ArrowColor #333377
+}
+hide empty members
+
+title Structure v0.5.0 : ProjetService
+
+package "Services Métier" as Business {
+    class "<b>ProjetService</b>" as ProjSvc {
+        '-- Champs --'
+        - _idGenerator: IIdGeneratorService
+        - _lots: Dictionary<string, Lot>
+        - _informationsProjet: InformationsProjet
+        --
+        '-- Constructeur --'
+        + ProjetService(idGenerator: IIdGeneratorService)
+        --
+        '-- Cycle de vie du projet --'
+        + InitialiserNouveauProjet()
+        + ChargerProjet(projetData: ProjetData)
+        + GetProjetDataPourSauvegarde(): ProjetData
+        + ViderProjet()
+        --
+        '-- Gestion des Lots --'
+        + CreerLot(nom: string, priorite: int, phases: ChantierPhase): Lot
+        + ModifierLot(lotModifie: Lot)
+        + SupprimerLot(lotId: string)
+        + ObtenirTousLesLots(): List<Lot>
+        + ObtenirLotParId(lotId: string): Lot
+        --
+        '-- Gestion des Blocs --'
+        + CreerBloc(lotIdParent: string, nom: string, capacite: int): Bloc
+        + ModifierBloc(blocModifie: Bloc)
+        + SupprimerBloc(blocId: string)
+        + ObtenirBlocsParLot(lotId: string): List<Bloc>
+        + ObtenirTousLesBlocs(): List<Bloc>
+        + ObtenirBlocParId(string blocId): Bloc
+    }
+}
+
+package "Services Infrastructure" as Infra {
+    interface IIdGeneratorService {
+        + GenererProchainLotId(...): string
+        + GenererProchainBlocId(...): string
+    }
+}
+
+package "Données" as Data {
+    class Lot {
+        + LotId: string
+        + Blocs: List<Bloc>
+    }
+    class Bloc {
+        + BlocId: string
+        + LotId: string
+    }
+    class ProjetData {
+        + Lots: List<Lot>
+        + InformationsProjet: InformationsProjet
+        ' La liste de Taches est ici pour la persistance,
+        ' mais n'est pas gérée par ProjetService.
+        + Taches: List<Tache> 
+    }
+    class InformationsProjet
+    enum ChantierPhase
+}
+
+' --- Relations ---
+ProjSvc "1" *-- "1" IIdGeneratorService : "dépend de"
+ProjSvc "1" o-- "*" Lot : "gère"
+ProjSvc "1" o-- "*" Bloc : "gère (via Lot)"
+ProjSvc ..> ProjetData : "lit/écrit"
+ProjSvc ..> InformationsProjet : "gère"
+ProjSvc ..> ChantierPhase : "utilise"
+
+note bottom of ProjSvc
+  <b>Responsabilités de ProjetService (v0.5.0)</b>
+  - Source de vérité pour la structure <b>Lots</b> et <b>Blocs</b>.
+  - Ne gère plus aucune logique liée aux <b>Tâches</b>.
+  - Les validations de suppression (ex: lot non vide)
+    sont maintenant orchestrées par l'<b>IHM</b>.
+end note
+
+@enduml

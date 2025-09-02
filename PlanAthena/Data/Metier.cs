@@ -3,7 +3,6 @@
 // Description: Correction suite à retour. Suppression de la propriété helper 'PrerequisMetierIds'
 // pour respecter la séparation des couches. L'entité est maintenant un pur objet de données.
 
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace PlanAthena.Data

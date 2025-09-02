@@ -1,10 +1,8 @@
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
-using PlanAthena.Services.DataAccess;
 using System.Data;
-using System.Drawing;
-using System.Text; 
+using System.Text;
 
 namespace PlanAthena.View.Utils
 {
@@ -70,7 +68,7 @@ namespace PlanAthena.View.Utils
             numHeuresEstimeesDefaut.Value = 2;
             numCapaciteMaxOuvriersDefaut.Value = 3;
             txtNomBlocParDefaut.Text = "Nouveau";
-            
+
             // Configuration du TableLayoutPanel pour le mappage
             tlpMapping.ColumnCount = _tacheFieldsToMap.Count;
             tlpMapping.RowCount = 2; // Labels + ComboBoxes
@@ -134,11 +132,11 @@ namespace PlanAthena.View.Utils
                 // Détection des en-têtes (heuristique simple pour le POC)
                 string[] firstLineValues = lines[0].Split(separator);
                 bool potentialHeaderDetected = firstLineValues.Any(v => !double.TryParse(v, out _) && !(v.All(char.IsLower) || v.All(char.IsUpper)));
-                
+
                 // On met à jour la checkbox. Si l'état de la checkbox change, cela déclenchera chkHasHeader_CheckedChanged.
                 // Sinon, il faut appeler PopulateHeadersAndPreview directement pour la première initialisation.
-                chkHasHeader.Checked = potentialHeaderDetected; 
-                
+                chkHasHeader.Checked = potentialHeaderDetected;
+
                 // Si le gestionnaire chkHasHeader_CheckedChanged n'a pas été déclenché (parce que l'état de la checkbox n'a pas changé),
                 // il faut appeler PopulateHeadersAndPreview manuellement pour la première initialisation.
                 if (chkHasHeader.Checked == potentialHeaderDetected && dgvCsvPreview.ColumnCount == 0) // Vérifie que le DGV n'est pas encore rempli
@@ -281,8 +279,8 @@ namespace PlanAthena.View.Utils
         private void RefreshAvailableComboBoxItemsExcludingDuplicates()
         {
             if (_isUpdatingComboBoxes) return; // Éviter la réentrance si un ComboBox a déclenché l'événement pendant son propre rafraîchissement
-                                            // Normalement, ceci ne devrait pas être déclenché si _isUpdatingComboBoxes est géré dans UpdateMappingComboBoxes,
-                                            // mais c'est une sécurité supplémentaire.
+                                               // Normalement, ceci ne devrait pas être déclenché si _isUpdatingComboBoxes est géré dans UpdateMappingComboBoxes,
+                                               // mais c'est une sécurité supplémentaire.
 
             _isUpdatingComboBoxes = true; // Définir le drapeau
 
@@ -298,12 +296,12 @@ namespace PlanAthena.View.Utils
                         selectedHeaders.Add(selectedHeader);
                     }
                 }
-                
+
                 // Mettre à jour les listes d'items de chaque ComboBox pour n'inclure que les non-sélectionnés (ou sa propre sélection)
                 foreach (var cmbEntry in _fieldComboBoxes)
                 {
                     var currentSelected = cmbEntry.Value.SelectedItem as string; // Garder la sélection actuelle
-                    
+
                     // Désabonner avant de modifier Items
                     cmbEntry.Value.SelectedIndexChanged -= ComboBox_MappingSelectionChanged;
 
@@ -535,7 +533,7 @@ namespace PlanAthena.View.Utils
             PopulateHeadersAndPreview(File.ReadAllLines(_filePath), separator);
             CheckValidationStatus();
         }
-        
+
         /// <summary>
         /// Enregistre un message dans la zone de log.
         /// </summary>

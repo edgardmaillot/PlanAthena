@@ -1,8 +1,6 @@
 // PlanAthena.core.Tests/Infrastructure/OrTools/ConstructeurProblemeOrToolsTests.cs
 
 using FluentAssertions;
-using FluentAssertions.Numeric; // Nécessaire pour BeGreaterThanOrEqualTo
-using Google.OrTools.Sat;
 using NodaTime;
 using PlanAthena.core.Application.InternalDto;
 using PlanAthena.Core.Domain;

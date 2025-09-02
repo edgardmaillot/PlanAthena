@@ -2,9 +2,6 @@
 using NodaTime;
 using PlanAthena.Core.Facade.Dto.Output;
 using PlanAthena.Services.Business.DTOs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using CoreEnums = PlanAthena.Core.Facade.Dto.Enums;
 
 namespace PlanAthena.Utilities
@@ -155,7 +152,7 @@ namespace PlanAthena.Utilities
             return segments;
         }
 
-        
+
 
         private bool IsTechnicalConvergenceMilestone(string tacheId)
         {

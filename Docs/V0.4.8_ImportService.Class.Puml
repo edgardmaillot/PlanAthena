@@ -1,0 +1,61 @@
+@startuml
+' --- Configuration ---
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam class {
+    BackgroundColor #F5DEB3
+    BorderColor #A0522D
+    ArrowColor #A0522D
+}
+hide empty members
+
+title Structure v0.5.0 : ImportService et ses Dépendances
+
+package "Services Accès Données" {
+    class "<b>ImportService</b>" as ImportSvc {
+        '-- Dépendances --'
+        - _projetService: ProjetService
+        - _ressourceService: RessourceService
+        - _taskManagerService: TaskManagerService
+        - _csvDataService: CsvDataService
+        --
+        '-- Méthodes Clés --'
+        + ImporterTachesCSV(...)
+        + ImporterOuvriersCSV(...)
+    }
+    note right of ImportSvc : **Orchestrateur d'Import**\nLit les fichiers, valide les données\net commande aux services métier\nde créer/modifier les entités.
+}
+
+package "Services Métier (Sources de Vérité)" {
+    class "<b>TaskManagerService</b>" as TaskSvc {
+        + ObtenirToutesLesTaches(lotId, blocId)
+        + CreerTache(...)
+        + ModifierTache(...)
+        + SupprimerTache(...)
+    }
+    class "<b>ProjetService</b>" as ProjSvc {
+        + ObtenirLotParId(...)
+        + ObtenirBlocsParLot(...)
+        + CreerBloc(...)
+        + SupprimerBloc(...)
+    }
+    class "<b>RessourceService</b>" as ResSvc {
+        + GetMetierById(...)
+        + ...
+    }
+}
+
+package "IHM" {
+    class "TaskManagerView" as UI_Task {
+        - ExecuterImport(...)
+    }
+}
+
+' --- Relations ---
+UI_Task ..> ImportSvc : appelle
+
+ImportSvc *-- TaskSvc
+ImportSvc *-- ProjSvc
+ImportSvc *-- ResSvc
+
+@enduml

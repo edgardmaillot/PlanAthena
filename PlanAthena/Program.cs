@@ -1,3 +1,5 @@
+// Emplacement: /Program.cs
+
 using Microsoft.Extensions.DependencyInjection;
 using PlanAthena.Core.Application;
 using PlanAthena.Core.Facade;
@@ -12,8 +14,10 @@ using PlanAthena.Services.Usecases;
 using PlanAthena.Services.UseCases;
 using PlanAthena.Utilities;
 using PlanAthena.View;
+using System.Linq; // Ajouté pour .Any()
 using System;
 using System.Windows.Forms;
+
 
 namespace PlanAthena
 {
@@ -35,7 +39,7 @@ namespace PlanAthena
 
         private static void ConfigureServices(IServiceCollection services)
         {
-            // --- Core DLL (inchangé) ---
+            // --- Core DLL ---
             services.AddApplicationServices();
             services.AddInfrastructureServices();
             services.AddScoped<PlanAthena.Core.Application.Interfaces.IConstructeurProblemeOrTools, PlanAthena.Core.Infrastructure.Services.OrTools.ConstructeurProblemeOrTools>();
@@ -43,46 +47,36 @@ namespace PlanAthena
 
             // --- Services de l'application principale ---
 
-            // 1. Sources de Vérité (Stateful, Singletons)
-            services.AddSingleton<ProjetService>();
-            services.AddSingleton<RessourceService>();
-            services.AddSingleton<PlanningService>();
-            services.AddSingleton<TaskStatusService>();
-
-            // 2. Use Cases / Orchestrateurs (Stateless/Stateful selon le rôle)
-            // ApplicationService est gardé pour la configuration de session
-            services.AddSingleton<ApplicationService>();
-            services.AddSingleton<ImportService>();
-            services.AddSingleton<PlanificationOrchestrator>();
-            // --- NOUVEAU USE CASE DE PERSISTANCE ---
-            services.AddSingleton<ProjectPersistenceUseCase>();
-
-            // 3. Utilitaires (Stateless, Singletons)
+            // 1. Utilitaires & Infrastructure
             services.AddSingleton<IIdGeneratorService, IdGeneratorService>();
-            services.AddSingleton<PreparationSolveurService>();
-            services.AddSingleton<DataTransformer>();
-            services.AddSingleton<PlanningConsolidationService>();
-            services.AddSingleton<AnalysisService>();
-
-            // 4. Présentateurs / Exports (Stateless, Singletons)
-            services.AddSingleton<PlanningExcelExportService>();
-            services.AddSingleton<GanttExportService>();
-
-            // 5. Infrastructure & Accès aux Données (Singletons)
-            // --- NOUVELLE COUCHE D'ACCÈS AUX DONNÉES ---
-            services.AddSingleton<ProjetServiceDataAccess>();
             services.AddSingleton<UserPreferencesService>();
             services.AddSingleton<CsvDataService>();
             services.AddSingleton<ExcelReader>();
             services.AddSingleton<CheminsPrefereService>();
-
-            // --- SERVICE OBSOLÈTE SUPPRIMÉ ---
-            // services.AddSingleton<ProjetRepository>(); // SUPPRIMÉ
-
-            // Le DependanceBuilder est probablement encore utilisé par l'UI, on le garde pour l'instant.
+            services.AddSingleton<ProjetServiceDataAccess>();
             services.AddSingleton<DependanceBuilder>();
 
-            // Enregistrement des formulaires et vues
+            // 2. Sources de Vérité (Stateful, Singletons) - Enregistrement simple
+            services.AddSingleton<ProjetService>();
+            services.AddSingleton<RessourceService>();
+            services.AddSingleton<PlanningService>(); // Ne dépend plus de RessourceService
+            services.AddSingleton<TaskManagerService>();
+
+            // 3. Use Cases / Orchestrateurs
+            services.AddSingleton<ApplicationService>();
+            services.AddSingleton<ImportService>();
+            services.AddSingleton<PlanificationOrchestrator>();
+            services.AddSingleton<ProjectPersistenceUseCase>();
+
+            // 4. Services de Processing & Export
+            services.AddSingleton<PreparationSolveurService>();
+            services.AddSingleton<DataTransformer>();
+            services.AddSingleton<PlanningConsolidationService>();
+            services.AddSingleton<AnalysisService>();
+            services.AddSingleton<PlanningExcelExportService>();
+            services.AddSingleton<GanttExportService>();
+
+            // 5. Formulaires et Vues
             services.AddSingleton<MainShellForm>();
         }
     }

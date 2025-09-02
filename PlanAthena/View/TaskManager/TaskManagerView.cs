@@ -1,19 +1,13 @@
 using Krypton.Docking;
 using Krypton.Navigator;
-using Krypton.Toolkit;
-using Krypton.Workspace;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Utilities;
 using PlanAthena.View.Planificator;
-using PlanAthena.View.Structure;
 using PlanAthena.View.TaskManager.PertDiagram;
 using PlanAthena.View.Utils;
-using System;
-using System.Linq;
 using System.Text;
-using System.Windows.Forms;
 
 namespace PlanAthena.View.TaskManager
 {
@@ -21,6 +15,7 @@ namespace PlanAthena.View.TaskManager
     {
         private readonly ApplicationService _applicationService;
         private readonly ProjetService _projetService;
+        private readonly TaskManagerService _taskManagerService;
         private readonly RessourceService _ressourceService;
         private readonly DependanceBuilder _dependanceBuilder;
         private readonly ImportService _importService;
@@ -29,11 +24,12 @@ namespace PlanAthena.View.TaskManager
 
         private KryptonPage _detailsPage;
 
-        public TaskManagerView(ApplicationService applicationService, ProjetService projetService, RessourceService ressourceService, DependanceBuilder dependanceBuilder, ImportService importService)
+        public TaskManagerView(ApplicationService applicationService, ProjetService projetService, TaskManagerService taskManagerService, RessourceService ressourceService, DependanceBuilder dependanceBuilder, ImportService importService)
         {
             InitializeComponent();
             _applicationService = applicationService;
             _projetService = projetService;
+            _taskManagerService = taskManagerService;
             _ressourceService = ressourceService;
             _dependanceBuilder = dependanceBuilder;
             _importService = importService;
@@ -46,7 +42,7 @@ namespace PlanAthena.View.TaskManager
 
             InitializeDockingLayout();
 
-            tacheDetailView1.InitializeServices(_projetService, _ressourceService, _dependanceBuilder);
+            tacheDetailView1.InitializeServices(_projetService, _taskManagerService, _ressourceService, _dependanceBuilder);
             pertDiagramControl1.Initialize(_projetService, _ressourceService, _dependanceBuilder, new PertDiagramSettings());
 
             AttachEvents();
@@ -186,7 +182,7 @@ namespace PlanAthena.View.TaskManager
             // 3. MODIFIÉ : Passer cet ensemble à la toolbox
             creationToolboxView1.PopulateMetiers(metiersPourLot, _ressourceService.GetDisplayColorForMetier, metiersActifs);
 
-            var tachesDuLot = _projetService.ObtenirTachesParLot(_activeLotId);
+            var tachesDuLot = _taskManagerService.ObtenirToutesLesTaches(lotId: _activeLotId);
             pertDiagramControl1.ChargerDonnees(tachesDuLot);
 
             tacheDetailView1.UpdateDropdowns(_activeLotId);
@@ -278,9 +274,9 @@ namespace PlanAthena.View.TaskManager
                 return;
             }
             var premierBlocId = lot.Blocs.First().BlocId;
-            var nouvelleTache = _projetService.CreerTache(_activeLotId, premierBlocId, $"Nouvelle tâche - {metier.Nom}", 8);
+            var nouvelleTache = _taskManagerService.CreerTache(_activeLotId, premierBlocId, $"Nouvelle tâche - {metier.Nom}", 8);
             nouvelleTache.MetierId = metier.MetierId;
-            _projetService.ModifierTache(nouvelleTache);
+            _taskManagerService.ModifierTache(nouvelleTache);
             RefreshUIForActiveLot();
             ShowTacheDetails(nouvelleTache);
         }
@@ -288,7 +284,7 @@ namespace PlanAthena.View.TaskManager
         private void OnTacheSaveRequested(object sender, Tache tacheASauvegarder)
         {
             if (tacheASauvegarder == null) return;
-            _projetService.ModifierTache(tacheASauvegarder);
+            _taskManagerService.ModifierTache(tacheASauvegarder);
             RefreshUIForActiveLot();
             ShowTacheDetails(tacheASauvegarder);
         }
@@ -308,7 +304,7 @@ namespace PlanAthena.View.TaskManager
             {
                 try
                 {
-                    _projetService.SupprimerTache(tache.TacheId);
+                    _taskManagerService.SupprimerTache(tache.TacheId);
                     RefreshUIForActiveLot();
                 }
                 catch (Exception ex)
@@ -356,7 +352,7 @@ namespace PlanAthena.View.TaskManager
             try
             {
                 bool confirmerEcrasement = false;
-                if (_projetService.ObtenirTachesParLot(_activeLotId).Any())
+                if (_taskManagerService.ObtenirToutesLesTaches(lotId: _activeLotId).Any())
                 {
                     var confirmResult = MessageBox.Show($"Le lot '{_activeLotId}' contient déjà des tâches. Voulez-vous les écraser?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                     if (confirmResult == DialogResult.Yes) { confirmerEcrasement = true; } else { return; }

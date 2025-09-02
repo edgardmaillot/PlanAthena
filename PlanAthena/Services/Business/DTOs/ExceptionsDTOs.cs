@@ -1,5 +1,3 @@
-using System;
-
 namespace PlanAthena.Services.Business.DTOs
 {
     /// <summary>

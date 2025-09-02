@@ -1,12 +1,7 @@
 // Fichier: Services/Export/PlanningExcelExportService.cs
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
-using System.Drawing;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DTOs.ImportExport;
 using PlanAthena.Services.Infrastructure;

@@ -1,8 +1,5 @@
 // Emplacement: /Services/Business/DTOs/AnalysisReport.cs
 
-using System;
-using System.Collections.Generic;
-
 namespace PlanAthena.Services.Business.DTOs
 {
     /// <summary>

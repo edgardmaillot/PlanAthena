@@ -3,10 +3,9 @@
 using Google.OrTools.Sat;
 using PlanAthena.core.Application.InternalDto;
 using PlanAthena.Core.Application.Interfaces;
-using PlanAthena.Core.Facade.Dto.Enums; 
-using PlanAthena.Core.Facade.Dto.Output;
 using PlanAthena.Core.Domain.ValueObjects;
-using System.Diagnostics;
+using PlanAthena.Core.Facade.Dto.Enums;
+using PlanAthena.Core.Facade.Dto.Output;
 
 namespace PlanAthena.Core.Infrastructure.Services
 {
@@ -64,7 +63,7 @@ namespace PlanAthena.Core.Infrastructure.Services
                         BlocId = tache.BlocParentId.Value,
                         DateDebut = dateDebut,
                         DateFin = dateFin,
-                        DureeHeures = dureeReelle, 
+                        DureeHeures = dureeReelle,
 
                         // *** AJOUT: Métadonnées pour export Gantt et affichage ***
                         TypeActivite = ObtenirTypeActivite(tacheId, modeleCpSat),
