@@ -1,0 +1,150 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam sequenceArrowColor #4682B4
+skinparam sequenceLifeLineBorderColor #87CEEB
+skinparam sequenceParticipantBackgroundColor #E6F3FF
+skinparam shadowing false
+autonumber
+
+title Comportement v0.5.0 : Export vers CSV
+
+actor Utilisateur
+participant "IHM" as UI
+participant "service:\nExportService" as ExportSvc
+participant "dto:\nTacheExportDto" as TacheDTO
+participant "dto:\nOuvrierCsvRecord" as OuvrierDTO
+participant "ChoCSVWriter<T>" as ChoWriter
+participant "Système Fichiers" as FS
+
+'=================================
+' GROUPE: Export de Tâches
+'=================================
+group Export de Tâches vers CSV
+
+    Utilisateur -> UI : Sélectionne "Exporter Tâches" + chemin destination
+    activate UI
+    
+    UI -> UI : Récupère toutes les tâches à exporter
+    note right: Via TaskManagerService\nou directement depuis\nles données en mémoire
+    
+    UI -> ExportSvc : ExporterTachesCSV(tachesAExporter, filePath)
+    activate ExportSvc
+    
+    '-- Phase 1: Transformation en DTOs --'
+    loop Pour chaque Tache dans la liste
+        ExportSvc -> TacheDTO : new TacheExportDto(tache)
+        activate TacheDTO
+        
+        TacheDTO -> TacheDTO : Extraction des propriétés simples
+        note right: TacheNom, MetierId,\nHeuresHommeEstimees, etc.
+        
+        TacheDTO -> TacheDTO : Résolution des relations
+        note right: BlocId → BlocNom\nType → string représentation
+        
+        TacheDTO --> ExportSvc : DTO configuré
+        deactivate TacheDTO
+    end
+    
+    note right of ExportSvc: Résultat : List<TacheExportDto>\nStructure plate prête pour CSV
+    
+    '-- Phase 2: Sérialisation CSV --'
+    ExportSvc -> ChoWriter : new ChoCSVWriter<TacheExportDto>(filePath)
+    activate ChoWriter
+    
+    ExportSvc -> ChoWriter : .WithFirstLineHeader()
+    ExportSvc -> ChoWriter : .Configure(config => config.Encoding = UTF8)
+    
+    ExportSvc -> ChoWriter : Write(tachesPourExport)
+    
+    ChoWriter -> FS : Création fichier + écriture en-têtes
+    note right: IdImporte;TacheNom;MetierId;\nHeuresHommeEstimees;BlocNom;\nDependencies;ExclusionsDependances;Type
+    
+    loop Pour chaque TacheExportDto
+        ChoWriter -> FS : Écriture ligne CSV
+        note right: Sérialisation automatique\nbasée sur les propriétés publiques
+    end
+    
+    ChoWriter --> ExportSvc : Écriture terminée
+    deactivate ChoWriter
+    
+    ExportSvc --> UI : Export réussi
+    deactivate ExportSvc
+    
+    UI -> Utilisateur : Popup "Export terminé : X tâches exportées"
+    deactivate UI
+
+end
+
+'=================================
+' GROUPE: Export d'Ouvriers
+'=================================
+group Export d'Ouvriers vers CSV
+
+    Utilisateur -> UI : Sélectionne "Exporter Ouvriers" + chemin destination
+    activate UI
+    
+    UI -> UI : Récupère tous les ouvriers à exporter
+    note right: Via RessourceService\nou depuis les données en mémoire
+    
+    UI -> ExportSvc : ExporterOuvriersCSV(tousLesOuvriers, filePath)
+    activate ExportSvc
+    
+    '-- Phase 1: Dénormalisation (Ouvrier → Plusieurs Lignes) --'
+    loop Pour chaque Ouvrier dans la liste
+        
+        alt Ouvrier a des compétences
+            loop Pour chaque CompetenceOuvrier
+                ExportSvc -> OuvrierDTO : new OuvrierCsvRecord { OuvrierId, Nom, Prenom, CoutJournalier, MetierId }
+                activate OuvrierDTO
+                note right: Une ligne par compétence.\nDonnées personnelles dupliquées.
+                OuvrierDTO --> ExportSvc : Record configuré
+                deactivate OuvrierDTO
+            end
+        else Ouvrier sans compétences
+            ExportSvc -> OuvrierDTO : new OuvrierCsvRecord { ..., MetierId = "" }
+            activate OuvrierDTO
+            note right: Une ligne avec métier vide\npour préserver l'ouvrier
+            OuvrierDTO --> ExportSvc : Record configuré
+            deactivate OuvrierDTO
+        end
+        
+    end
+    
+    note right of ExportSvc: Résultat : List<OuvrierCsvRecord>\nStructure dénormalisée prête pour CSV\n(Plus de lignes que d'ouvriers originaux)
+    
+    '-- Phase 2: Sérialisation CSV --'
+    ExportSvc -> ChoWriter : new ChoCSVWriter<OuvrierCsvRecord>(filePath)
+    activate ChoWriter
+    
+    ExportSvc -> ChoWriter : .WithFirstLineHeader()
+    ExportSvc -> ChoWriter : .Configure(config => config.Encoding = UTF8)
+    
+    ExportSvc -> ChoWriter : Write(recordsPourCsv)
+    
+    ChoWriter -> FS : Création fichier + écriture en-têtes
+    note right: OuvrierId;Nom;Prenom;\nCoutJournalier;MetierId
+    
+    loop Pour chaque OuvrierCsvRecord
+        ChoWriter -> FS : Écriture ligne CSV
+        note right: Format natif PlanAthena.\nCompatible avec ImporterOuvriersFormatNatif()
+    end
+    
+    ChoWriter --> ExportSvc : Écriture terminée
+    deactivate ChoWriter
+    
+    ExportSvc --> UI : Export réussi
+    deactivate ExportSvc
+    
+    UI -> Utilisateur : Popup "Export terminé : X ouvriers exportés (Y lignes)"
+    note right: X ouvriers peut être différent de Y lignes\nà cause des compétences multiples
+    deactivate UI
+
+end
+
+'=================================
+' NOTE: Cycle Complet Import/Export
+'=================================
+note across : **Cycle Complet Import/Export**\nLes fichiers exportés par ExportService sont compatibles\navec ImportService (format natif) et ImportWizardOrchestrator (format libre).
+
+@enduml

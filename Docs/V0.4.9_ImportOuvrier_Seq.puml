@@ -1,0 +1,171 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam sequenceArrowColor #8B4513
+skinparam sequenceLifeLineBorderColor #CD853F
+skinparam sequenceParticipantBackgroundColor #FFEBCD
+skinparam shadowing false
+autonumber
+
+title Comportement v0.5.0 : Import d'Ouvriers avec Wizard
+
+actor Utilisateur
+participant "IHM\nRessourceView" as UI
+participant "orchestrator:\nImportWizardOrchestrator" as Orchestrator
+participant "wizard1:\nImportMapOuvrierP1" as Wizard1
+participant "wizard2:\nImportMapOuvrierP2" as Wizard2
+participant "service:\nImportService" as ImportSvc
+participant "service:\nRessourceService" as ResSvc
+
+'=================================
+' GROUPE: Import d'Ouvriers avec Wizard
+'=================================
+group Import d'Ouvriers avec Wizard Complet
+
+    Utilisateur -> UI : Sélectionne fichier CSV et confirme import
+    activate UI
+    
+    UI -> Orchestrator : LancerWizardImportOuvriers(filePath)
+    activate Orchestrator
+    
+    '-- Phase 0: Validation des pré-requis --'
+    Orchestrator -> ResSvc : GetAllMetiers()
+    ResSvc --> Orchestrator : Liste des métiers
+    
+    alt Aucun métier défini
+        Orchestrator -> UI : MessageBox "Pré-requis manquant"
+        Orchestrator --> UI : return ImportResult.Echec("Aucun métier défini")
+        deactivate Orchestrator
+        deactivate UI
+        return
+    end
+    
+    '-- Phase 1: Choix du mode d'import --'
+    Orchestrator -> UI : MessageBox "Remplacer ou Ajouter ?"
+    UI -> Utilisateur : Affiche dialogue de confirmation
+    Utilisateur --> UI : Choix (Oui/Non/Annuler)
+    
+    alt Utilisateur annule
+        Orchestrator --> UI : return ImportResult.Echec("Annulé par utilisateur")
+        deactivate Orchestrator
+        deactivate UI
+        return
+    end
+    
+    '-- Phase 2: Étape 1 du Wizard - Mapping des Colonnes --'
+    Orchestrator -> Wizard1 : new ImportMapOuvrierP1(filePath)
+    activate Wizard1
+    Orchestrator -> Wizard1 : ShowDialog()
+    
+    Wizard1 -> Utilisateur : Interface de mapping des colonnes
+    Utilisateur -> Wizard1 : Configure les correspondances colonnes
+    
+    alt Utilisateur clique "Annuler"
+        Wizard1 --> Orchestrator : AnnulerClicked event
+        Orchestrator --> UI : return ImportResult.Echec("Annulé à l'étape 1")
+        deactivate Wizard1
+        deactivate Orchestrator
+        deactivate UI
+        return
+    end
+    
+    Utilisateur -> Wizard1 : Clique "Suivant"
+    Wizard1 --> Orchestrator : SuivantClicked event + Mappings + HasHeader
+    deactivate Wizard1
+    
+    '-- Validation critique --'
+    alt Champ "Métier" non mappé
+        Orchestrator -> UI : MessageBox "Mapping incomplet"
+        Orchestrator --> UI : return ImportResult.Echec("Champ 'Métier' non mappé")
+        deactivate Orchestrator
+        deactivate UI
+        return
+    end
+    
+    '-- Phase 3: Étape 2 du Wizard - Mapping des Valeurs --'
+    Orchestrator -> Wizard2 : new ImportMapOuvrierP2(filePath, metierColumnIndex, ressourceService, hasHeader)
+    activate Wizard2
+    Orchestrator -> Wizard2 : ShowDialog()
+    
+    Wizard2 -> ResSvc : GetAllMetiers()
+    ResSvc --> Wizard2 : Liste des métiers disponibles
+    
+    Wizard2 -> Utilisateur : Interface de mapping des valeurs métier
+    Utilisateur -> Wizard2 : Configure correspondances (ex: "Maçon" -> Métier M001)
+    
+    alt Utilisateur clique "Retour"
+        Wizard2 --> Orchestrator : RetourClicked event
+        Orchestrator --> UI : return ImportResult.Echec("Annulé à l'étape 2")
+        deactivate Wizard2
+        deactivate Orchestrator
+        deactivate UI
+        return
+    end
+    
+    Utilisateur -> Wizard2 : Clique "Terminer"
+    Wizard2 --> Orchestrator : TerminerClicked event + ValueMappings
+    deactivate Wizard2
+    
+    '-- Phase 4: Transformation ETL --'
+    Orchestrator -> self : TransformerDonneesBrutesEnOuvriers(etatImport)
+    activate Orchestrator
+    note right: **Cœur de l'ETL**\n1. Lecture du fichier brut\n2. Application des mappings colonnes\n3. Application des mappings valeurs\n4. Construction des objets Ouvrier\n5. Agrégation des compétences
+    
+    Orchestrator -> ImportSvc : DetectCsvDelimiter(filePath)
+    ImportSvc --> Orchestrator : Délimiteur détecté
+    
+    loop Pour chaque ligne du CSV
+        note right: Transformation ligne par ligne :\n- Extraction des valeurs via ColumnIndexMappings\n- Conversion des libellés métier via ValueMappings\n- Agrégation des compétences par ouvrier
+    end
+    
+    deactivate Orchestrator
+    note right: Résultat : Liste d'objets Ouvrier\ncomplets avec leurs compétences
+    
+    '-- Phase 5: Chargement Final --'
+    Orchestrator -> ImportSvc : ImporterOuvriers(ouvriersPrets, remplacerExistants)
+    activate ImportSvc
+    
+    alt Mode remplacement
+        ImportSvc -> ResSvc : ViderOuvriers()
+    end
+    
+    loop Pour chaque ouvrier à importer
+        alt Ouvrier existant trouvé (mode ajout)
+            ImportSvc -> ResSvc : ModifierOuvrier(ouvrierExistant)
+        else Nouvel ouvrier
+            ImportSvc -> ResSvc : CreerOuvrier(prenom, nom, cout)
+        end
+        
+        loop Pour chaque compétence
+            ImportSvc -> ResSvc : AjouterCompetence(ouvrierId, metierId)
+        end
+    end
+    
+    ImportSvc --> Orchestrator : return ImportResult.SuccesOuvriers(...)
+    deactivate ImportSvc
+    
+    Orchestrator --> UI : return ImportResult.SuccesOuvriers(...)
+    deactivate Orchestrator
+    
+    UI -> Utilisateur : Affiche popup "Import réussi : X ouvriers importés"
+    deactivate UI
+
+end
+
+'=================================
+' GROUPE: Voie Rapide - Format Natif (Alternative)
+'=================================
+group Alternative : Import Format Natif (Voie Rapide)
+
+    note over Orchestrator : **Si le fichier est détecté comme format natif**\n(en-têtes : OuvrierId, Nom, Prenom, CoutJournalier, MetierId)
+    
+    Orchestrator -> ImportSvc : ImporterOuvriersFormatNatif(filePath, remplacerExistants)
+    activate ImportSvc
+    note right: Bypass complet du wizard.\nLecture directe avec ChoETL\net chargement immédiat.
+    
+    ImportSvc --> Orchestrator : return ImportResult.SuccesOuvriers(...)
+    deactivate ImportSvc
+
+end
+
+@enduml

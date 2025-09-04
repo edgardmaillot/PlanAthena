@@ -15,7 +15,6 @@ namespace PlanAthena.View.Planificator
 {
     public partial class PlanificatorView : UserControl
     {
-        private readonly ApplicationService _applicationService;
         private readonly PlanificationOrchestrator _planificationOrchestrator;
         private readonly PlanningService _planningService;
         private readonly ProjetService _projetService;
@@ -29,7 +28,6 @@ namespace PlanAthena.View.Planificator
         private int _solverMaxSeconds;
 
         public PlanificatorView(
-            ApplicationService applicationService,
             PlanificationOrchestrator planificationOrchestrator,
             PlanningService planningService,
             ProjetService projetService,
@@ -39,7 +37,6 @@ namespace PlanAthena.View.Planificator
             CheminsPrefereService cheminsPrefereService) // Dépendance injectée
         {
             InitializeComponent();
-            _applicationService = applicationService;
             _planificationOrchestrator = planificationOrchestrator;
             _planningService = planningService;
             _projetService = projetService;
@@ -85,7 +82,7 @@ namespace PlanAthena.View.Planificator
 
         private void PopulateFormFromSessionConfig()
         {
-            var config = _applicationService.ConfigPlanificationActuelle;
+            var config = _projetService.ConfigPlanificationActuelle;
             if (config == null) return;
 
             for (int i = 0; i < chkListJoursOuvres.Items.Count; i++)
@@ -108,7 +105,7 @@ namespace PlanAthena.View.Planificator
 
         private ConfigurationPlanification GetConfigFromForm()
         {
-            var config = _applicationService.ConfigPlanificationActuelle;
+            var config = _projetService.ConfigPlanificationActuelle;
 
             config.JoursOuvres = chkListJoursOuvres.CheckedItems.Cast<DayOfWeek>().ToList();
             config.HeureDebutJournee = (int)numHeureDebut.Value;
@@ -344,7 +341,7 @@ namespace PlanAthena.View.Planificator
                         var exportData = new ExportDataProjetDto
                         {
                             NomProjet = nomProjet,
-                            Configuration = _applicationService.ConfigPlanificationActuelle,
+                            Configuration = _projetService.ConfigPlanificationActuelle,
                             Planning = _planningService.GetCurrentPlanning(),
                             Report = _lastRunResult.AnalysisReport,
                             ProjetStructure = _projetService.GetProjetDataPourSauvegarde(),
@@ -394,7 +391,7 @@ namespace PlanAthena.View.Planificator
                         var exportData = new ExportDataProjetDto
                         {
                             NomProjet = nomProjet,
-                            Configuration = _applicationService.ConfigPlanificationActuelle,
+                            Configuration = _projetService.ConfigPlanificationActuelle,
                             Planning = _planningService.GetCurrentPlanning(),
                             Report = _lastRunResult.AnalysisReport,
                             ProjetStructure = _projetService.GetProjetDataPourSauvegarde()

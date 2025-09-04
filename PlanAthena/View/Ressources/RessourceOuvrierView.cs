@@ -2,6 +2,8 @@ using Krypton.Toolkit;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
+using PlanAthena.Services.DTOs.ImportExport;
+using PlanAthena.Services.Usecases;
 using System.Data;
 
 namespace PlanAthena.View.Ressources.MetierDiagram
@@ -10,19 +12,21 @@ namespace PlanAthena.View.Ressources.MetierDiagram
     {
         private readonly RessourceService _ressourceService;
         private readonly ProjetService _projetService;
-        private readonly ImportService _importService;
+        private readonly ImportWizardOrchestrator _importWizardOrchestrator;
+        private readonly ExportService _exportService;
 
         private bool _isLoading = false;
 
-        public RessourceOuvrierView(RessourceService ressourceService, ProjetService projetService, ImportService importService)
+        public RessourceOuvrierView(RessourceService ressourceService, ProjetService projetService, ImportWizardOrchestrator importWizardOrchestrator, ExportService exportService)
         {
             InitializeComponent();
             _ressourceService = ressourceService;
             _projetService = projetService;
-            _importService = importService;
-
+            _importWizardOrchestrator = importWizardOrchestrator;   
+            _exportService = exportService;
             // Appliquer la règle "ID non éditable"
             textId.ReadOnly = true;
+
         }
 
         private void RessourceOuvrierView_Load(object sender, EventArgs e)
@@ -381,7 +385,120 @@ namespace PlanAthena.View.Ressources.MetierDiagram
                 }
             }
         }
+        // Dans votre fichier de vue (ex: RessourcesView.cs)
 
+        private void btnImporterOuvriers_Click(object sender, EventArgs e)
+        {
+            using (var ofd = new OpenFileDialog())
+            {
+                ofd.Title = "Sélectionner le fichier CSV des ouvriers à importer";
+                ofd.Filter = "Fichiers CSV (*.csv)|*.csv|Tous les fichiers (*.*)|*.*";
+
+                if (ofd.ShowDialog(this.FindForm()) == DialogResult.OK)
+                {
+                    try
+                    {
+                        // La vue ne fait qu'un seul appel : elle lance le wizard.
+                        // Toute la complexité (MessageBox, enchaînement des étapes) est dans l'orchestrateur.
+                        var resultat = _importWizardOrchestrator.LancerWizardImportOuvriers(ofd.FileName);
+
+                        // La vue affiche le résultat final, quel qu'il soit.
+                        if (resultat.EstSucces)
+                        {
+                            MessageBox.Show($"{resultat.NbOuvriersImportes} ouvriers ont été importés avec succès.", // Adapter le message au DTO de résultat
+                                            "Importation Réussie",
+                                            MessageBoxButtons.OK,
+                                            MessageBoxIcon.Information);
+                            RefreshAll(); // Ou le nom de votre méthode de rafraîchissement
+                        }
+                        else if (!string.IsNullOrEmpty(resultat.MessageErreur))
+                        {
+                            // Ne pas afficher de message si l'erreur est "Annulé par l'utilisateur"
+                            if (!resultat.MessageErreur.Contains("annulée par l'utilisateur"))
+                            {
+                                MessageBox.Show($"L'importation a échoué : {resultat.MessageErreur}",
+                                                "Erreur d'Importation",
+                                                MessageBoxButtons.OK,
+                                                MessageBoxIcon.Warning);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Une erreur inattendue est survenue : {ex.Message}",
+                                        "Erreur Critique",
+                                        MessageBoxButtons.OK,
+                                        MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+        private void btnExporterOuvriers_Click(object sender, EventArgs e)
+        {
+            // 1. Récupérer les données depuis le service métier
+            var ouvriersAExporter = _ressourceService.GetAllOuvriers();
+            if (!ouvriersAExporter.Any())
+            {
+                MessageBox.Show("Il n'y a aucun ouvrier à exporter.", "Action impossible", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            // 2. Créer la liste des DTOs pour l'export
+            var dtosPourExport = new List<OuvrierExportDto>();
+            foreach (var ouvrier in ouvriersAExporter)
+            {
+                if (ouvrier.Competences.Any())
+                {
+                    foreach (var competence in ouvrier.Competences)
+                    {
+                        var metier = _ressourceService.GetMetierById(competence.MetierId);
+                        dtosPourExport.Add(new OuvrierExportDto
+                        {
+                            OuvrierId = ouvrier.OuvrierId,
+                            Nom = ouvrier.Nom,
+                            Prenom = ouvrier.Prenom,
+                            CoutJournalier = ouvrier.CoutJournalier,
+                            MetierNom = metier?.Nom ?? competence.MetierId // Traduction
+                        });
+                    }
+                }
+                else
+                {
+                    // Ouvrier sans compétence
+                    dtosPourExport.Add(new OuvrierExportDto
+                    {
+                        OuvrierId = ouvrier.OuvrierId,
+                        Nom = ouvrier.Nom,
+                        Prenom = ouvrier.Prenom,
+                        CoutJournalier = ouvrier.CoutJournalier,
+                        MetierNom = ""
+                    });
+                }
+            }
+            // 3. Ouvrir la boîte de dialogue pour choisir l'emplacement du fichier
+            using (var sfd = new SaveFileDialog())
+            {
+                sfd.Title = "Exporter les ouvriers au format CSV";
+                sfd.Filter = "Fichiers CSV (*.csv)|*.csv|Tous les fichiers (*.*)|*.*";
+                sfd.FileName = $"Export_Ouvriers_{DateTime.Now:yyyyMMdd}.csv";
+
+                if (sfd.ShowDialog(this.FindForm()) == DialogResult.OK)
+                {
+                    try
+                    {
+                        // 3. Appeler le service d'export avec les données et le chemin
+                        _exportService.ExporterOuvriersCSV(ouvriersAExporter, sfd.FileName);
+
+                        MessageBox.Show($"Exportation terminée avec succès.\n{ouvriersAExporter.Count} ouvriers ont été exportés dans le fichier :\n{sfd.FileName}",
+                                        "Export Réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Une erreur est survenue lors de l'exportation :\n{ex.Message}",
+                                        "Erreur d'Exportation", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
 
         private void btnEnregistrer_Click(object sender, EventArgs e)
         {

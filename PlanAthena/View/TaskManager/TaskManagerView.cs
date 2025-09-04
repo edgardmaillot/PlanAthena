@@ -13,26 +13,26 @@ namespace PlanAthena.View.TaskManager
 {
     public partial class TaskManagerView : UserControl
     {
-        private readonly ApplicationService _applicationService;
         private readonly ProjetService _projetService;
         private readonly TaskManagerService _taskManagerService;
         private readonly RessourceService _ressourceService;
         private readonly DependanceBuilder _dependanceBuilder;
         private readonly ImportService _importService;
+        private readonly ExportService _exportService;
         private string _activeLotId;
         public event EventHandler<Type> NavigateToViewRequested;
 
         private KryptonPage _detailsPage;
 
-        public TaskManagerView(ApplicationService applicationService, ProjetService projetService, TaskManagerService taskManagerService, RessourceService ressourceService, DependanceBuilder dependanceBuilder, ImportService importService)
+        public TaskManagerView(ProjetService projetService, TaskManagerService taskManagerService, RessourceService ressourceService, DependanceBuilder dependanceBuilder, ImportService importService, ExportService exportService)
         {
             InitializeComponent();
-            _applicationService = applicationService;
             _projetService = projetService;
             _taskManagerService = taskManagerService;
             _ressourceService = ressourceService;
             _dependanceBuilder = dependanceBuilder;
             _importService = importService;
+            _exportService = exportService;
             this.Load += TaskManagerView_Load;
         }
 
@@ -128,6 +128,7 @@ namespace PlanAthena.View.TaskManager
             lotSelectionView1.LotSelectionChanged += OnLotSelectionChanged;
             creationToolboxView1.AddBlocRequested += OnAddBlocRequested;
             creationToolboxView1.AddTacheRequested += OnAddTacheRequested;
+            creationToolboxView1.AddJalonRequested += OnAddJalonRequested;
 
             pertDiagramControl1.TacheClick += PertDiagram_TacheClick;
             pertDiagramControl1.BlocClick += PertDiagram_BlocClick;
@@ -280,6 +281,26 @@ namespace PlanAthena.View.TaskManager
             RefreshUIForActiveLot();
             ShowTacheDetails(nouvelleTache);
         }
+        private void OnAddJalonRequested(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(_activeLotId))
+            {
+                MessageBox.Show("Veuillez d'abord sélectionner un lot.", "Action impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            var lot = _projetService.ObtenirLotParId(_activeLotId);
+            if (lot == null || !lot.Blocs.Any())
+            {
+                MessageBox.Show("Veuillez d'abord créer un bloc dans ce lot.", "Action impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            var premierBlocId = lot.Blocs.First().BlocId;
+            var nom = "Jalon"; 
+            var heures = 8;
+            var nouveauJalon = _taskManagerService.CreerTacheJalon(_activeLotId, premierBlocId, nom, heures);
+            RefreshUIForActiveLot();
+            ShowTacheDetails(nouveauJalon);
+        }
 
         private void OnTacheSaveRequested(object sender, Tache tacheASauvegarder)
         {
@@ -383,7 +404,49 @@ namespace PlanAthena.View.TaskManager
 
         private void btnExporter_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Fonction d'export non implémentée.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            // 1. Vérifier qu'un lot est bien sélectionné
+            if (string.IsNullOrEmpty(_activeLotId))
+            {
+                MessageBox.Show("Veuillez sélectionner un lot avant d'exporter des tâches.", "Lot requis", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // 2. Récupérer les tâches à exporter
+            var tachesAExporter = _taskManagerService.ObtenirToutesLesTaches(lotId: _activeLotId);
+            if (!tachesAExporter.Any())
+            {
+                MessageBox.Show("Le lot sélectionné ne contient aucune tâche à exporter.", "Exportation impossible", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // 3. Ouvrir la boîte de dialogue pour choisir l'emplacement du fichier
+            using (var sfd = new SaveFileDialog())
+            {
+                sfd.Title = "Exporter les tâches au format CSV";
+                sfd.Filter = "Fichiers CSV (*.csv)|*.csv|Tous les fichiers (*.*)|*.*";
+
+                // Bonus : proposer un nom de fichier par défaut intelligent
+                var lot = _projetService.ObtenirLotParId(_activeLotId);
+                sfd.FileName = $"Export_Taches_{lot?.Nom.Replace(" ", "_") ?? "Lot"}_{DateTime.Now:yyyyMMdd}.csv";
+
+                if (sfd.ShowDialog(this.FindForm()) == DialogResult.OK)
+                {
+                    try
+                    {
+                        // 4. Appeler le service d'export avec les données et le chemin
+                        _exportService.ExporterTachesCSV(tachesAExporter, sfd.FileName);
+
+                        MessageBox.Show($"Exportation terminée avec succès.\n{tachesAExporter.Count} tâches ont été exportées dans le fichier :\n{sfd.FileName}",
+                                        "Export Réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        // 5. Gérer les erreurs potentielles (ex: fichier verrouillé)
+                        MessageBox.Show($"Une erreur est survenue lors de l'exportation :\n{ex.Message}",
+                                        "Erreur d'Exportation", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
         }
         #endregion
     }

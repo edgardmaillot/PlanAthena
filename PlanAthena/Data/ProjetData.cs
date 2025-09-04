@@ -1,4 +1,5 @@
 using PlanAthena.Services.Business.DTOs; // Pour ConsolidatedPlanning et ConfigurationPlanification
+using PlanAthena.Services.DTOs.TaskManager;
 
 namespace PlanAthena.Data
 {
@@ -29,7 +30,7 @@ namespace PlanAthena.Data
         /// L'état d'avancement (statut) de chaque tâche.
         /// La clé est le TacheId.
         /// </summary>
-        public Dictionary<string, Status> TaskStatuses { get; set; }
+        public Dictionary<string, Statut> TaskStatuses { get; set; }
 
 
         // --- MÉTADONNÉES DE SAUVEGARDE ---

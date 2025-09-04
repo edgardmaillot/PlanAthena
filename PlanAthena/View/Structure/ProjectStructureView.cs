@@ -8,7 +8,6 @@ namespace PlanAthena.View.Structure
 {
     public partial class ProjectStructureView : UserControl
     {
-        private readonly ApplicationService _applicationService;
         private readonly ProjetService _projetService;
 
         // Stocke la liste "plate" pour l'affichage et la recherche
@@ -18,10 +17,9 @@ namespace PlanAthena.View.Structure
 
         public event EventHandler<Type> NavigateToViewRequested;
 
-        public ProjectStructureView(ApplicationService applicationService, ProjetService projetService)
+        public ProjectStructureView(ProjetService projetService)
         {
             InitializeComponent();
-            _applicationService = applicationService;
             _projetService = projetService;
 
             this.Load += ProjectStructureView_Load;

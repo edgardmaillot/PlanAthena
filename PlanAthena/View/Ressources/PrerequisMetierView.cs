@@ -9,7 +9,6 @@ namespace PlanAthena.View.Ressources.MetierDiagram
 {
     public partial class PrerequisMetierView : UserControl
     {
-        private readonly ApplicationService _applicationService;
         private readonly RessourceService _ressourceService;
         private readonly ProjetService _projetService;
         private readonly DependanceBuilder _dependanceBuilder;
@@ -19,10 +18,9 @@ namespace PlanAthena.View.Ressources.MetierDiagram
         private bool _isLoading = false;
         private readonly Dictionary<ChantierPhase, MetierDiagramControl> _diagramsByPhase = new Dictionary<ChantierPhase, MetierDiagramControl>();
 
-        public PrerequisMetierView(ApplicationService applicationService, RessourceService ressourceService, ProjetService projetService, DependanceBuilder dependanceBuilder)
+        public PrerequisMetierView(RessourceService ressourceService, ProjetService projetService, DependanceBuilder dependanceBuilder)
         {
             InitializeComponent();
-            _applicationService = applicationService;
             _ressourceService = ressourceService;
             _projetService = projetService;
             _dependanceBuilder = dependanceBuilder;

@@ -535,7 +535,6 @@ namespace PlanAthena.View.Dashboard
         private KryptonCheckBox chkTuesday;
         private KryptonCheckBox chkMonday;
         private KryptonCheckBox chkSunday;
-        private ApplicationService applicationService;
         private CheminsPrefereService cheminsPrefereService;
 
        

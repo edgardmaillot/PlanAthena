@@ -13,16 +13,29 @@ namespace PlanAthena.Services.Business
         private readonly IIdGeneratorService _idGenerator;
         private readonly Dictionary<string, Lot> _lots = new();
         private InformationsProjet _informationsProjet;
+        public ConfigurationPlanification ConfigPlanificationActuelle { get; private set; }
 
 
 
         public ProjetService(IIdGeneratorService idGenerator)
         {
             _idGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
+            // Initialiser la configuration de session avec des valeurs par défaut
+            InitialiserConfigurationParDefaut();
         }
 
         #region Cycle de vie du projet
-
+        private void InitialiserConfigurationParDefaut()
+        {
+            ConfigPlanificationActuelle = new ConfigurationPlanification
+            {
+                JoursOuvres = new List<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday },
+                HeureDebutJournee = 8,
+                DureeJournaliereStandardHeures = 8,
+                HeuresTravailEffectifParJour = 7,
+                CoutIndirectJournalierAbsolu = 500
+            };
+        }
         public virtual void InitialiserNouveauProjet()
         {
             //ViderProjet();

@@ -22,11 +22,12 @@ namespace PlanAthena.View
 
         // Stockage des autres services
         private readonly IServiceProvider _serviceProvider;
-        private readonly ApplicationService _applicationService;
         private readonly ProjetService _projetService;
         private readonly TaskManagerService _taskManagerService;
         private readonly RessourceService _ressourceService;
         private readonly ImportService _importService;
+        private readonly ImportWizardOrchestrator _importWizardOrchestrator;
+        private readonly ExportService _exportService;
         private readonly CheminsPrefereService _cheminsPrefereService;
         private readonly DependanceBuilder _dependanceBuilder;
         private readonly PlanningService _planningService;
@@ -39,11 +40,12 @@ namespace PlanAthena.View
             IServiceProvider serviceProvider,
             // --- NOUVELLE INJECTION ---
             ProjectPersistenceUseCase persistenceUseCase,
-            ApplicationService applicationService,
             ProjetService projetService,
             TaskManagerService taskManagerService,
             RessourceService ressourceService,
             ImportService importService,
+            ImportWizardOrchestrator ImportWizardOrchestrator,
+            ExportService exportService,
             CheminsPrefereService cheminsPrefereService,
             DependanceBuilder dependanceBuilder,
             PlanificationOrchestrator planificationOrchestrator,
@@ -58,11 +60,12 @@ namespace PlanAthena.View
             _serviceProvider = serviceProvider;
             // --- NOUVELLE ASSIGNATION ---
             _persistenceUseCase = persistenceUseCase;
-            _applicationService = applicationService;
             _projetService = projetService;
             _taskManagerService = taskManagerService;
             _ressourceService = ressourceService;
             _importService = importService;
+            _importWizardOrchestrator = ImportWizardOrchestrator;
+            _exportService = exportService;
             _cheminsPrefereService = cheminsPrefereService;
             _dependanceBuilder = dependanceBuilder;
             _planificationOrchestrator = planificationOrchestrator;
@@ -129,7 +132,7 @@ namespace PlanAthena.View
         private void NavigateToAccueil()
         {
             // --- CORRECTION: Le constructeur de DashboardView est mis à jour ---
-            var view = new DashboardView(_persistenceUseCase, _projetService, _applicationService);
+            var view = new DashboardView(_persistenceUseCase, _projetService);
             view.NavigateToViewRequested += OnNavigateToViewRequested;
             ShowView(view);
         }
@@ -137,7 +140,7 @@ namespace PlanAthena.View
         private void NavigateToStructure()
         {
             // Note: ProjectStructureView devra aussi être mis à jour s'il utilise ApplicationService
-            var view = new ProjectStructureView(_applicationService, _projetService);
+            var view = new ProjectStructureView(_projetService);
             view.NavigateToViewRequested += OnNavigateToViewRequested;
             ShowView(view);
         }
@@ -151,14 +154,14 @@ namespace PlanAthena.View
 
         private void NavigateToRessourcesOuvriers()
         {
-            var view = new RessourceOuvrierView(_ressourceService, _projetService, _importService);
+            var view = new RessourceOuvrierView(_ressourceService, _projetService, _importWizardOrchestrator, _exportService);
             ShowView(view);
         }
 
         private void NavigateToPrerequisMetiers()
         {
             // Note: PrerequisMetierView devra aussi être mis à jour
-            var view = new PrerequisMetierView(_applicationService, _ressourceService, _projetService, _dependanceBuilder);
+            var view = new PrerequisMetierView(_ressourceService, _projetService, _dependanceBuilder);
             view.NavigateToViewRequested += OnNavigateToViewRequested;
             ShowView(view);
         }
@@ -166,14 +169,14 @@ namespace PlanAthena.View
         private void NavigateToTaskManager()
         {
             // Note: TaskManagerView devra aussi être mis à jour
-            var view = new TaskManagerView(_applicationService, _projetService, _taskManagerService, _ressourceService, _dependanceBuilder, _importService);
+            var view = new TaskManagerView(_projetService, _taskManagerService, _ressourceService, _dependanceBuilder, _importService, _exportService);
             view.NavigateToViewRequested += OnNavigateToViewRequested;
             ShowView(view);
         }
         private void NavigateToPlanificator()
         {
             // --- CORRECTION: Le constructeur de PlanificatorView est mis à jour ---
-            var view = new PlanificatorView(_applicationService, _planificationOrchestrator, _planningService, _projetService, _ressourceService, _planningExcelExportService, _ganttExportService, _cheminsPrefereService);
+            var view = new PlanificatorView(_planificationOrchestrator, _planningService, _projetService, _ressourceService, _planningExcelExportService, _ganttExportService, _cheminsPrefereService);
             ShowView(view);
         }
         #endregion

@@ -1,3 +1,5 @@
+// --- START OF FILE CreationToolboxView.Designer.cs ---
+
 using Krypton.Toolkit;
 using System.Drawing;
 using System.Windows.Forms;
@@ -21,76 +23,92 @@ namespace PlanAthena.View.TaskManager
 
         private void InitializeComponent()
         {
-            this.panelMain = new Krypton.Toolkit.KryptonPanel();
-            this.panelDynamicButtons = new System.Windows.Forms.TableLayoutPanel();
-            this.headerMetiers = new Krypton.Toolkit.KryptonHeader();
-            this.btnAddBloc = new Krypton.Toolkit.KryptonButton();
-            ((System.ComponentModel.ISupportInitialize)(this.panelMain)).BeginInit();
-            this.panelMain.SuspendLayout();
-            this.SuspendLayout();
+            panelMain = new KryptonPanel();
+            panelDynamicButtons = new TableLayoutPanel();
+            headerMetiers = new KryptonHeader();
+            btnAddBloc = new KryptonButton();
+            btnCreerJalon = new KryptonButton();
+            ((System.ComponentModel.ISupportInitialize)panelMain).BeginInit();
+            panelMain.SuspendLayout();
+            SuspendLayout();
             // 
             // panelMain
             // 
-            this.panelMain.Controls.Add(this.panelDynamicButtons);
-            this.panelMain.Controls.Add(this.headerMetiers);
-            this.panelMain.Controls.Add(this.btnAddBloc);
-            this.panelMain.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelMain.Location = new System.Drawing.Point(0, 0);
-            this.panelMain.Margin = new System.Windows.Forms.Padding(0);
-            this.panelMain.Name = "panelMain";
-            this.panelMain.Size = new System.Drawing.Size(180, 700);
-            this.panelMain.TabIndex = 0;
+            panelMain.Controls.Add(panelDynamicButtons);
+            panelMain.Controls.Add(headerMetiers);
+            panelMain.Controls.Add(btnAddBloc);
+            panelMain.Controls.Add(btnCreerJalon);
+            panelMain.Dock = DockStyle.Fill;
+            panelMain.Location = new Point(0, 0);
+            panelMain.Margin = new Padding(0);
+            panelMain.Name = "panelMain";
+            panelMain.Size = new Size(180, 700);
+            panelMain.TabIndex = 0;
             // 
             // panelDynamicButtons
             // 
-            this.panelDynamicButtons.AutoScroll = true;
-            this.panelDynamicButtons.BackColor = System.Drawing.Color.Transparent;
-            this.panelDynamicButtons.ColumnCount = 2;
-            this.panelDynamicButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 25F));
-            this.panelDynamicButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.panelDynamicButtons.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelDynamicButtons.Location = new System.Drawing.Point(0, 76);
-            this.panelDynamicButtons.Margin = new System.Windows.Forms.Padding(0);
-            this.panelDynamicButtons.Name = "panelDynamicButtons";
-            this.panelDynamicButtons.RowCount = 0;
-            this.panelDynamicButtons.Size = new System.Drawing.Size(180, 624);
-            this.panelDynamicButtons.TabIndex = 2;
+            panelDynamicButtons.AutoScroll = true;
+            panelDynamicButtons.BackColor = Color.Transparent;
+            panelDynamicButtons.ColumnCount = 2;
+            panelDynamicButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 25F));
+            panelDynamicButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            panelDynamicButtons.Dock = DockStyle.Fill;
+            panelDynamicButtons.Location = new Point(0, 68);
+            panelDynamicButtons.Margin = new Padding(0);
+            panelDynamicButtons.Name = "panelDynamicButtons";
+            panelDynamicButtons.Size = new Size(180, 586);
+            panelDynamicButtons.TabIndex = 2;
             // 
             // headerMetiers
             // 
-            this.headerMetiers.Dock = System.Windows.Forms.DockStyle.Top;
-            this.headerMetiers.Location = new System.Drawing.Point(0, 46);
-            this.headerMetiers.Name = "headerMetiers";
-            this.headerMetiers.Size = new System.Drawing.Size(180, 30);
-            this.headerMetiers.StateCommon.Content.ShortText.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.headerMetiers.TabIndex = 1;
-            this.headerMetiers.Values.Description = "";
-            this.headerMetiers.Values.Heading = "Créer Tâches";
-            this.headerMetiers.Values.Image = null;
+            headerMetiers.Dock = DockStyle.Top;
+            headerMetiers.Location = new Point(0, 46);
+            headerMetiers.Name = "headerMetiers";
+            headerMetiers.Size = new Size(180, 22);
+            headerMetiers.StateCommon.Content.ShortText.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            headerMetiers.TabIndex = 1;
+            headerMetiers.Values.Description = "";
+            headerMetiers.Values.Heading = "Créer Tâches";
+            headerMetiers.Values.Image = null;
             // 
             // btnAddBloc
             // 
-            this.btnAddBloc.Dock = System.Windows.Forms.DockStyle.Top;
-            this.btnAddBloc.Location = new System.Drawing.Point(0, 0);
-            this.btnAddBloc.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.btnAddBloc.Name = "btnAddBloc";
-            this.btnAddBloc.Size = new System.Drawing.Size(180, 46);
-            this.btnAddBloc.TabIndex = 0;
-            this.btnAddBloc.Values.Text = "Ajouter un Bloc";
-            this.btnAddBloc.Click += new System.EventHandler(this.btnAddBloc_Click);
+            btnAddBloc.Dock = DockStyle.Top;
+            btnAddBloc.Location = new Point(0, 0);
+            btnAddBloc.Margin = new Padding(4, 3, 4, 3);
+            btnAddBloc.Name = "btnAddBloc";
+            btnAddBloc.Size = new Size(180, 46);
+            btnAddBloc.TabIndex = 0;
+            btnAddBloc.Values.DropDownArrowColor = Color.Empty;
+            btnAddBloc.Values.Text = "Ajouter un Bloc";
+            btnAddBloc.Click += btnAddBloc_Click;
+            // 
+            // btnCreerJalon
+            // 
+            btnCreerJalon.Dock = DockStyle.Bottom;
+            btnCreerJalon.Location = new Point(0, 654);
+            btnCreerJalon.Margin = new Padding(4, 3, 4, 3);
+            btnCreerJalon.Name = "btnCreerJalon";
+            btnCreerJalon.Size = new Size(180, 46);
+            btnCreerJalon.TabIndex = 3;
+            //this.btnCreerJalon.Values.Image = global::PlanAthena.Properties.Resources.Jalon;
+            btnCreerJalon.Values.DropDownArrowColor = Color.Empty;
+            btnCreerJalon.Values.Text = "Créer Jalon";
+            btnCreerJalon.Click += btnCreerJalon_Click;
             // 
             // CreationToolboxView
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.panelMain);
-            this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.Name = "CreationToolboxView";
-            this.Size = new System.Drawing.Size(180, 700);
-            ((System.ComponentModel.ISupportInitialize)(this.panelMain)).EndInit();
-            this.panelMain.ResumeLayout(false);
-            this.panelMain.PerformLayout();
-            this.ResumeLayout(false);
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            BackgroundImage = Properties.Resources.Jalon;
+            Controls.Add(panelMain);
+            Margin = new Padding(4, 3, 4, 3);
+            Name = "CreationToolboxView";
+            Size = new Size(180, 700);
+            ((System.ComponentModel.ISupportInitialize)panelMain).EndInit();
+            panelMain.ResumeLayout(false);
+            panelMain.PerformLayout();
+            ResumeLayout(false);
 
         }
 
@@ -99,6 +117,7 @@ namespace PlanAthena.View.TaskManager
         private KryptonPanel panelMain;
         private KryptonButton btnAddBloc;
         private TableLayoutPanel panelDynamicButtons;
-        private KryptonHeader headerMetiers; // <-- NOUVEAU
+        private KryptonHeader headerMetiers;
+        private KryptonButton btnCreerJalon; // <-- NOUVEAU
     }
 }

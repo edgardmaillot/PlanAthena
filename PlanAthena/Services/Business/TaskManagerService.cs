@@ -139,6 +139,22 @@ namespace PlanAthena.Services.Business
             _taches.Add(nouvelleTache.TacheId, nouvelleTache);
             return nouvelleTache;
         }
+        public virtual Tache CreerTacheJalon(string lotId, string blocId, string nom="Jalon", int heures=0)
+        {
+            var tacheMereExistantes = _taches.Values.Where(t => string.IsNullOrEmpty(t.ParentId)).ToList();
+            var nouvelleTache = new Tache
+            {
+                LotId = lotId,
+                BlocId = blocId,
+                TacheId = _idGenerator.GenererProchainTacheId(blocId, tacheMereExistantes),
+                TacheNom = nom,
+                HeuresHommeEstimees = heures,
+                Statut = Statut.Estimée, // Statut par défaut à la création
+                Type = TypeActivite.JalonUtilisateur
+            };
+            _taches.Add(nouvelleTache.TacheId, nouvelleTache);
+            return nouvelleTache;
+        }
 
         public virtual void ModifierTache(Tache tacheModifiee)
         {

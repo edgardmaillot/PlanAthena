@@ -1,10 +1,14 @@
 // PlanAthena/Services/DataAccess/ImportService.cs V0.4.8
 
+using ChoETL; 
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
+using PlanAthena.Services.Usecases;
+using PlanAthena.View.Utils;
 using System.Diagnostics;
+using System.Text;
 
 namespace PlanAthena.Services.DataAccess
 {
@@ -12,20 +16,20 @@ namespace PlanAthena.Services.DataAccess
     {
         private readonly ProjetService _projetService;
         private readonly RessourceService _ressourceService;
-        private readonly TaskManagerService _taskManagerService; // NOUVELLE DÉPENDANCE
+        private readonly TaskManagerService _taskManagerService;
         private readonly IIdGeneratorService _idGenerator;
         private readonly CsvDataService _csvDataService;
 
         public ImportService(
             ProjetService projetService,
             RessourceService ressourceService,
-            TaskManagerService taskManagerService, // NOUVELLE DÉPENDANCE
+            TaskManagerService taskManagerService,
             IIdGeneratorService idGenerator,
             CsvDataService csvDataService)
         {
             _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
             _ressourceService = ressourceService ?? throw new ArgumentNullException(nameof(ressourceService));
-            _taskManagerService = taskManagerService ?? throw new ArgumentNullException(nameof(taskManagerService)); // NOUVELLE DÉPENDANCE
+            _taskManagerService = taskManagerService ?? throw new ArgumentNullException(nameof(taskManagerService)); 
             _idGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
             _csvDataService = csvDataService ?? throw new ArgumentNullException(nameof(csvDataService));
         }
@@ -78,117 +82,6 @@ namespace PlanAthena.Services.DataAccess
                 stopwatch.Stop();
                 return ImportResult.Echec($"Erreur lors de l'import: {ex.Message}");
             }
-        }
-
-        #endregion
-
-        #region Import/Export Ouvriers
-
-        public int ImporterOuvriersCSV(string filePath, bool remplacerExistants)
-        {
-            var lignesCsv = _csvDataService.ImportCsv<OuvrierCsvRecord>(filePath);
-
-            if (remplacerExistants)
-            {
-                _ressourceService.ViderOuvriers();
-            }
-
-            var idExterneVersIdInterneMap = new Dictionary<string, string>();
-            var ouvriersUniquesExternes = lignesCsv.GroupBy(l => l.OuvrierId).Select(g => g.First());
-
-            foreach (var ligneUnique in ouvriersUniquesExternes)
-            {
-                Ouvrier? ouvrierExistant = null;
-                if (!remplacerExistants)
-                {
-                    ouvrierExistant = _ressourceService.GetAllOuvriers()
-                        .FirstOrDefault(o => o.Nom == ligneUnique.Nom && o.Prenom == ligneUnique.Prenom);
-                }
-
-                if (ouvrierExistant != null)
-                {
-                    idExterneVersIdInterneMap[ligneUnique.OuvrierId] = ouvrierExistant.OuvrierId;
-                }
-                else
-                {
-                    var nouvelOuvrier = _ressourceService.CreerOuvrier(ligneUnique.Prenom, ligneUnique.Nom, ligneUnique.CoutJournalier);
-                    idExterneVersIdInterneMap[ligneUnique.OuvrierId] = nouvelOuvrier.OuvrierId;
-                }
-            }
-
-            var ouvriersGroupes = lignesCsv.GroupBy(ligne => ligne.OuvrierId);
-
-            foreach (var groupe in ouvriersGroupes)
-            {
-                string idExterne = groupe.Key;
-                if (!idExterneVersIdInterneMap.TryGetValue(idExterne, out string? idInterne))
-                {
-                    continue;
-                }
-
-                var ouvrierAModifier = _ressourceService.GetOuvrierById(idInterne);
-                if (ouvrierAModifier == null) continue;
-
-                var premiereLigne = groupe.First();
-                ouvrierAModifier.Nom = premiereLigne.Nom;
-                ouvrierAModifier.Prenom = premiereLigne.Prenom;
-                ouvrierAModifier.CoutJournalier = premiereLigne.CoutJournalier;
-
-                if (remplacerExistants && idExterneVersIdInterneMap.ContainsKey(idExterne))
-                {
-                    ouvrierAModifier.Competences.Clear();
-                }
-
-                foreach (var ligne in groupe)
-                {
-                    if (!string.IsNullOrWhiteSpace(ligne.MetierId) && !ouvrierAModifier.Competences.Any(c => c.MetierId == ligne.MetierId))
-                    {
-                        var estPrincipal = !ouvrierAModifier.Competences.Any();
-                        ouvrierAModifier.Competences.Add(new CompetenceOuvrier { MetierId = ligne.MetierId, EstMetierPrincipal = estPrincipal });
-                    }
-                }
-
-                _ressourceService.ModifierOuvrier(ouvrierAModifier);
-            }
-
-            return idExterneVersIdInterneMap.Count;
-        }
-
-        public void ExporterOuvriersCSV(string filePath)
-        {
-            var tousLesOuvriers = _ressourceService.GetAllOuvriers();
-            var recordsPourCsv = new List<OuvrierCsvRecord>();
-
-            foreach (var ouvrier in tousLesOuvriers)
-            {
-                if (ouvrier.Competences.Any())
-                {
-                    foreach (var competence in ouvrier.Competences)
-                    {
-                        recordsPourCsv.Add(new OuvrierCsvRecord
-                        {
-                            OuvrierId = ouvrier.OuvrierId,
-                            Nom = ouvrier.Nom,
-                            Prenom = ouvrier.Prenom,
-                            CoutJournalier = ouvrier.CoutJournalier,
-                            MetierId = competence.MetierId
-                        });
-                    }
-                }
-                else
-                {
-                    recordsPourCsv.Add(new OuvrierCsvRecord
-                    {
-                        OuvrierId = ouvrier.OuvrierId,
-                        Nom = ouvrier.Nom,
-                        Prenom = ouvrier.Prenom,
-                        CoutJournalier = ouvrier.CoutJournalier,
-                        MetierId = ""
-                    });
-                }
-            }
-
-            _csvDataService.ExportCsv(recordsPourCsv, filePath);
         }
 
         #endregion
@@ -353,6 +246,226 @@ namespace PlanAthena.Services.DataAccess
             return dict.TryGetValue(mappedColumnName, out string? value) ? value : defaultValue;
         }
         #endregion
+
+        #region Import Ouvriers
+
+        /// <summary>
+        /// Méthode finale d'importation des ouvriers qui utilise la configuration
+        /// complète issue de l'assistant de mapping (wizard).
+        /// </summary>
+        /// <summary>
+        /// Reçoit une liste d'objets Ouvrier propres et les charge dans le système.
+        /// Ne contient aucune logique de mapping ou de transformation de données brutes.
+        /// </summary>
+        /// <param name="ouvriersAImporter">La liste des objets Ouvrier finaux.</param>
+        /// <param name="remplacerExistants">True pour vider la base avant l'import.</param>
+        /// <returns>Un objet ImportResult avec le résumé de l'opération.</returns>
+        public ImportResult ImporterOuvriers(List<Ouvrier> ouvriersAImporter, bool remplacerExistants)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            var warnings = new List<string>();
+            int ouvriersCreesOuMaj = 0;
+
+            try
+            {
+                if (remplacerExistants)
+                {
+                    _ressourceService.ViderOuvriers();
+                }
+
+                foreach (var ouvrierImporte in ouvriersAImporter)
+                {
+                    // On cherche d'abord si un ouvrier correspondant existe
+                    Ouvrier ouvrierExistant = null;
+                    if (!remplacerExistants)
+                    {
+                        ouvrierExistant = _ressourceService.GetAllOuvriers()
+                            .FirstOrDefault(o => o.Nom.Equals(ouvrierImporte.Nom, StringComparison.OrdinalIgnoreCase) &&
+                                                 o.Prenom.Equals(ouvrierImporte.Prenom, StringComparison.OrdinalIgnoreCase));
+                    }
+
+                    Ouvrier ouvrierACreerOuModifier;
+
+                    if (ouvrierExistant == null)
+                    {
+                        // L'ouvrier n'existe pas, on le crée en utilisant RessourceService
+                        ouvrierACreerOuModifier = _ressourceService.CreerOuvrier(ouvrierImporte.Prenom, ouvrierImporte.Nom, ouvrierImporte.CoutJournalier);
+                    }
+                    else
+                    {
+                        // L'ouvrier existe, on le met à jour
+                        ouvrierExistant.CoutJournalier = ouvrierImporte.CoutJournalier;
+                        ouvrierACreerOuModifier = ouvrierExistant;
+                    }
+
+                    // Maintenant, on travaille avec ouvrierACreerOuModifier, qui n'est jamais null
+                    // On ajoute les compétences une par une
+                    foreach (var competence in ouvrierImporte.Competences)
+                    {
+                        try
+                        {
+                            // On vérifie que la compétence n'existe pas déjà avant de l'ajouter
+                            if (!ouvrierACreerOuModifier.Competences.Any(c => c.MetierId == competence.MetierId))
+                            {
+                                _ressourceService.AjouterCompetence(ouvrierACreerOuModifier.OuvrierId, competence.MetierId);
+                            }
+                        }
+                        catch (InvalidOperationException ex)
+                        {
+                            // Si l'ouvrier a déjà la compétence, on l'ignore silencieusement.
+                            // On pourrait ajouter un warning si on voulait être plus verbeux.
+                            warnings.Add($"Avertissement pour l'ouvrier {ouvrierACreerOuModifier.NomComplet}: {ex.Message}");
+                        }
+                    }
+
+                    // Si c'est un ouvrier existant, on s'assure que les modifications sont sauvegardées
+                    if (ouvrierExistant != null)
+                    {
+                        _ressourceService.ModifierOuvrier(ouvrierACreerOuModifier);
+                    }
+
+                    ouvriersCreesOuMaj++;
+                }
+
+                stopwatch.Stop();
+                return ImportResult.SuccesOuvriers(ouvriersCreesOuMaj, warnings, stopwatch.Elapsed);
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                return ImportResult.Echec($"Erreur lors du chargement des données : {ex.Message}");
+            }
+        }
+        public string DetectCsvDelimiter(string filePath)
+        {
+            var delimiters = new[] { ';', ',', '\t' };
+            string firstLine = File.ReadLines(filePath).FirstOrDefault();
+            if (string.IsNullOrEmpty(firstLine)) return ";"; // Par défaut
+
+            return delimiters.OrderByDescending(d => firstLine.Count(c => c == d))
+                             .First()
+                             .ToString();
+        }
+        #endregion
+
+
+        #region Import Natif (Voie Rapide)
+
+        /// <summary>
+        /// Importe un fichier CSV d'ouvriers qui est déjà au format standard de PlanAthena.
+        /// Contourne le wizard de mapping pour une expérience utilisateur rapide.
+        /// </summary>
+        /// <param name="filePath">Chemin du fichier CSV.</param>
+        /// <param name="remplacerExistants">True pour vider la liste des ouvriers avant l'import.</param>
+        /// <returns>Un objet ImportResult avec le résumé de l'opération.</returns>
+        public ImportResult ImporterOuvriersFormatNatif(string filePath, bool remplacerExistants)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            var warnings = new List<string>();
+
+            try
+            {
+                // --- Étape 1 : Lecture du fichier avec ChoETL et un DTO fortement typé ---
+                List<OuvrierCsvRecord> lignesCsv;
+                using (var reader = new ChoCSVReader<OuvrierCsvRecord>(filePath)
+                    .WithFirstLineHeader()
+                    .Configure(config =>
+                    {
+                        config.Delimiter = ";"; // Le format natif utilise le point-virgule
+                        config.Encoding = Encoding.UTF8;
+                        config.ThrowAndStopOnMissingField = false; // Plus flexible
+                    })
+                )
+                {
+                    lignesCsv = reader.ToList();
+                }
+
+                // --- Le reste de la logique est directement inspiré de votre ancienne méthode ---
+
+                if (remplacerExistants)
+                {
+                    _ressourceService.ViderOuvriers();
+                }
+
+                var idExterneVersIdInterneMap = new Dictionary<string, string>();
+                var ouvriersUniquesExternes = lignesCsv.GroupBy(l => l.OuvrierId).Select(g => g.First());
+
+                foreach (var ligneUnique in ouvriersUniquesExternes)
+                {
+                    Ouvrier ouvrierExistant = null;
+                    if (!remplacerExistants)
+                    {
+                        // La recherche d'un ouvrier existant se fait par Nom/Prénom
+                        ouvrierExistant = _ressourceService.GetAllOuvriers()
+                            .FirstOrDefault(o => o.Nom == ligneUnique.Nom && o.Prenom == ligneUnique.Prenom);
+                    }
+
+                    if (ouvrierExistant != null)
+                    {
+                        // On a trouvé un ouvrier existant, on met à jour son ID dans notre map
+                        idExterneVersIdInterneMap[ligneUnique.OuvrierId] = ouvrierExistant.OuvrierId;
+                    }
+                    else
+                    {
+                        // L'ouvrier n'existe pas, on le crée
+                        var nouvelOuvrier = _ressourceService.CreerOuvrier(ligneUnique.Prenom, ligneUnique.Nom, (int)ligneUnique.CoutJournalier);
+                        idExterneVersIdInterneMap[ligneUnique.OuvrierId] = nouvelOuvrier.OuvrierId;
+                    }
+                }
+
+                var ouvriersGroupes = lignesCsv.GroupBy(ligne => ligne.OuvrierId);
+
+                foreach (var groupe in ouvriersGroupes)
+                {
+                    string idExterne = groupe.Key;
+                    if (!idExterneVersIdInterneMap.TryGetValue(idExterne, out string idInterne))
+                    {
+                        continue;
+                    }
+
+                    var ouvrierAModifier = _ressourceService.GetOuvrierById(idInterne);
+                    if (ouvrierAModifier == null) continue;
+
+                    var premiereLigne = groupe.First();
+                    ouvrierAModifier.Nom = premiereLigne.Nom;
+                    ouvrierAModifier.Prenom = premiereLigne.Prenom;
+                    ouvrierAModifier.CoutJournalier = (int)premiereLigne.CoutJournalier;
+
+                    if (remplacerExistants)
+                    {
+                        ouvrierAModifier.Competences.Clear();
+                    }
+
+                    foreach (var ligne in groupe)
+                    {
+                        if (!string.IsNullOrWhiteSpace(ligne.MetierId) && _ressourceService.GetMetierById(ligne.MetierId) != null)
+                        {
+                            if (!ouvrierAModifier.Competences.Any(c => c.MetierId == ligne.MetierId))
+                            {
+                                var estPrincipal = !ouvrierAModifier.Competences.Any();
+                                ouvrierAModifier.Competences.Add(new CompetenceOuvrier { MetierId = ligne.MetierId, EstMetierPrincipal = estPrincipal });
+                            }
+                        }
+                        else if (!string.IsNullOrWhiteSpace(ligne.MetierId))
+                        {
+                            warnings.Add($"Le métier '{ligne.MetierId}' pour l'ouvrier '{premiereLigne.Nom}' n'existe pas et a été ignoré.");
+                        }
+                    }
+                    _ressourceService.ModifierOuvrier(ouvrierAModifier);
+                }
+
+                stopwatch.Stop();
+                return ImportResult.SuccesOuvriers(idExterneVersIdInterneMap.Count, warnings, stopwatch.Elapsed);
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                return ImportResult.Echec($"Erreur lors de l'import natif : {ex.Message}");
+            }
+        }
+
+        #endregion
+
     }
 
 }

@@ -1,4 +1,4 @@
-﻿Structure du Projet - GÃ©nÃ©rÃ© le 09/02/2025 09:03:06
+﻿Structure du Projet - GÃ©nÃ©rÃ© le 09/03/2025 17:01:11
 D:.
 
     +--- Data
@@ -23,6 +23,9 @@ D:.
     +--- Resources
             Capture d'écran 2025-07-29 160101.png
             DefaultMetiersConfig.json
+            Etage1GO.jpg
+            Etage1SE.jpg
+            Etage2GO.jpg
             file.txt
             Ic_ac_unit_24.png
             Ic_air_24.png
@@ -45,8 +48,12 @@ D:.
             Ic_roofing_24.png
             Ic_speed_camera_24.png
             Ic_valve_24.png
+            Jalon.jpg
             MaterialSymbolsOutlined.ttf
             office-layout-example-1.jpg
+            PlanBoutique.jpg
+            PlanBoutiqueGO.jpg
+            PlanBoutiqueSE.jpg
             Tache.jpg
             Tache.png
     +--- Services
@@ -55,23 +62,16 @@ D:.
                     AnalysisReport.cs
                     ConfigurationPlanificationDTOs.cs
                     ConsolidatedPlanning.cs
-                    ExceptionsDTOs.cs
-                    ExportDTOs.cs
-                    ExportGanttDTOs.cs
                     ImportDTOs.cs
                     JalonPlanifie.cs
                     LogPlanningDtos.cs
                     MetierDTOs.cs
                     MetierTensionReport.cs
-                    OuvrierDTOs.cs
                     PlanificationRunResult.cs
                     ProcessDTOs.cs
                     ProjetDTOs.cs
                     SegmentDeTravail.cs
-                    Status.cs
                     UIDTOs.cs
-                ApplicationService.cs
-                PlanificationResultDto.cs
                 PlanningService.cs
                 ProjetService.cs
                 RessourceService.cs
@@ -80,17 +80,24 @@ D:.
         +--- DataAccess
                 CsvDataService.cs
                 ExcelReader.cs
+                ExportService.cs
                 ImportService.cs
                 ProjetRepository.cs
                 ProjetServiceDataAccess.cs
         +--- DTOs
             +--- ImportExport
                     ExportDataProjetDto.cs
+                    OuvrierCsvRecord.cs
+                    TacheExportDto.cs
             +--- ProjectPersistence
                     ProjetSummaryDto.cs
+            +--- Projet
+                    InformationsProjet.cs
             +--- TaskManager
                     PlanningInfoPourTache.cs
                     Statut.cs
+            +--- UseCases
+                    PlanificationRunParams.cs
         +--- Export
                 GanttExportService.cs
                 PlanningExcelExportService.cs
@@ -106,7 +113,6 @@ D:.
                 ProjectPersistenceUseCase.cs
     +--- Utilities
             AnalysisService.cs
-            ConfigurationBuilder.cs
             DependanceBuilder.cs
             IdGeneratorService.cs
             PlanningConsolidationService.cs

@@ -8,6 +8,7 @@ namespace PlanAthena.View.TaskManager
         // Événements pour notifier le parent
         public event EventHandler AddBlocRequested;
         public event EventHandler<Metier> AddTacheRequested;
+        public event EventHandler AddJalonRequested;
 
         public CreationToolboxView()
         {
@@ -100,6 +101,10 @@ namespace PlanAthena.View.TaskManager
                 // Lever l'événement en passant le métier concerné
                 AddTacheRequested?.Invoke(this, metier);
             }
+        }
+        private void btnCreerJalon_Click(object sender, EventArgs e)
+        {
+            AddJalonRequested?.Invoke(this, EventArgs.Empty);
         }
 
         private void btnAddBloc_Click(object sender, EventArgs e)

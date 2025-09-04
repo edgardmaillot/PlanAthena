@@ -41,6 +41,8 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             textId = new KryptonTextBox();
             labelId = new KryptonLabel();
             panelGlobalActions = new KryptonPanel();
+            btnExporter = new KryptonButton();
+            btnImporter = new KryptonButton();
             btnEnregistrer = new KryptonButton();
             btnSupprimer = new KryptonButton();
             ((System.ComponentModel.ISupportInitialize)kryptonPanelMain).BeginInit();
@@ -190,9 +192,39 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             panelRightContainer.Dock = DockStyle.Fill;
             panelRightContainer.Location = new Point(10, 0);
             panelRightContainer.Name = "panelRightContainer";
-            panelRightContainer.Size = new System.Drawing.Size(716, 630);
+            panelRightContainer.Size = new Size(837, 726);
             panelRightContainer.TabIndex = 0;
-            
+            // 
+            // groupCompetences
+            // 
+            groupCompetences.Dock = DockStyle.Fill;
+            groupCompetences.Location = new Point(0, 186);
+            // 
+            // 
+            // 
+            groupCompetences.Panel.Controls.Add(gridCompetences);
+            groupCompetences.Panel.Padding = new Padding(6);
+            groupCompetences.Size = new Size(837, 540);
+            groupCompetences.TabIndex = 1;
+            groupCompetences.Values.Heading = "Compétences";
+            // 
+            // gridCompetences
+            // 
+            gridCompetences.AllowUserToAddRows = false;
+            gridCompetences.AllowUserToDeleteRows = false;
+            gridCompetences.AllowUserToResizeRows = false;
+            gridCompetences.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            gridCompetences.BorderStyle = BorderStyle.None;
+            gridCompetences.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            gridCompetences.Dock = DockStyle.Fill;
+            gridCompetences.Location = new Point(6, 6);
+            gridCompetences.Margin = new Padding(4, 3, 4, 3);
+            gridCompetences.Name = "gridCompetences";
+            gridCompetences.ReadOnly = true;
+            gridCompetences.RowHeadersVisible = false;
+            gridCompetences.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            gridCompetences.Size = new Size(821, 504);
+            gridCompetences.TabIndex = 0;
             // 
             // groupDetails
             // 
@@ -305,40 +337,10 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             labelId.TabIndex = 0;
             labelId.Values.Text = "ID";
             // 
-            // groupCompetences
-            // 
-            groupCompetences.Dock = DockStyle.Fill;
-            groupCompetences.Location = new Point(0, 186);
-            // 
-            // 
-            // 
-            groupCompetences.Panel.Controls.Add(gridCompetences);
-            groupCompetences.Panel.Padding = new Padding(6);
-            groupCompetences.Size = new Size(837, 540);
-            groupCompetences.TabIndex = 1;
-            groupCompetences.Values.Heading = "Compétences";
-            // 
-            // gridCompetences
-            // 
-            gridCompetences.AllowUserToAddRows = false;
-            gridCompetences.AllowUserToDeleteRows = false;
-            gridCompetences.AllowUserToResizeRows = false;
-            gridCompetences.BorderStyle = BorderStyle.None;
-            gridCompetences.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            gridCompetences.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            gridCompetences.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            gridCompetences.Dock = DockStyle.Fill;
-            gridCompetences.Location = new Point(6, 6);
-            gridCompetences.Margin = new Padding(4, 3, 4, 3);
-            gridCompetences.Name = "gridCompetences";
-            gridCompetences.ReadOnly = true;
-            gridCompetences.RowHeadersVisible = false;
-            gridCompetences.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            gridCompetences.Size = new Size(826, 504);
-            gridCompetences.TabIndex = 0;
-            // 
             // panelGlobalActions
             // 
+            panelGlobalActions.Controls.Add(btnExporter);
+            panelGlobalActions.Controls.Add(btnImporter);
             panelGlobalActions.Controls.Add(btnEnregistrer);
             panelGlobalActions.Controls.Add(btnSupprimer);
             panelGlobalActions.Dock = DockStyle.Bottom;
@@ -347,6 +349,26 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             panelGlobalActions.Name = "panelGlobalActions";
             panelGlobalActions.Size = new Size(1376, 58);
             panelGlobalActions.TabIndex = 0;
+            // 
+            // btnExporter
+            // 
+            btnExporter.Location = new Point(130, 12);
+            btnExporter.Name = "btnExporter";
+            btnExporter.Size = new Size(105, 35);
+            btnExporter.TabIndex = 3;
+            btnExporter.Values.DropDownArrowColor = Color.Empty;
+            btnExporter.Values.Text = "Exporter";
+            btnExporter.Click += btnExporterOuvriers_Click;
+            // 
+            // btnImporter
+            // 
+            btnImporter.Location = new Point(7, 12);
+            btnImporter.Name = "btnImporter";
+            btnImporter.Size = new Size(105, 35);
+            btnImporter.TabIndex = 2;
+            btnImporter.Values.DropDownArrowColor = Color.Empty;
+            btnImporter.Values.Text = "Importer";
+            btnImporter.Click += btnImporterOuvriers_Click;
             // 
             // btnEnregistrer
             // 
@@ -437,6 +459,7 @@ namespace PlanAthena.View.Ressources.MetierDiagram
         private KryptonDataGridView gridCompetences;
         private KryptonComboBox cmbAddCompetence;
         private KryptonPanel panelRightContainer;
-
+        private KryptonButton btnExporter;
+        private KryptonButton btnImporter;
     }
 }

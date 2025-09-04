@@ -11,19 +11,16 @@ namespace PlanAthena.View.Dashboard
     {
         private readonly ProjectPersistenceUseCase _persistenceUseCase;
         private readonly ProjetService _projetService;
-        private readonly ApplicationService _applicationService;
 
         public event EventHandler<Type> NavigateToViewRequested;
 
         public DashboardView(
             ProjectPersistenceUseCase persistenceUseCase,
-            ProjetService projetService,
-            ApplicationService applicationService)
+            ProjetService projetService)
         {
             InitializeComponent();
             _persistenceUseCase = persistenceUseCase;
             _projetService = projetService;
-            _applicationService = applicationService;
 
             textFilePath.ReadOnly = true;
             this.Load += DashboardView_Load;
@@ -120,7 +117,7 @@ namespace PlanAthena.View.Dashboard
         {
             var info = _projetService.ObtenirInformationsProjet();
             var chemin = _persistenceUseCase.GetCurrentProjectPath();
-            var config = _applicationService.ConfigPlanificationActuelle;
+            var config = _projetService.ConfigPlanificationActuelle;
 
             if (info == null)
             {
@@ -155,7 +152,7 @@ namespace PlanAthena.View.Dashboard
         private void UpdateProjectFromForm()
         {
             var info = _projetService.ObtenirInformationsProjet();
-            var config = _applicationService.ConfigPlanificationActuelle;
+            var config = _projetService.ConfigPlanificationActuelle;
             if (info == null) return;
 
             info.NomProjet = textName.Text;

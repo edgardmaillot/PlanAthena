@@ -63,10 +63,11 @@ namespace PlanAthena
             services.AddSingleton<TaskManagerService>();
 
             // 3. Use Cases / Orchestrateurs
-            services.AddSingleton<ApplicationService>();
             services.AddSingleton<ImportService>();
+            services.AddSingleton <ExportService>();
             services.AddSingleton<PlanificationOrchestrator>();
             services.AddSingleton<ProjectPersistenceUseCase>();
+            services.AddSingleton<ImportWizardOrchestrator>();
 
             // 4. Services de Processing & Export
             services.AddSingleton<PreparationSolveurService>();
