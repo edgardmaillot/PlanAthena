@@ -26,7 +26,8 @@ namespace PlanAthena.View.Structure
 
         private void AttachEvents()
         {
-            textName.TextChanged += OnDetailChanged;
+            // Utiliser Leave pour ne déclencher qu'au changement de focus
+            textName.Leave += OnDetailChanged;
             numCapacity.ValueChanged += OnDetailChanged;
         }
 

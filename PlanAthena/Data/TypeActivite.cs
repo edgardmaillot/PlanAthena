@@ -16,7 +16,7 @@ namespace PlanAthena.Data
         JalonUtilisateur,
 
         /// <summary>
-        /// Un jalon généré automatiquement pour synchroniser la fin d'un métier.
+        /// Un jalon généré automatiquement pour eviter les dépendances croisées N/N.
         /// </summary>
         JalonDeSynchronisation,
 

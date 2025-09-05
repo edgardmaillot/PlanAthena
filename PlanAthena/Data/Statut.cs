@@ -1,7 +1,7 @@
 // Emplacement: /Services/DTOs/TaskManager/Statut.cs
 // NOTE: Le dossier TaskManager doit être créé dans /Services/DTOs/
 
-namespace PlanAthena.Services.DTOs.TaskManager
+namespace PlanAthena.Data
 {
     /// <summary>
     /// Représente l'état d'avancement d'une tâche.
@@ -16,7 +16,7 @@ namespace PlanAthena.Services.DTOs.TaskManager
         /// <summary>
         /// Tâche placée dans le planning, future.
         /// </summary>
-        Planifiee,
+        Planifiée,
 
         /// <summary>
         /// Tâche dont la date de début est atteinte.
@@ -26,7 +26,7 @@ namespace PlanAthena.Services.DTOs.TaskManager
         /// <summary>
         /// Tâche déclarée comme terminée manuellement par l'utilisateur. C'est un état final.
         /// </summary>
-        Terminee,
+        Terminée,
 
         /// <summary>
         /// Tâche non terminée dont la date de fin est dépassée.

@@ -35,8 +35,6 @@ namespace PlanAthena.View.TaskManager
             cmbMetier = new KryptonComboBox();
             lblBlocNom = new KryptonLabel();
             cmbBlocNom = new KryptonComboBox();
-            lblBlocCap = new KryptonLabel();
-            numBlocCapacite = new KryptonNumericUpDown();
             kryptonLabel1 = new KryptonLabel();
             chkListDependances = new KryptonCheckedListBox();
             ((System.ComponentModel.ISupportInitialize)panelActions).BeginInit();
@@ -111,8 +109,6 @@ namespace PlanAthena.View.TaskManager
             kryptonGroup1.Panel.Controls.Add(cmbMetier);
             kryptonGroup1.Panel.Controls.Add(lblBlocNom);
             kryptonGroup1.Panel.Controls.Add(cmbBlocNom);
-            kryptonGroup1.Panel.Controls.Add(lblBlocCap);
-            kryptonGroup1.Panel.Controls.Add(numBlocCapacite);
             kryptonGroup1.Size = new Size(280, 217);
             kryptonGroup1.TabIndex = 22;
             // 
@@ -168,7 +164,7 @@ namespace PlanAthena.View.TaskManager
             // 
             // lblMetier
             // 
-            lblMetier.Location = new Point(23, 99);
+            lblMetier.Location = new Point(23, 84);
             lblMetier.Margin = new Padding(4, 3, 4, 3);
             lblMetier.Name = "lblMetier";
             lblMetier.Size = new Size(52, 20);
@@ -182,7 +178,7 @@ namespace PlanAthena.View.TaskManager
             cmbMetier.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbMetier.DropDownWidth = 250;
             cmbMetier.IntegralHeight = false;
-            cmbMetier.Location = new Point(93, 99);
+            cmbMetier.Location = new Point(93, 84);
             cmbMetier.Margin = new Padding(4, 3, 4, 3);
             cmbMetier.Name = "cmbMetier";
             cmbMetier.Size = new Size(178, 22);
@@ -191,7 +187,7 @@ namespace PlanAthena.View.TaskManager
             // 
             // lblBlocNom
             // 
-            lblBlocNom.Location = new Point(37, 148);
+            lblBlocNom.Location = new Point(37, 115);
             lblBlocNom.Margin = new Padding(4, 3, 4, 3);
             lblBlocNom.Name = "lblBlocNom";
             lblBlocNom.Size = new Size(40, 20);
@@ -205,33 +201,12 @@ namespace PlanAthena.View.TaskManager
             cmbBlocNom.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbBlocNom.DropDownWidth = 250;
             cmbBlocNom.IntegralHeight = false;
-            cmbBlocNom.Location = new Point(93, 148);
+            cmbBlocNom.Location = new Point(93, 115);
             cmbBlocNom.Margin = new Padding(4, 3, 4, 3);
             cmbBlocNom.Name = "cmbBlocNom";
             cmbBlocNom.Size = new Size(178, 22);
             cmbBlocNom.TabIndex = 6;
             cmbBlocNom.UseMnemonic = false;
-            // 
-            // lblBlocCap
-            // 
-            lblBlocCap.Location = new Point(8, 180);
-            lblBlocCap.Margin = new Padding(4, 3, 4, 3);
-            lblBlocCap.Name = "lblBlocCap";
-            lblBlocCap.Size = new Size(63, 20);
-            lblBlocCap.TabIndex = 23;
-            lblBlocCap.Values.Text = "Capacité :";
-            // 
-            // numBlocCapacite
-            // 
-            numBlocCapacite.Increment = new decimal(new int[] { 1, 0, 0, 0 });
-            numBlocCapacite.Location = new Point(93, 180);
-            numBlocCapacite.Margin = new Padding(4, 3, 4, 3);
-            numBlocCapacite.Maximum = new decimal(new int[] { 100, 0, 0, 0 });
-            numBlocCapacite.Minimum = new decimal(new int[] { 0, 0, 0, 0 });
-            numBlocCapacite.Name = "numBlocCapacite";
-            numBlocCapacite.Size = new Size(47, 22);
-            numBlocCapacite.TabIndex = 24;
-            numBlocCapacite.Value = new decimal(new int[] { 0, 0, 0, 0 });
             // 
             // kryptonLabel1
             // 
@@ -293,8 +268,6 @@ namespace PlanAthena.View.TaskManager
         private KryptonComboBox cmbMetier;
         private KryptonLabel lblBlocNom;
         private KryptonComboBox cmbBlocNom;
-        private KryptonLabel lblBlocCap;
-        private KryptonNumericUpDown numBlocCapacite;
         private KryptonLabel kryptonLabel1;
         private KryptonCheckedListBox chkListDependances;
     }

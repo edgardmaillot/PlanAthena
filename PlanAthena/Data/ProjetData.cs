@@ -1,5 +1,4 @@
 using PlanAthena.Services.Business.DTOs; // Pour ConsolidatedPlanning et ConfigurationPlanification
-using PlanAthena.Services.DTOs.TaskManager;
 
 namespace PlanAthena.Data
 {

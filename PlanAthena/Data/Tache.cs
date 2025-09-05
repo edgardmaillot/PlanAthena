@@ -1,7 +1,5 @@
 // Emplacement: /Data/Tache.cs
 
-using PlanAthena.Services.DTOs.TaskManager;
-
 namespace PlanAthena.Data
 {
     /// <summary>

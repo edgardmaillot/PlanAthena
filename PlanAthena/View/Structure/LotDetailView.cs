@@ -36,10 +36,11 @@ namespace PlanAthena.View.Structure
 
         private void AttachEvents()
         {
-            textName.TextChanged += OnDetailChanged;
+            // Utiliser Leave au lieu de TextChanged pour ne déclencher qu'au changement de focus
+            textName.Leave += OnDetailChanged;
             numPriority.ValueChanged += OnDetailChanged;
             cmbPhases.SelectedIndexChanged += OnDetailChanged;
-            textPlanPath.TextChanged += OnDetailChanged;
+            textPlanPath.Leave += OnDetailChanged;
         }
 
         /// <summary>

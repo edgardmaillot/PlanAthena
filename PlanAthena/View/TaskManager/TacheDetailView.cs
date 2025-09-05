@@ -117,7 +117,6 @@ namespace PlanAthena.View.TaskManager
             chkIsJalon.Checked = false;
             cmbMetier.SelectedIndex = -1;
             cmbBlocNom.SelectedIndex = -1;
-            if (numBlocCapacite != null) numBlocCapacite.Value = 3; // Vérification de nullité
             chkListDependances.Items.Clear();
             _isLoading = false;
         }
@@ -164,7 +163,6 @@ namespace PlanAthena.View.TaskManager
             if (cmbBlocNom.SelectedItem is Bloc selectedBloc)
             {
                 _currentTache.BlocId = selectedBloc.BlocId;
-                if (numBlocCapacite != null) numBlocCapacite.Value = selectedBloc.CapaciteMaxOuvriers;
                 LoadDependencies();
             }
         }

@@ -4,7 +4,6 @@ using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.DTOs.ProjectPersistence;
-using PlanAthena.Services.DTOs.TaskManager; // NOUVEAU: pour l'enum Statut
 using PlanAthena.Services.Infrastructure;
 
 
@@ -153,7 +152,7 @@ namespace PlanAthena.Services.Usecases
                         NomProjet = data.InformationsProjet?.NomProjet ?? Path.GetFileNameWithoutExtension(filePath),
                         Description = data.InformationsProjet?.Description,
                         NombreTotalTaches = taches.Count(t => string.IsNullOrEmpty(t.ParentId)), // Ne compter que les tâches mères
-                        NombreTachesTerminees = taches.Count(t => string.IsNullOrEmpty(t.ParentId) && t.Statut == Statut.Terminee),
+                        NombreTachesTerminees = taches.Count(t => string.IsNullOrEmpty(t.ParentId) && t.Statut == Statut.Terminée),
                         NombreTachesEnRetard = 0, // Simplifié pour le moment
                         ErreurLecture = false
                     });

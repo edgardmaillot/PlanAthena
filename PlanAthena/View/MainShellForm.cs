@@ -12,6 +12,7 @@ using PlanAthena.View.Ressources;
 using PlanAthena.View.Ressources.MetierDiagram;
 using PlanAthena.View.Structure;
 using PlanAthena.View.TaskManager;
+using static PlanAthena.View.TaskManager.TaskManagerView;
 
 namespace PlanAthena.View
 {
@@ -81,7 +82,7 @@ namespace PlanAthena.View
 
         #region Logique de Navigation Principale
 
-        // ... (Cette région reste inchangée)
+
         private void ShowView(UserControl viewToShow)
         {
             if (viewToShow == null) return;
@@ -140,7 +141,7 @@ namespace PlanAthena.View
         private void NavigateToStructure()
         {
             // Note: ProjectStructureView devra aussi être mis à jour s'il utilise ApplicationService
-            var view = new ProjectStructureView(_projetService);
+            var view = new ProjectStructureView(_projetService, _taskManagerService);
             view.NavigateToViewRequested += OnNavigateToViewRequested;
             ShowView(view);
         }
@@ -168,8 +169,16 @@ namespace PlanAthena.View
 
         private void NavigateToTaskManager()
         {
-            // Note: TaskManagerView devra aussi être mis à jour
-            var view = new TaskManagerView(_projetService, _taskManagerService, _ressourceService, _dependanceBuilder, _importService, _exportService);
+            // L'appel normal affiche la vue diagramme par défaut
+            var view = new TaskManagerView(_projetService, _taskManagerService, _ressourceService, _dependanceBuilder, _importService, _exportService, TaskManagerDefaultView.Diagram);
+            view.NavigateToViewRequested += OnNavigateToViewRequested;
+            ShowView(view);
+        }
+
+        private void NavigateToTaskListView()
+        {
+            // L'appel depuis le menu "Liste" force l'affichage de la liste
+            var view = new TaskManagerView(_projetService, _taskManagerService, _ressourceService, _dependanceBuilder, _importService, _exportService, TaskManagerDefaultView.List);
             view.NavigateToViewRequested += OnNavigateToViewRequested;
             ShowView(view);
         }
@@ -188,6 +197,7 @@ namespace PlanAthena.View
         private void menuRessourcesMetiers_Click(object sender, EventArgs e) => NavigateToRessourcesMetiers();
         private void menuRessourcesOuvriers_Click(object sender, EventArgs e) => NavigateToRessourcesOuvriers();
         private void menuTachesDiagramme_Click(object sender, EventArgs e) => NavigateToTaskManager();
+        private void menuTachesListe_Click(object sender, EventArgs e) => NavigateToTaskListView();
 
         private void menuNouveauProjet_Click(object sender, EventArgs e)
         {
@@ -238,7 +248,6 @@ namespace PlanAthena.View
         #endregion
 
         #region Gestionnaires Layout & Thèmes
-        // ... (Cette région reste inchangée)
         private void menuSaveLayout_Click(object sender, EventArgs e)
         {
             var manager = FindActiveDockingManager();

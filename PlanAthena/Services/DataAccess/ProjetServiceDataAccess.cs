@@ -67,6 +67,7 @@ namespace PlanAthena.Services.DataAccess
 
             string jsonString = JsonSerializer.Serialize(projetData, options);
             File.WriteAllText(filePath, jsonString);
+            File.SetLastWriteTime(filePath, DateTime.Now);
 
             _currentProjectPath = filePath;
             _cheminsService.SauvegarderDernierDossier(TypeOperation.ProjetSauvegarde, filePath);

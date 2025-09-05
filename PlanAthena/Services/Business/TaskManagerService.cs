@@ -2,7 +2,7 @@
 
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
-using PlanAthena.Services.DTOs.TaskManager;
+using System.Data;
 
 namespace PlanAthena.Services.Business
 {
@@ -102,7 +102,7 @@ namespace PlanAthena.Services.Business
 
             foreach (var tache in _taches.Values)
             {
-                if (tache.Statut == Statut.Terminee) continue;
+                if (tache.Statut == Statut.Terminée) continue;
 
                 if (!tache.DateDebutPlanifiee.HasValue)
                 {
@@ -115,7 +115,7 @@ namespace PlanAthena.Services.Business
                     else if (maintenant >= tache.DateDebutPlanifiee)
                         tache.Statut = Statut.EnCours;
                     else
-                        tache.Statut = Statut.Planifiee;
+                        tache.Statut = Statut.Planifiée;
                 }
             }
         }
@@ -124,7 +124,7 @@ namespace PlanAthena.Services.Business
 
         #region CRUD Structurel
 
-        public virtual Tache CreerTache(string lotId, string blocId, string nom, int heures)
+        public virtual Tache CreerTache(string lotId, string blocId, string nom, int heures, string metierId = null)
         {
             var tacheMereExistantes = _taches.Values.Where(t => string.IsNullOrEmpty(t.ParentId)).ToList();
             var nouvelleTache = new Tache
@@ -134,7 +134,8 @@ namespace PlanAthena.Services.Business
                 TacheId = _idGenerator.GenererProchainTacheId(blocId, tacheMereExistantes),
                 TacheNom = nom,
                 HeuresHommeEstimees = heures,
-                Statut = Statut.Estimée // Statut par défaut à la création
+                Statut = Statut.Estimée, // Statut par défaut à la création
+                MetierId = metierId ?? string.Empty
             };
             _taches.Add(nouvelleTache.TacheId, nouvelleTache);
             return nouvelleTache;
@@ -169,11 +170,24 @@ namespace PlanAthena.Services.Business
         {
             if (!_taches.TryGetValue(tacheId, out var tacheASupprimer)) return;
 
-            // Logique de suppression récursive
+            // --- NOUVELLE RÈGLE MÉTIER ---
+            // Vérifier si cette tâche est une dépendance pour une autre.
+            var tachesDependantes = _taches.Values
+                .Where(t => (t.Dependencies ?? "").Split(',').Contains(tacheId))
+                .ToList();
+
+            if (tachesDependantes.Any())
+            {
+                var nomsTaches = string.Join(", ", tachesDependantes.Select(t => t.TacheNom));
+                throw new InvalidConstraintException($"Impossible de supprimer la tâche '{tacheASupprimer.TacheNom}'. Elle est un prérequis pour : {nomsTaches}.");
+            }
+            // --- FIN DE LA RÈGLE MÉTIER ---
+
+            // Logique de suppression récursive (pour les sous-tâches)
             var enfants = ObtenirTachesEnfants(tacheId);
             foreach (var enfant in enfants)
             {
-                SupprimerTache(enfant.TacheId); // L'appel récursif gère la notification au planning
+                SupprimerTache(enfant.TacheId);
             }
 
             _taches.Remove(tacheId);
@@ -250,14 +264,14 @@ namespace PlanAthena.Services.Business
                     if (tache.EstConteneur)
                     {
                         var enfants = ObtenirTachesEnfants(id);
-                        if (enfants.Any(e => e.Statut != Statut.Terminee))
+                        if (enfants.Any(e => e.Statut != Statut.Terminée))
                         {
                             // Optionnel: lever une exception ou ignorer silencieusement.
                             // Pour l'instant, on ignore pour ne pas bloquer les opérations en masse.
                             continue;
                         }
                     }
-                    tache.Statut = Statut.Terminee;
+                    tache.Statut = Statut.Terminée;
                     // Mettre à jour le parent si tous ses enfants sont maintenant terminés
                     if (!string.IsNullOrEmpty(tache.ParentId))
                     {
@@ -335,14 +349,14 @@ namespace PlanAthena.Services.Business
 
         private void MettreAJourStatutConteneur(string conteneurId)
         {
-            if (!_taches.TryGetValue(conteneurId, out var conteneur) || conteneur.Statut == Statut.Terminee) return;
+            if (!_taches.TryGetValue(conteneurId, out var conteneur) || conteneur.Statut == Statut.Terminée) return;
 
             var enfants = ObtenirTachesEnfants(conteneurId);
             if (!enfants.Any()) return;
 
-            if (enfants.All(e => e.Statut == Statut.Terminee))
+            if (enfants.All(e => e.Statut == Statut.Terminée))
             {
-                conteneur.Statut = Statut.Terminee;
+                conteneur.Statut = Statut.Terminée;
             }
             // La logique d'agrégation des autres statuts (EnCours, EnRetard) est déjà gérée par SynchroniserStatutsTaches
             // qui se base sur les dates agrégées du conteneur. Cette méthode ne sert donc qu'à remonter le statut "Terminee".

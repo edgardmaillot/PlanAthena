@@ -9,6 +9,7 @@ namespace PlanAthena.View.Structure
     public partial class ProjectStructureView : UserControl
     {
         private readonly ProjetService _projetService;
+        private readonly TaskManagerService _taskManagerService;
 
         // Stocke la liste "plate" pour l'affichage et la recherche
         private List<object> _structureItems = new List<object>();
@@ -17,10 +18,11 @@ namespace PlanAthena.View.Structure
 
         public event EventHandler<Type> NavigateToViewRequested;
 
-        public ProjectStructureView(ProjetService projetService)
+        public ProjectStructureView(ProjetService projetService, TaskManagerService taskManagerService)
         {
             InitializeComponent();
             _projetService = projetService;
+            _taskManagerService = taskManagerService;
 
             this.Load += ProjectStructureView_Load;
         }
@@ -123,7 +125,8 @@ namespace PlanAthena.View.Structure
                 UpdateDetailUI();
             }
         }
-        // Nouvelle méthode helper pour la sélection
+
+        // Helper pour la sélection
         private void SelectObjectInGrid(string idToSelect)
         {
             foreach (DataGridViewRow row in gridStructure.Rows)
@@ -136,8 +139,19 @@ namespace PlanAthena.View.Structure
 
                     if (currentId == idToSelect)
                     {
+                        // Désélectionner toutes les lignes d'abord
+                        gridStructure.ClearSelection();
+
+                        // Sélectionner la ligne trouvée
                         row.Selected = true;
                         gridStructure.CurrentCell = row.Cells[0];
+
+                        // Forcer la mise à jour de l'interface détail
+                        UpdateDetailUI();
+
+                        // Optionnel : faire défiler jusqu'à la ligne sélectionnée
+                        gridStructure.FirstDisplayedScrollingRowIndex = row.Index;
+
                         return;
                     }
                 }
@@ -211,8 +225,7 @@ namespace PlanAthena.View.Structure
                 }
             }
 
-            // --- LA CORRECTION EST ICI ---
-            // On transforme notre liste d'objets en une liste de notre nouvelle classe d'affichage
+
             var displayList = new List<StructureDisplayItem>();
             foreach (var item in itemsToDisplay)
             {
@@ -304,8 +317,13 @@ namespace PlanAthena.View.Structure
         private void btnNewLot_Click(object sender, EventArgs e)
         {
             var newLot = _projetService.CreerLot();
+            string parentLotId = newLot.LotId;
+            var newBloc = _projetService.CreerBloc(parentLotId);
+            var nouveauJalon = _taskManagerService.CreerTacheJalon(newLot.LotId, newBloc.BlocId, "Début", 0);
             RefreshAll();
-            // TODO: Sélectionner le nouveau lot dans la grille
+
+            // Sélectionner le nouveau lot créé
+            SelectObjectInGrid(newLot.LotId);
         }
 
         private void btnNewBloc_Click(object sender, EventArgs e)
@@ -321,8 +339,11 @@ namespace PlanAthena.View.Structure
             }
 
             var newBloc = _projetService.CreerBloc(parentLotId);
+            var nouveauJalon = _taskManagerService.CreerTacheJalon(parentLotId, newBloc.BlocId, "Début", 0);
             RefreshAll();
-            // TODO: Sélectionner le nouveau bloc dans la grille
+
+            // Sélectionner le nouveau bloc créé
+            SelectObjectInGrid(newBloc.BlocId);
         }
 
         private void btnDelete_Click(object sender, EventArgs e)

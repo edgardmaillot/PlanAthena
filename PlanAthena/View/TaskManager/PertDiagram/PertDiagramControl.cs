@@ -130,7 +130,7 @@ namespace PlanAthena.View.TaskManager.PertDiagram
 
             if (objectUnderMouse.DrawingObject is DrawingNode node && node.UserData is Tache tache)
             {
-                TacheClick?.Invoke(this, new TacheSelectedEventArgs(tache));
+                TacheClick?.Invoke(this, new TacheSelectedEventArgs(tache, TacheInteractionType.SingleClick));
                 MettreEnEvidenceTache(node);
             }
             else if (objectUnderMouse.DrawingObject is Subgraph subgraph)
@@ -147,7 +147,7 @@ namespace PlanAthena.View.TaskManager.PertDiagram
 
             if (objectUnderMouse.DrawingObject is DrawingNode node && node.UserData is Tache tache)
             {
-                TacheDoubleClick?.Invoke(this, new TacheSelectedEventArgs(tache));
+                TacheClick?.Invoke(this, new TacheSelectedEventArgs(tache, TacheInteractionType.DoubleClick));
             }
             else if (objectUnderMouse.DrawingObject is Subgraph subgraph)
             {
@@ -365,10 +365,23 @@ namespace PlanAthena.View.TaskManager.PertDiagram
     }
 
     #region Classes d'Arguments d'Événements
+    // NOUVEL ENUM pour clarifier l'intention
+    public enum TacheInteractionType
+    {
+        SingleClick,
+        DoubleClick
+    }
+
     public class TacheSelectedEventArgs : EventArgs
     {
         public Tache Tache { get; }
-        public TacheSelectedEventArgs(Tache tache) { Tache = tache; }
+        public TacheInteractionType InteractionType { get; } // NOUVELLE PROPRIÉTÉ
+
+        public TacheSelectedEventArgs(Tache tache, TacheInteractionType interactionType = TacheInteractionType.SingleClick)
+        {
+            Tache = tache;
+            InteractionType = interactionType;
+        }
     }
     public class BlocSelectedEventArgs : EventArgs
     {
