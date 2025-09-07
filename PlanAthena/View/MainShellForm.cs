@@ -99,7 +99,9 @@ namespace PlanAthena.View
             if (manager != null)
             {
                 string viewIdentifier = viewToShow.GetType().Name;
-                _userPreferencesService.LoadLayout(manager, viewIdentifier);
+
+                // pour l'instant le chargement automatique est désactivé
+                //_userPreferencesService.LoadLayout(manager, viewIdentifier);
             }
         }
         private void InitializeMenuHoverOpening()
@@ -170,7 +172,7 @@ namespace PlanAthena.View
         private void NavigateToTaskManager()
         {
             // L'appel normal affiche la vue diagramme par défaut
-            var view = new TaskManagerView(_projetService, _taskManagerService, _ressourceService, _dependanceBuilder, _importService, _exportService, TaskManagerDefaultView.Diagram);
+            var view = new TaskManagerView(_projetService, _taskManagerService, _ressourceService, _dependanceBuilder, _importService, _exportService);
             view.NavigateToViewRequested += OnNavigateToViewRequested;
             ShowView(view);
         }
@@ -178,9 +180,9 @@ namespace PlanAthena.View
         private void NavigateToTaskListView()
         {
             // L'appel depuis le menu "Liste" force l'affichage de la liste
-            var view = new TaskManagerView(_projetService, _taskManagerService, _ressourceService, _dependanceBuilder, _importService, _exportService, TaskManagerDefaultView.List);
-            view.NavigateToViewRequested += OnNavigateToViewRequested;
-            ShowView(view);
+            //var view = new TaskManagerView(_projetService, _taskManagerService, _ressourceService, _dependanceBuilder, _importService, _exportService, TaskManagerDefaultView.List);
+            //view.NavigateToViewRequested += OnNavigateToViewRequested;
+            //ShowView(view);
         }
         private void NavigateToPlanificator()
         {

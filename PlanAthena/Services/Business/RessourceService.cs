@@ -289,7 +289,7 @@ namespace PlanAthena.Services.Business
             competence.EstMetierPrincipal = true;
         }
 
-        public List<Ouvrier> GetAllOuvriers() => _ouvriers.Values.OrderBy(o => o.Nom).ThenBy(o => o.Prenom).ToList();
+        public virtual List<Ouvrier> GetAllOuvriers() => _ouvriers.Values.OrderBy(o => o.Nom).ThenBy(o => o.Prenom).ToList();
         public virtual Ouvrier GetOuvrierById(string id) => _ouvriers.GetValueOrDefault(id);
 
         #endregion

@@ -26,7 +26,7 @@ _transformerService: DataTransformer
 _facade: PlanAthenaCoreFacade
 _consolidationService: PlanningConsolidationService
 _planningService: PlanningService
-_taskStatusService: TaskStatusService
+_taskManagerService: TaskManagerService
 _analysisService: AnalysisService
 --
 ' --- Méthode Publique ---
@@ -38,7 +38,7 @@ package "Sources de Vérité" <<Folder>> {
 class ProjetService
 class RessourceService
 class PlanningService
-class TaskStatusService
+class TaskManagerService
 }
 package "Utilitaires" <<Folder>> {
 class PreparationSolveurService
@@ -86,7 +86,7 @@ externe via la Facade.
 (PlanningConsolidationService, AnalysisService) en
 leur passant les données nécessaires (ex: poolMetiers).
 <b>Mise à Jour :</b> Applique les résultats aux sources
-de vérité (PlanningService, TaskStatusService).
+de vérité (PlanningService, TaskManagerService).
 <b>Retour :</b> Construit et retourne le DTO
 PlanificationRunResult à l'appelant.
 end note

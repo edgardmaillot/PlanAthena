@@ -2,6 +2,7 @@
 
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
+using PlanAthena.Services.Business.DTOs;
 using System.Data;
 
 namespace PlanAthena.Services.Business
@@ -45,18 +46,21 @@ namespace PlanAthena.Services.Business
             return _taches.Values.ToList();
         }
 
+
         #endregion
 
         #region Intégration avec le Planificateur
 
         /// <summary>
-        /// Met à jour la structure hiérarchique des tâches suite à une nouvelle planification.
-        /// Cette méthode remplace toutes les anciennes sous-tâches par les nouvelles.
-        /// Elle met également à jour les données planifiées (dates, affectations) sur toutes les tâches.
+        /// Point d'entrée unique pour la mise à jour complète de l'état des tâches après une planification.
+        /// Cette méthode réconcilie la structure des tâches (découpage en sous-tâches) et enrichit
+        /// toutes les tâches avec les données calculées (dates, affectations, statut).
         /// </summary>
-        public virtual void MettreAJourDecompositionTaches(List<Tache> tachesCalculees, Dictionary<string, string> parentIdParSousTacheId)
+        /// <param name="planningService">Le service contenant le planning consolidé.</param>
+        /// <param name="preparationResult">Le résultat de la préparation contenant la nouvelle structure des tâches.</param>
+        public virtual void MettreAJourApresPlanification(PlanningService planningService, PreparationResult preparationResult)
         {
-            // --- 1. Nettoyage ---
+            // --- 1. Nettoyage des anciennes sous-tâches et réinitialisation des tâches mères ---
             var anciennesSousTachesIds = _taches.Values.Where(t => !string.IsNullOrEmpty(t.ParentId)).Select(t => t.TacheId).ToList();
             foreach (var id in anciennesSousTachesIds)
             {
@@ -64,34 +68,53 @@ namespace PlanAthena.Services.Business
             }
             foreach (var tache in _taches.Values)
             {
-                tache.EstConteneur = false; // Réinitialisation
+                tache.EstConteneur = false; // Réinitialisation du flag conteneur
+                tache.Affectations.Clear(); // Réinitialisation des affectations
             }
 
-            // --- 2. Intégration des nouvelles sous-tâches ---
-            foreach (var tacheCalc in tachesCalculees)
+            // --- 2. Intégration de la nouvelle structure (sous-tâches) ---
+            var nouvellesSousTaches = preparationResult.TachesPreparees
+                .Where(t => preparationResult.ParentIdParSousTacheId.ContainsKey(t.TacheId));
+
+            foreach (var sousTache in nouvellesSousTaches)
             {
-                if (parentIdParSousTacheId.TryGetValue(tacheCalc.TacheId, out var parentId))
+                sousTache.ParentId = preparationResult.ParentIdParSousTacheId[sousTache.TacheId];
+                _taches.TryAdd(sousTache.TacheId, sousTache);
+            }
+
+            // --- 3. Mise à jour de toutes les tâches avec les données du planning ---
+            var infosPlanning = planningService.ObtenirInfosPlanificationPourToutesLesTaches();
+
+            // On parcourt toutes les tâches connues (mères et nouvelles sous-tâches)
+            foreach (var tache in _taches.Values)
+            {
+                // On cherche si le planning a des infos pour cette tâche (ou sa mère)
+                var tacheInfoId = tache.ParentId ?? tache.TacheId;
+                if (infosPlanning.TryGetValue(tacheInfoId, out var info))
                 {
-                    tacheCalc.ParentId = parentId;
-                    _taches.TryAdd(tacheCalc.TacheId, tacheCalc);
+                    // C'est une tâche mère ou une tâche simple planifiée
+                    if (tache.ParentId == null)
+                    {
+                        tache.EstConteneur = info.EstConteneur;
+                        tache.DateDebutPlanifiee = info.DateDebut;
+                        tache.DateFinPlanifiee = info.DateFin;
+                        tache.Affectations = info.Affectations;
+                    }
+                    // Pour les sous-tâches, on pourrait vouloir affiner les dates/affectations
+                    // mais pour l'instant, on se contente de les marquer comme planifiées.
+                }
+
+                // Toutes les tâches qui ont des dates sont maintenant "Planifiée"
+                if (tache.DateDebutPlanifiee.HasValue || info != null)
+                {
+                    tache.Statut = Statut.Planifiée;
+                }
+                else
+                {
+                    tache.Statut = Statut.Estimée;
                 }
             }
-
-            // --- 3. Mise à jour des flags conteneurs ---
-            var tousLesParentIds = parentIdParSousTacheId.Values.Distinct();
-            foreach (var parentId in tousLesParentIds)
-            {
-                if (_taches.TryGetValue(parentId, out var tacheMere))
-                {
-                    tacheMere.EstConteneur = true;
-                }
-            }
-
-            // --- 4. Mise à jour des données enrichies (Dates, Affectations) ---
-            MettreAJourDonneesPlanifiees();
         }
-
-
         /// <summary>
         /// Met à jour uniquement le statut des tâches (Estimée, Planifiee, EnCours, EnRetard)
         /// en fonction de la date actuelle, sans modifier la structure ou les données planifiées.

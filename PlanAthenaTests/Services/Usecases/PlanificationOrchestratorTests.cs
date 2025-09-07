@@ -19,7 +19,7 @@ namespace PlanAthena.Tests.Services.UseCases
     {
         private Mock<ProjetService> _mockProjetService;
         private Mock<RessourceService> _mockRessourceService;
-        private Mock<TaskManagerService> _mockTaskManagerService; // MODIFIÉ
+        private Mock<TaskManagerService> _mockTaskManagerService;
         private Mock<PreparationSolveurService> _mockPreparationService;
         private Mock<DataTransformer> _mockTransformerService;
         private Mock<PlanAthenaCoreFacade> _mockFacade;
@@ -83,12 +83,19 @@ namespace PlanAthena.Tests.Services.UseCases
             // --- ARRANGE ---
             var config = new ConfigurationPlanification();
             var sampleMetiers = new List<Metier> { new Metier { MetierId = "TEST" } };
+            var sampleOuvriers = new List<Ouvrier> { new Ouvrier { OuvrierId = "O1" } };
+
             _mockRessourceService.Setup(r => r.GetAllMetiers()).Returns(sampleMetiers);
+            _mockRessourceService.Setup(r => r.GetAllOuvriers()).Returns(sampleOuvriers);
 
             var rawResult = new ProcessChantierResultDto { OptimisationResultat = new PlanningOptimizationResultDto() };
             _mockFacade.Setup(f => f.ProcessChantierAsync(It.IsAny<ChantierSetupInputDto>())).ReturnsAsync(rawResult);
 
-            var preparationResult = new PreparationResult { TachesPreparees = new List<Tache>(), ParentIdParSousTacheId = new Dictionary<string, string>() };
+            var preparationResult = new PreparationResult
+            {
+                TachesPreparees = new List<Tache>(),
+                ParentIdParSousTacheId = new Dictionary<string, string>()
+            };
             _mockPreparationService.Setup(p => p.PreparerPourSolveur(It.IsAny<IReadOnlyList<Tache>>(), It.IsAny<ConfigurationPlanification>()))
                 .Returns(preparationResult);
 
@@ -97,8 +104,18 @@ namespace PlanAthena.Tests.Services.UseCases
                 .Returns(consolidatedPlanning);
 
             var analysisReport = new AnalysisReport();
-            _mockAnalysisService.Setup(a => a.GenerateReport(It.IsAny<ConsolidatedPlanning>(), It.IsAny<IReadOnlyList<Ouvrier>>(), It.IsAny<IReadOnlyList<Metier>>(), It.IsAny<ConfigurationPlanification>(), It.IsAny<AnalysisService.JoursOuvresCalculator>()))
+            _mockAnalysisService.Setup(a => a.GenerateReport(
+                It.IsAny<ConsolidatedPlanning>(),
+                It.IsAny<IReadOnlyList<Ouvrier>>(),
+                It.IsAny<IReadOnlyList<Metier>>(),
+                It.IsAny<ConfigurationPlanification>(),
+                It.IsAny<AnalysisService.JoursOuvresCalculator>()))
                 .Returns(analysisReport);
+
+            // Setup pour la nouvelle méthode MettreAJourApresPlanification
+            _mockTaskManagerService.Setup(t => t.MettreAJourApresPlanification(
+                It.IsAny<PlanningService>(),
+                It.IsAny<PreparationResult>()));
 
             // --- ACT ---
             var result = await _orchestrator.ExecuteAsync(config);
@@ -106,36 +123,63 @@ namespace PlanAthena.Tests.Services.UseCases
             // --- ASSERT ---
             _mockPlanningService.Verify(p => p.UpdatePlanning(consolidatedPlanning, config), Times.Once);
 
-            // On vérifie que la nouvelle méthode de réconciliation est bien appelée
-            _mockTaskManagerService.Verify(t => t.MettreAJourDecompositionTaches(preparationResult.TachesPreparees, preparationResult.ParentIdParSousTacheId), Times.Once);
+            // Vérifier que la nouvelle méthode de mise à jour après planification est bien appelée
+            _mockTaskManagerService.Verify(t => t.MettreAJourApresPlanification(
+                _mockPlanningService.Object,
+                preparationResult), Times.Once);
 
-            _mockAnalysisService.Verify(a => a.GenerateReport(consolidatedPlanning, It.IsAny<IReadOnlyList<Ouvrier>>(), sampleMetiers, config, It.IsAny<AnalysisService.JoursOuvresCalculator>()), Times.Once);
+            _mockAnalysisService.Verify(a => a.GenerateReport(
+                consolidatedPlanning,
+                sampleOuvriers,
+                sampleMetiers,
+                config,
+                It.IsAny<AnalysisService.JoursOuvresCalculator>()), Times.Once);
 
             Assert.IsNotNull(result.AnalysisReport);
+            Assert.AreSame(rawResult, result.RawResult);
         }
-
-        // ... Les deux autres tests (AnalyseRapide et ResultIsEmpty) n'ont pas besoin de changer car ils ne touchent pas à la logique modifiée.
-        // Je les garde pour la complétude.
 
         [TestMethod]
         public async Task ExecuteAsync_WhenAnalyseRapideSucceeds_ShouldCallAnalysisWorkflow()
         {
             // --- ARRANGE ---
             var config = new ConfigurationPlanification();
-            var rawResult = new ProcessChantierResultDto { AnalyseStatiqueResultat = new AnalyseRessourcesResultatDto { OuvriersClesSuggereIds = new List<string> { "O1" } } };
+            var sampleOuvriers = new List<Ouvrier> { new Ouvrier { OuvrierId = "O1" } };
+
+            _mockRessourceService.Setup(r => r.GetAllOuvriers()).Returns(sampleOuvriers);
+
+            var rawResult = new ProcessChantierResultDto
+            {
+                AnalyseStatiqueResultat = new AnalyseRessourcesResultatDto
+                {
+                    OuvriersClesSuggereIds = new List<string> { "O1" }
+                }
+            };
             _mockFacade.Setup(f => f.ProcessChantierAsync(It.IsAny<ChantierSetupInputDto>())).ReturnsAsync(rawResult);
+
             _mockPreparationService.Setup(p => p.PreparerPourSolveur(It.IsAny<IReadOnlyList<Tache>>(), It.IsAny<ConfigurationPlanification>()))
                .Returns(new PreparationResult { TachesPreparees = new List<Tache>(), ParentIdParSousTacheId = new Dictionary<string, string>() });
+
             var tensionReport = new MetierTensionReport();
-            _mockAnalysisService.Setup(a => a.AnalyzeMetierTension(It.IsAny<IReadOnlyList<string>>(), It.IsAny<IReadOnlyList<Ouvrier>>())).Returns(tensionReport);
+            _mockAnalysisService.Setup(a => a.AnalyzeMetierTension(It.IsAny<IReadOnlyList<string>>(), It.IsAny<IReadOnlyList<Ouvrier>>()))
+                .Returns(tensionReport);
 
             // --- ACT ---
             var result = await _orchestrator.ExecuteAsync(config);
 
             // --- ASSERT ---
-            _mockAnalysisService.Verify(a => a.AnalyzeMetierTension(rawResult.AnalyseStatiqueResultat.OuvriersClesSuggereIds, It.IsAny<IReadOnlyList<Ouvrier>>()), Times.Once);
-            _mockTaskManagerService.Verify(t => t.MettreAJourDecompositionTaches(It.IsAny<List<Tache>>(), It.IsAny<Dictionary<string, string>>()), Times.Never);
+            _mockAnalysisService.Verify(a => a.AnalyzeMetierTension(
+                rawResult.AnalyseStatiqueResultat.OuvriersClesSuggereIds,
+                sampleOuvriers), Times.Once);
+
+            // Dans le cas d'analyse rapide, MettreAJourApresPlanification ne doit PAS être appelée
+            _mockTaskManagerService.Verify(t => t.MettreAJourApresPlanification(
+                It.IsAny<PlanningService>(),
+                It.IsAny<PreparationResult>()), Times.Never);
+
             Assert.IsNotNull(result.MetierTensionReport);
+            Assert.AreSame(rawResult, result.RawResult);
+            Assert.IsNull(result.AnalysisReport);
         }
 
         [TestMethod]
@@ -155,6 +199,39 @@ namespace PlanAthena.Tests.Services.UseCases
             Assert.IsNull(result.AnalysisReport);
             Assert.IsNull(result.MetierTensionReport);
             Assert.AreSame(rawResult, result.RawResult);
+
+            // Dans ce cas, aucune mise à jour ne doit être effectuée
+            _mockTaskManagerService.Verify(t => t.MettreAJourApresPlanification(
+                It.IsAny<PlanningService>(),
+                It.IsAny<PreparationResult>()), Times.Never);
+        }
+
+        [TestMethod]
+        public async Task ExecuteAsync_ShouldAlwaysCallPreparationService()
+        {
+            // --- ARRANGE ---
+            var config = new ConfigurationPlanification();
+            var rawResult = new ProcessChantierResultDto();
+            _mockFacade.Setup(f => f.ProcessChantierAsync(It.IsAny<ChantierSetupInputDto>())).ReturnsAsync(rawResult);
+
+            var expectedTaches = new List<Tache> { new Tache { TacheId = "T1" } };
+            // Si ObtenirToutesLesTaches a des paramètres optionnels, on utilise It.IsAny pour tous
+            _mockTaskManagerService.Setup(t => t.ObtenirToutesLesTaches(It.IsAny<string?>(), It.IsAny<string>())).Returns(expectedTaches);
+
+            var preparationResult = new PreparationResult
+            {
+                TachesPreparees = new List<Tache>(),
+                ParentIdParSousTacheId = new Dictionary<string, string>()
+            };
+            _mockPreparationService.Setup(p => p.PreparerPourSolveur(It.IsAny<IReadOnlyList<Tache>>(), It.IsAny<ConfigurationPlanification>()))
+                .Returns(preparationResult);
+
+            // --- ACT ---
+            await _orchestrator.ExecuteAsync(config);
+
+            // --- ASSERT ---
+            _mockTaskManagerService.Verify(t => t.ObtenirToutesLesTaches(It.IsAny<string?>(), It.IsAny<string>()), Times.Once);
+            _mockPreparationService.Verify(p => p.PreparerPourSolveur(It.IsAny<IReadOnlyList<Tache>>(), config), Times.Once);
         }
     }
 }

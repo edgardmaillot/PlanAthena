@@ -1,5 +1,3 @@
-// --- START OF FILE TaskManagerView.cs ---
-
 using Krypton.Docking;
 using Krypton.Navigator;
 using Krypton.Workspace;
@@ -14,6 +12,10 @@ using System.Text;
 
 namespace PlanAthena.View.TaskManager
 {
+    /// <summary>
+    /// Vue principale pour la gestion des tâches en mode diagramme (PERT).
+    /// Gère le layout des panneaux d'outils et l'interaction avec le diagramme.
+    /// </summary>
     public partial class TaskManagerView : UserControl
     {
         #region Champs et Propriétés
@@ -28,20 +30,16 @@ namespace PlanAthena.View.TaskManager
 
         // État de la vue
         private string _activeLotId;
-        private readonly TaskManagerDefaultView _defaultView;
-        public enum TaskManagerDefaultView { Diagram, List }
         public event EventHandler<Type> NavigateToViewRequested;
 
-        // Éléments d'UI managés
+        // Éléments d'UI managés par le DockingManager
         private KryptonPage _detailsPage;
-        private KryptonPage _taskListingsPage;
-
 
         #endregion
 
         #region Constructeur et Initialisation
 
-        public TaskManagerView(ProjetService projetService, TaskManagerService taskManagerService, RessourceService ressourceService, DependanceBuilder dependanceBuilder, ImportService importService, ExportService exportService, TaskManagerDefaultView defaultView = TaskManagerDefaultView.Diagram)
+        public TaskManagerView(ProjetService projetService, TaskManagerService taskManagerService, RessourceService ressourceService, DependanceBuilder dependanceBuilder, ImportService importService, ExportService exportService)
         {
             InitializeComponent();
             _projetService = projetService;
@@ -50,7 +48,6 @@ namespace PlanAthena.View.TaskManager
             _dependanceBuilder = dependanceBuilder;
             _importService = importService;
             _exportService = exportService;
-            _defaultView = defaultView;
 
             this.Load += TaskManagerView_Load;
         }
@@ -63,31 +60,28 @@ namespace PlanAthena.View.TaskManager
             InitializeDockingLayout();
             AttachEvents();
             RefreshAll();
-
-            if (_defaultView == TaskManagerDefaultView.List)
-            {
-                ShowListView();
-            }
-            UpdateToggleViewButtonState();
         }
 
+        /// <summary>
+        /// Injecte les services nécessaires dans les UserControls enfants.
+        /// </summary>
         private void InitializeServicesForControls()
         {
-            tacheDetailView1.InitializeServices(_projetService, _taskManagerService, _ressourceService, _dependanceBuilder);
+            tacheDetailView1.InitializeServices(_projetService, _taskManagerService, _ressourceService, this);
             pertDiagramControl1.Initialize(_projetService, _ressourceService, _dependanceBuilder, new PertDiagram.PertDiagramSettings());
-            taskManagerListe1.InitializeServices(_projetService, _taskManagerService, _ressourceService);
         }
 
         #endregion
 
         #region Configuration du Docking Layout
 
+        /// <summary>
+        /// Configure le layout initial des panneaux dockés autour du diagramme PERT.
+        /// </summary>
         private void InitializeDockingLayout()
         {
-            // Le manager prend le contrôle du panel principal pour y organiser les fenêtres.
             kryptonDockingManager.ManageControl("RootControl", kryptonPanelMain);
 
-            // Le diagramme PERT est l'élément central de l'espace de travail.
             pertDiagramControl1.Dock = DockStyle.Fill;
             kryptonPanelMain.Controls.Add(pertDiagramControl1);
 
@@ -100,60 +94,37 @@ namespace PlanAthena.View.TaskManager
             SetupDockingPanels();
         }
 
+        /// <summary>
+        /// Crée les pages et les dockspaces pour les panneaux d'outils.
+        /// </summary>
         private void SetupDockingPanels()
         {
             var headerFont = new Font("Segoe UI", 11F, FontStyle.Bold);
 
-            // --- CRÉATION DES PAGES ---
+            // Page de gauche - Creation Toolbox
             var creationToolboxPage = CreateDockingPage("Création", "toolbox", Properties.Resources.tache, creationToolboxView1, headerFont);
-            _taskListingsPage = CreateDockingPage("Liste des Tâches", "listeTaches", null, taskManagerListe1, headerFont);
-            var lotSelectionPage = CreateDockingPage("Lot Actif", "lotselect", Properties.Resources.tache, lotSelectionView1, headerFont);
-            _detailsPage = CreateDockingPage("Gestion", "details", Properties.Resources.tache, null, headerFont);
+            var leftDockspace = kryptonDockingManager.AddDockspace("RootControl", DockingEdge.Left, new[] { creationToolboxPage });
+            leftDockspace.DockspaceControl.Width = 220;
 
-            // --- ORGANISATION DU LAYOUT ---
+            // La page de droite - Selecteur Lot + Détails (Tâche/Bloc) 
+            _detailsPage = CreateDockingPage("Gestion", "details", Properties.Resources.tache, tacheDetailView1, headerFont);
 
-            // 1. Panneau de DROITE (structure verticale avec splitter)
-            var rightDockspace = kryptonDockingManager.AddDockspace("RootControl", DockingEdge.Right, new[] { lotSelectionPage, _detailsPage });
-            if (rightDockspace.DockspaceControl.Root is KryptonWorkspaceSequence sequenceRight)
-            {
-                sequenceRight.Orientation = Orientation.Vertical;
-                sequenceRight.StarSize = "33*,67*";
-            }
+            var rightDockspace = kryptonDockingManager.AddDockspace("RootControl", DockingEdge.Right, new[] { _detailsPage });
+            rightDockspace.DockspaceControl.Width = 280; 
 
-            // 2. Panneaux de GAUCHE (deux dockspaces séparés sur le même bord)
-
-            // On crée le PREMIER dockspace à gauche pour la Toolbox
-            var leftToolboxDockspace = kryptonDockingManager.AddDockspace("RootControl", DockingEdge.Left, new[] { creationToolboxPage });
-            leftToolboxDockspace.DockspaceControl.Width = 220; // Largeur fixe pour la toolbox
-
-            // On crée le DEUXIÈME dockspace à gauche pour la Liste des Tâches
-            var leftListDockspace = kryptonDockingManager.AddDockspace("RootControl", DockingEdge.Left, new[] { _taskListingsPage });
-            leftListDockspace.DockspaceControl.Width = 400; // Largeur fixe pour la liste
-
-            // --- ÉTAT INITIAL ---
-            kryptonDockingManager.HidePage(_detailsPage);
-
-            // Si la vue par défaut n'est pas la liste, on cache la page.
-            // L'utilisateur pourra la réafficher avec le bouton.
-            if (_defaultView != TaskManagerDefaultView.List)
-            {
-                kryptonDockingManager.HidePage(_taskListingsPage);
-            }
-            // Si la vue par défaut EST la liste, on s'assure qu'elle est bien visible.
-            else
-            {
-                kryptonDockingManager.ShowPage(_taskListingsPage);
-            }
         }
 
-        private KryptonPage CreateDockingPage(string title, string uniqueName, System.Drawing.Bitmap icon, Control content, Font headerFont)
+        /// <summary>
+        /// Méthode utilitaire pour créer une KryptonPage configurée.
+        /// </summary>
+        private KryptonPage CreateDockingPage(string title, string uniqueName, System.Drawing.Image icon, Control content, Font headerFont)
         {
             var page = new KryptonPage()
             {
                 Text = title,
                 TextTitle = title,
                 UniqueName = uniqueName,
-                ImageSmall = icon,
+                ImageSmall = (Bitmap)icon,
                 Dock = DockStyle.Fill
             };
             page.StateCommon.HeaderGroup.HeaderPrimary.Content.ShortText.Font = headerFont;
@@ -163,7 +134,6 @@ namespace PlanAthena.View.TaskManager
                 content.Dock = DockStyle.Fill;
                 page.Controls.Add(content);
             }
-
             return page;
         }
 
@@ -171,26 +141,24 @@ namespace PlanAthena.View.TaskManager
 
         #region Gestion des événements
 
+        /// <summary>
+        /// Abonne les gestionnaires d'événements aux événements des contrôles enfants.
+        /// </summary>
         private void AttachEvents()
         {
-            // Vues principales
-            lotSelectionView1.LotSelectionChanged += OnLotSelectionChanged;
+            tacheDetailView1.LotSelectionChanged += OnLotSelectionChanged;
+            tacheDetailView1.SaveRequested += OnTacheSaveRequested;
+            tacheDetailView1.TacheDeleteRequested += OnTacheDeleteRequested;
+
             creationToolboxView1.AddBlocRequested += OnAddBlocRequested;
             creationToolboxView1.AddTacheRequested += OnAddTacheRequested;
             creationToolboxView1.AddJalonRequested += OnAddJalonRequested;
 
-            // Diagramme et Liste
             pertDiagramControl1.TacheClick += OnDiagramTacheClick;
             pertDiagramControl1.BlocClick += OnDiagramBlocClick;
-            taskManagerListe1.TacheSelectionChanged += OnListTacheSelectionChanged;
 
-            // Vues de détails
-            tacheDetailView1.SaveRequested += OnTacheSaveRequested;
-            tacheDetailView1.TacheDeleteRequested += OnTacheDeleteRequested;
             blocDetailView1.BlocChanged += OnBlocChanged;
 
-            // Barre d'outils
-            btnToggleView.Click += BtnToggleView_Click;
             btnPlanificator.Click += (s, e) => NavigateToViewRequested?.Invoke(this, typeof(PlanificatorView));
         }
 
@@ -206,9 +174,13 @@ namespace PlanAthena.View.TaskManager
         private void OnDiagramTacheClick(object sender, TacheSelectedEventArgs e)
         {
             if (e.InteractionType == TacheInteractionType.SingleClick)
-                ShowTacheDetails(e.Tache);
+            {
+                tacheDetailView1.LoadTache(e.Tache);
+            }
             else if (e.InteractionType == TacheInteractionType.DoubleClick)
+            {
                 ShowTacheDetailsXL(e.Tache);
+            }
         }
 
         private void OnDiagramBlocClick(object sender, BlocSelectedEventArgs e)
@@ -218,12 +190,6 @@ namespace PlanAthena.View.TaskManager
             {
                 ShowBlocDetails(bloc);
             }
-        }
-
-        private void OnListTacheSelectionChanged(object sender, Tache tache)
-        {
-            // La sélection dans la liste ouvre directement la vue de détail complète.
-            ShowTacheDetailsXL(tache);
         }
 
         private void OnTacheSaveRequested(object sender, Tache tacheToSave)
@@ -327,19 +293,22 @@ namespace PlanAthena.View.TaskManager
 
         #region Logique d'UI (Affichage, Rafraîchissement)
 
+        /// <summary>
+        /// Rafraîchit l'ensemble des données de la vue, y compris la liste des lots.
+        /// </summary>
         public void RefreshAll()
         {
             var allLots = _projetService.ObtenirTousLesLots();
-            lotSelectionView1.PopulateLots(allLots);
+            tacheDetailView1.PopulateLots(allLots);
 
             if (!string.IsNullOrEmpty(_activeLotId) && allLots.Any(l => l.LotId == _activeLotId))
             {
-                lotSelectionView1.SetSelectedLot(_activeLotId);
+                tacheDetailView1.SetSelectedLot(_activeLotId);
             }
             else if (allLots.Any())
             {
                 _activeLotId = allLots.First().LotId;
-                lotSelectionView1.SetSelectedLot(_activeLotId);
+                tacheDetailView1.SetSelectedLot(_activeLotId);
             }
             else
             {
@@ -348,6 +317,9 @@ namespace PlanAthena.View.TaskManager
             RefreshUIForActiveLot();
         }
 
+        /// <summary>
+        /// Met à jour l'interface utilisateur pour le lot actuellement sélectionné.
+        /// </summary>
         private void RefreshUIForActiveLot()
         {
             var lot = _projetService.ObtenirLotParId(_activeLotId);
@@ -355,11 +327,12 @@ namespace PlanAthena.View.TaskManager
             {
                 creationToolboxView1.PopulateMetiers(null, null, null);
                 pertDiagramControl1.ChargerDonnees(null);
-                taskManagerListe1.RefreshAll();
-                ClearDetailsPanel();
+                // --- MODIFICATION : On vide le panneau unifié ---
+                tacheDetailView1.Clear();
                 return;
             }
 
+            // ... (le reste de la méthode est inchangé) ...
             var metiersPourLot = _ressourceService.GetAllMetiers().Where(m => m.Phases.HasFlag(lot.Phases));
             var metiersActifs = _ressourceService.GetMetierIdsAvecCompetences();
             creationToolboxView1.PopulateMetiers(metiersPourLot, _ressourceService.GetDisplayColorForMetier, metiersActifs);
@@ -367,11 +340,15 @@ namespace PlanAthena.View.TaskManager
             var tachesDuLot = _taskManagerService.ObtenirToutesLesTaches(lotId: _activeLotId);
             pertDiagramControl1.ChargerDonnees(tachesDuLot);
 
-            taskManagerListe1.RefreshAll();
             tacheDetailView1.UpdateDropdowns(_activeLotId);
-            ClearDetailsPanel();
+
+            // --- MODIFICATION : On vide uniquement la partie "tâche" du panneau ---
+            tacheDetailView1.ClearTacheDetails();
         }
 
+        /// <summary>
+        /// Affiche le panneau de détails simple pour une tâche.
+        /// </summary>
         private void ShowTacheDetails(Tache tache)
         {
             _detailsPage.SuspendLayout();
@@ -383,6 +360,9 @@ namespace PlanAthena.View.TaskManager
             _detailsPage.ResumeLayout();
         }
 
+        /// <summary>
+        /// Affiche le panneau de détails simple pour un bloc.
+        /// </summary>
         private void ShowBlocDetails(Bloc bloc)
         {
             _detailsPage.SuspendLayout();
@@ -394,6 +374,9 @@ namespace PlanAthena.View.TaskManager
             _detailsPage.ResumeLayout();
         }
 
+        /// <summary>
+        /// Affiche la vue de détail complète (XL) pour une tâche dans une fenêtre flottante.
+        /// </summary>
         private void ShowTacheDetailsXL(Tache tache)
         {
             if (tache == null) return;
@@ -403,22 +386,17 @@ namespace PlanAthena.View.TaskManager
 
             if (existingPage != null)
             {
-                // La page existe déjà, on la met au premier plan
                 kryptonDockingManager.ShowPage(pageUniqueName);
                 var cell = kryptonDockingManager.DockingCellForPage(pageUniqueName);
                 if (cell?.Parent is KryptonFloatspace floatspace)
                 {
-                    // On s'assure que la fenêtre flottante est bien active
                     floatspace.FindForm()?.Activate();
                 }
-
-                // On met à jour les données de la vue existante dans la page
                 var existingDetailView = existingPage.Controls.OfType<TacheDetailViewXL>().FirstOrDefault();
                 existingDetailView?.LoadTache(tache);
             }
             else
             {
-                // La page n'existe pas, on la crée de A à Z
                 var newDetailPage = new KryptonPage()
                 {
                     Text = tache.TacheNom,
@@ -427,26 +405,21 @@ namespace PlanAthena.View.TaskManager
                     Dock = DockStyle.Fill
                 };
 
-                // 1. On crée une NOUVELLE instance de la vue de détail
                 var newDetailView = new TacheDetailViewXL();
-                newDetailView.InitializeServices(_projetService, _ressourceService, _taskManagerService);
+                newDetailView.InitializeServices(_projetService, _ressourceService, _taskManagerService, this);
                 newDetailView.Dock = DockStyle.Fill;
 
-                // 2. On attache les événements à CETTE nouvelle instance
                 newDetailView.TacheSaved += OnTacheXLSaved;
-                newDetailView.TacheDeleteRequested += OnTacheXLDeleteRequested; // <--- Nouvel événement
+                newDetailView.TacheDeleteRequested += OnTacheXLDeleteRequested;
 
-                // La page est fermée par l'utilisateur ? On détache les événements pour éviter les fuites mémoire.
                 newDetailPage.Disposed += (s, e) => {
                     newDetailView.TacheSaved -= OnTacheXLSaved;
                     newDetailView.TacheDeleteRequested -= OnTacheXLDeleteRequested;
                 };
 
-                // 3. On ajoute la vue à la page, PUIS on charge les données
                 newDetailPage.Controls.Add(newDetailView);
                 newDetailView.LoadTache(tache);
 
-                // 4. On crée la fenêtre flottante
                 var floatingElement = kryptonDockingManager.OfType<KryptonDockingFloating>().FirstOrDefault();
                 if (floatingElement == null)
                 {
@@ -462,19 +435,51 @@ namespace PlanAthena.View.TaskManager
                 );
             }
         }
+
+        /// <summary>
+        /// Calcule et retourne la liste des dépendances affichables pour une tâche donnée.
+        /// Cette méthode centralise la logique pour les vues de détail.
+        /// </summary>
+        /// <param name="tache">La tâche pour laquelle calculer les dépendances.</param>
+        /// <returns>Une liste d'objets DependanceDisplayItem prêts à être affichés.</returns>
+        public List<DependanceDisplayItem> GetDependancesForTache(Tache tache)
+        {
+            var dependancesPourAffichage = new List<DependanceDisplayItem>();
+
+            if (tache == null || _projetService == null || _taskManagerService == null || _dependanceBuilder == null ||
+                string.IsNullOrEmpty(tache.LotId) || string.IsNullOrEmpty(tache.BlocId))
+            {
+                return dependancesPourAffichage; // Retourne une liste vide si les prérequis ne sont pas remplis
+            }
+
+            var lot = _projetService.ObtenirLotParId(tache.LotId);
+            if (lot == null) return dependancesPourAffichage;
+
+            var tachesDuMemeBloc = _taskManagerService.ObtenirToutesLesTaches(blocId: tache.BlocId);
+            var etatsDependances = _dependanceBuilder.ObtenirDependancesPourTache(tache, tachesDuMemeBloc, lot.Phases)
+                                                    .OrderBy(d => d.TachePredecesseur.TacheNom)
+                                                    .ToList();
+
+            foreach (var etat in etatsDependances)
+            {
+                dependancesPourAffichage.Add(new DependanceDisplayItem(etat));
+            }
+
+            return dependancesPourAffichage;
+        }
+
         private void OnTacheXLDeleteRequested(object sender, Tache tache)
         {
-            // On peut réutiliser la même logique que pour la petite vue
             OnTacheDeleteRequested(sender, tache);
 
-            // Après suppression, il faut fermer la fenêtre de détail devenue invalide
             string pageUniqueName = $"DetailXL_{tache.TacheId}";
             var pageToClose = kryptonDockingManager.PageForUniqueName(pageUniqueName);
             if (pageToClose != null)
             {
-                kryptonDockingManager.RemovePage(pageToClose, true); // true pour disposer la page
+                kryptonDockingManager.RemovePage(pageToClose, true);
             }
         }
+
         private void ClearDetailsPanel()
         {
             _detailsPage.Controls.Clear();
@@ -483,32 +488,9 @@ namespace PlanAthena.View.TaskManager
             kryptonDockingManager.HidePage(_detailsPage);
         }
 
-        public void ShowListView()
-        {
-            var page = kryptonDockingManager.PageForUniqueName("listeTaches");
-            if (page != null)
-            {
-                kryptonDockingManager.ShowPage(page);
-                page.Select();
-            }
-        }
-
-        private void UpdateToggleViewButtonState()
-        {
-            var page = kryptonDockingManager.PageForUniqueName(_taskListingsPage.UniqueName);
-            if (page != null && kryptonDockingManager.IsPageShowing(page.UniqueName))
-            {
-                btnToggleView.Text = "Masquer la Liste";
-            }
-            else
-            {
-                btnToggleView.Text = "Afficher la Liste";
-            }
-        }
-
         #endregion
 
-        #region Actions de la barre d'outils (Import/Export, etc.)
+        #region Actions de la barre d'outils
 
         private void btnAdjustView_Click(object sender, EventArgs e)
         {
@@ -544,7 +526,8 @@ namespace PlanAthena.View.TaskManager
                 if (_taskManagerService.ObtenirToutesLesTaches(lotId: _activeLotId).Any())
                 {
                     var result = MessageBox.Show($"Le lot '{_activeLotId}' contient déjà des tâches. Voulez-vous les écraser?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-                    if (result == DialogResult.Yes) { confirmOverwrite = true; } else { return; }
+                    if (result != DialogResult.Yes) return;
+                    confirmOverwrite = true;
                 }
 
                 var importResult = _importService.ImporterTachesCSV(filePath, _activeLotId, mappingConfig, confirmOverwrite);
@@ -602,44 +585,6 @@ namespace PlanAthena.View.TaskManager
                     MessageBox.Show($"Une erreur est survenue lors de l'exportation :\n{ex.Message}", "Erreur d'Exportation", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
-        }
-
-        private void BtnToggleView_Click(object sender, EventArgs e)
-        {
-            string pageUniqueName = "listeTaches"; // Le nom unique de notre page
-
-            // On vérifie si la page existe déjà quelque part
-            var page = kryptonDockingManager.PageForUniqueName(pageUniqueName);
-
-            // Si la page n'existe PAS, on la crée
-            if (page == null)
-            {
-                var headerFont = new Font("Segoe UI", 11F, FontStyle.Bold);
-
-                // On utilise notre méthode helper pour créer la page
-                // Note: Assurez-vous que taskManagerListe1 est bien initialisé (il l'est dans InitializeServicesForControls)
-                page = CreateDockingPage("Liste des Tâches", pageUniqueName, null, taskManagerListe1, headerFont);
-
-                // Important : Il faut ajouter la page au manager pour qu'il la connaisse,
-                // même si on ne la docke pas tout de suite. On l'ajoute à la collection "flottante".
-                var floatingElement = kryptonDockingManager.OfType<KryptonDockingFloating>().FirstOrDefault();
-                if (floatingElement != null)
-                {
-                    kryptonDockingManager.AddFloatingWindow(floatingElement.Name, new[] { page }, new Point(100, 100), new Size(600, 400));
-                }
-                else
-                {
-                    MessageBox.Show("Erreur : Le conteneur flottant n'a pas été trouvé.", "Erreur Docking", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-            }
-
-            // Maintenant qu'on est sûr que la page existe et est connue du manager,
-            // on la montre dans une fenêtre flottante.
-            kryptonDockingManager.ShowPage(page.UniqueName); // Le 'true' force la création d'une fenêtre flottante
-
-            // Mettez à jour le texte du bouton si vous le souhaitez
-            btnToggleView.Text = "Masquer la Liste";
         }
 
         #endregion

@@ -78,11 +78,8 @@ namespace PlanAthena.Services.UseCases
                 var consolidatedPlanning = _consolidationService.Process(rawResult, config);
                 _planningService.UpdatePlanning(consolidatedPlanning, config);
 
-                // --- NOUVELLE ÉTAPE DE RÉCONCILIATION ---
-                // On informe le TaskManagerService de la nouvelle décomposition des tâches.
-                var tachesCalculees = preparationResult.TachesPreparees;
-                var mappageParentEnfant = preparationResult.ParentIdParSousTacheId;
-                _taskManagerService.MettreAJourDecompositionTaches(tachesCalculees, mappageParentEnfant);
+                // --- Mise à jour des tâches et sous-tâches ---
+                _taskManagerService.MettreAJourApresPlanification(_planningService, preparationResult);
 
                 var joursOuvresCalculator = new AnalysisService.JoursOuvresCalculator((start, end) =>
                     _planningService.GetNombreJoursOuvres(start, end));

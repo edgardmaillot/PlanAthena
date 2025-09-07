@@ -12,7 +12,7 @@ participant "PlanificationOrchestrator" as Orchestrator
 participant "DLL (Facade)" as Facade
 participant "PlanningConsolidationService" as Consolidator
 participant "PlanningService\n(Source de Vérité)" as PlanningSvc
-participant "TaskStatusService\n(Source de Vérité)" as StatusSvc
+participant "TaskManagerService\n(Source de Vérité)" as StatusSvc
 participant "AnalysisService" as AnalysisSvc
 ' --- Flux ---
 Utilisateur -> UI : Clique "Lancer Planification"

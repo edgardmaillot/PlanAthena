@@ -1,10 +1,8 @@
-// --- START OF FILE TaskManagerView.Designer.cs ---
-
-using Krypton.Docking;
 using Krypton.Toolkit;
-using PlanAthena.View.Ressources;
-using PlanAthena.View.Structure;
 using PlanAthena.View.TaskManager;
+using PlanAthena.View.Structure;
+using Krypton.Docking;
+using PlanAthena.View.Ressources;
 
 namespace PlanAthena.View.TaskManager
 {
@@ -25,10 +23,8 @@ namespace PlanAthena.View.TaskManager
 
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(TaskManagerView));
             kryptonPanelMain = new KryptonPanel();
             panelGlobalActions = new KryptonPanel();
-            btnToggleView = new KryptonButton();
             btnPlanificator = new KryptonButton();
             btnAdjustView = new KryptonButton();
             btnMappingAuto = new KryptonButton();
@@ -38,7 +34,6 @@ namespace PlanAthena.View.TaskManager
             kryptonDockingManager = new KryptonDockingManager();
             creationToolboxView1 = new CreationToolboxView();
             pertDiagramControl1 = new PlanAthena.View.TaskManager.PertDiagram.PertDiagramControl();
-            taskManagerListe1 = new TaskManagerList();
             lotSelectionView1 = new LotSelectionView();
             tacheDetailView1 = new TacheDetailView();
             blocDetailView1 = new BlocDetailView();
@@ -58,7 +53,6 @@ namespace PlanAthena.View.TaskManager
             // 
             // panelGlobalActions
             // 
-            panelGlobalActions.Controls.Add(btnToggleView);
             panelGlobalActions.Controls.Add(btnPlanificator);
             panelGlobalActions.Controls.Add(btnAdjustView);
             panelGlobalActions.Controls.Add(btnMappingAuto);
@@ -71,16 +65,6 @@ namespace PlanAthena.View.TaskManager
             panelGlobalActions.Name = "panelGlobalActions";
             panelGlobalActions.Size = new Size(1400, 67);
             panelGlobalActions.TabIndex = 1;
-            // 
-            // btnToggleView
-            // 
-            btnToggleView.Location = new Point(697, 14);
-            btnToggleView.Name = "btnToggleView";
-            btnToggleView.Size = new Size(128, 40);
-            btnToggleView.TabIndex = 6;
-            btnToggleView.Values.DropDownArrowColor = Color.Empty;
-            btnToggleView.Values.Text = "Afficher la liste";
-            btnToggleView.Click += BtnToggleView_Click;
             // 
             // btnPlanificator
             // 
@@ -150,7 +134,6 @@ namespace PlanAthena.View.TaskManager
             // 
             // creationToolboxView1
             // 
-            creationToolboxView1.BackgroundImage = (Image)resources.GetObject("creationToolboxView1.BackgroundImage");
             creationToolboxView1.Location = new Point(0, 0);
             creationToolboxView1.Margin = new Padding(4, 3, 4, 3);
             creationToolboxView1.Name = "creationToolboxView1";
@@ -163,13 +146,6 @@ namespace PlanAthena.View.TaskManager
             pertDiagramControl1.Name = "pertDiagramControl1";
             pertDiagramControl1.Size = new Size(570, 630);
             pertDiagramControl1.TabIndex = 0;
-            // 
-            // taskManagerListe1
-            // 
-            taskManagerListe1.Location = new Point(0, 0);
-            taskManagerListe1.Name = "taskManagerListe1";
-            taskManagerListe1.Size = new Size(1400, 800);
-            taskManagerListe1.TabIndex = 0;
             // 
             // lotSelectionView1
             // 
@@ -208,6 +184,7 @@ namespace PlanAthena.View.TaskManager
             ((System.ComponentModel.ISupportInitialize)panelGlobalActions).EndInit();
             panelGlobalActions.ResumeLayout(false);
             ResumeLayout(false);
+
         }
 
         #endregion
@@ -219,7 +196,6 @@ namespace PlanAthena.View.TaskManager
         private LotSelectionView lotSelectionView1;
         private TacheDetailView tacheDetailView1;
         private BlocDetailView blocDetailView1;
-        private TaskManagerList taskManagerListe1;
         private KryptonButton btnImporter;
         private KryptonButton btnPlanificator;
         private KryptonButton btnAdjustView;
@@ -227,6 +203,5 @@ namespace PlanAthena.View.TaskManager
         private KryptonButton btnPrint;
         private KryptonButton btnExporter;
         private KryptonDockingManager kryptonDockingManager;
-        private KryptonButton btnToggleView;
     }
 }

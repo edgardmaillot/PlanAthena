@@ -21,12 +21,5 @@ namespace PlanAthena.Services.Business.DTOs
         /// </summary>
         public Dictionary<string, string> ParentIdParSousTacheId { get; set; } = new Dictionary<string, string>();
     }
-    public class StatistiquesSimplifiees
-    {
-        public int TachesChef { get; set; }
-        public int TachesSolveur { get; set; }
-        public int TachesDecoupees { get; set; }
-        public int JalonsTechniques { get; set; }
-        public string Resume { get; set; } = "";
-    }
+
 }

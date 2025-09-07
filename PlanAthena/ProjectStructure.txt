@@ -1,4 +1,4 @@
-﻿Structure du Projet - GÃ©nÃ©rÃ© le 09/03/2025 17:01:11
+﻿Structure du Projet - GÃ©nÃ©rÃ© le 09/07/2025 17:39:21
 D:.
 
     +--- Data
@@ -9,6 +9,7 @@ D:.
             Metier.cs
             Ouvrier.cs
             ProjetData.cs
+            Statut.cs
             Tache.cs
             TypeActivite.cs
     +--- Interfaces
@@ -88,6 +89,7 @@ D:.
             +--- ImportExport
                     ExportDataProjetDto.cs
                     OuvrierCsvRecord.cs
+                    OuvrierExportDto.cs
                     TacheExportDto.cs
             +--- ProjectPersistence
                     ProjetSummaryDto.cs
@@ -95,7 +97,6 @@ D:.
                     InformationsProjet.cs
             +--- TaskManager
                     PlanningInfoPourTache.cs
-                    Statut.cs
             +--- UseCases
                     PlanificationRunParams.cs
         +--- Export
@@ -107,8 +108,8 @@ D:.
                 DataTransformer.cs
                 GanttDto.cs
                 PreparationSolveurService.cs
-                ResultatConsolidationService.cs
         +--- Usecases
+                ImportWizardOrchestrator.cs
                 PlanificationOrchestrator.cs
                 ProjectPersistenceUseCase.cs
     +--- Utilities
@@ -157,6 +158,10 @@ D:.
                     PertDiagramControl.resx
                     PertDiagramSettings.cs
                     PertNodeBuilder.cs
+            +--- WebPertDiagram
+                    AffichagePert.cs
+                    AffichagePert.Designer.cs
+                    AffichagePert.resx
                 CreationToolboxView.cs
                 CreationToolboxView.Designer.cs
                 CreationToolboxView.resx
@@ -166,10 +171,21 @@ D:.
                 TacheDetailView.cs
                 TacheDetailView.Designer.cs
                 TacheDetailView.resx
+                TacheDetailViewXL.cs
+                TacheDetailViewXL.Designer.cs
+                TacheDetailViewXL.resx
+                TaskManagerList.cs
+                TaskManagerList.Designer.cs
+                TaskManagerList.resx
                 TaskManagerView.cs
                 TaskManagerView.Designer.cs
-                TaskManagerView.resx
         +--- Utils
+                ImportMapOuvrierP1.cs
+                ImportMapOuvrierP1.Designer.cs
+                ImportMapOuvrierP1.resx
+                ImportMapOuvrierP2.cs
+                ImportMapOuvrierP2.Designer.cs
+                ImportMapOuvrierP2.resx
                 ImportMappingView.cs
                 ImportMappingView.Designer.cs
                 ImportMappingView.resx
@@ -179,6 +195,13 @@ D:.
             MainShellForm.cs
             MainShellForm.Designer.cs
             MainShellForm.resx
+    +--- WebAssets
+            cytoscape-dagre.js
+            cytoscape.min.js
+            dagre.js
+            index.html
+            main.js
+            style.css
         App.config
         ClassDiagramPlanAthena.cd
         file.txt

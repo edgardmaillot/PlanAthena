@@ -13,4 +13,5 @@ namespace PlanAthena.Data
         public string NomOuvrier { get; init; } // Dénormalisé pour un accès facile par l'IHM
         public int HeuresTravaillees { get; init; }
     }
+
 }
