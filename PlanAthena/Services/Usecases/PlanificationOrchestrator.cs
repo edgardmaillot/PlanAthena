@@ -1,10 +1,12 @@
-// /Services/UseCases/PlanificationOrchestrator.cs V0.4.8
+// /Services/UseCases/PlanificationOrchestrator.cs V0.4.9.1
 
 using PlanAthena.Core.Facade;
+using PlanAthena.Data; // Ajout pour Statut
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.Processing;
 using PlanAthena.Utilities;
+using System.Linq; // Ajout pour LINQ
 
 namespace PlanAthena.Services.UseCases
 {
@@ -49,14 +51,15 @@ namespace PlanAthena.Services.UseCases
 
         public async Task<PlanificationRunResult> ExecuteAsync(ConfigurationPlanification config)
         {
-            // --- PHASE 1 : COLLECTE & PRÉPARATION ---
+            // --- PHASE 1 : COLLECTE & PRÉPARATION (SANS EFFET DE BORD) ---
             var projetData = _projetService.GetProjetDataPourSauvegarde();
             var poolOuvriers = _ressourceService.GetAllOuvriers();
             var poolMetiers = _ressourceService.GetAllMetiers();
 
-            // MODIFIÉ: La source de vérité pour les tâches est maintenant TaskManagerService
+            // La source de vérité pour les tâches est TaskManagerService. On prend tout.
             var tachesOriginales = _taskManagerService.ObtenirToutesLesTaches();
 
+            // Le service de préparation filtre et transforme les tâches sans modifier l'état original.
             var preparationResult = _preparationService.PreparerPourSolveur(tachesOriginales, config);
 
             var inputDto = _transformerService.TransformToChantierSetupDto(
@@ -72,13 +75,14 @@ namespace PlanAthena.Services.UseCases
                     rawResult.AnalyseStatiqueResultat.OuvriersClesSuggereIds, poolOuvriers);
                 return new PlanificationRunResult { RawResult = rawResult, MetierTensionReport = tensionReport };
             }
+            // MODIFIÉ : On applique les changements SEULEMENT SI l'optimisation a réussi.
             else if (rawResult.OptimisationResultat != null)
             {
                 // --- CAS B : OPTIMISATION ---
                 var consolidatedPlanning = _consolidationService.Process(rawResult, config);
                 _planningService.UpdatePlanning(consolidatedPlanning, config);
 
-                // --- Mise à jour des tâches et sous-tâches ---
+                // La réconciliation se fait ici, de manière transactionnelle, après le succès.
                 _taskManagerService.MettreAJourApresPlanification(_planningService, preparationResult);
 
                 var joursOuvresCalculator = new AnalysisService.JoursOuvresCalculator((start, end) =>
@@ -95,6 +99,8 @@ namespace PlanAthena.Services.UseCases
             }
             else
             {
+                // En cas d'échec de la planification, on ne fait rien et on retourne le résultat brut.
+                // L'état du projet dans TaskManagerService reste inchangé.
                 return new PlanificationRunResult { RawResult = rawResult };
             }
         }

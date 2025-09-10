@@ -1,4 +1,4 @@
-﻿Structure du Projet - GÃ©nÃ©rÃ© le 09/07/2025 17:39:21
+﻿Structure du Projet - GÃ©nÃ©rÃ© le 09/08/2025 16:57:11
 D:.
 
     +--- Data
@@ -69,7 +69,7 @@ D:.
                     MetierDTOs.cs
                     MetierTensionReport.cs
                     PlanificationRunResult.cs
-                    ProcessDTOs.cs
+                    PreparationResult.cs
                     ProjetDTOs.cs
                     SegmentDeTravail.cs
                     UIDTOs.cs
@@ -110,6 +110,7 @@ D:.
                 PreparationSolveurService.cs
         +--- Usecases
                 ImportWizardOrchestrator.cs
+                PilotageProjetUseCase.cs
                 PlanificationOrchestrator.cs
                 ProjectPersistenceUseCase.cs
     +--- Utilities
@@ -152,6 +153,16 @@ D:.
                 ProjectStructureView.Designer.cs
                 ProjectStructureView.resx
         +--- TaskManager
+            +--- Cockpit
+                    Cockpit.cs
+                    Cockpit.Designer.cs
+                    Cockpit.resx
+                    PlanningView.cs
+                    PlanningView.Designer.cs
+                    PlanningView.resx
+                    TaskListView.cs
+                    TaskListView.Designer.cs
+                    TaskListView.resx
             +--- PertDiagram
                     PertDiagramControl.cs
                     PertDiagramControl.Designer.cs
@@ -174,11 +185,9 @@ D:.
                 TacheDetailViewXL.cs
                 TacheDetailViewXL.Designer.cs
                 TacheDetailViewXL.resx
-                TaskManagerList.cs
-                TaskManagerList.Designer.cs
-                TaskManagerList.resx
                 TaskManagerView.cs
                 TaskManagerView.Designer.cs
+                TaskManagerView.resx
         +--- Utils
                 ImportMapOuvrierP1.cs
                 ImportMapOuvrierP1.Designer.cs

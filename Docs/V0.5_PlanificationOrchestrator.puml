@@ -1,0 +1,106 @@
+@startuml
+' --- Configuration ---
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+title Diagramme de Classe : PlanificationOrchestrator et ses Interactions (v0.4.9.1)
+
+package "DTOs" {
+    class ConfigurationPlanification
+    class "PlanificationRunResult" as RunResult {
+        RawResult: ProcessChantierResultDto
+        AnalysisReport: AnalysisReport?
+        MetierTensionReport: MetierTensionReport?
+    }
+    class ProcessChantierResultDto
+    class AnalysisReport
+    class MetierTensionReport
+}
+
+package "Use Cases" {
+    class PlanificationOrchestrator {
+        ' --- Dépendances Injectées ---
+        _projetService: ProjetService
+        _ressourceService: RessourceService
+        _taskManagerService: TaskManagerService
+        _preparationService: PreparationSolveurService
+        _transformerService: DataTransformer
+        _facade: PlanAthenaCoreFacade
+        _consolidationService: PlanningConsolidationService
+        _planningService: PlanningService
+        _analysisService: AnalysisService
+        --
+        ' --- Méthode Publique ---
+        ExecuteAsync(config: ConfigurationPlanification): Task<PlanificationRunResult>
+    }
+}
+
+package "Dépendances" {
+    package "Sources de Vérité" <<Folder>> {
+        class ProjetService
+        class RessourceService
+        class PlanningService
+        class TaskManagerService
+    }
+    package "Utilitaires" <<Folder>> {
+        class PreparationSolveurService
+        class DataTransformer
+        class PlanningConsolidationService
+        class AnalysisService
+    }
+    package "Facade Externe" <<Cloud>> {
+        class PlanAthenaCoreFacade
+    }
+}
+
+' --- Relations de Dépendance et d'Utilisation ---
+PlanificationOrchestrator --> ProjetService
+PlanificationOrchestrator --> RessourceService
+PlanificationOrchestrator --> PreparationSolveurService
+PlanificationOrchestrator --> DataTransformer
+PlanificationOrchestrator --> PlanAthenaCoreFacade
+PlanificationOrchestrator --> PlanningConsolidationService
+PlanificationOrchestrator --> PlanningService
+PlanificationOrchestrator --> TaskManagerService 
+PlanificationOrchestrator --> AnalysisService
+
+PlanificationOrchestrator ..> ConfigurationPlanification : "utilise en entrée"
+PlanificationOrchestrator ..> RunResult : "crée et retourne"
+
+' --- Relations de Composition du DTO de Sortie ---
+RunResult "1" *-- "1" ProcessChantierResultDto
+RunResult "1" *-- "0..1" AnalysisReport
+RunResult "1" *-- "0..1" MetierTensionReport
+
+
+note top of PlanificationOrchestrator
+    <b>Chef d'Orchestre du Use Case "Planifier"</b>
+    Coordination pure, sans logique métier interne.
+    Appelle les services experts dans le bon ordre
+    et met à jour l'état de l'application de manière transactionnelle.
+end note
+
+note right of PlanificationOrchestrator
+    <b>Flux d'Exécution Non-Destructif</b>
+    <b>1. Collecte & Préparation :</b> Lit les données depuis les
+    sources de vérité (TaskManagerService, RessourceService...).
+    Appelle PreparationSolveurService pour créer un jeu de données
+    isolé pour le solveur, sans altérer l'état original.
+    
+    <b>2. Exécution :</b> Invoque la méthode de calcul
+    externe via la Facade.
+    
+    <b>3. Traitement & Réconciliation (Conditionnel) :</b>
+    <b>SI</b> la planification réussit :
+     - Appelle PlanningConsolidationService.
+     - Appelle PlanningService.UpdatePlanning(...) pour mettre
+       à jour la source de vérité du planning.
+     - Appelle TaskManagerService.MettreAJourApresPlanification(...)
+       pour réconcilier l'état des tâches de manière transactionnelle.
+     - Appelle AnalysisService pour générer le rapport.
+    
+    <b>4. Retour :</b> Construit et retourne le DTO
+    PlanificationRunResult avec le résultat approprié.
+end note
+
+@enduml

@@ -29,14 +29,14 @@ namespace PlanAthena.Services.Usecases
             ProjetService projetService,
             RessourceService ressourceService,
             PlanningService planningService,
-            TaskManagerService taskManagerService, // MODIFIÉ
+            TaskManagerService taskManagerService, 
             ProjetServiceDataAccess dataAccess,
             CheminsPrefereService cheminsService)
         {
             _projetService = projetService;
             _ressourceService = ressourceService;
             _planningService = planningService;
-            _taskManagerService = taskManagerService; // MODIFIÉ
+            _taskManagerService = taskManagerService; 
             _dataAccess = dataAccess;
             _cheminsService = cheminsService;
         }
@@ -99,9 +99,11 @@ namespace PlanAthena.Services.Usecases
                 _taskManagerService.ChargerTaches(data.Taches); // Charger les tâches avec leur statut persistant
 
                 // 2. Charger les données du planning s'il existe
-                if (data.Planning != null && data.Configuration != null)
+                if (data.Planning != null)
                 {
-                    _planningService.UpdatePlanning(data.Planning, data.Configuration);
+                    // On doit aussi récupérer la config qui était active
+                    var config = _projetService.ConfigPlanificationActuelle; // Ou la sauvegarder/charger
+                    _planningService.LoadPlanning(data.Planning, config);
                 }
 
                 // 3. Synchroniser les statuts pour refléter l'état actuel (EnCours, EnRetard, etc.)

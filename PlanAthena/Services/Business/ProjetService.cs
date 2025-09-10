@@ -119,7 +119,7 @@ namespace PlanAthena.Services.Business
         }
 
         public List<Lot> ObtenirTousLesLots() => _lots.Values.OrderBy(l => l.Priorite).ThenBy(l => l.Nom).ToList();
-        public Lot ObtenirLotParId(string lotId) => _lots.GetValueOrDefault(lotId);
+        public virtual Lot ObtenirLotParId(string lotId) => _lots.GetValueOrDefault(lotId);
         #endregion
 
         #region Gestion des Blocs

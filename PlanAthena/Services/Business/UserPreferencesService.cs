@@ -77,5 +77,50 @@ namespace PlanAthena.Services.Business
         }
 
         #endregion
+
+
+        #region Gestion des Traductions
+        /// <summary>
+        /// Charge le dictionnaire des correspondances depuis un fichier de configuration utilisateur.
+        /// </summary>
+        /// <returns>Un dictionnaire des correspondances. Retourne un dictionnaire vide si le fichier n'existe pas ou est invalide.</returns>
+        public Dictionary<string, string> ChargerDictionnaire()
+        {
+            // Logique pour lire un fichier JSON/XML et désérialiser le dictionnaire.
+            // Exemple simplifié :
+            string filePath = Path.Combine(_cheminsService.ObtenirDossierUIPrefs(), "user_mappings.json");
+            if (!File.Exists(filePath))
+            {
+                // On peut charger un dictionnaire par défaut ici la première fois.
+                return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            try
+            {
+                string json = File.ReadAllText(filePath);
+                var dico = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+                return new Dictionary<string, string>(dico, StringComparer.OrdinalIgnoreCase);
+            }
+            catch (System.Exception)
+            {
+                // Gérer les erreurs de lecture/désérialisation
+                return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            }
+        }
+
+        /// <summary>
+        /// Sauvegarde le dictionnaire complet des correspondances dans un fichier de configuration utilisateur.
+        /// </summary>
+        /// <param name="dictionnaire">Le dictionnaire à sauvegarder.</param>
+        public void SauverDictionnaire(Dictionary<string, string> dictionnaire)
+        {
+            // Logique pour sérialiser le dictionnaire en JSON/XML et l'écrire dans un fichier.
+            // Exemple simplifié :
+            string filePath = Path.Combine(_cheminsService.ObtenirDossierUIPrefs(), "user_mappings.json");
+            var options = new System.Text.Json.JsonSerializerOptions { WriteIndented = true };
+            string json = System.Text.Json.JsonSerializer.Serialize(dictionnaire, options);
+            File.WriteAllText(filePath, json);
+        }
+        #endregion
     }
 }

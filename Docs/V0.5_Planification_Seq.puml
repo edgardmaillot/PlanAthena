@@ -1,0 +1,99 @@
+@startuml
+' --- Configuration ---
+title Diagramme de Séquence : Lancement de la Planification (v0.4.9.1)
+skinparam componentStyle uml2
+skinparam wrapWidth 250
+skinparam participantPadding 5
+skinparam sequenceMessageAlign center
+skinparam lifelineStrategy solid
+
+' --- Participants ---
+actor Utilisateur
+participant "PlanificatorView" as UI
+participant "PlanificationOrchestrator" as Orchestrator
+box "Sources de Vérité" #LightYellow
+    participant "TaskManagerService" as TaskManagerSvc
+    participant "RessourceService" as RessourceSvc
+    participant "ProjetService" as ProjetSvc
+end box
+box "Services de Traitement" #LightBlue
+    participant "PreparationSolveurService" as PreparationSvc
+    participant "DLL (Facade)" as Facade
+    participant "PlanningConsolidationService" as ConsolidationSvc
+    participant "PlanningService" as PlanningSvc
+    participant "AnalysisService" as AnalysisSvc
+end box
+
+' --- Flux ---
+Utilisateur -> UI : Clique "Lancer Planification"
+activate UI
+UI -> Orchestrator : ExecuteAsync(config)
+activate Orchestrator
+
+group Phase 1 : Collecte & Préparation (Lecture seule)
+    Orchestrator -> TaskManagerSvc : ObtenirToutesLesTaches()
+    activate TaskManagerSvc
+    TaskManagerSvc --> Orchestrator : tachesOriginales
+    deactivate TaskManagerSvc
+
+    Orchestrator -> RessourceSvc : GetAllOuvriers(), GetAllMetiers()
+    activate RessourceSvc
+    RessourceSvc --> Orchestrator : poolsRessources
+    deactivate RessourceSvc
+    
+    Orchestrator -> ProjetSvc : GetProjetDataPourSauvegarde()
+    activate ProjetSvc
+    ProjetSvc --> Orchestrator : projetData
+    deactivate ProjetSvc
+
+    Orchestrator -> PreparationSvc : PreparerPourSolveur(tachesOriginales, config)
+    activate PreparationSvc
+    PreparationSvc --> Orchestrator : preparationResult
+    deactivate PreparationSvc
+end
+
+group Phase 2 : Calcul par le Solveur
+    Orchestrator -> Facade : ProcessChantierAsync(preparationResult.TachesPreparees)
+    activate Facade
+    Facade --> Orchestrator : rawResult
+    deactivate Facade
+end
+
+group Phase 3 : Traitement du Résultat et Réconciliation (Écriture si succès)
+    alt Optimisation Réussie
+        Orchestrator -> ConsolidationSvc : Process(rawResult, config)
+        activate ConsolidationSvc
+        ConsolidationSvc --> Orchestrator : consolidatedPlanning
+        deactivate ConsolidationSvc
+
+        Orchestrator -> PlanningSvc : UpdatePlanning(consolidatedPlanning, config)
+        activate PlanningSvc
+        PlanningSvc --> Orchestrator
+        deactivate PlanningSvc
+
+        note over Orchestrator, TaskManagerSvc : Point de réconciliation transactionnel
+        Orchestrator -> TaskManagerSvc : MettreAJourApresPlanification(PlanningSvc, preparationResult)
+        activate TaskManagerSvc
+        ' Le TaskManagerService met à jour son état interne (sous-tâches, statuts, etc.)
+        TaskManagerSvc --> Orchestrator
+        deactivate TaskManagerSvc
+
+        Orchestrator -> AnalysisSvc : GenerateReport(consolidatedPlanning, ...)
+        activate AnalysisSvc
+        AnalysisSvc --> Orchestrator : analysisReport
+        deactivate AnalysisSvc
+    
+    else Analyse Statique ou Échec
+        note over Orchestrator : Le planning a échoué ou était une analyse.\nLes données dans TaskManagerService ne sont pas modifiées.
+        ' (Flux pour l'analyse de tension ou le retour simple du résultat brut)
+    end
+end
+
+Orchestrator --> UI : runResult { rawResult, analysisReport }
+deactivate Orchestrator
+
+UI -> UI : Affiche les KPIs ou le message d'erreur
+UI -> UI : Active les boutons d'export si succès
+deactivate UI
+
+@enduml

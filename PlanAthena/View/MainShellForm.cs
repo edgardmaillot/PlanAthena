@@ -1,9 +1,9 @@
 using Krypton.Toolkit;
 using PlanAthena.Services.Business;
-using PlanAthena.Services.DataAccess; // Ajout pour ProjetServiceDataAccess
+using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.Export;
 using PlanAthena.Services.Infrastructure;
-using PlanAthena.Services.Usecases; // Assurez-vous que le namespace est correct
+using PlanAthena.Services.Usecases; 
 using PlanAthena.Services.UseCases;
 using PlanAthena.Utilities;
 using PlanAthena.View.Dashboard;
@@ -179,10 +179,21 @@ namespace PlanAthena.View
 
         private void NavigateToTaskListView()
         {
-            // L'appel depuis le menu "Liste" force l'affichage de la liste
-            //var view = new TaskManagerView(_projetService, _taskManagerService, _ressourceService, _dependanceBuilder, _importService, _exportService, TaskManagerDefaultView.List);
-            //view.NavigateToViewRequested += OnNavigateToViewRequested;
-            //ShowView(view);
+            // 1. Créer une instance du nouveau formulaire Cockpit.
+            var cockpitForm = new PlanAthena.View.TaskManager.Cockpit.Cockpit();
+
+            // 2. Appeler sa méthode d'initialisation en lui passant les services requis
+            //    qui sont déjà disponibles dans MainShellForm.
+            cockpitForm.Initialize(
+                _taskManagerService,
+                _planningService,
+                _projetService,
+                _ressourceService
+            );
+
+            // 3. Afficher le formulaire en tant que fenêtre de dialogue modale.
+            //    Cela empêche l'interaction avec la fenêtre principale tant que le cockpit est ouvert.
+            cockpitForm.ShowDialog();
         }
         private void NavigateToPlanificator()
         {

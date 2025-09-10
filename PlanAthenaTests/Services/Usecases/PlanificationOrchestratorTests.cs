@@ -12,7 +12,7 @@ using PlanAthena.Services.Processing;
 using PlanAthena.Services.UseCases;
 using PlanAthena.Utilities;
 
-namespace PlanAthena.Tests.Services.UseCases
+namespace PlanAthenaTests.Services.UseCases
 {
     [TestClass]
     public class PlanificationOrchestratorTests

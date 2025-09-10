@@ -35,6 +35,8 @@ namespace PlanAthena.Data
         /// </summary>
         public bool EstConteneur { get; set; } = false;
 
+        public DateTime? DateDebutReelle { get; set; }
+        public DateTime? DateFinReelle { get; set; }
         public DateTime? DateDebutPlanifiee { get; set; }
         public DateTime? DateFinPlanifiee { get; set; }
         public List<AffectationOuvrier> Affectations { get; set; } = new List<AffectationOuvrier>();

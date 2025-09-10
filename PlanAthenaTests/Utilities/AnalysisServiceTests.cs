@@ -4,7 +4,7 @@ using PlanAthena.Data;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Utilities;
 
-namespace PlanAthena.Tests.Utilities
+namespace PlanAthenaTests.Utilities
 {
     [TestClass]
     public class AnalysisServiceTests

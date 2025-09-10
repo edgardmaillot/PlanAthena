@@ -1,9 +1,14 @@
-// Services/Business/TaskManagerService.cs V0.4.8
+// Emplacement: /Services/Business/TaskManagerService.cs
+// Version: 0.4.9.1 (Hotfix + Refactoring Corrigé)
 
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
 using PlanAthena.Services.Business.DTOs;
+using PlanAthena.Services.DTOs.TaskManager; // Ajout de la référence au DTO
+using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 
 namespace PlanAthena.Services.Business
 {
@@ -11,6 +16,7 @@ namespace PlanAthena.Services.Business
     /// Agit comme la Source de Vérité unique pour tout ce qui concerne les tâches.
     /// Il gère leur structure (CRUD, hiérarchie) et leur état d'avancement (statut),
     /// y compris les informations agrégées issues du planning.
+    /// Ce service est stateful et conserve l'état des tâches en mémoire.
     /// </summary>
     public class TaskManagerService
     {
@@ -26,9 +32,13 @@ namespace PlanAthena.Services.Business
 
         #region Persistance & Cycle de Vie
 
+        /// <summary>
+        /// Charge une liste de tâches dans le service, en remplaçant les données existantes.
+        /// </summary>
+        /// <param name="taches">La liste des tâches à charger.</param>
         public virtual void ChargerTaches(List<Tache> taches)
         {
-            //ViderTaches();
+            ViderTaches();
             if (taches == null) return;
             foreach (var tache in taches)
             {
@@ -36,88 +46,59 @@ namespace PlanAthena.Services.Business
             }
         }
 
+        /// <summary>
+        /// Supprime toutes les tâches gérées par le service.
+        /// </summary>
         public virtual void ViderTaches()
         {
             _taches.Clear();
         }
 
+        /// <summary>
+        /// Retourne une copie de toutes les tâches actuellement gérées, typiquement pour la sauvegarde.
+        /// </summary>
+        /// <returns>Une liste de toutes les tâches.</returns>
         public virtual List<Tache> ObtenirToutesLesTachesPourSauvegarde()
         {
             return _taches.Values.ToList();
         }
-
 
         #endregion
 
         #region Intégration avec le Planificateur
 
         /// <summary>
-        /// Point d'entrée unique pour la mise à jour complète de l'état des tâches après une planification.
-        /// Cette méthode réconcilie la structure des tâches (découpage en sous-tâches) et enrichit
-        /// toutes les tâches avec les données calculées (dates, affectations, statut).
+        /// Point d'entrée unique pour la mise à jour complète de l'état des tâches après une planification réussie.
+        /// Cette méthode est transactionnelle : elle nettoie l'état précédent (sous-tâches, jalons)
+        /// uniquement pour les tâches replanifiées, intègre la nouvelle structure,
+        /// et enrichit toutes les tâches avec les données calculées (dates, affectations, statut).
         /// </summary>
-        /// <param name="planningService">Le service contenant le planning consolidé.</param>
+        /// <param name="planningService">Le service de planning contenant les résultats.</param>
         /// <param name="preparationResult">Le résultat de la préparation contenant la nouvelle structure des tâches.</param>
         public virtual void MettreAJourApresPlanification(PlanningService planningService, PreparationResult preparationResult)
         {
-            // --- 1. Nettoyage des anciennes sous-tâches et réinitialisation des tâches mères ---
-            var anciennesSousTachesIds = _taches.Values.Where(t => !string.IsNullOrEmpty(t.ParentId)).Select(t => t.TacheId).ToList();
-            foreach (var id in anciennesSousTachesIds)
-            {
-                _taches.Remove(id);
-            }
-            foreach (var tache in _taches.Values)
-            {
-                tache.EstConteneur = false; // Réinitialisation du flag conteneur
-                tache.Affectations.Clear(); // Réinitialisation des affectations
-            }
+            var idsParentsReplanifies = preparationResult.ParentIdParSousTacheId.Values.Distinct().ToHashSet();
 
-            // --- 2. Intégration de la nouvelle structure (sous-tâches) ---
-            var nouvellesSousTaches = preparationResult.TachesPreparees
-                .Where(t => preparationResult.ParentIdParSousTacheId.ContainsKey(t.TacheId));
+            NettoyerAnciennesDonneesDePlanification(idsParentsReplanifies);
+            IntegrerNouvelleStructureDeTaches(preparationResult);
 
-            foreach (var sousTache in nouvellesSousTaches)
-            {
-                sousTache.ParentId = preparationResult.ParentIdParSousTacheId[sousTache.TacheId];
-                _taches.TryAdd(sousTache.TacheId, sousTache);
-            }
+            // --- LOGIQUE DE MISE À JOUR RESTRUCTURÉE ---
+            // 1. Mettre à jour les tâches feuilles (sous-tâches et tâches simples)
+            var infosFeuilles = planningService.ObtenirInfosPlanificationPourTachesFeuilles();
+            MettreAJourTachesFeuillesAvecPlanning(infosFeuilles);
 
-            // --- 3. Mise à jour de toutes les tâches avec les données du planning ---
-            var infosPlanning = planningService.ObtenirInfosPlanificationPourToutesLesTaches();
+            // 2. Mettre à jour les tâches mères (conteneurs) avec les données agrégées
+            var infosMeres = planningService.ObtenirInfosPlanificationPourToutesLesTaches();
+            MettreAJourTachesMeresAvecPlanning(infosMeres);
 
-            // On parcourt toutes les tâches connues (mères et nouvelles sous-tâches)
-            foreach (var tache in _taches.Values)
-            {
-                // On cherche si le planning a des infos pour cette tâche (ou sa mère)
-                var tacheInfoId = tache.ParentId ?? tache.TacheId;
-                if (infosPlanning.TryGetValue(tacheInfoId, out var info))
-                {
-                    // C'est une tâche mère ou une tâche simple planifiée
-                    if (tache.ParentId == null)
-                    {
-                        tache.EstConteneur = info.EstConteneur;
-                        tache.DateDebutPlanifiee = info.DateDebut;
-                        tache.DateFinPlanifiee = info.DateFin;
-                        tache.Affectations = info.Affectations;
-                    }
-                    // Pour les sous-tâches, on pourrait vouloir affiner les dates/affectations
-                    // mais pour l'instant, on se contente de les marquer comme planifiées.
-                }
-
-                // Toutes les tâches qui ont des dates sont maintenant "Planifiée"
-                if (tache.DateDebutPlanifiee.HasValue || info != null)
-                {
-                    tache.Statut = Statut.Planifiée;
-                }
-                else
-                {
-                    tache.Statut = Statut.Estimée;
-                }
-            }
+            // 3. Synchroniser les statuts (EnCours, EnRetard) en fonction de la date du jour
+            SynchroniserStatutsTaches();
         }
+
         /// <summary>
         /// Met à jour uniquement le statut des tâches (Estimée, Planifiee, EnCours, EnRetard)
         /// en fonction de la date actuelle, sans modifier la structure ou les données planifiées.
+        /// Cette méthode ne touche pas aux tâches déjà marquées comme 'Terminée'.
         /// </summary>
         public virtual void SynchroniserStatutsTaches()
         {
@@ -135,8 +116,6 @@ namespace PlanAthena.Services.Business
                 {
                     if (maintenant > tache.DateFinPlanifiee)
                         tache.Statut = Statut.EnRetard;
-                    else if (maintenant >= tache.DateDebutPlanifiee)
-                        tache.Statut = Statut.EnCours;
                     else
                         tache.Statut = Statut.Planifiée;
                 }
@@ -147,6 +126,9 @@ namespace PlanAthena.Services.Business
 
         #region CRUD Structurel
 
+        /// <summary>
+        /// Crée une nouvelle tâche standard.
+        /// </summary>
         public virtual Tache CreerTache(string lotId, string blocId, string nom, int heures, string metierId = null)
         {
             var tacheMereExistantes = _taches.Values.Where(t => string.IsNullOrEmpty(t.ParentId)).ToList();
@@ -157,13 +139,17 @@ namespace PlanAthena.Services.Business
                 TacheId = _idGenerator.GenererProchainTacheId(blocId, tacheMereExistantes),
                 TacheNom = nom,
                 HeuresHommeEstimees = heures,
-                Statut = Statut.Estimée, // Statut par défaut à la création
+                Statut = Statut.Estimée,
                 MetierId = metierId ?? string.Empty
             };
             _taches.Add(nouvelleTache.TacheId, nouvelleTache);
             return nouvelleTache;
         }
-        public virtual Tache CreerTacheJalon(string lotId, string blocId, string nom="Jalon", int heures=0)
+
+        /// <summary>
+        /// Crée une nouvelle tâche de type Jalon Utilisateur.
+        /// </summary>
+        public virtual Tache CreerTacheJalon(string lotId, string blocId, string nom = "Jalon", int heures = 0)
         {
             var tacheMereExistantes = _taches.Values.Where(t => string.IsNullOrEmpty(t.ParentId)).ToList();
             var nouvelleTache = new Tache
@@ -173,13 +159,17 @@ namespace PlanAthena.Services.Business
                 TacheId = _idGenerator.GenererProchainTacheId(blocId, tacheMereExistantes),
                 TacheNom = nom,
                 HeuresHommeEstimees = heures,
-                Statut = Statut.Estimée, // Statut par défaut à la création
+                Statut = Statut.Estimée,
                 Type = TypeActivite.JalonUtilisateur
             };
             _taches.Add(nouvelleTache.TacheId, nouvelleTache);
             return nouvelleTache;
         }
 
+        /// <summary>
+        /// Met à jour une tâche existante avec les nouvelles données fournies.
+        /// </summary>
+        /// <param name="tacheModifiee">L'objet Tache contenant les modifications.</param>
         public virtual void ModifierTache(Tache tacheModifiee)
         {
             if (tacheModifiee == null) throw new ArgumentNullException(nameof(tacheModifiee));
@@ -189,12 +179,15 @@ namespace PlanAthena.Services.Business
             _taches[tacheModifiee.TacheId] = tacheModifiee;
         }
 
+        /// <summary>
+        /// Supprime une tâche et toutes ses sous-tâches éventuelles.
+        /// Lève une exception si la tâche est une dépendance pour une autre tâche.
+        /// </summary>
+        /// <param name="tacheId">L'ID de la tâche à supprimer.</param>
         public virtual void SupprimerTache(string tacheId)
         {
             if (!_taches.TryGetValue(tacheId, out var tacheASupprimer)) return;
 
-            // --- NOUVELLE RÈGLE MÉTIER ---
-            // Vérifier si cette tâche est une dépendance pour une autre.
             var tachesDependantes = _taches.Values
                 .Where(t => (t.Dependencies ?? "").Split(',').Contains(tacheId))
                 .ToList();
@@ -204,42 +197,30 @@ namespace PlanAthena.Services.Business
                 var nomsTaches = string.Join(", ", tachesDependantes.Select(t => t.TacheNom));
                 throw new InvalidConstraintException($"Impossible de supprimer la tâche '{tacheASupprimer.TacheNom}'. Elle est un prérequis pour : {nomsTaches}.");
             }
-            // --- FIN DE LA RÈGLE MÉTIER ---
 
-            // Logique de suppression récursive (pour les sous-tâches)
             var enfants = ObtenirTachesEnfants(tacheId);
             foreach (var enfant in enfants)
             {
-                SupprimerTache(enfant.TacheId);
+                SupprimerTache(enfant.TacheId); // Appel récursif
             }
 
             _taches.Remove(tacheId);
             _planningService.InvaliderTache(tacheId);
-
-            // Mettre à jour le parent si c'était le dernier enfant
-            if (!string.IsNullOrEmpty(tacheASupprimer.ParentId))
-            {
-                if (_taches.TryGetValue(tacheASupprimer.ParentId, out var parent))
-                {
-                    if (!ObtenirTachesEnfants(parent.TacheId).Any())
-                    {
-                        parent.EstConteneur = false;
-                    }
-                }
-            }
         }
 
         #endregion
 
         #region Accesseurs
 
+        /// <summary>
+        /// Récupère une tâche par son ID.
+        /// </summary>
+        /// <returns>La Tache ou null si non trouvée.</returns>
         public virtual Tache ObtenirTache(string tacheId) => _taches.GetValueOrDefault(tacheId);
 
         /// <summary>
         /// Récupère une liste de tâches, avec des filtres optionnels par lot et/ou par bloc.
         /// </summary>
-        /// <param name="lotId">Si fourni, ne retourne que les tâches de ce lot.</param>
-        /// <param name="blocId">Si fourni, ne retourne que les tâches de ce bloc.</param>
         /// <returns>Une liste de tâches correspondant aux critères.</returns>
         public virtual List<Tache> ObtenirToutesLesTaches(string? lotId = null, string? blocId = null)
         {
@@ -257,9 +238,9 @@ namespace PlanAthena.Services.Business
 
             return query.ToList();
         }
+
         /// <summary>
-        /// NOUVEAU: Retourne la liste des tâches associées à un métier spécifique.
-        /// Utilisé principalement pour les validations avant suppression.
+        /// Retourne la liste des tâches associées à un métier spécifique.
         /// </summary>
         public virtual List<Tache> ObtenirTachesParMetier(string metierId)
         {
@@ -269,15 +250,36 @@ namespace PlanAthena.Services.Business
             return _taches.Values.Where(t => t.MetierId == metierId).ToList();
         }
 
+        /// <summary>
+        /// Retourne la liste des sous-tâches directes d'une tâche mère.
+        /// </summary>
         public virtual List<Tache> ObtenirTachesEnfants(string parentId)
         {
             return _taches.Values.Where(t => t.ParentId == parentId).ToList();
         }
-
+        /// <summary>
+        /// Calcule le nombre de tâches (non-conteneurs) dont la date de fin planifiée est passée.
+        /// Utilisé pour le calcul du KPI "SPI Simplifié".
+        /// </summary>
+        /// <param name="dateReference">La date à laquelle comparer la date de fin planifiée.</param>
+        /// <returns>Le nombre de tâches qui auraient dû être terminées.</returns>
+        public virtual int ObtenirNombreTachesQuiDevraientEtreTerminees(DateTime dateReference)
+        {
+            return _taches.Values.Count(t =>
+                !t.EstConteneur &&
+                t.DateFinPlanifiee.HasValue &&
+                t.DateFinPlanifiee.Value.Date <= dateReference.Date
+            );
+        }
         #endregion
 
         #region Gestion de Statut Manuel
 
+        /// <summary>
+        /// Marque une ou plusieurs tâches comme 'Terminée'.
+        /// Si une tâche est un conteneur, elle ne peut être marquée que si toutes ses sous-tâches sont déjà terminées.
+        /// </summary>
+        /// <param name="tacheIds">La liste des IDs des tâches à marquer comme terminées.</param>
         public virtual void MarquerTachesTerminees(List<string> tacheIds)
         {
             foreach (var id in tacheIds)
@@ -289,13 +291,11 @@ namespace PlanAthena.Services.Business
                         var enfants = ObtenirTachesEnfants(id);
                         if (enfants.Any(e => e.Statut != Statut.Terminée))
                         {
-                            // Optionnel: lever une exception ou ignorer silencieusement.
-                            // Pour l'instant, on ignore pour ne pas bloquer les opérations en masse.
-                            continue;
+                            continue; // On ne peut pas terminer un conteneur si ses enfants ne sont pas terminés.
                         }
                     }
                     tache.Statut = Statut.Terminée;
-                    // Mettre à jour le parent si tous ses enfants sont maintenant terminés
+
                     if (!string.IsNullOrEmpty(tache.ParentId))
                     {
                         MettreAJourStatutConteneur(tache.ParentId);
@@ -308,66 +308,83 @@ namespace PlanAthena.Services.Business
 
         #region Méthodes Privées
 
-        private void MettreAJourDonneesPlanifiees()
+        private void NettoyerAnciennesDonneesDePlanification(ISet<string> idsParentsReplanifies)
         {
-            var planningInfo = _planningService.ObtenirInfosPlanificationPourToutesLesTaches();
+            var idsASupprimer = _taches.Values
+                .Where(t => (t.ParentId != null && idsParentsReplanifies.Contains(t.ParentId)) || t.Type == TypeActivite.JalonTechnique)
+                .Select(t => t.TacheId)
+                .ToList();
 
-            foreach (var tache in _taches.Values.Where(t => !t.EstConteneur && string.IsNullOrEmpty(t.ParentId)))
+            foreach (var id in idsASupprimer)
             {
-                // Tâches "feuilles" qui n'ont pas été découpées
-                if (planningInfo.TryGetValue(tache.TacheId, out var info))
+                _taches.Remove(id);
+            }
+        }
+
+        private void IntegrerNouvelleStructureDeTaches(PreparationResult preparationResult)
+        {
+            var nouvellesSousTaches = preparationResult.TachesPreparees
+                .Where(t => t.Type != TypeActivite.JalonTechnique &&
+                            preparationResult.ParentIdParSousTacheId.ContainsKey(t.TacheId));
+
+            foreach (var sousTache in nouvellesSousTaches)
+            {
+                sousTache.ParentId = preparationResult.ParentIdParSousTacheId[sousTache.TacheId];
+                sousTache.Dependencies = string.Empty;
+                // Pas besoin de nettoyer les dates/affectations ici, elles seront peuplées à l'étape suivante.
+                _taches.TryAdd(sousTache.TacheId, sousTache);
+            }
+        }
+
+        // NOUVELLE méthode privée pour gérer les taches feuilles
+        private void MettreAJourTachesFeuillesAvecPlanning(IReadOnlyDictionary<string, PlanningInfoPourTache> infosFeuilles)
+        {
+            // On cible les sous-tâches nouvellement créées et les tâches simples.
+            foreach (var tache in _taches.Values.Where(t => t.ParentId != null || !t.EstConteneur))
+            {
+                if (infosFeuilles.TryGetValue(tache.TacheId, out var info))
                 {
                     tache.DateDebutPlanifiee = info.DateDebut;
                     tache.DateFinPlanifiee = info.DateFin;
                     tache.Affectations = info.Affectations;
-                }
-            }
 
-            foreach (var conteneur in _taches.Values.Where(t => t.EstConteneur))
-            {
-                // Tâches "conteneurs"
-                MettreAJourDonneesConteneur(conteneur.TacheId);
+                    // Une tâche feuille planifiée a le statut Planifiée (sera ajusté par SynchroniserStatutsTaches)
+                    if (tache.Statut != Statut.Terminée)
+                    {
+                        tache.Statut = Statut.Planifiée;
+                    }
+                }
             }
         }
 
-        private void MettreAJourDonneesConteneur(string conteneurId)
+
+        private void MettreAJourTachesMeresAvecPlanning(IReadOnlyDictionary<string, PlanningInfoPourTache> infosPlanning)
         {
-            if (!_taches.TryGetValue(conteneurId, out var conteneur)) return;
-
-            var enfants = ObtenirTachesEnfants(conteneurId);
-            if (!enfants.Any()) return;
-
-            // Recupérer les infos du planning pour chaque enfant
-            var planningInfoEnfants = _planningService.ObtenirInfosPlanificationPourToutesLesTaches();
-
-            var affectationsAgregees = new List<AffectationOuvrier>();
-            DateTime? dateDebutMin = null;
-            DateTime? dateFinMax = null;
-
-            foreach (var enfant in enfants)
+            foreach (var tache in _taches.Values.Where(t => t.ParentId == null)) // Uniquement les tâches racines
             {
-                if (planningInfoEnfants.TryGetValue(enfant.TacheId, out var infoEnfant))
+                if (infosPlanning.TryGetValue(tache.TacheId, out var info))
                 {
-                    if (!dateDebutMin.HasValue || infoEnfant.DateDebut < dateDebutMin)
-                        dateDebutMin = infoEnfant.DateDebut;
+                    tache.EstConteneur = info.EstConteneur;
 
-                    if (!dateFinMax.HasValue || infoEnfant.DateFin > dateFinMax)
-                        dateFinMax = infoEnfant.DateFin;
+                    // On met à jour les dates/affectations agrégées sur le parent
+                    tache.DateDebutPlanifiee = info.DateDebut;
+                    tache.DateFinPlanifiee = info.DateFin;
+                    tache.Affectations = info.Affectations;
 
-                    affectationsAgregees.AddRange(infoEnfant.Affectations);
+                    if (tache.Statut != Statut.Terminée)
+                    {
+                        tache.Statut = Statut.Planifiée;
+                    }
+                }
+                else if (tache.Statut != Statut.Terminée && !tache.EstConteneur)
+                {
+                    // Si une tâche simple n'est plus dans le planning, on la réinitialise.
+                    tache.Statut = Statut.Estimée;
+                    tache.DateDebutPlanifiee = null;
+                    tache.DateFinPlanifiee = null;
+                    tache.Affectations.Clear();
                 }
             }
-
-            conteneur.DateDebutPlanifiee = dateDebutMin;
-            conteneur.DateFinPlanifiee = dateFinMax;
-            conteneur.Affectations = affectationsAgregees
-                .GroupBy(a => a.OuvrierId)
-                .Select(g => new AffectationOuvrier
-                {
-                    OuvrierId = g.Key,
-                    NomOuvrier = g.First().NomOuvrier,
-                    HeuresTravaillees = g.Sum(a => a.HeuresTravaillees)
-                }).ToList();
         }
 
         private void MettreAJourStatutConteneur(string conteneurId)
@@ -375,14 +392,10 @@ namespace PlanAthena.Services.Business
             if (!_taches.TryGetValue(conteneurId, out var conteneur) || conteneur.Statut == Statut.Terminée) return;
 
             var enfants = ObtenirTachesEnfants(conteneurId);
-            if (!enfants.Any()) return;
-
-            if (enfants.All(e => e.Statut == Statut.Terminée))
+            if (enfants.Any() && enfants.All(e => e.Statut == Statut.Terminée))
             {
                 conteneur.Statut = Statut.Terminée;
             }
-            // La logique d'agrégation des autres statuts (EnCours, EnRetard) est déjà gérée par SynchroniserStatutsTaches
-            // qui se base sur les dates agrégées du conteneur. Cette méthode ne sert donc qu'à remonter le statut "Terminee".
         }
 
         #endregion
