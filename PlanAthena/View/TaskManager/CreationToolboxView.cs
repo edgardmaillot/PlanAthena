@@ -65,7 +65,14 @@ namespace PlanAthena.View.TaskManager
                         Padding = new Padding(2), // L'épaisseur de la bordure
                         Margin = new Padding(0, 3, 3, 3) // Marge extérieure
                     };
-
+                    var iconLabel = new KryptonLabel
+                    {
+                        Text = metier.Pictogram,
+                        Dock = DockStyle.Left,
+                        Width = 30,
+                        StateNormal = { ShortText = { Color1 = Color.Black, Font = new Font("Segoe UI Symbol", 16F, FontStyle.Regular, GraphicsUnit.Point) } },
+                        
+                    };
                     // --- ÉTAPE 4: Créer le bouton qui ira À L'INTÉRIEUR du panel de bordure ---
                     var metierButton = new KryptonButton
                     {
@@ -83,6 +90,7 @@ namespace PlanAthena.View.TaskManager
 
                     // 2. Mettre les deux éléments principaux dans le tableau
                     tbl.Controls.Add(colorIndicator, 0, rowIndex);
+                    colorIndicator.Controls.Add(iconLabel);
                     tbl.Controls.Add(borderPanel, 1, rowIndex);
                 }
             }

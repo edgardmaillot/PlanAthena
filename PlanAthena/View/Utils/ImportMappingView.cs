@@ -1,3 +1,6 @@
+// Fichier destiné à disparaitre
+// sera remplacé par le nouveau service d'import
+
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;

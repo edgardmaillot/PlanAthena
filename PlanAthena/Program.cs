@@ -55,11 +55,12 @@ namespace PlanAthena
             services.AddSingleton<CheminsPrefereService>();
             services.AddSingleton<ProjetServiceDataAccess>();
             services.AddSingleton<DependanceBuilder>();
+            services.AddSingleton<ValueMappingService>();
 
             // 2. Sources de Vérité (Stateful, Singletons) - Enregistrement simple
             services.AddSingleton<ProjetService>();
             services.AddSingleton<RessourceService>();
-            services.AddSingleton<PlanningService>(); // Ne dépend plus de RessourceService
+            services.AddSingleton<PlanningService>(); 
             services.AddSingleton<TaskManagerService>();
 
             // 3. Use Cases / Orchestrateurs

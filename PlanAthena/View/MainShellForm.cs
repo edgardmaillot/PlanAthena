@@ -172,7 +172,7 @@ namespace PlanAthena.View
         private void NavigateToTaskManager()
         {
             // L'appel normal affiche la vue diagramme par défaut
-            var view = new TaskManagerView(_projetService, _taskManagerService, _ressourceService, _dependanceBuilder, _importService, _exportService);
+            var view = new TaskManagerView(_projetService, _taskManagerService, _ressourceService, _dependanceBuilder, _importWizardOrchestrator, _exportService,_cheminsPrefereService);
             view.NavigateToViewRequested += OnNavigateToViewRequested;
             ShowView(view);
         }

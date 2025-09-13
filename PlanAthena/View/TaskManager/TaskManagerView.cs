@@ -3,7 +3,10 @@ using Krypton.Navigator;
 using Krypton.Workspace;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
+using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DataAccess;
+using PlanAthena.Services.Infrastructure;
+using PlanAthena.Services.Usecases;
 using PlanAthena.Utilities;
 using PlanAthena.View.Planificator;
 using PlanAthena.View.TaskManager.PertDiagram;
@@ -25,8 +28,9 @@ namespace PlanAthena.View.TaskManager
         private readonly TaskManagerService _taskManagerService;
         private readonly RessourceService _ressourceService;
         private readonly DependanceBuilder _dependanceBuilder;
-        private readonly ImportService _importService;
+        private readonly ImportWizardOrchestrator _orchestrator;
         private readonly ExportService _exportService;
+        private readonly CheminsPrefereService _cheminsService;
 
         // État de la vue
         private string _activeLotId;
@@ -34,20 +38,21 @@ namespace PlanAthena.View.TaskManager
 
         // Éléments d'UI managés par le DockingManager
         private KryptonPage _detailsPage;
-
+        private KryptonDockspace _rightDockspaceControl;
         #endregion
 
         #region Constructeur et Initialisation
 
-        public TaskManagerView(ProjetService projetService, TaskManagerService taskManagerService, RessourceService ressourceService, DependanceBuilder dependanceBuilder, ImportService importService, ExportService exportService)
+        public TaskManagerView(ProjetService projetService, TaskManagerService taskManagerService, RessourceService ressourceService, DependanceBuilder dependanceBuilder, ImportWizardOrchestrator orchestrator, ExportService exportService, CheminsPrefereService cheminsPrefereService)
         {
             InitializeComponent();
             _projetService = projetService;
             _taskManagerService = taskManagerService;
             _ressourceService = ressourceService;
             _dependanceBuilder = dependanceBuilder;
-            _importService = importService;
+            _orchestrator = orchestrator;
             _exportService = exportService;
+            _cheminsService = cheminsPrefereService;
 
             this.Load += TaskManagerView_Load;
         }
@@ -109,8 +114,9 @@ namespace PlanAthena.View.TaskManager
             // La page de droite - Selecteur Lot + Détails (Tâche/Bloc) 
             _detailsPage = CreateDockingPage("Gestion", "details", Properties.Resources.tache, tacheDetailView1, headerFont);
 
-            var rightDockspace = kryptonDockingManager.AddDockspace("RootControl", DockingEdge.Right, new[] { _detailsPage });
-            rightDockspace.DockspaceControl.Width = 280; 
+            var rightDockingElement = kryptonDockingManager.AddDockspace("RootControl", DockingEdge.Right, new[] { _detailsPage });
+            _rightDockspaceControl = rightDockingElement.DockspaceControl;
+            _rightDockspaceControl.Width = 280;
 
         }
 
@@ -175,6 +181,8 @@ namespace PlanAthena.View.TaskManager
         {
             if (e.InteractionType == TacheInteractionType.SingleClick)
             {
+                //vérifier ce qui est affiché dans tacheDetailView1
+                ShowTacheDetails(e.Tache);
                 tacheDetailView1.LoadTache(e.Tache);
             }
             else if (e.InteractionType == TacheInteractionType.DoubleClick)
@@ -353,6 +361,8 @@ namespace PlanAthena.View.TaskManager
         {
             _detailsPage.SuspendLayout();
             _detailsPage.Controls.Clear();
+            //reset la largeur du panneau de détails pour les tâches
+            _rightDockspaceControl.Width = 280;
             tacheDetailView1.Dock = DockStyle.Fill;
             _detailsPage.Controls.Add(tacheDetailView1);
             tacheDetailView1.LoadTache(tache);
@@ -367,6 +377,8 @@ namespace PlanAthena.View.TaskManager
         {
             _detailsPage.SuspendLayout();
             _detailsPage.Controls.Clear();
+            //fixer la largeur du panneau de détails pour les blocs
+            _rightDockspaceControl.Width = 400;
             blocDetailView1.Dock = DockStyle.Fill;
             _detailsPage.Controls.Add(blocDetailView1);
             blocDetailView1.LoadBloc(bloc);
@@ -506,52 +518,52 @@ namespace PlanAthena.View.TaskManager
         {
             if (!IsLotActive("Veuillez sélectionner un lot avant d'importer des tâches.")) return;
 
-            using var ofd = new OpenFileDialog { Title = "Sélectionner le fichier CSV", Filter = "Fichiers CSV (*.csv)|*.csv|Tous les fichiers (*.*)|*.*" };
-            if (ofd.ShowDialog(FindForm()) == DialogResult.OK)
+            using (var ofd = new OpenFileDialog
             {
-                var lotActif = _projetService.ObtenirLotParId(_activeLotId);
-                using var importView = new ImportMappingView(ofd.FileName, lotActif, _projetService, _ressourceService);
-                if (importView.ShowDialog(FindForm()) == DialogResult.OK)
-                {
-                    ExecuteImport(ofd.FileName, importView.MappingConfiguration);
-                }
-            }
-        }
-
-        private void ExecuteImport(string filePath, Services.Business.DTOs.ImportMappingConfiguration mappingConfig)
-        {
-            try
+                Title = "Sélectionner le fichier CSV de tâches",
+                Filter = "Fichiers CSV (*.csv)|*.csv|Tous les fichiers (*.*)|*.*",
+                InitialDirectory = _cheminsService.ObtenirDernierDossierImport() // Bonus UX
+            })
             {
-                bool confirmOverwrite = false;
-                if (_taskManagerService.ObtenirToutesLesTaches(lotId: _activeLotId).Any())
+                if (ofd.ShowDialog(this.FindForm()) == DialogResult.OK)
                 {
-                    var result = MessageBox.Show($"Le lot '{_activeLotId}' contient déjà des tâches. Voulez-vous les écraser?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-                    if (result != DialogResult.Yes) return;
-                    confirmOverwrite = true;
-                }
+                    _cheminsService.SauvegarderDernierDossier(TypeOperation.ImportCsv, ofd.FileName);
+                    var lotActif = _projetService.ObtenirLotParId(_activeLotId);
 
-                var importResult = _importService.ImporterTachesCSV(filePath, _activeLotId, mappingConfig, confirmOverwrite);
-                if (importResult.EstSucces)
-                {
-                    var sb = new StringBuilder("Import terminé avec succès !\n");
-                    sb.AppendLine($"- {importResult.NbTachesImportees} tâches importées.");
-                    sb.AppendLine($"- {importResult.NbBlocsTraites} nouveaux blocs créés.");
-                    if (importResult.Warnings.Any())
+                    // --- NOUVEL APPEL À L'ORCHESTRATEUR ---
+                    ImportResult result = _orchestrator.LancerWizardImportTaches(ofd.FileName, lotActif);
+
+                    // --- GESTION DU RÉSULTAT ---
+                    if (result.EstSucces)
                     {
-                        using var warningsView = new ImportWarningsView(importResult.Warnings);
-                        warningsView.ShowDialog(FindForm());
+                        var sb = new StringBuilder();
+                        sb.AppendLine("Importation des tâches terminée avec succès !");
+                        sb.AppendLine();
+                        sb.AppendLine($"  - Tâches importées : {result.NbTachesImportees}");
+                        sb.AppendLine($"  - Blocs traités : {result.NbBlocsTraites}");
+                        sb.AppendLine($"  - Durée : {result.DureeImport:g}");
+
+                        if (result.Warnings.Any())
+                        {
+                            sb.AppendLine();
+                            sb.AppendLine("Avertissements :");
+                            result.Warnings.Take(10).ToList().ForEach(w => sb.AppendLine($"- {w}"));
+                            if (result.Warnings.Count > 10) sb.AppendLine("...");
+                        }
+
+                        MessageBox.Show(sb.ToString(), "Importation réussie", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        RefreshUIForActiveLot();
                     }
-                    MessageBox.Show(sb.ToString(), "Import Réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    RefreshAll();
+                    else if (!string.IsNullOrEmpty(result.MessageErreur))
+                    {
+                        // Ne pas afficher de popup d'erreur si l'utilisateur a juste annulé.
+                        if (!result.MessageErreur.ToLower().Contains("annulé"))
+                        {
+                            MessageBox.Show(result.MessageErreur, "Échec de l'importation", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
                 }
-                else
-                {
-                    MessageBox.Show($"L'import a échoué : {importResult.MessageErreur}", "Erreur d'Import", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Une erreur inattendue est survenue : {ex.Message}", "Erreur Critique", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

@@ -50,7 +50,7 @@ namespace PlanAthena.View.TaskManager
             panelDynamicButtons.AutoScroll = true;
             panelDynamicButtons.BackColor = Color.Transparent;
             panelDynamicButtons.ColumnCount = 2;
-            panelDynamicButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 25F));
+            panelDynamicButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 35F));
             panelDynamicButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             panelDynamicButtons.Dock = DockStyle.Fill;
             panelDynamicButtons.Location = new Point(0, 68);
@@ -80,7 +80,8 @@ namespace PlanAthena.View.TaskManager
             btnAddBloc.Size = new Size(180, 46);
             btnAddBloc.TabIndex = 0;
             btnAddBloc.Values.DropDownArrowColor = Color.Empty;
-            btnAddBloc.Values.Text = "Ajouter un Bloc";
+            btnAddBloc.Values.Text = "◻ Ajouter un Bloc";
+            btnAddBloc.Values.UACShieldIconSize = UACShieldIconSize.Small;
             btnAddBloc.Click += btnAddBloc_Click;
             // 
             // btnCreerJalon
@@ -91,16 +92,15 @@ namespace PlanAthena.View.TaskManager
             btnCreerJalon.Name = "btnCreerJalon";
             btnCreerJalon.Size = new Size(180, 46);
             btnCreerJalon.TabIndex = 3;
-            //this.btnCreerJalon.Values.Image = global::PlanAthena.Properties.Resources.Jalon;
             btnCreerJalon.Values.DropDownArrowColor = Color.Empty;
-            btnCreerJalon.Values.Text = "Créer Jalon";
+            btnCreerJalon.Values.Text = " ◇ Créer Jalon";
+            btnCreerJalon.Values.UACShieldIconSize = UACShieldIconSize.Medium;
             btnCreerJalon.Click += btnCreerJalon_Click;
             // 
             // CreationToolboxView
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            BackgroundImage = Properties.Resources.Jalon;
             Controls.Add(panelMain);
             Margin = new Padding(4, 3, 4, 3);
             Name = "CreationToolboxView";
@@ -118,6 +118,6 @@ namespace PlanAthena.View.TaskManager
         private KryptonButton btnAddBloc;
         private TableLayoutPanel panelDynamicButtons;
         private KryptonHeader headerMetiers;
-        private KryptonButton btnCreerJalon; // <-- NOUVEAU
+        private KryptonButton btnCreerJalon;
     }
 }

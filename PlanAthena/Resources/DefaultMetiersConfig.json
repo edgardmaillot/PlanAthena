@@ -4,7 +4,7 @@
     "Nom": "Terrassier",
     "PrerequisMetierIds": "",
     "CouleurHex": "#808040",
-    "Pictogram": "Terrassier_Icon",
+    "Pictogram": "⛏",
     "Phases": "GrosOeuvre"
   },
   {
@@ -12,7 +12,7 @@
     "Nom": "Maçon",
     "PrerequisMetierIds": "M001",
     "CouleurHex": "Gray",
-    "Pictogram": "build",
+    "Pictogram": "⛪",
     "Phases": "GrosOeuvre, SecondOeuvre"
   },
   {
@@ -20,7 +20,7 @@
     "Nom": "Charpentier",
     "PrerequisMetierIds": "M001,M002",
     "CouleurHex": "#C88214",
-    "Pictogram": "Charpentier_Icon",
+    "Pictogram": "⇈",
     "Phases": "GrosOeuvre, SecondOeuvre"
   },
   {
@@ -28,7 +28,7 @@
     "Nom": "Couvreur",
     "PrerequisMetierIds": "M003",
     "CouleurHex": "#C88214",
-    "Pictogram": "Couvreur_Icon",
+    "Pictogram": "⛺",
     "Phases": "GrosOeuvre, SecondOeuvre"
   },
   {
@@ -36,7 +36,7 @@
     "Nom": "Facadier",
     "PrerequisMetierIds": "M002",
     "CouleurHex": "#BAE1FF",
-    "Pictogram": "Facadier_Icon",
+    "Pictogram": "▤",
     "Phases": "GrosOeuvre, SecondOeuvre"
   },
   {
@@ -44,7 +44,7 @@
     "Nom": "Canaliseur",
     "PrerequisMetierIds": "M001",
     "CouleurHex": "#80FFFF",
-    "Pictogram": "\uE276",
+    "Pictogram": "⛲",
     "Phases": "GrosOeuvre, SecondOeuvre"
   },
   {
@@ -52,7 +52,7 @@
     "Nom": "Menuisier",
     "PrerequisMetierIds": "M002",
     "CouleurHex": "#C88214",
-    "Pictogram": "Menuisier_Icon",
+    "Pictogram": "⛩",
     "Phases": "SecondOeuvre, Finition"
   },
   {
@@ -60,7 +60,7 @@
     "Nom": "Plombier",
     "PrerequisMetierIds": "M002",
     "CouleurHex": "#80FFFF",
-    "Pictogram": "\uE278",
+    "Pictogram": "⛲",
     "Phases": "SecondOeuvre, Finition"
   },
   {
@@ -68,7 +68,7 @@
     "Nom": "Electricien",
     "PrerequisMetierIds": "M002",
     "CouleurHex": "Red",
-    "Pictogram": "Electricien_Icon",
+    "Pictogram": "⚡",
     "Phases": "SecondOeuvre, Finition"
   },
   {
@@ -76,7 +76,7 @@
     "Nom": "Chauffagiste",
     "PrerequisMetierIds": "M002",
     "CouleurHex": "#A6E3E9",
-    "Pictogram": "Chauffagiste_Icon",
+    "Pictogram": "❄",
     "Phases": "SecondOeuvre, Finition"
   },
   {
@@ -84,7 +84,7 @@
     "Nom": "Plaquiste",
     "PrerequisMetierIds": "M008,M009",
     "CouleurHex": "#80FF80",
-    "Pictogram": "Plaquiste_Icon",
+    "Pictogram": "▥",
     "Phases": "SecondOeuvre, Finition"
   },
   {
@@ -92,7 +92,7 @@
     "Nom": "Peintre",
     "PrerequisMetierIds": "M011",
     "CouleurHex": "Lime",
-    "Pictogram": "Peintre_Icon",
+    "Pictogram": "✎",
     "Phases": "SecondOeuvre, Finition"
   },
   {
@@ -100,7 +100,7 @@
     "Nom": "Carreleur",
     "PrerequisMetierIds": "M012",
     "CouleurHex": "#00FF96",
-    "Pictogram": "Carreleur_Icon",
+    "Pictogram": "▦",
     "Phases": "SecondOeuvre, Finition"
   },
   {
@@ -108,7 +108,7 @@
     "Nom": "Moquetiste",
     "PrerequisMetierIds": "M013",
     "CouleurHex": "#8080FF",
-    "Pictogram": "Moquetiste_Icon",
+    "Pictogram": "▧",
     "Phases": "SecondOeuvre, Finition"
   },
   {
@@ -116,7 +116,7 @@
     "Nom": "Manoeuvre",
     "PrerequisMetierIds": "",
     "CouleurHex": "Silver",
-    "Pictogram": "Manoeuvre_Icon",
+    "Pictogram": "♲",
     "Phases": "GrosOeuvre, SecondOeuvre, Finition"
   }
 ]

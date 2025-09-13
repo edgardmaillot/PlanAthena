@@ -1,3 +1,6 @@
+// Fichier destiné à disparaitre
+// sera remplacé par le nouveau service d'import
+
 using Krypton.Toolkit;
 using System.Data;
 using System.Text;

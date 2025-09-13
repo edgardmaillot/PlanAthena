@@ -103,6 +103,16 @@ namespace PlanAthena.Properties {
         /// <summary>
         ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap ic_Instructions {
+            get {
+                object obj = ResourceManager.GetObject("ic_Instructions", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Ic_Planning {
             get {
                 object obj = ResourceManager.GetObject("Ic_Planning", resourceCulture);
@@ -123,6 +133,26 @@ namespace PlanAthena.Properties {
         /// <summary>
         ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Import_Ouvriers {
+            get {
+                object obj = ResourceManager.GetObject("Import_Ouvriers", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Import_Task {
+            get {
+                object obj = ResourceManager.GetObject("Import_Task", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Jalon {
             get {
                 object obj = ResourceManager.GetObject("Jalon", resourceCulture);
@@ -136,6 +166,16 @@ namespace PlanAthena.Properties {
         internal static System.Drawing.Bitmap office_layout_example_1 {
             get {
                 object obj = ResourceManager.GetObject("office-layout-example-1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap rainy {
+            get {
+                object obj = ResourceManager.GetObject("rainy", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

@@ -1,0 +1,45 @@
+@startuml
+'---------------------------------
+' Titre et Configuration
+'---------------------------------
+title Diagramme simplifié
+autonumber
+
+actor Utilisateur
+
+sequenceDiagram
+    participant UI as Interface
+    participant O as Orchestrator
+    participant W1 as Wizard P1 (Extraction)
+    participant W2 as Wizard P2 (Transformation - Optionnel)
+    participant W3 as Wizard P3 (Validation)
+    participant VMS as ValueMappingService
+    participant IS as ImportService
+
+    UI->>O: LancerWizardImport("Ouvriers", filePath)
+    
+    %% Étape 1: Extraction %%
+    O->>VMS: SuggererMappings(champsOuvrier, entetesCsv)
+    VMS-->>O: Mappings Suggérés
+    O->>W1: Initialize(configExtraction)
+    W1->>O: ColumnMappings + DefaultValues
+    O->>VMS: LearnTranslation(mappingsManuels)
+
+    %% Étape 2: Transformation (si nécessaire) %%
+    alt Import nécessite un mapping de valeurs (ex: métiers)
+        O->>O: Préparer configTransformation
+        O->>W2: Initialize(configTransformation)
+        W2->>O: ValueMappings
+        O->>VMS: LearnTranslation(mappingsValeurs)
+    end
+    
+    %% Étape 3: Validation %%
+    O->>O: TransformerDonneesBrutes()
+    Note right of O: Sépare les données valides des rejets
+    O->>W3: Initialize(resultatTransformation)
+    W3->>O: Validation Finale
+    
+    %% Chargement %%
+    O->>IS: ImporterOuvriers(donneesValides)
+    end
+@enduml

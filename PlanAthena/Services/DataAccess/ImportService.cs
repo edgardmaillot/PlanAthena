@@ -5,6 +5,7 @@ using PlanAthena.Data;
 using PlanAthena.Interfaces;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
+using PlanAthena.Services.DTOs.ImportExport;
 using PlanAthena.Services.Usecases;
 using PlanAthena.View.Utils;
 using System.Diagnostics;
@@ -88,6 +89,78 @@ namespace PlanAthena.Services.DataAccess
 
         #region Méthodes Privées de l'Import de Tâches
 
+
+        public ImportResult ImporterTaches(TachesImportPlan plan, string lotIdCible, bool remplacerExistants)
+        {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var warnings = new List<string>();
+
+            try
+            {
+                var lot = _projetService.ObtenirLotParId(lotIdCible);
+                if (lot == null) return ImportResult.Echec($"Le lot cible '{lotIdCible}' n'a pas été trouvé.");
+
+                if (remplacerExistants)
+                {
+                    var tachesASupprimer = _taskManagerService.ObtenirToutesLesTaches(lotId: lotIdCible);
+                    foreach (var tache in tachesASupprimer) _taskManagerService.SupprimerTache(tache.TacheId);
+
+                    var blocsASupprimer = _projetService.ObtenirBlocsParLot(lotIdCible);
+                    foreach (var bloc in blocsASupprimer) _projetService.SupprimerBloc(bloc.BlocId);
+                }
+
+                var tempBlocIdToRealBlocIdMap = new Dictionary<string, string>();
+
+                // Étape 1: Créer les blocs et mapper les IDs temporaires aux IDs réels
+                foreach (var blocTemp in plan.NouveauxBlocs)
+                {
+                    var blocExistant = _projetService.ObtenirBlocsParLot(lotIdCible)
+                                                .FirstOrDefault(b => b.Nom.Equals(blocTemp.Nom, StringComparison.OrdinalIgnoreCase));
+
+                    Bloc blocReel = blocExistant ?? _projetService.CreerBloc(lotIdCible, blocTemp.Nom, blocTemp.CapaciteMaxOuvriers);
+
+                    tempBlocIdToRealBlocIdMap[blocTemp.BlocId] = blocReel.BlocId;
+                }
+
+                // Étape 2: Créer les tâches en utilisant les vrais IDs de blocs
+                var tachesCrees = new List<Tache>();
+                foreach (var tacheTemp in plan.NouvellesTaches)
+                {
+                    if (!tempBlocIdToRealBlocIdMap.TryGetValue(tacheTemp.BlocId, out string realBlocId))
+                    {
+                        warnings.Add($"Le bloc '{tacheTemp.BlocId.Replace("TEMP_", "")}' pour la tâche '{tacheTemp.TacheNom}' n'a pas pu être créé/trouvé. Tâche ignorée.");
+                        continue;
+                    }
+
+                    // Mettre à jour les propriétés avec les vrais IDs avant la création
+                    tacheTemp.BlocId = realBlocId;
+                    tacheTemp.LotId = lotIdCible;
+
+                    var tacheCree = _taskManagerService.CreerTache(tacheTemp.LotId, tacheTemp.BlocId, tacheTemp.TacheNom, tacheTemp.HeuresHommeEstimees);
+
+                    // Stocker les autres propriétés
+                    tacheCree.IdImporte = tacheTemp.IdImporte;
+                    tacheCree.Dependencies = tacheTemp.Dependencies;
+                    tacheCree.ExclusionsDependances = tacheTemp.ExclusionsDependances;
+                    tacheCree.Type = tacheTemp.Type;
+                    tacheCree.MetierId = tacheTemp.MetierId;
+
+                    tachesCrees.Add(tacheCree);
+                }
+
+                // Étape 3: Re-mapper les dépendances maintenant que toutes les tâches ont de vrais IDs
+                var remappingWarnings = RemapperDependancesDesTaches(tachesCrees);
+                warnings.AddRange(remappingWarnings);
+
+                stopwatch.Stop();
+                return ImportResult.Succes(tachesCrees.Count, 1, tempBlocIdToRealBlocIdMap.Count, warnings, stopwatch.Elapsed);
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                return ImportResult.Echec($"Erreur lors du chargement des tâches : {ex.Message}");
+            }
+        }
         private (int nbTaches, int nbBlocs, List<Tache> importedTasks, List<string> warnings) ImporterDonneesInitialTaches(
             string filePath, string lotIdCible, ImportMappingConfiguration mappingConfig)
         {
@@ -336,7 +409,7 @@ namespace PlanAthena.Services.DataAccess
                 return ImportResult.Echec($"Erreur lors du chargement des données : {ex.Message}");
             }
         }
-        public string DetectCsvDelimiter(string filePath)
+        public virtual string DetectCsvDelimiter(string filePath)
         {
             var delimiters = new[] { ';', ',', '\t' };
             string firstLine = File.ReadLines(filePath).FirstOrDefault();

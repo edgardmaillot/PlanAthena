@@ -1,4 +1,4 @@
-﻿Structure du Projet - GÃ©nÃ©rÃ© le 09/08/2025 16:57:11
+﻿Structure du Projet - GÃ©nÃ©rÃ© le 09/11/2025 22:59:40
 D:.
 
     +--- Data
@@ -23,18 +23,24 @@ D:.
             Settings.settings
     +--- Resources
             Capture d'écran 2025-07-29 160101.png
+            cartouche.png
+            cloudy.png
             DefaultMetiersConfig.json
             Etage1GO.jpg
             Etage1SE.jpg
             Etage2GO.jpg
             file.txt
+            Google_AI_Studio_2025-09-08T17_07_04.635Z.png
             Ic_ac_unit_24.png
             Ic_air_24.png
             Ic_aq_indoor_24.png
             Ic_brick_24.png
+            Ic_Budget.png
+            Ic_calendar.png
             Ic_carpenter_24.png
             Ic_climate_mini_24.png
             Ic_construction_24.png
+            Ic_Danger_24.png
             Ic_device_thermostat_24.png
             Ic_faucet_24.png
             Ic_fire_extinguisher_24.png
@@ -42,6 +48,8 @@ D:.
             Ic_garden_cart_24.png
             Ic_handyman_24.png
             Ic_heat_pump_24.png
+            ic_Instructions.png
+            Ic_KPI_24.png
             Ic_paint_24.png
             Ic_plumbing_24.png
             Ic_power_24.png
@@ -49,12 +57,18 @@ D:.
             Ic_roofing_24.png
             Ic_speed_camera_24.png
             Ic_valve_24.png
+            Ic_worker.png
+            Import_Ouvriers.png
+            Import_Task.png
             Jalon.jpg
             MaterialSymbolsOutlined.ttf
             office-layout-example-1.jpg
             PlanBoutique.jpg
             PlanBoutiqueGO.jpg
             PlanBoutiqueSE.jpg
+            rainy.png
+            stormy.png
+            sunny.png
             Tache.jpg
             Tache.png
     +--- Services
@@ -88,6 +102,10 @@ D:.
         +--- DTOs
             +--- ImportExport
                     ExportDataProjetDto.cs
+                    ImportP1Config.cs
+                    ImportP1Result.cs
+                    ImportP2Dtos.cs
+                    ImportP3Dtos.cs
                     OuvrierCsvRecord.cs
                     OuvrierExportDto.cs
                     TacheExportDto.cs
@@ -98,6 +116,7 @@ D:.
             +--- TaskManager
                     PlanningInfoPourTache.cs
             +--- UseCases
+                    PilotageDTOs.cs
                     PlanificationRunParams.cs
         +--- Export
                 GanttExportService.cs
@@ -118,6 +137,7 @@ D:.
             DependanceBuilder.cs
             IdGeneratorService.cs
             PlanningConsolidationService.cs
+            ValueMappingService.cs
     +--- View
         +--- Dashboard
                 DashboardView.cs
@@ -169,6 +189,10 @@ D:.
                     PertDiagramControl.resx
                     PertDiagramSettings.cs
                     PertNodeBuilder.cs
+            +--- Utilitaires
+                    DateTimePicker.cs
+                    DateTimePicker.Designer.cs
+                    DateTimePicker.resx
             +--- WebPertDiagram
                     AffichagePert.cs
                     AffichagePert.Designer.cs
@@ -189,6 +213,7 @@ D:.
                 TaskManagerView.Designer.cs
                 TaskManagerView.resx
         +--- Utils
+                DoubleBufferedTableLayoutPanel.cs
                 ImportMapOuvrierP1.cs
                 ImportMapOuvrierP1.Designer.cs
                 ImportMapOuvrierP1.resx
@@ -198,6 +223,15 @@ D:.
                 ImportMappingView.cs
                 ImportMappingView.Designer.cs
                 ImportMappingView.resx
+                ImportP1.cs
+                ImportP1.Designer.cs
+                ImportP1.resx
+                ImportP2.cs
+                ImportP2.Designer.cs
+                ImportP2.resx
+                ImportP3.cs
+                ImportP3.Designer.cs
+                ImportP3.resx
                 ImportWarningsView.cs
                 ImportWarningsView.Designer.cs
                 ImportWarningsView.resx

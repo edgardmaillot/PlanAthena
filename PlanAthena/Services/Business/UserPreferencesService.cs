@@ -10,15 +10,13 @@ namespace PlanAthena.Services.Business
     public class UserPreferencesService
     {
         private readonly CheminsPrefereService _cheminsService;
-        // --- CHANGEMENT: Remplacement de la dépendance ---
         private readonly ProjetServiceDataAccess _dataAccess;
 
         public UserPreferencesService(
             CheminsPrefereService cheminsService,
-            ProjetServiceDataAccess dataAccess) // CHANGEMENT
+            ProjetServiceDataAccess dataAccess)
         {
             _cheminsService = cheminsService;
-            // --- CHANGEMENT ---
             _dataAccess = dataAccess;
         }
 
@@ -84,7 +82,7 @@ namespace PlanAthena.Services.Business
         /// Charge le dictionnaire des correspondances depuis un fichier de configuration utilisateur.
         /// </summary>
         /// <returns>Un dictionnaire des correspondances. Retourne un dictionnaire vide si le fichier n'existe pas ou est invalide.</returns>
-        public Dictionary<string, string> ChargerDictionnaire()
+        public virtual Dictionary<string, string> ChargerDictionnaire()
         {
             // Logique pour lire un fichier JSON/XML et désérialiser le dictionnaire.
             // Exemple simplifié :
@@ -112,7 +110,7 @@ namespace PlanAthena.Services.Business
         /// Sauvegarde le dictionnaire complet des correspondances dans un fichier de configuration utilisateur.
         /// </summary>
         /// <param name="dictionnaire">Le dictionnaire à sauvegarder.</param>
-        public void SauverDictionnaire(Dictionary<string, string> dictionnaire)
+        public virtual void SauverDictionnaire(Dictionary<string, string> dictionnaire)
         {
             // Logique pour sérialiser le dictionnaire en JSON/XML et l'écrire dans un fichier.
             // Exemple simplifié :
