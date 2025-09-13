@@ -165,6 +165,9 @@ namespace PlanAthena.View.TaskManager
 
             blocDetailView1.BlocChanged += OnBlocChanged;
 
+            zoomTrackBar.ValueChanged += zoomTrackBar_ValueChanged;
+            pertDiagramControl1.ZoomChanged += PertDiagramControl1_ZoomChanged;
+
             btnPlanificator.Click += (s, e) => NavigateToViewRequested?.Invoke(this, typeof(PlanificatorView));
         }
 
@@ -503,12 +506,32 @@ namespace PlanAthena.View.TaskManager
         #endregion
 
         #region Actions de la barre d'outils
+        private void PertDiagramControl1_ZoomChanged(object sender, PertDiagram.ZoomChangedEventArgs e)
+        {
+            // Convertir le facteur de zoom (ex: 1.5) en pourcentage entier (ex: 150)
+            int newTrackBarValue = (int)Math.Round(e.ZoomFactor * 100.0);
 
+            // S'assurer que la valeur reste dans les limites du TrackBar
+            newTrackBarValue = Math.Max(zoomTrackBar.Minimum, Math.Min(zoomTrackBar.Maximum, newTrackBarValue));
+
+            // Mettre à jour la valeur du TrackBar.
+            // Important : il faut éviter de déclencher une boucle infinie d'événements.
+            // On met à jour la valeur du trackbar SEULEMENT si elle est différente.
+            if (zoomTrackBar.Value != newTrackBarValue)
+            {
+                zoomTrackBar.Value = newTrackBarValue;
+            }
+        }
         private void btnAdjustView_Click(object sender, EventArgs e)
         {
             pertDiagramControl1.ZoomToutAjuster();
+            zoomTrackBar.Value = 100;
         }
-
+        private void zoomTrackBar_ValueChanged(object sender, EventArgs e)
+        {
+            // Appelle la méthode publique du contrôle enfant avec la valeur actuelle du trackbar.
+            pertDiagramControl1.ZoomModifier(zoomTrackBar.Value);
+        }
         private void btnPrint_Click(object sender, EventArgs e)
         {
             pertDiagramControl1.ImprimerDiagramme();

@@ -12,7 +12,7 @@
     "Nom": "Maçon",
     "PrerequisMetierIds": "M001",
     "CouleurHex": "Gray",
-    "Pictogram": "⛪",
+    "Pictogram": "🏠",
     "Phases": "GrosOeuvre, SecondOeuvre"
   },
   {
@@ -20,7 +20,7 @@
     "Nom": "Charpentier",
     "PrerequisMetierIds": "M001,M002",
     "CouleurHex": "#C88214",
-    "Pictogram": "⇈",
+    "Pictogram": "⤊",
     "Phases": "GrosOeuvre, SecondOeuvre"
   },
   {
@@ -44,7 +44,7 @@
     "Nom": "Canaliseur",
     "PrerequisMetierIds": "M001",
     "CouleurHex": "#80FFFF",
-    "Pictogram": "⛲",
+    "Pictogram": "💧",
     "Phases": "GrosOeuvre, SecondOeuvre"
   },
   {
@@ -52,7 +52,7 @@
     "Nom": "Menuisier",
     "PrerequisMetierIds": "M002",
     "CouleurHex": "#C88214",
-    "Pictogram": "⛩",
+    "Pictogram": "🚪",
     "Phases": "SecondOeuvre, Finition"
   },
   {
@@ -92,7 +92,7 @@
     "Nom": "Peintre",
     "PrerequisMetierIds": "M011",
     "CouleurHex": "Lime",
-    "Pictogram": "✎",
+    "Pictogram": "🎨",
     "Phases": "SecondOeuvre, Finition"
   },
   {

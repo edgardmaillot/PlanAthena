@@ -22,7 +22,15 @@ namespace PlanAthena.View.TaskManager.PertDiagram
         private DependanceBuilder _dependanceBuilder;
         private List<Tache> _taches = new List<Tache>();
 
-        // Logique de Pan réintroduite
+        // Zoom management
+        public double ZoomFacteur => _viewer?.ZoomF ?? 1.0;
+        private double _lastKnownZoomFactor = 1.0;
+
+        // Tooltip management 
+        private System.Windows.Forms.Timer tooltipTimer;
+        private Node _hoveredNode;
+
+        // Logique de Pan 
         private bool _isPanning = false;
 
         private PrintDocument _printDocument;
@@ -38,13 +46,15 @@ namespace PlanAthena.View.TaskManager.PertDiagram
 
         #endregion
 
-        public double ZoomFacteur => _viewer?.ZoomF ?? 1.0;
+        
 
         public PertDiagramControl()
         {
             InitializeComponent();
             _viewer = new GViewer { Dock = DockStyle.Fill };
             Controls.Add(_viewer);
+            InitializeTooltipHandling();
+
         }
 
         public void Initialize(ProjetService projetService, RessourceService ressourceService, DependanceBuilder dependanceBuilder, PertDiagramSettings settings)
@@ -71,6 +81,9 @@ namespace PlanAthena.View.TaskManager.PertDiagram
             _viewer.MouseDoubleClick += Viewer_MouseDoubleClick;
             _viewer.MouseDown += Viewer_MouseDown;
             _viewer.MouseUp += Viewer_MouseUp;
+            _viewer.ViewChangeEvent += Viewer_ViewChangeEvent;
+            _viewer.MouseWheel += Viewer_MouseWheel;
+            _lastKnownZoomFactor = _viewer.ZoomF;
         }
 
         public void ChargerDonnees(List<Tache> taches, string filtreRecherche = "")
@@ -79,7 +92,20 @@ namespace PlanAthena.View.TaskManager.PertDiagram
             GenererDiagramme(filtreRecherche);
         }
 
-        #region Gestionnaires d'Événements de Souris (Logique de Pan Restaurée)
+        #region Gestionnaires d'Événements
+        private void Viewer_ViewChangeEvent(object sender, EventArgs e)
+        {
+            // Cet événement est déclenché par les changements programmatiques.
+            NotifyIfZoomChanged();
+        }
+
+        private void Viewer_MouseWheel(object sender, MouseEventArgs e)
+        {
+            // Le GViewer a déjà traité le zoom de la molette en interne.
+            // Notre seule responsabilité est de notifier le reste de l'application
+            // que le zoom a changé.
+            NotifyIfZoomChanged();
+        }
 
         private void Viewer_MouseDown(object sender, MouseEventArgs e)
         {
@@ -252,11 +278,29 @@ namespace PlanAthena.View.TaskManager.PertDiagram
             catch (Exception ex) { MessageBox.Show($"Erreur impression:\n{ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
+        public void ZoomModifier(int zoomPercentage)
+        {
+            if (_viewer == null) return;
+
+            // On s'assure que la valeur est dans des limites raisonnables pour éviter les erreurs.
+            // Le TrackBar le fait déjà, mais c'est une bonne pratique.
+            double newZoomFactor = Math.Max(0.1, zoomPercentage / 100.0);
+
+            _viewer.ZoomF = newZoomFactor;
+            _viewer.Invalidate(); // Force le redessin du diagramme avec le nouveau zoom
+
+            // On notifie les abonnés que le zoom a changé
+            ZoomChanged?.Invoke(this, new ZoomChangedEventArgs(newZoomFactor));
+        }
+
         public void ZoomToutAjuster()
         {
             if (_viewer?.Graph == null) return;
             _viewer.ZoomF = 1.0;
             _viewer.Invalidate();
+
+            // On notifie aussi ici
+            ZoomChanged?.Invoke(this, new ZoomChangedEventArgs(1.0));
         }
 
         #endregion
@@ -324,7 +368,7 @@ namespace PlanAthena.View.TaskManager.PertDiagram
             cluster.Attr.LineWidth = _settings.ClusterLineWidth;
             cluster.Label.FontColor = _settings.ClusterFontColor;
             cluster.Label.FontSize = (int)_settings.ClusterFontSize;
-            cluster.Label.FontName = "Segoe UI Emoji";
+            cluster.Label.FontName = "Segoe UI Symbol";
 
             foreach (var tache in tachesDuBloc.OrderBy(t => t.TacheId))
             {
@@ -357,15 +401,106 @@ namespace PlanAthena.View.TaskManager.PertDiagram
             var node = _graph.AddNode("info");
             node.LabelText = message;
             node.Attr.FillColor = Microsoft.Msagl.Drawing.Color.LightGray;
-            node.Attr.Shape = Shape.Box;
+            node.Attr.Shape = Shape.Plaintext;
             node.Label.FontSize = 14;
         }
 
         #endregion
+
+        #region Tooltips
+        private void InitializeTooltipHandling()
+        {
+            // Le GViewer est le contrôle qui reçoit les clics et survols
+            _viewer.ObjectUnderMouseCursorChanged += GViewer_ObjectUnderMouseCursorChanged;
+
+            // Le timer évite que le tooltip n'apparaisse et ne disparaisse instantanément
+            tooltipTimer = new System.Windows.Forms.Timer();
+            tooltipTimer.Interval = 500; // Délai en ms avant d'afficher le tooltip
+            tooltipTimer.Tick += TooltipTimer_Tick;
+        }
+
+        private void GViewer_ObjectUnderMouseCursorChanged(object sender, ObjectUnderMouseCursorChangedEventArgs e)
+        {
+            // Arrêter le timer précédent pour éviter les affichages intempestifs
+            tooltipTimer.Stop();
+            nodeTooltip.Hide(_viewer); // Cacher l'ancien tooltip immédiatement
+
+            // Récupérer le nœud sous le curseur
+            _hoveredNode = e.NewObject?.DrawingObject as Node;
+
+            // Si on survole bien un nœud (et pas une arête ou le vide)
+            if (_hoveredNode != null)
+            {
+                // Redémarrer le timer. Le tooltip s'affichera si la souris reste assez longtemps.
+                tooltipTimer.Start();
+            }
+        }
+
+        private void TooltipTimer_Tick(object sender, EventArgs e)
+        {
+            // Le timer s'est écoulé, on peut afficher le tooltip
+            tooltipTimer.Stop();
+
+            if (_hoveredNode != null && _hoveredNode.UserData is Tache tache)
+            {
+                // Construire le texte du tooltip à partir des données de la tâche
+                string tooltipText = FormatTooltipText(tache);
+
+                // Afficher le tooltip. On l'associe au gViewer.
+                nodeTooltip.Show(tooltipText, _viewer, _viewer.PointToClient(Cursor.Position), nodeTooltip.AutoPopDelay);
+            }
+        }
+
+        private string FormatTooltipText(Tache tache)
+        {
+            // Ici, vous avez accès à l'objet Tache complet !
+            // Construisez la chaîne de caractères que vous voulez afficher.
+
+            // Exemple simple :
+            // return $"ID: {tache.TacheId}\nNom: {tache.TacheNom}\nStatut: {tache.Statut}";
+
+            // Exemple plus riche :
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"Tâche : {tache.TacheNom}");
+            sb.AppendLine($"ID complet : {tache.TacheId}");
+            sb.AppendLine($"────────────────────");
+            sb.AppendLine($"Statut : {tache.Statut}");
+            sb.AppendLine($"Durée estimée : {tache.HeuresHommeEstimees}h");
+
+            var metier = _ressourceService.GetMetierById(tache.MetierId); // Assurez-vous d'avoir accès à votre service
+            if (metier != null)
+            {
+                sb.AppendLine($"Métier : {metier.Nom}");
+            }
+
+            if (!string.IsNullOrEmpty(tache.Dependencies))
+            {
+                sb.AppendLine($"Dépendances : {tache.Dependencies.Split(',').Length}");
+            }
+
+            return sb.ToString();
+        }
+
+        #endregion
+
+
+        //HelpER: This method checks if the zoom level has changed and notifies subscribers if it has.
+        private void NotifyIfZoomChanged()
+        {
+            double currentZoom = _viewer.ZoomF;
+
+            // Utiliser une petite tolérance pour les comparaisons de double
+            if (Math.Abs(currentZoom - _lastKnownZoomFactor) > 0.001)
+            {
+                _lastKnownZoomFactor = currentZoom;
+                // Déclencher notre événement personnalisé avec la nouvelle valeur
+                ZoomChanged?.Invoke(this, new ZoomChangedEventArgs(currentZoom));
+            }
+        }
     }
 
     #region Classes d'Arguments d'Événements
-    // NOUVEL ENUM pour clarifier l'intention
+    
     public enum TacheInteractionType
     {
         SingleClick,
@@ -375,7 +510,7 @@ namespace PlanAthena.View.TaskManager.PertDiagram
     public class TacheSelectedEventArgs : EventArgs
     {
         public Tache Tache { get; }
-        public TacheInteractionType InteractionType { get; } // NOUVELLE PROPRIÉTÉ
+        public TacheInteractionType InteractionType { get; } 
 
         public TacheSelectedEventArgs(Tache tache, TacheInteractionType interactionType = TacheInteractionType.SingleClick)
         {
