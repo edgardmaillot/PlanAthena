@@ -1,19 +1,15 @@
-// Fichier: PlanAthena/Services/Business/RessourceService.cs
-// Version: 0.4.4 (Refactorisation Finale)
+// Fichier: PlanAthena/Services/Business/RessourceService.cs V0.4.8
+
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
 using PlanAthena.Services.Business.DTOs;
 using QuikGraph;
 using QuikGraph.Algorithms;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
 using System.Text.Json;
 
 namespace PlanAthena.Services.Business
 {
+    public delegate bool MetierEstUtilisePredicate(string metierId);
     public class RessourceService
     {
         private readonly Dictionary<string, Metier> _metiers = new();
@@ -21,25 +17,27 @@ namespace PlanAthena.Services.Business
         private readonly IIdGeneratorService _idGenerator;
 
 
+
         public RessourceService(IIdGeneratorService idGenerator)
         {
             _idGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
+            //ChargerMetiersParDefaut();
         }
 
         #region Cycle de vie des Ressources
 
-        public void ChargerRessources(List<Metier> metiers, List<Ouvrier> ouvriers)
+        public virtual void ChargerRessources(List<Metier> metiers, List<Ouvrier> ouvriers)
         {
-            ViderMetiers();
-            ViderOuvriers();
+            //ViderMetiers();
+            //ViderOuvriers();
             metiers?.ForEach(m => _metiers.TryAdd(m.MetierId, m));
             ouvriers?.ForEach(o => _ouvriers.TryAdd(o.OuvrierId, o));
         }
 
-        public void ChargerMetiersParDefaut()
+        public virtual void ChargerMetiersParDefaut()
         {
             // Cette méthode commence par vider pour assurer un état prédictible
-            ViderMetiers();
+            //ViderMetiers();
             try
             {
                 string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "DefaultMetiersConfig.json");
@@ -58,14 +56,14 @@ namespace PlanAthena.Services.Business
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Erreur chargement métiers par défaut: {ex.Message}"); }
         }
 
-        public void ViderMetiers() => _metiers.Clear();
-        public void ViderOuvriers() => _ouvriers.Clear();
+        public virtual void ViderMetiers() => _metiers.Clear();
+        public virtual void ViderOuvriers() => _ouvriers.Clear();
 
         #endregion
 
         #region Gestion des Métiers
 
-        public Metier CreerMetier(string nom = "Nouveau Métier", ChantierPhase phases = ChantierPhase.SecondOeuvre)
+        public virtual Metier CreerMetier(string nom = "Nouveau Métier", ChantierPhase phases = ChantierPhase.SecondOeuvre)
         {
             if (string.IsNullOrWhiteSpace(nom)) throw new ArgumentException("Le nom du métier ne peut pas être vide.", nameof(nom));
             var nouveauMetier = new Metier
@@ -78,7 +76,7 @@ namespace PlanAthena.Services.Business
             return nouveauMetier;
         }
 
-        public void ModifierMetier(Metier metierModifie)
+        public virtual void ModifierMetier(Metier metierModifie)
         {
             if (metierModifie == null) throw new ArgumentNullException(nameof(metierModifie));
             if (!_metiers.ContainsKey(metierModifie.MetierId)) throw new InvalidOperationException($"Le métier ID '{metierModifie.MetierId}' n'existe pas.");
@@ -86,40 +84,66 @@ namespace PlanAthena.Services.Business
             _metiers[metierModifie.MetierId] = metierModifie;
         }
 
-        public void SupprimerMetier(string metierId, ProjetService projetService)
+        public virtual void SupprimerMetier(string metierId)
         {
-            if (projetService == null)
-                throw new ArgumentNullException(nameof(projetService));
-            if (!_metiers.ContainsKey(metierId)) throw new InvalidOperationException($"Le métier ID '{metierId}' n'a pas été trouvé.");
-            if (projetService.ObtenirTachesParMetier(metierId).Any()) throw new InvalidOperationException("Impossible de supprimer le métier car il est utilisé par des tâches.");
+            if (_ouvriers.Values.Any(o => o.Competences.Any(c => c.MetierId == metierId)))
+                throw new InvalidOperationException("Impossible de supprimer le métier car il est assigné à des ouvriers.");
             _metiers.Remove(metierId);
-            foreach (var metier in _metiers.Values)
-            {
-                foreach (var phase in metier.PrerequisParPhase.Keys.ToList())
-                {
-                    metier.PrerequisParPhase[phase].RemoveAll(id => id == metierId);
-                }
-            }
         }
 
-        private void ValiderCircularite(Metier metier)
+
+        private void ValiderCircularite(Metier metierModifie)
         {
-            var graph = new AdjacencyGraph<string, Edge<string>>();
+            // Crée une liste à jour des métiers, incluant la modification en cours
             var tousLesMetiers = _metiers.Values.ToList();
-            var metierExistant = tousLesMetiers.FirstOrDefault(m => m.MetierId == metier.MetierId);
-            if (metierExistant != null) tousLesMetiers.Remove(metierExistant);
-            tousLesMetiers.Add(metier);
-            graph.AddVertexRange(tousLesMetiers.Select(m => m.MetierId));
-            foreach (var m in tousLesMetiers)
+            var metierExistant = tousLesMetiers.FirstOrDefault(m => m.MetierId == metierModifie.MetierId);
+            if (metierExistant != null)
             {
-                var prerequis = m.PrerequisParPhase?.Values.SelectMany(p => p).Distinct() ?? Enumerable.Empty<string>();
-                foreach (var prereqId in prerequis)
+                tousLesMetiers.Remove(metierExistant);
+            }
+            tousLesMetiers.Add(metierModifie);
+
+            // Obtenir toutes les phases possibles pour itérer dessus
+            var phasesAValider = Enum.GetValues(typeof(ChantierPhase))
+                                     .Cast<ChantierPhase>()
+                                     .Where(p => p != ChantierPhase.None);
+
+            // Itérer sur chaque phase et valider les dépendances de manière isolée
+            foreach (var phase in phasesAValider)
+            {
+                var graph = new AdjacencyGraph<string, Edge<string>>();
+
+                // N'ajouter au graphe que les métiers concernés par cette phase
+                var metiersDeLaPhase = tousLesMetiers.Where(m => m.Phases.HasFlag(phase)).ToList();
+                graph.AddVertexRange(metiersDeLaPhase.Select(m => m.MetierId));
+
+                foreach (var m in metiersDeLaPhase)
                 {
-                    if (graph.ContainsVertex(prereqId)) graph.AddEdge(new Edge<string>(prereqId, m.MetierId));
+                    // Récupérer les prérequis UNIQUEMENT pour la phase en cours de validation
+                    if (m.PrerequisParPhase.TryGetValue(phase, out var prerequisPourPhase))
+                    {
+                        foreach (var prereqId in prerequisPourPhase)
+                        {
+                            // S'assurer que le prérequis est aussi un métier de cette phase avant d'ajouter la dépendance
+                            if (graph.ContainsVertex(prereqId))
+                            {
+                                graph.AddEdge(new Edge<string>(prereqId, m.MetierId));
+                            }
+                        }
+                    }
+                }
+
+                try
+                {
+                    // Tenter le tri topologique sur le graphe de la phase actuelle
+                    graph.TopologicalSort();
+                }
+                catch (NonAcyclicGraphException)
+                {
+                    // L'exception est plus précise : elle indique dans quelle phase se trouve le cycle
+                    throw new InvalidOperationException($"Dépendance circulaire détectée pour la phase '{phase}' impliquant le métier '{metierModifie.Nom}'.");
                 }
             }
-            try { graph.TopologicalSort(); }
-            catch (NonAcyclicGraphException) { throw new InvalidOperationException($"Dépendance circulaire détectée pour le métier '{metier.Nom}'."); }
         }
         /// <summary>
         /// Calcule et retourne la liste des métiers qu'un ouvrier ne possède pas encore.
@@ -128,7 +152,7 @@ namespace PlanAthena.Services.Business
         /// </summary>
         /// <param name="ouvrierId">L'ID de l'ouvrier concerné.</param>
         /// <returns>Une liste d'objets Metier que l'ouvrier peut apprendre.</returns>
-        public List<Metier> GetMetiersDisponiblesPourOuvrier(string ouvrierId)
+        public virtual List<Metier> GetMetiersDisponiblesPourOuvrier(string ouvrierId)
         {
             // Étape 1 : Valider l'entrée et récupérer l'ouvrier
             if (!_ouvriers.TryGetValue(ouvrierId, out var ouvrier))
@@ -150,7 +174,23 @@ namespace PlanAthena.Services.Business
 
             return metiersDisponibles;
         }
-        public List<Metier> GetAllMetiers() => _metiers.Values.OrderBy(m => m.Nom).ToList();
+        /// <summary>
+        /// Calcule et retourne un ensemble de tous les MetierId pour lesquels au moins un ouvrier possède la compétence.
+        /// Optimisé pour des vérifications rapides de type "existe-t-il une compétence pour ce métier ?".
+        /// </summary>
+        /// <returns>Un HashSet<string> contenant les IDs des métiers avec des compétences assignées.</returns>
+        public virtual HashSet<string> GetMetierIdsAvecCompetences()
+        {
+            // Utilise LINQ pour parcourir tous les ouvriers,
+            // aplatir (SelectMany) toutes leurs listes de compétences en une seule grande liste,
+            // extraire (Select) juste le MetierId de chaque compétence,
+            // et finalement, convertir le tout en un HashSet pour des performances optimales et une déduplication automatique.
+            return _ouvriers.Values
+                .SelectMany(ouvrier => ouvrier.Competences)
+                .Select(competence => competence.MetierId)
+                .ToHashSet();
+        }
+        public virtual List<Metier> GetAllMetiers() => _metiers.Values.OrderBy(m => m.Nom).ToList();
         public Metier GetMetierById(string id) => _metiers.GetValueOrDefault(id);
         public Color GetDisplayColorForMetier(string metierId)
         {
@@ -249,8 +289,8 @@ namespace PlanAthena.Services.Business
             competence.EstMetierPrincipal = true;
         }
 
-        public List<Ouvrier> GetAllOuvriers() => _ouvriers.Values.OrderBy(o => o.Nom).ThenBy(o => o.Prenom).ToList();
-        public Ouvrier GetOuvrierById(string id) => _ouvriers.GetValueOrDefault(id);
+        public virtual List<Ouvrier> GetAllOuvriers() => _ouvriers.Values.OrderBy(o => o.Nom).ThenBy(o => o.Prenom).ToList();
+        public virtual Ouvrier GetOuvrierById(string id) => _ouvriers.GetValueOrDefault(id);
 
         #endregion
     }

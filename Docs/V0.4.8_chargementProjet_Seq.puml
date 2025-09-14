@@ -1,0 +1,59 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam sequenceArrowColor #005588
+skinparam sequenceLifeLineBorderColor #007ACC
+skinparam sequenceParticipantBackgroundColor #DDEEFF
+skinparam shadowing false
+
+title Comportement v0.5.0 : Chargement d'un Projet
+
+actor "Utilisateur" as User
+participant "IHM" as UI
+participant "useCase: ProjectPersistenceUseCase" as UseCase
+participant "dataAccess: ProjetServiceDataAccess" as DA
+participant "projetService: ProjetService" as PS
+participant "ressourceService: RessourceService" as RS
+participant "taskManagerService: TaskManagerService" as TMS
+participant "planningService: PlanningService" as PlS
+
+User -> UI : Clique "Charger Projet"
+activate UI
+UI -> UseCase : ChargerProjetDepuisChemin(filePath)
+activate UseCase
+
+group Étape 1 : Lecture du Fichier
+    UseCase -> DA : Charger(filePath)
+    activate DA
+    DA --> UseCase : projetData
+    deactivate DA
+end
+
+group Étape 2 : Réinitialisation de l'État
+    UseCase -> PS : ViderProjet()
+    UseCase -> RS : ViderMetiers()
+    UseCase -> RS : ViderOuvriers()
+    UseCase -> TMS : ViderTaches()
+    UseCase -> PlS : ClearPlanning()
+end
+
+group Étape 3 : Distribution des Données
+    UseCase -> PS : ChargerProjet(projetData)
+    UseCase -> RS : ChargerRessources(projetData.Metiers, projetData.Ouvriers)
+    UseCase -> TMS : ChargerTaches(projetData.Taches)
+    alt Le projet contient un planning
+        UseCase -> PlS : UpdatePlanning(projetData.Planning, projetData.Configuration)
+    end
+end
+
+group Étape 4 : Synchronisation Finale
+    UseCase -> TMS : SynchroniserStatutsTaches()
+    note right of TMS: Calcule les statuts (EnCours, EnRetard...)\net enrichit les tâches avec les données du planning.
+end
+
+UseCase --> UI : retour (void)
+deactivate UseCase
+UI -> UI : Met à jour l'affichage
+deactivate UI
+
+@enduml

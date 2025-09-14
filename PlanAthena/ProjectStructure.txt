@@ -1,0 +1,252 @@
+﻿Structure du Projet - GÃ©nÃ©rÃ© le 09/11/2025 22:59:40
+D:.
+
+    +--- Data
+            AffectationOuvrier.cs
+            Bloc.cs
+            ChantierPhase.cs
+            Lot.cs
+            Metier.cs
+            Ouvrier.cs
+            ProjetData.cs
+            Statut.cs
+            Tache.cs
+            TypeActivite.cs
+    +--- Interfaces
+            IIdGeneratorService.cs
+    +--- Properties
+        +--- DataSources
+                PlanAthena.Data.Metier.datasource
+            Resources.Designer.cs
+            Resources.resx
+            Settings.Designer.cs
+            Settings.settings
+    +--- Resources
+            Capture d'écran 2025-07-29 160101.png
+            cartouche.png
+            cloudy.png
+            DefaultMetiersConfig.json
+            Etage1GO.jpg
+            Etage1SE.jpg
+            Etage2GO.jpg
+            file.txt
+            Google_AI_Studio_2025-09-08T17_07_04.635Z.png
+            Ic_ac_unit_24.png
+            Ic_air_24.png
+            Ic_aq_indoor_24.png
+            Ic_brick_24.png
+            Ic_Budget.png
+            Ic_calendar.png
+            Ic_carpenter_24.png
+            Ic_climate_mini_24.png
+            Ic_construction_24.png
+            Ic_Danger_24.png
+            Ic_device_thermostat_24.png
+            Ic_faucet_24.png
+            Ic_fire_extinguisher_24.png
+            Ic_foundation_24.png
+            Ic_garden_cart_24.png
+            Ic_handyman_24.png
+            Ic_heat_pump_24.png
+            ic_Instructions.png
+            Ic_KPI_24.png
+            Ic_paint_24.png
+            Ic_plumbing_24.png
+            Ic_power_24.png
+            Ic_roller_24.png
+            Ic_roofing_24.png
+            Ic_speed_camera_24.png
+            Ic_valve_24.png
+            Ic_worker.png
+            Import_Ouvriers.png
+            Import_Task.png
+            Jalon.jpg
+            MaterialSymbolsOutlined.ttf
+            office-layout-example-1.jpg
+            PlanBoutique.jpg
+            PlanBoutiqueGO.jpg
+            PlanBoutiqueSE.jpg
+            rainy.png
+            stormy.png
+            sunny.png
+            Tache.jpg
+            Tache.png
+    +--- Services
+        +--- Business
+            +--- DTOs
+                    AnalysisReport.cs
+                    ConfigurationPlanificationDTOs.cs
+                    ConsolidatedPlanning.cs
+                    ImportDTOs.cs
+                    JalonPlanifie.cs
+                    LogPlanningDtos.cs
+                    MetierDTOs.cs
+                    MetierTensionReport.cs
+                    PlanificationRunResult.cs
+                    PreparationResult.cs
+                    ProjetDTOs.cs
+                    SegmentDeTravail.cs
+                    UIDTOs.cs
+                PlanningService.cs
+                ProjetService.cs
+                RessourceService.cs
+                TaskManagerService.cs
+                UserPreferencesService.cs
+        +--- DataAccess
+                CsvDataService.cs
+                ExcelReader.cs
+                ExportService.cs
+                ImportService.cs
+                ProjetRepository.cs
+                ProjetServiceDataAccess.cs
+        +--- DTOs
+            +--- ImportExport
+                    ExportDataProjetDto.cs
+                    ImportP1Config.cs
+                    ImportP1Result.cs
+                    ImportP2Dtos.cs
+                    ImportP3Dtos.cs
+                    OuvrierCsvRecord.cs
+                    OuvrierExportDto.cs
+                    TacheExportDto.cs
+            +--- ProjectPersistence
+                    ProjetSummaryDto.cs
+            +--- Projet
+                    InformationsProjet.cs
+            +--- TaskManager
+                    PlanningInfoPourTache.cs
+            +--- UseCases
+                    PilotageDTOs.cs
+                    PlanificationRunParams.cs
+        +--- Export
+                GanttExportService.cs
+                PlanningExcelExportService.cs
+        +--- Infrastructure
+                CheminsPrefereService.cs
+        +--- Processing
+                DataTransformer.cs
+                GanttDto.cs
+                PreparationSolveurService.cs
+        +--- Usecases
+                ImportWizardOrchestrator.cs
+                PilotageProjetUseCase.cs
+                PlanificationOrchestrator.cs
+                ProjectPersistenceUseCase.cs
+    +--- Utilities
+            AnalysisService.cs
+            DependanceBuilder.cs
+            IdGeneratorService.cs
+            PlanningConsolidationService.cs
+            ValueMappingService.cs
+    +--- View
+        +--- Dashboard
+                DashboardView.cs
+                DashboardView.Designer.cs
+                DashboardView.resx
+        +--- Planificator
+                PlanificatorView.cs
+                PlanificatorView.Designer.cs
+                PlanificatorView.resx
+        +--- Ressources
+            +--- MetierDiagram
+                    MetierDiagramControl.cs
+                    MetierDiagramControl.Designer.cs
+                    MetierDiagramSettings.cs
+                    MetierNodeBuilder.cs
+                PrerequisMetierView.cs
+                PrerequisMetierView.Designer.cs
+                PrerequisMetierView.resx
+                RessourceMetierView.cs
+                RessourceMetierView.Designer.cs
+                RessourceMetierView.resx
+                RessourceOuvrierView.cs
+                RessourceOuvrierView.Designer.cs
+                RessourceOuvrierView.resx
+        +--- Structure
+                BlocDetailView.cs
+                BlocDetailView.Designer.cs
+                BlocDetailView.resx
+                LotDetailView.cs
+                LotDetailView.Designer.cs
+                LotDetailView.resx
+                ProjectStructureView.cs
+                ProjectStructureView.Designer.cs
+                ProjectStructureView.resx
+        +--- TaskManager
+            +--- Cockpit
+                    Cockpit.cs
+                    Cockpit.Designer.cs
+                    Cockpit.resx
+                    PlanningView.cs
+                    PlanningView.Designer.cs
+                    PlanningView.resx
+                    TaskListView.cs
+                    TaskListView.Designer.cs
+                    TaskListView.resx
+            +--- PertDiagram
+                    PertDiagramControl.cs
+                    PertDiagramControl.Designer.cs
+                    PertDiagramControl.resx
+                    PertDiagramSettings.cs
+                    PertNodeBuilder.cs
+            +--- Utilitaires
+                    DateTimePicker.cs
+                    DateTimePicker.Designer.cs
+                    DateTimePicker.resx
+            +--- WebPertDiagram
+                    AffichagePert.cs
+                    AffichagePert.Designer.cs
+                    AffichagePert.resx
+                CreationToolboxView.cs
+                CreationToolboxView.Designer.cs
+                CreationToolboxView.resx
+                LotSelectionView.cs
+                LotSelectionView.Designer.cs
+                LotSelectionView.resx
+                TacheDetailView.cs
+                TacheDetailView.Designer.cs
+                TacheDetailView.resx
+                TacheDetailViewXL.cs
+                TacheDetailViewXL.Designer.cs
+                TacheDetailViewXL.resx
+                TaskManagerView.cs
+                TaskManagerView.Designer.cs
+                TaskManagerView.resx
+        +--- Utils
+                DoubleBufferedTableLayoutPanel.cs
+                ImportMapOuvrierP1.cs
+                ImportMapOuvrierP1.Designer.cs
+                ImportMapOuvrierP1.resx
+                ImportMapOuvrierP2.cs
+                ImportMapOuvrierP2.Designer.cs
+                ImportMapOuvrierP2.resx
+                ImportMappingView.cs
+                ImportMappingView.Designer.cs
+                ImportMappingView.resx
+                ImportP1.cs
+                ImportP1.Designer.cs
+                ImportP1.resx
+                ImportP2.cs
+                ImportP2.Designer.cs
+                ImportP2.resx
+                ImportP3.cs
+                ImportP3.Designer.cs
+                ImportP3.resx
+                ImportWarningsView.cs
+                ImportWarningsView.Designer.cs
+                ImportWarningsView.resx
+            MainShellForm.cs
+            MainShellForm.Designer.cs
+            MainShellForm.resx
+    +--- WebAssets
+            cytoscape-dagre.js
+            cytoscape.min.js
+            dagre.js
+            index.html
+            main.js
+            style.css
+        App.config
+        ClassDiagramPlanAthena.cd
+        file.txt
+        PlanAthena.csproj
+        Program.cs

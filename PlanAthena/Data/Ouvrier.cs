@@ -1,8 +1,6 @@
 // Data/Ouvrier.cs - Structure mise à jour V0.4.2
 
 using PlanAthena.Services.Business.DTOs; // Pour CompetenceOuvrier
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json.Serialization;
 
 namespace PlanAthena.Data

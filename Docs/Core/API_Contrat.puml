@@ -1,14 +1,15 @@
 @startuml
 ' --- Configuration ---
+!theme toy
 skinparam componentStyle uml2
 skinparam linetype ortho
 skinparam ranksep 60
 skinparam nodesep 60
 skinparam shadowing false
-title Contrat de Service API - PlanAthena.Core v1.1
+title Contrat de Service API - PlanAthena.Core v1.0\nsize:12<i>Documentation complète des DTOs d'entrée et de sortie</i></size>
 package "Point d'Entrée" {
 class "PlanAthenaCoreFacade" as Facade {
-+ ProcessChantierAsync(input): Task<ProcessChantierResultDto>
++ ProcessChantierAsync(input: ChantierSetupInputDto): Task<ProcessChantierResultDto>
 }
 }
 package "Contrat d'Entrée (Input DTOs)" <<Rectangle>> {
@@ -17,88 +18,93 @@ class ChantierSetupInputDto {
 + Description: string
 + DateDebutSouhaitee: DateTime?
 + DateFinSouhaitee: DateTime?
-+ FlexibiliteDebut: FlexibiliteDate
-+ FlexibiliteFin: FlexibiliteDate
-' ... autres collections ...
+--
++ CalendrierTravail: CalendrierTravailDefinitionDto
++ Blocs: IReadOnlyList<BlocTravailDto>
++ Taches: IReadOnlyList<TacheDto>
++ Lots: IReadOnlyList<LotTravauxDto>
++ Ouvriers: IReadOnlyList<OuvrierDto>
++ Metiers: IReadOnlyList<MetierDto>
++ OptimizationConfig: OptimizationConfigDto?
 }
-
-class "<b>OptimizationConfigDto</b>" as OptiConfig <<(M,Lime) Modified>> {
-    + TypeDeSortie: string
-    + DureeJournaliereStandardHeures: int
-    + PenaliteChangementOuvrierPourcentage: decimal
-    --
-    + <b>CoutIndirectJournalier: long <<(N,SkyBlue) New>></b>
-    + <b>DureeCalculMaxSecondes: int <<(N,SkyBlue) New>></b>
-    ..
-    - <strike>CoutIndirectJournalierPourcentage: decimal?</strike> <<(D,Tomato) Deprecated>>
-}
-note right of OptiConfig
-    <b>Modifications Clés :</b>
-    - Remplacement du coût en % par une valeur absolue (long).
-    - Ajout d'un timeout pour le solveur (en secondes).
-end note
-
 class CalendrierTravailDefinitionDto{
 + JoursOuvres: IReadOnlyList<DayOfWeek>
 + HeureDebutJournee: int
 + HeuresTravailEffectifParJour: int
-+ JoursChomes : IReadOnlyList<DateTime>
 }
-class TacheDto{
+class TacheDto {
 + TacheId: string
-+ Nom: string
-+ Type: TypeActivite
-+ BlocId: string
-+ HeuresHommeEstimees: int
++ TacheNom: string
++ HeuresHommeEstimees: double
 + MetierId: string
 + Dependencies: IReadOnlyList<string>
++ BlocId: string
++ TypeActivite: TypeActivite
 }
-class OuvrierDto{
- + OuvrierId: string
- + Nom: string
- + Prenom: string
- + Competences: IReadOnlyList<CompetenceDto>
- + CoutJournalier: int
+class OuvrierDto {
++ OuvrierId: string
++ Nom: string
++ Prenom: string
++ CoutJournalier: long
++ Competences: IReadOnlyList<CompetenceDto>
 }
-' ... autres DTOs ...
-
+class OptimizationConfigDto {
++ TypeDeSortie: string
++ PenaliteChangementOuvrierPourcentage: decimal
++ CoutIndirectJournalierAbsolu: long
++ DureeCalculMaxMinutes: int
+}
 }
 package "Contrat de Sortie (Output DTOs)" <<Cloud>> {
-class ProcessChantierResultDto {
+class "ProcessChantierResultDto" as ProcessResult <<(M,Lime) Modified>> {
 + ChantierId: string
 + Etat: EtatTraitementInput
 + Messages: IReadOnlyList<MessageValidationDto>
-' ... autres résultats ...
+--
++ OptimisationResultat: PlanningOptimizationResultDto?
+..
++ AnalyseStatiqueResultat: AnalyseRessourcesResultatDto?>
 }
-
-class PlanningOptimizationResultDto {
-    + Status: OptimizationStatus
-    + Affectations: IReadOnlyList<AffectationDto>
-    + CoutTotalEstime: long?
-    + CoutTotalRhEstime: long?
-    + CoutTotalIndirectEstime: long?
-    ' ...
-}
-note bottom of PlanningOptimizationResultDto
-    Aucune modification du contrat de sortie.
-    La décomposition des coûts existe déjà
-    et reflétera le nouveau calcul.
+note right of ProcessResult
+<b>Modification Majeure :</b>
+Vérifier les données sorties par la DLL
+et le retour de l'analyse rapide.
 end note
-
-class AnalyseRessourcesResultatDto
-class PlanningAnalysisReportDto
-class MessageValidationDto
-class AffectationDto
-
+class PlanningOptimizationResultDto {
++ ChantierId: string
++ Status: OptimizationStatus
++ CoutTotalEstime: long?
++ CoutTotalRhEstime: long?
++ CoutTotalIndirectEstime: long?
++ DureeTotaleEnSlots: long?
++ Affectations: IReadOnlyList<AffectationDto>
+}
+class AffectationDto {
++ TacheId: string
++ TacheNom: string
++ OuvrierId: string
++ OuvrierNom: string
++ BlocId: string
++ DateDebut: DateTime
++ DureeHeures: double
++ DateFin: DateTime
++ TypeActivite: TypeActivite
+}
+class MessageValidationDto {
++ Type: TypeMessageValidation
++ CodeMessage: string
++ Message: string
++ ElementId: string?
+}
 }
 ' --- Relations de Contrat ---
-Facade .u.> ChantierSetupInputDto : "<<accepte>>"
-Facade .d.> ProcessChantierResultDto : "<<retourne>>"
-ChantierSetupInputDto "1" *-r- "0..1" OptiConfig : "configure"
-ChantierSetupInputDto "1" *-l- "1" CalendrierTravailDefinitionDto
-ChantierSetupInputDto "1" -u- "1.." TacheDto
-ChantierSetupInputDto "1" -u- "1.." OuvrierDto
-ProcessChantierResultDto "1" *-r- "0..1" PlanningOptimizationResultDto
-ProcessChantierResultDto "1" *-d- "0..1" AnalyseRessourcesResultatDto
-ProcessChantierResultDto "1" *-d- "0..1" PlanningAnalysisReportDto
+Facade .up.> ChantierSetupInputDto : "<<accepte>>"
+Facade .down.> ProcessResult : "<<retourne>>"
+ChantierSetupInputDto "1" *-down- "1" CalendrierTravailDefinitionDto
+ChantierSetupInputDto "1" *-down- "0..1" OptimizationConfigDto
+ChantierSetupInputDto "1" -down- "0.." TacheDto
+ChantierSetupInputDto "1" -down- "0.." OuvrierDto
+ProcessResult "1" *-down- "0..1" PlanningOptimizationResultDto
+PlanningOptimizationResultDto "1" -down- "0.." AffectationDto
+ProcessResult "1" -down- "0.." MessageValidationDto
 @enduml

@@ -28,7 +28,10 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             gridOuvriers = new KryptonDataGridView();
             textSearchOuvrier = new KryptonTextBox();
             panelRightContainer = new KryptonPanel();
+            groupCompetences = new KryptonGroupBox();
+            gridCompetences = new KryptonDataGridView();
             groupDetails = new KryptonGroupBox();
+            cmbAddCompetence = new KryptonComboBox();
             numCoutJournalier = new KryptonNumericUpDown();
             labelCout = new KryptonLabel();
             textPrenom = new KryptonTextBox();
@@ -37,13 +40,9 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             labelNom = new KryptonLabel();
             textId = new KryptonTextBox();
             labelId = new KryptonLabel();
-            groupCompetences = new KryptonGroupBox();
-            panelCompetenceActions = new KryptonPanel();
-            btnDeleteCompetence = new KryptonButton();
-            btnModifyCompetence = new KryptonButton();
-            btnAddCompetence = new KryptonButton();
-            gridCompetences = new KryptonDataGridView();
             panelGlobalActions = new KryptonPanel();
+            btnExporter = new KryptonButton();
+            btnImporter = new KryptonButton();
             btnEnregistrer = new KryptonButton();
             btnSupprimer = new KryptonButton();
             ((System.ComponentModel.ISupportInitialize)kryptonPanelMain).BeginInit();
@@ -59,15 +58,16 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             ((System.ComponentModel.ISupportInitialize)panelOuvrierActions).BeginInit();
             panelOuvrierActions.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)gridOuvriers).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)groupDetails).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)groupDetails.Panel).BeginInit();
-            groupDetails.Panel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)panelRightContainer).BeginInit();
+            panelRightContainer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)groupCompetences).BeginInit();
             ((System.ComponentModel.ISupportInitialize)groupCompetences.Panel).BeginInit();
             groupCompetences.Panel.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)panelCompetenceActions).BeginInit();
-            panelCompetenceActions.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)gridCompetences).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)groupDetails).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)groupDetails.Panel).BeginInit();
+            groupDetails.Panel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)cmbAddCompetence).BeginInit();
             ((System.ComponentModel.ISupportInitialize)panelGlobalActions).BeginInit();
             panelGlobalActions.SuspendLayout();
             SuspendLayout();
@@ -78,9 +78,8 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             kryptonPanelMain.Controls.Add(panelGlobalActions);
             kryptonPanelMain.Dock = DockStyle.Fill;
             kryptonPanelMain.Location = new Point(0, 0);
-            kryptonPanelMain.Margin = new Padding(4, 3, 4, 3);
             kryptonPanelMain.Name = "kryptonPanelMain";
-            kryptonPanelMain.Padding = new Padding(12, 12, 12, 12);
+            kryptonPanelMain.Padding = new Padding(12);
             kryptonPanelMain.Size = new Size(1400, 808);
             kryptonPanelMain.TabIndex = 0;
             // 
@@ -88,7 +87,6 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             // 
             kryptonSplitContainer1.Dock = DockStyle.Fill;
             kryptonSplitContainer1.Location = new Point(12, 12);
-            kryptonSplitContainer1.Margin = new Padding(4, 3, 4, 3);
             // 
             // 
             // 
@@ -96,11 +94,11 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             // 
             // 
             // 
-            this.kryptonSplitContainer1.Panel2.Controls.Add(this.panelRightContainer); 
-            this.kryptonSplitContainer1.Panel2.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
-            this.kryptonSplitContainer1.Size = new System.Drawing.Size(1180, 630);
-            this.kryptonSplitContainer1.SplitterDistance = 450;
-            this.kryptonSplitContainer1.TabIndex = 1;
+            kryptonSplitContainer1.Panel2.Controls.Add(panelRightContainer);
+            kryptonSplitContainer1.Panel2.Padding = new Padding(10, 0, 0, 0);
+            kryptonSplitContainer1.Size = new Size(1376, 726);
+            kryptonSplitContainer1.SplitterDistance = 524;
+            kryptonSplitContainer1.TabIndex = 0;
             // 
             // headerOuvriers
             // 
@@ -114,7 +112,7 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             headerOuvriers.Panel.Controls.Add(panelOuvrierActions);
             headerOuvriers.Panel.Controls.Add(gridOuvriers);
             headerOuvriers.Panel.Controls.Add(textSearchOuvrier);
-            headerOuvriers.Panel.Padding = new Padding(6, 6, 6, 6);
+            headerOuvriers.Panel.Padding = new Padding(6);
             headerOuvriers.Size = new Size(524, 726);
             headerOuvriers.StateCommon.Back.Color1 = Color.White;
             headerOuvriers.StateCommon.Back.Color2 = Color.White;
@@ -189,22 +187,54 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             // 
             // panelRightContainer
             // 
-            this.panelRightContainer.Controls.Add(this.groupCompetences);
-            this.panelRightContainer.Controls.Add(this.groupDetails);
-            this.panelRightContainer.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panelRightContainer.Location = new System.Drawing.Point(10, 0);
-            this.panelRightContainer.Name = "panelRightContainer";
-            this.panelRightContainer.Size = new System.Drawing.Size(716, 630);
-            this.panelRightContainer.TabIndex = 0;
+            panelRightContainer.Controls.Add(groupCompetences);
+            panelRightContainer.Controls.Add(groupDetails);
+            panelRightContainer.Dock = DockStyle.Fill;
+            panelRightContainer.Location = new Point(10, 0);
+            panelRightContainer.Name = "panelRightContainer";
+            panelRightContainer.Size = new Size(837, 726);
+            panelRightContainer.TabIndex = 0;
+            // 
+            // groupCompetences
+            // 
+            groupCompetences.Dock = DockStyle.Fill;
+            groupCompetences.Location = new Point(0, 186);
+            // 
+            // 
+            // 
+            groupCompetences.Panel.Controls.Add(gridCompetences);
+            groupCompetences.Panel.Padding = new Padding(6);
+            groupCompetences.Size = new Size(837, 540);
+            groupCompetences.TabIndex = 1;
+            groupCompetences.Values.Heading = "Compétences";
+            // 
+            // gridCompetences
+            // 
+            gridCompetences.AllowUserToAddRows = false;
+            gridCompetences.AllowUserToDeleteRows = false;
+            gridCompetences.AllowUserToResizeRows = false;
+            gridCompetences.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            gridCompetences.BorderStyle = BorderStyle.None;
+            gridCompetences.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            gridCompetences.Dock = DockStyle.Fill;
+            gridCompetences.Location = new Point(6, 6);
+            gridCompetences.Margin = new Padding(4, 3, 4, 3);
+            gridCompetences.Name = "gridCompetences";
+            gridCompetences.ReadOnly = true;
+            gridCompetences.RowHeadersVisible = false;
+            gridCompetences.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            gridCompetences.Size = new Size(821, 504);
+            gridCompetences.TabIndex = 0;
             // 
             // groupDetails
             // 
             groupDetails.Dock = DockStyle.Top;
-            groupDetails.Location = new Point(12, 0);
+            groupDetails.Location = new Point(0, 0);
             groupDetails.Margin = new Padding(4, 3, 4, 3);
             // 
             // 
             // 
+            groupDetails.Panel.Controls.Add(cmbAddCompetence);
             groupDetails.Panel.Controls.Add(numCoutJournalier);
             groupDetails.Panel.Controls.Add(labelCout);
             groupDetails.Panel.Controls.Add(textPrenom);
@@ -213,10 +243,21 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             groupDetails.Panel.Controls.Add(labelNom);
             groupDetails.Panel.Controls.Add(textId);
             groupDetails.Panel.Controls.Add(labelId);
-            groupDetails.Panel.Padding = new Padding(12, 12, 12, 12);
-            groupDetails.Size = new Size(835, 186);
+            groupDetails.Panel.Padding = new Padding(12);
+            groupDetails.Size = new Size(837, 186);
             groupDetails.TabIndex = 0;
             groupDetails.Values.Heading = "Détails de l'Ouvrier";
+            // 
+            // cmbAddCompetence
+            // 
+            cmbAddCompetence.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            cmbAddCompetence.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbAddCompetence.DropDownWidth = 250;
+            cmbAddCompetence.IntegralHeight = false;
+            cmbAddCompetence.Location = new Point(310, 121);
+            cmbAddCompetence.Name = "cmbAddCompetence";
+            cmbAddCompetence.Size = new Size(517, 22);
+            cmbAddCompetence.TabIndex = 8;
             // 
             // numCoutJournalier
             // 
@@ -246,7 +287,7 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             textPrenom.Location = new Point(152, 81);
             textPrenom.Margin = new Padding(4, 3, 4, 3);
             textPrenom.Name = "textPrenom";
-            textPrenom.Size = new Size(668, 23);
+            textPrenom.Size = new Size(670, 23);
             textPrenom.TabIndex = 5;
             textPrenom.TextChanged += DetailOuvrier_Changed;
             // 
@@ -265,7 +306,7 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             textNom.Location = new Point(152, 40);
             textNom.Margin = new Padding(4, 3, 4, 3);
             textNom.Name = "textNom";
-            textNom.Size = new Size(668, 23);
+            textNom.Size = new Size(670, 23);
             textNom.TabIndex = 3;
             textNom.TextChanged += DetailOuvrier_Changed;
             // 
@@ -296,90 +337,10 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             labelId.TabIndex = 0;
             labelId.Values.Text = "ID";
             // 
-            // groupCompetences
-            // 
-            groupCompetences.Dock = DockStyle.Fill;
-            groupCompetences.Location = new Point(12, 170);
-            groupCompetences.Margin = new Padding(4, 3, 4, 3);
-            // 
-            // 
-            // 
-            groupCompetences.Panel.Controls.Add(panelCompetenceActions);
-            groupCompetences.Panel.Controls.Add(gridCompetences);
-            groupCompetences.Panel.Padding = new Padding(6, 6, 6, 6);
-            groupCompetences.Size = new Size(835, 726);
-            groupCompetences.TabIndex = 1;
-            groupCompetences.Values.Heading = "Compétences";
-            // 
-            // panelCompetenceActions
-            // 
-            panelCompetenceActions.Controls.Add(btnDeleteCompetence);
-            panelCompetenceActions.Controls.Add(btnModifyCompetence);
-            panelCompetenceActions.Controls.Add(btnAddCompetence);
-            panelCompetenceActions.Dock = DockStyle.Bottom;
-            panelCompetenceActions.Location = new Point(6, 638);
-            panelCompetenceActions.Margin = new Padding(4, 3, 4, 3);
-            panelCompetenceActions.Name = "panelCompetenceActions";
-            panelCompetenceActions.Size = new Size(819, 58);
-            panelCompetenceActions.TabIndex = 1;
-            // 
-            // btnDeleteCompetence
-            // 
-            btnDeleteCompetence.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnDeleteCompetence.Location = new Point(700, 12);
-            btnDeleteCompetence.Margin = new Padding(4, 3, 4, 3);
-            btnDeleteCompetence.Name = "btnDeleteCompetence";
-            btnDeleteCompetence.Size = new Size(105, 35);
-            btnDeleteCompetence.TabIndex = 2;
-            btnDeleteCompetence.Values.DropDownArrowColor = Color.Empty;
-            btnDeleteCompetence.Values.Text = "Supprimer";
-            btnDeleteCompetence.Click += btnDeleteCompetence_Click;
-            // 
-            // btnModifyCompetence
-            // 
-            btnModifyCompetence.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnModifyCompetence.Location = new Point(588, 12);
-            btnModifyCompetence.Margin = new Padding(4, 3, 4, 3);
-            btnModifyCompetence.Name = "btnModifyCompetence";
-            btnModifyCompetence.Size = new Size(105, 35);
-            btnModifyCompetence.TabIndex = 1;
-            btnModifyCompetence.Values.DropDownArrowColor = Color.Empty;
-            btnModifyCompetence.Values.Text = "Modifier";
-            btnModifyCompetence.Click += btnModifyCompetence_Click;
-            // 
-            // btnAddCompetence
-            // 
-            btnAddCompetence.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnAddCompetence.Location = new Point(476, 12);
-            btnAddCompetence.Margin = new Padding(4, 3, 4, 3);
-            btnAddCompetence.Name = "btnAddCompetence";
-            btnAddCompetence.Size = new Size(105, 35);
-            btnAddCompetence.TabIndex = 0;
-            btnAddCompetence.Values.DropDownArrowColor = Color.Empty;
-            btnAddCompetence.Values.Text = "Ajouter";
-            btnAddCompetence.Click += btnAddCompetence_Click;
-            // 
-            // gridCompetences
-            // 
-            gridCompetences.AllowUserToAddRows = false;
-            gridCompetences.AllowUserToDeleteRows = false;
-            gridCompetences.AllowUserToResizeRows = false;
-            gridCompetences.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            gridCompetences.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            gridCompetences.BorderStyle = BorderStyle.None;
-            gridCompetences.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            gridCompetences.Location = new Point(6, 0);
-            gridCompetences.Margin = new Padding(4, 3, 4, 3);
-            gridCompetences.MultiSelect = false;
-            gridCompetences.Name = "gridCompetences";
-            gridCompetences.ReadOnly = true;
-            gridCompetences.RowHeadersVisible = false;
-            gridCompetences.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            gridCompetences.Size = new Size(821, 612);
-            gridCompetences.TabIndex = 0;
-            // 
             // panelGlobalActions
             // 
+            panelGlobalActions.Controls.Add(btnExporter);
+            panelGlobalActions.Controls.Add(btnImporter);
             panelGlobalActions.Controls.Add(btnEnregistrer);
             panelGlobalActions.Controls.Add(btnSupprimer);
             panelGlobalActions.Dock = DockStyle.Bottom;
@@ -388,6 +349,26 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             panelGlobalActions.Name = "panelGlobalActions";
             panelGlobalActions.Size = new Size(1376, 58);
             panelGlobalActions.TabIndex = 0;
+            // 
+            // btnExporter
+            // 
+            btnExporter.Location = new Point(130, 12);
+            btnExporter.Name = "btnExporter";
+            btnExporter.Size = new Size(105, 35);
+            btnExporter.TabIndex = 3;
+            btnExporter.Values.DropDownArrowColor = Color.Empty;
+            btnExporter.Values.Text = "Exporter";
+            btnExporter.Click += btnExporterOuvriers_Click;
+            // 
+            // btnImporter
+            // 
+            btnImporter.Location = new Point(7, 12);
+            btnImporter.Name = "btnImporter";
+            btnImporter.Size = new Size(105, 35);
+            btnImporter.TabIndex = 2;
+            btnImporter.Values.DropDownArrowColor = Color.Empty;
+            btnImporter.Values.Text = "Importer";
+            btnImporter.Click += btnImporterOuvriers_Click;
             // 
             // btnEnregistrer
             // 
@@ -436,16 +417,17 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             ((System.ComponentModel.ISupportInitialize)panelOuvrierActions).EndInit();
             panelOuvrierActions.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)gridOuvriers).EndInit();
+            ((System.ComponentModel.ISupportInitialize)panelRightContainer).EndInit();
+            panelRightContainer.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)groupCompetences.Panel).EndInit();
+            groupCompetences.Panel.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)groupCompetences).EndInit();
+            ((System.ComponentModel.ISupportInitialize)gridCompetences).EndInit();
             ((System.ComponentModel.ISupportInitialize)groupDetails.Panel).EndInit();
             groupDetails.Panel.ResumeLayout(false);
             groupDetails.Panel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)groupDetails).EndInit();
-            ((System.ComponentModel.ISupportInitialize)groupCompetences.Panel).EndInit();
-            groupCompetences.Panel.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)groupCompetences).EndInit();
-            ((System.ComponentModel.ISupportInitialize)panelCompetenceActions).EndInit();
-            panelCompetenceActions.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)gridCompetences).EndInit();
+            ((System.ComponentModel.ISupportInitialize)cmbAddCompetence).EndInit();
             ((System.ComponentModel.ISupportInitialize)panelGlobalActions).EndInit();
             panelGlobalActions.ResumeLayout(false);
             ResumeLayout(false);
@@ -475,10 +457,9 @@ namespace PlanAthena.View.Ressources.MetierDiagram
         private KryptonNumericUpDown numCoutJournalier;
         private KryptonLabel labelCout;
         private KryptonDataGridView gridCompetences;
-        private KryptonPanel panelCompetenceActions;
-        private KryptonButton btnDeleteCompetence;
-        private KryptonButton btnModifyCompetence;
-        private KryptonButton btnAddCompetence;
+        private KryptonComboBox cmbAddCompetence;
         private KryptonPanel panelRightContainer;
+        private KryptonButton btnExporter;
+        private KryptonButton btnImporter;
     }
 }

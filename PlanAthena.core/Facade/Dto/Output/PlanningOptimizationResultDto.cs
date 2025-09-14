@@ -25,7 +25,6 @@ namespace PlanAthena.Core.Facade.Dto.Output
     // Ce sous-DTO est ajouté au même fichier pour la simplicité
     public class AffectationDto
     {
-        // *** VOS PROPRIÉTÉS EXISTANTES (ne pas toucher) ***
         public string TacheId { get; set; }
         public string TacheNom { get; set; }
         public string OuvrierId { get; set; }
@@ -33,8 +32,8 @@ namespace PlanAthena.Core.Facade.Dto.Output
         public string BlocId { get; set; }
         public DateTime DateDebut { get; set; }
         public double DureeHeures { get; set; }
+        public DateTime DateFin { get; set; }
 
-        // *** AJOUT: 3 nouvelles propriétés pour corriger l'export Gantt ***
 
         /// <summary>
         /// Type d'activité (Tache, JalonUtilisateur, JalonTechnique).

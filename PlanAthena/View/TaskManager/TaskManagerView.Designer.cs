@@ -25,6 +25,15 @@ namespace PlanAthena.View.TaskManager
         {
             kryptonPanelMain = new KryptonPanel();
             panelGlobalActions = new KryptonPanel();
+            kryptonTableLayoutPanel1 = new KryptonTableLayoutPanel();
+            panUp = new KryptonLabel();
+            panLeft = new KryptonLabel();
+            panRight = new KryptonLabel();
+            panDown = new KryptonLabel();
+            panCenter = new KryptonLabel();
+            kryptonLabel2 = new KryptonLabel();
+            kryptonLabel1 = new KryptonLabel();
+            zoomTrackBar = new KryptonTrackBar();
             btnPlanificator = new KryptonButton();
             btnAdjustView = new KryptonButton();
             btnMappingAuto = new KryptonButton();
@@ -40,6 +49,7 @@ namespace PlanAthena.View.TaskManager
             ((System.ComponentModel.ISupportInitialize)kryptonPanelMain).BeginInit();
             ((System.ComponentModel.ISupportInitialize)panelGlobalActions).BeginInit();
             panelGlobalActions.SuspendLayout();
+            kryptonTableLayoutPanel1.SuspendLayout();
             SuspendLayout();
             // 
             // kryptonPanelMain
@@ -53,6 +63,10 @@ namespace PlanAthena.View.TaskManager
             // 
             // panelGlobalActions
             // 
+            panelGlobalActions.Controls.Add(kryptonTableLayoutPanel1);
+            panelGlobalActions.Controls.Add(kryptonLabel2);
+            panelGlobalActions.Controls.Add(kryptonLabel1);
+            panelGlobalActions.Controls.Add(zoomTrackBar);
             panelGlobalActions.Controls.Add(btnPlanificator);
             panelGlobalActions.Controls.Add(btnAdjustView);
             panelGlobalActions.Controls.Add(btnMappingAuto);
@@ -65,6 +79,105 @@ namespace PlanAthena.View.TaskManager
             panelGlobalActions.Name = "panelGlobalActions";
             panelGlobalActions.Size = new Size(1400, 67);
             panelGlobalActions.TabIndex = 1;
+            // 
+            // kryptonTableLayoutPanel1
+            // 
+            kryptonTableLayoutPanel1.ColumnCount = 3;
+            kryptonTableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
+            kryptonTableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
+            kryptonTableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
+            kryptonTableLayoutPanel1.Controls.Add(panUp, 1, 0);
+            kryptonTableLayoutPanel1.Controls.Add(panLeft, 0, 1);
+            kryptonTableLayoutPanel1.Controls.Add(panRight, 2, 1);
+            kryptonTableLayoutPanel1.Controls.Add(panDown, 1, 2);
+            kryptonTableLayoutPanel1.Controls.Add(panCenter, 1, 1);
+            kryptonTableLayoutPanel1.Location = new Point(1017, 3);
+            kryptonTableLayoutPanel1.Name = "kryptonTableLayoutPanel1";
+            kryptonTableLayoutPanel1.RowCount = 3;
+            kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
+            kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
+            kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
+            kryptonTableLayoutPanel1.Size = new Size(61, 58);
+            kryptonTableLayoutPanel1.TabIndex = 9;
+            // 
+            // panUp
+            // 
+            panUp.Location = new Point(21, 0);
+            panUp.Margin = new Padding(1, 0, 0, 0);
+            panUp.Name = "panUp";
+            panUp.Size = new Size(19, 20);
+            panUp.StateNormal.ShortText.Font = new Font("Segoe UI Emoji", 10F, FontStyle.Bold);
+            panUp.TabIndex = 0;
+            panUp.Values.Text = "⇧";
+            // 
+            // panLeft
+            // 
+            panLeft.Location = new Point(0, 20);
+            panLeft.Margin = new Padding(0);
+            panLeft.Name = "panLeft";
+            panLeft.Size = new Size(20, 20);
+            panLeft.StateNormal.ShortText.Font = new Font("Segoe UI Emoji", 10F, FontStyle.Bold);
+            panLeft.TabIndex = 1;
+            panLeft.Values.Text = "⇦";
+            // 
+            // panRight
+            // 
+            panRight.Location = new Point(40, 20);
+            panRight.Margin = new Padding(0);
+            panRight.Name = "panRight";
+            panRight.Size = new Size(21, 20);
+            panRight.StateNormal.ShortText.Font = new Font("Segoe UI Emoji", 10F, FontStyle.Bold);
+            panRight.TabIndex = 2;
+            panRight.Values.Text = "⇨";
+            // 
+            // panDown
+            // 
+            panDown.Location = new Point(21, 40);
+            panDown.Margin = new Padding(1, 0, 0, 0);
+            panDown.Name = "panDown";
+            panDown.Size = new Size(19, 20);
+            panDown.StateNormal.ShortText.Font = new Font("Segoe UI Emoji", 10F, FontStyle.Bold);
+            panDown.TabIndex = 3;
+            panDown.Values.Text = "⇩";
+            // 
+            // panCenter
+            // 
+            panCenter.Location = new Point(20, 20);
+            panCenter.Margin = new Padding(0, 0, 2, 0);
+            panCenter.Name = "panCenter";
+            panCenter.Size = new Size(18, 20);
+            panCenter.StateNormal.ShortText.Font = new Font("Segoe UI Emoji", 10F);
+            panCenter.TabIndex = 4;
+            panCenter.Values.Text = "●";
+            // 
+            // kryptonLabel2
+            // 
+            kryptonLabel2.Location = new Point(715, 17);
+            kryptonLabel2.Name = "kryptonLabel2";
+            kryptonLabel2.Orientation = VisualOrientation.Left;
+            kryptonLabel2.Size = new Size(20, 43);
+            kryptonLabel2.TabIndex = 8;
+            kryptonLabel2.Values.Text = "Zoom";
+            // 
+            // kryptonLabel1
+            // 
+            kryptonLabel1.Location = new Point(739, 0);
+            kryptonLabel1.Name = "kryptonLabel1";
+            kryptonLabel1.Size = new Size(247, 20);
+            kryptonLabel1.TabIndex = 7;
+            kryptonLabel1.Values.Text = "10%           100%                                  300%";
+            // 
+            // zoomTrackBar
+            // 
+            zoomTrackBar.LargeChange = 50;
+            zoomTrackBar.Location = new Point(739, 27);
+            zoomTrackBar.Maximum = 300;
+            zoomTrackBar.Minimum = 10;
+            zoomTrackBar.Name = "zoomTrackBar";
+            zoomTrackBar.Size = new Size(231, 27);
+            zoomTrackBar.SmallChange = 10;
+            zoomTrackBar.TabIndex = 6;
+            zoomTrackBar.Value = 100;
             // 
             // btnPlanificator
             // 
@@ -183,6 +296,9 @@ namespace PlanAthena.View.TaskManager
             ((System.ComponentModel.ISupportInitialize)kryptonPanelMain).EndInit();
             ((System.ComponentModel.ISupportInitialize)panelGlobalActions).EndInit();
             panelGlobalActions.ResumeLayout(false);
+            panelGlobalActions.PerformLayout();
+            kryptonTableLayoutPanel1.ResumeLayout(false);
+            kryptonTableLayoutPanel1.PerformLayout();
             ResumeLayout(false);
 
         }
@@ -203,5 +319,14 @@ namespace PlanAthena.View.TaskManager
         private KryptonButton btnPrint;
         private KryptonButton btnExporter;
         private KryptonDockingManager kryptonDockingManager;
+        private KryptonTrackBar zoomTrackBar;
+        private KryptonLabel kryptonLabel1;
+        private KryptonLabel kryptonLabel2;
+        private KryptonTableLayoutPanel kryptonTableLayoutPanel1;
+        private KryptonLabel panUp;
+        private KryptonLabel panLeft;
+        private KryptonLabel panRight;
+        private KryptonLabel panDown;
+        private KryptonLabel panCenter;
     }
 }

@@ -22,7 +22,7 @@ public class PlanAthenaCoreFacade
     /// </summary>
     /// <param name="inputDto">Les données complètes du chantier et la configuration de l'action souhaitée.</param>
     /// <returns>Un résultat contenant soit des erreurs, soit une analyse, soit un planning optimisé.</returns>
-    public async Task<ProcessChantierResultDto> ProcessChantierAsync(ChantierSetupInputDto inputDto)
+    public virtual async Task<ProcessChantierResultDto> ProcessChantierAsync(ChantierSetupInputDto inputDto)
     {
         return await _processChantierUseCase.ExecuteAsync(inputDto);
     }

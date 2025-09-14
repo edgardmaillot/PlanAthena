@@ -118,13 +118,52 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="Capture d'écran 2025-07-29 160101" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Capture d'écran 2025-07-29 160101.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="office-layout-example-1" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\office-layout-example-1.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="Capture d'écran 2025-07-29 160101" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Capture d'écran 2025-07-29 160101.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="tache" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Tache.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Jalon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Jalon.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="cartouche" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\cartouche.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="cloudy" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\cloudy.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="stormy" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\stormy.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="sunny" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\sunny.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Ic_Budget" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Ic_Budget.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Ic_Planning" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Ic_calendar.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Ic_Ressource" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Ic_worker.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Import_Ouvriers" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Import_Ouvriers.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Import_Task" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Import_Task.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="rainy" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\rainy.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ic_Instructions" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ic_Instructions.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="image_immeuble" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\image_immeuble.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

@@ -1,37 +1,52 @@
-using Krypton.Toolkit;
+// PlanAthena Version 0.5.1 - Refactoring persistance
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
-using PlanAthena.Services.DataAccess;
+using PlanAthena.Services.DTOs.ImportExport;
+using PlanAthena.Services.DTOs.Projet;
 using PlanAthena.Services.Export;
-using System;
+using PlanAthena.Services.Infrastructure;
+using PlanAthena.Services.UseCases;
 using System.Data;
-using System.IO;
-using System.Linq;
+using System.Globalization;
 using System.Text;
-using System.Windows.Forms;
+using System.Windows.Forms.DataVisualization.Charting;
+using Timer = System.Windows.Forms.Timer;
 
 namespace PlanAthena.View.Planificator
-
 {
     public partial class PlanificatorView : UserControl
     {
-        private readonly ApplicationService _applicationService;
-        private readonly PlanificationService _planificationService;
+        private readonly PlanificationOrchestrator _planificationOrchestrator;
+        private readonly PlanningService _planningService;
+        private readonly ProjetService _projetService;
+        private readonly RessourceService _ressourceService;
         private readonly PlanningExcelExportService _planningExcelExportService;
         private readonly GanttExportService _ganttExportService;
-        private readonly RessourceService _ressourceService;
+        private readonly CheminsPrefereService _cheminsPrefereService; // Retiré l'initialisation directe
+        private PlanificationRunResult _lastRunResult = null;
+        private int _elapsedSeconds = 0;
+        private Timer _solverTimer;
+        private int _solverMaxSeconds;
 
-        private PlanificationResultDto _lastResult = null;
-
-        public PlanificatorView(ApplicationService applicationService, PlanificationService planificationService, PlanningExcelExportService planningExcelExportService, GanttExportService ganttExportService, RessourceService ressourceService)
+        public PlanificatorView(
+            PlanificationOrchestrator planificationOrchestrator,
+            PlanningService planningService,
+            ProjetService projetService,
+            RessourceService ressourceService,
+            PlanningExcelExportService planningExcelExportService,
+            GanttExportService ganttExportService,
+            CheminsPrefereService cheminsPrefereService) // Dépendance injectée
         {
             InitializeComponent();
-            _applicationService = applicationService;
-            _planificationService = planificationService;
+            _planificationOrchestrator = planificationOrchestrator;
+            _planningService = planningService;
+            _projetService = projetService;
+            _ressourceService = ressourceService;
             _planningExcelExportService = planningExcelExportService;
             _ganttExportService = ganttExportService;
-            _ressourceService = ressourceService;
-
+            _cheminsPrefereService = cheminsPrefereService; // Assignation par injection
+            _solverTimer = new Timer { Interval = 1000 };
+            _solverTimer.Tick += SolverTimer_Tick;
             this.Load += PlanificatorView_Load;
         }
 
@@ -40,7 +55,10 @@ namespace PlanAthena.View.Planificator
             if (DesignMode) return;
             InitializeFields();
             PopulateFormFromSessionConfig();
+            navigatorResultats.Visible = false;
         }
+
+        #region Initialisation et Configuration du Formulaire
 
         private void InitializeFields()
         {
@@ -53,17 +71,19 @@ namespace PlanAthena.View.Planificator
             chkListJoursOuvres.Items.Add(DayOfWeek.Sunday);
 
             cmbTypeDeSortie.Items.AddRange(new string[] { "Analyse et Estimation", "Optimisation Coût", "Optimisation Délai" });
-            cmbCalculMax.Items.AddRange(new object[] { 1, 5, 15, 30, 60 });
+            cmbCalculMax.Items.AddRange(new object[] { 1, 3, 5, 10, 15, 30, 60 });
 
             dtpDateDebut.Value = DateTime.Today;
             dtpDateFin.Value = DateTime.Today.AddDays(90);
             chkDateDebut.Checked = true;
             chkDateFin.Checked = true;
+
+            dgvAnalyseOuvriers.AutoGenerateColumns = false;
         }
 
         private void PopulateFormFromSessionConfig()
         {
-            var config = _applicationService.ConfigPlanificationActuelle;
+            var config = _projetService.ConfigPlanificationActuelle;
             if (config == null) return;
 
             for (int i = 0; i < chkListJoursOuvres.Items.Count; i++)
@@ -78,69 +98,77 @@ namespace PlanAthena.View.Planificator
             numPenaliteChangement.Value = config.PenaliteChangementOuvrierPourcentage;
             numCoutIndirect.Value = config.CoutIndirectJournalierAbsolu;
             cmbCalculMax.SelectedItem = config.DureeCalculMaxMinutes > 0 ? (object)config.DureeCalculMaxMinutes : 5;
-            cmbTypeDeSortie.SelectedItem = config.TypeDeSortie;
+            cmbTypeDeSortie.SelectedItem = config.TypeDeSortie ?? "Optimisation Délai";
 
-            if (config.DateDebutSouhaitee.HasValue)
-            {
-                dtpDateDebut.Value = config.DateDebutSouhaitee.Value;
-                chkDateDebut.Checked = true;
-            }
-            if (config.DateFinSouhaitee.HasValue)
-            {
-                dtpDateFin.Value = config.DateFinSouhaitee.Value;
-                chkDateFin.Checked = true;
-            }
+            if (config.DateDebutSouhaitee.HasValue) dtpDateDebut.Value = config.DateDebutSouhaitee.Value;
+            if (config.DateFinSouhaitee.HasValue) dtpDateFin.Value = config.DateFinSouhaitee.Value;
         }
 
         private ConfigurationPlanification GetConfigFromForm()
         {
-            var config = _applicationService.ConfigPlanificationActuelle;
+            var config = _projetService.ConfigPlanificationActuelle;
 
             config.JoursOuvres = chkListJoursOuvres.CheckedItems.Cast<DayOfWeek>().ToList();
             config.HeureDebutJournee = (int)numHeureDebut.Value;
             config.DureeJournaliereStandardHeures = (int)numDureeOuverture.Value;
             config.HeuresTravailEffectifParJour = (int)numHeuresTravail.Value;
-            config.TypeDeSortie = cmbTypeDeSortie.SelectedItem.ToString();
             config.PenaliteChangementOuvrierPourcentage = numPenaliteChangement.Value;
             config.CoutIndirectJournalierAbsolu = (long)numCoutIndirect.Value;
             config.DureeCalculMaxMinutes = (int)cmbCalculMax.SelectedItem;
-            config.DateDebutSouhaitee = chkDateDebut.Checked ? dtpDateDebut.Value.Date : (DateTime?)null;
-            config.DateFinSouhaitee = chkDateFin.Checked ? dtpDateFin.Value.Date : (DateTime?)null;
+            config.SeuilJoursDecoupageTache = (int)numSeuilDecoupage.Value;
 
-            // Correction pour la description requise
-            config.Description = _applicationService.ProjetActif?.InformationsProjet?.Description ?? "Pas de description";
-            if (string.IsNullOrWhiteSpace(config.Description))
+            config.DateDebutSouhaitee = chkDateDebut.Checked ? dtpDateDebut.Value.Date : DateTime.Today;
+            config.DateFinSouhaitee = chkDateFin.Checked ? dtpDateFin.Value.Date : DateTime.Today.AddYears(5);
+
+            // --- CORRECTION ---
+            // On récupère les informations du projet depuis le service source de vérité.
+            InformationsProjet infosProjet = _projetService.ObtenirInformationsProjet();
+            config.Description = infosProjet?.NomProjet ?? "Nouveau Projet";
+
+            switch (cmbTypeDeSortie.SelectedItem?.ToString())
             {
-                config.Description = "Projet sans description";
+                case "Analyse et Estimation":
+                    config.TypeDeSortie = "ANALYSE_RAPIDE";
+                    break;
+                case "Optimisation Coût":
+                    config.TypeDeSortie = "OPTIMISATION_COUT";
+                    break;
+                case "Optimisation Délai":
+                default:
+                    config.TypeDeSortie = "OPTIMISATION_DELAI";
+                    break;
             }
 
             return config;
         }
+        #endregion
 
+        #region Logique Principale et Barre de Progression
         private async void btnLaunch_Click(object sender, EventArgs e)
         {
-            if (_applicationService.ProjetActif == null)
+            // --- CORRECTION ---
+            // La vérification se fait sur l'état du ProjetService.
+            if (_projetService.ObtenirInformationsProjet() == null)
             {
                 MessageBox.Show("Veuillez charger un projet avant de lancer la planification.", "Projet requis", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            Log("Lancement de la planification...");
             btnLaunch.Enabled = false;
+            navigatorResultats.Visible = false;
             rtbLog.Clear();
+            _elapsedSeconds = 0;
+            progressBar.Style = ProgressBarStyle.Marquee;
+            progressBar.Visible = true;
+            StartSolverProgress();
+
+            Log("Lancement de la planification...");
 
             try
             {
                 var configuration = GetConfigFromForm();
-
-                _lastResult = await _planificationService.LancerPlanificationAsync(
-                    _applicationService.ProjetActif,
-                    _ressourceService.GetAllOuvriers(),
-                    _ressourceService.GetAllMetiers(),
-                    configuration
-                );
-
-                AfficherResultatDansLog(_lastResult.ResultatBrut);
+                _lastRunResult = await _planificationOrchestrator.ExecuteAsync(configuration);
+                AfficherResultats(_lastRunResult);
                 UpdateExportButtonsState();
             }
             catch (Exception ex)
@@ -150,74 +178,247 @@ namespace PlanAthena.View.Planificator
             }
             finally
             {
+                StopSolverProgress();
+                progressBar.Visible = false;
                 btnLaunch.Enabled = true;
                 Log("PLANIFICATION TERMINÉE.");
             }
         }
+        #endregion
 
+        #region Affichage des Résultats
+        // ... (Aucun changement dans cette région, elle est déjà correcte)
+        private void AfficherResultats(PlanificationRunResult runResult)
+        {
+            if (runResult == null) return;
+
+            navigatorResultats.Visible = true;
+            var culture = CultureInfo.GetCultureInfo("fr-FR");
+
+            string solverStatus = runResult.RawResult?.OptimisationResultat?.Status.ToString();
+            UpdateSolverStatusDisplay(solverStatus);
+
+            if (runResult.AnalysisReport != null)
+            {
+                var synthese = runResult.AnalysisReport.SyntheseProjet;
+                lblCoutTotalValue.Text = synthese.CoutTotalProjet.ToString("C", culture);
+                lblCoutRhValue.Text = synthese.CoutTotalRh.ToString("C", culture);
+                lblCoutIndirectValue.Text = synthese.CoutTotalIndirect.ToString("C", culture);
+                lblJoursHommeValue.Text = synthese.EffortTotalJoursHomme.ToString("0.0");
+                lblDureeValue.Text = synthese.DureeJoursOuvres.ToString();
+                AfficherAnalyseRessources(runResult.AnalysisReport);
+            }
+            else if (runResult.RawResult?.AnalyseStatiqueResultat != null)
+            {
+                var estimation = runResult.RawResult.AnalyseStatiqueResultat;
+                decimal coutRhEstime = (estimation.CoutTotalEstime ?? 0) / 100.0m;
+                long coutIndirectJournalier = (long)numCoutIndirect.Value;
+                decimal heuresTravailParJour = numHeuresTravail.Value > 0 ? numHeuresTravail.Value : 8.0m;
+                decimal dureeEstimeeEnJours = Math.Ceiling((decimal)(estimation.DureeTotaleEstimeeEnSlots ?? 0) / heuresTravailParJour);
+                decimal coutIndirectEstime = dureeEstimeeEnJours * coutIndirectJournalier;
+                decimal coutTotalEstimeBrut = coutRhEstime + coutIndirectEstime;
+                decimal coutTotalFinal = Math.Ceiling(coutTotalEstimeBrut / 1000) * 1000;
+                lblCoutTotalValue.Text = coutTotalFinal.ToString("C", culture);
+                lblCoutIndirectValue.Text = coutIndirectEstime.ToString("C", culture);
+                lblDureeValue.Text = $"{estimation.DureeTotaleEstimeeEnSlots ?? 0} heures";
+                lblCoutRhValue.Text = "N/A";
+                lblJoursHommeValue.Text = "N/A";
+                NettoyerAnalyseRessources();
+            }
+            else
+            {
+                NettoyerAffichageKpis();
+            }
+
+            AfficherResultatDansLog(runResult);
+            navigatorResultats.SelectedPage = tabPageSynthese;
+        }
+
+        private void UpdateSolverStatusDisplay(string status)
+        {
+            khgStatutSolveur.Visible = !string.IsNullOrEmpty(status);
+            if (string.IsNullOrEmpty(status)) return;
+            var defaultBackColor = SystemColors.ControlDark;
+            var optimalColor = Color.FromArgb(0, 150, 0);
+            var feasibleColor = Color.FromArgb(204, 132, 0);
+            var infeasibleColor = Color.FromArgb(192, 0, 0);
+            switch (status.ToUpperInvariant())
+            {
+                case "OPTIMAL":
+                    khgStatutSolveur.ValuesPrimary.Heading = "OPTIMAL";
+                    khgStatutSolveur.StateCommon.HeaderPrimary.Back.Color1 = optimalColor;
+                    lblStatutExplication.Text = "La meilleure solution\npossible a été trouvée.";
+                    break;
+                case "FEASIBLE":
+                    khgStatutSolveur.ValuesPrimary.Heading = "FAISABLE";
+                    khgStatutSolveur.StateCommon.HeaderPrimary.Back.Color1 = feasibleColor;
+                    lblStatutExplication.Text = "Une solution a été trouvée,\nmais elle n'est peut-être pas la meilleure.\nLe temps de calcul était peut-être insuffisant.";
+                    break;
+                case "INFEASIBLE":
+                    khgStatutSolveur.ValuesPrimary.Heading = "IMPOSSIBLE";
+                    khgStatutSolveur.StateCommon.HeaderPrimary.Back.Color1 = infeasibleColor;
+                    lblStatutExplication.Text = "Aucune solution possible.\nAccordez plus de délai à l'IA.";
+                    break;
+                default:
+                    khgStatutSolveur.ValuesPrimary.Heading = status.ToUpperInvariant();
+                    khgStatutSolveur.StateCommon.HeaderPrimary.Back.Color1 = defaultBackColor;
+                    lblStatutExplication.Text = "Statut du solveur non reconnu.";
+                    break;
+            }
+        }
+        private void AfficherAnalyseRessources(AnalysisReport report)
+        {
+            dgvAnalyseOuvriers.DataSource = null;
+            dgvAnalyseOuvriers.DataSource = report.AnalysesOuvriers;
+            foreach (DataGridViewRow row in dgvAnalyseOuvriers.Rows)
+            {
+                if (row.Cells["colTauxFragmentation"].Value != null)
+                {
+                    var fragValue = Convert.ToDouble(row.Cells["colTauxFragmentation"].Value) * 100;
+                    if (fragValue > 75) row.Cells["colTauxFragmentation"].Style.BackColor = Color.LightCoral;
+                    else if (fragValue > 50) row.Cells["colTauxFragmentation"].Style.BackColor = Color.LightSalmon;
+                }
+            }
+            chartChargeJournaliere.Series.Clear();
+            var series = new Series("Charge") { ChartType = SeriesChartType.Column, XValueType = ChartValueType.Date };
+            foreach (var chargeJour in report.ChargeJournaliere.OrderBy(kvp => kvp.Key))
+            {
+                series.Points.AddXY(chargeJour.Key, chargeJour.Value);
+            }
+            chartChargeJournaliere.Series.Add(series);
+            chartChargeJournaliere.ChartAreas[0].AxisX.LabelStyle.Format = "dd/MM";
+            chartChargeJournaliere.ChartAreas[0].RecalculateAxesScale();
+        }
+        private void NettoyerAffichageKpis()
+        {
+            lblCoutTotalValue.Text = "N/A";
+            lblCoutRhValue.Text = "N/A";
+            lblCoutIndirectValue.Text = "N/A";
+            lblJoursHommeValue.Text = "N/A";
+            lblDureeValue.Text = "N/A";
+            NettoyerAnalyseRessources();
+        }
+        private void NettoyerAnalyseRessources()
+        {
+            dgvAnalyseOuvriers.DataSource = null;
+            chartChargeJournaliere.Series.Clear();
+        }
+
+        #endregion
+
+        #region Exports et États
         private void UpdateExportButtonsState()
         {
-            btnExportPlanningExcel.Enabled = _lastResult?.ResultatBrut?.OptimisationResultat?.Affectations?.Any() == true;
-            btnExportGantt.Enabled = _lastResult?.GanttConsolide?.TachesRacines?.Any() == true;
+            bool canExport = _lastRunResult?.AnalysisReport != null;
+            btnExportPlanningExcel.Enabled = canExport;
+            btnExportGantt.Enabled = canExport;
         }
 
         private async void btnExportPlanningExcel_Click(object sender, EventArgs e)
         {
-            if (_lastResult == null) return;
-
-            try
+            if (_lastRunResult?.AnalysisReport == null || _planningService.GetCurrentPlanning() == null)
             {
-                var config = GetConfigFromForm();
-                var nomProjet = _applicationService.ProjetActif.InformationsProjet.NomProjet;
-
-                Log("Début de l'export Excel...");
-                var cheminFichier = await _planningExcelExportService.ExporterPlanningComplet(
-                    _lastResult,
-                    _ressourceService.GetAllOuvriers(),
-                    _ressourceService.GetAllMetiers(),
-                    nomProjet,
-                    config
-                );
-                Log($"Export Excel réussi : {cheminFichier}");
-                MessageBox.Show($"Export terminé : {cheminFichier}", "Succès", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Aucun planning optimisé n'est disponible pour l'export.", "Export impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
             }
-            catch (Exception ex)
-            {
-                Log($"ERREUR EXPORT EXCEL : {ex.Message}");
-                MessageBox.Show($"Erreur lors de l'export : {ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
 
-        private void btnExportGantt_Click(object sender, EventArgs e)
-        {
-            if (_lastResult == null) return;
+            // --- CORRECTION ---
+            InformationsProjet infosProjet = _projetService.ObtenirInformationsProjet();
+            string nomProjet = infosProjet?.NomProjet ?? "Projet";
 
-            using var sfd = new SaveFileDialog { Filter = "Fichiers GanttProject (*.gan)|*.gan", Title = "Exporter vers GanttProject", FileName = "planning.gan" };
-            if (sfd.ShowDialog() == DialogResult.OK)
+            using (var saveFileDialog = new SaveFileDialog
             {
-                try
+                Filter = "Fichiers Excel (*.xlsx)|*.xlsx",
+                Title = "Exporter le planning au format Excel",
+                InitialDirectory = _cheminsPrefereService.ObtenirDernierDossierExport(),
+                FileName = $"Planning_{nomProjet}_{DateTime.Now:yyyyMMdd_HHmm}.xlsx"
+            })
+            {
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    var config = new ConfigurationExportGantt
+                    try
                     {
-                        NomProjet = _applicationService.ProjetActif.InformationsProjet.NomProjet,
-                        HeuresParJour = (double)numHeuresTravail.Value,
-                        JoursOuvres = chkListJoursOuvres.CheckedItems.Cast<DayOfWeek>()
-                    };
-                    _ganttExportService.ExporterVersGanttProjectXml(_lastResult.GanttConsolide, sfd.FileName, config);
-                    Log($"Export Gantt réussi : {sfd.FileName}");
-                    MessageBox.Show($"Export terminé : {sfd.FileName}", "Succès", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                catch (Exception ex)
-                {
-                    Log($"ERREUR EXPORT GANTT : {ex.Message}");
-                    MessageBox.Show($"Erreur lors de l'export : {ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        btnExportPlanningExcel.Enabled = false;
+                        var exportData = new ExportDataProjetDto
+                        {
+                            NomProjet = nomProjet,
+                            Configuration = _projetService.ConfigPlanificationActuelle,
+                            Planning = _planningService.GetCurrentPlanning(),
+                            Report = _lastRunResult.AnalysisReport,
+                            ProjetStructure = _projetService.GetProjetDataPourSauvegarde(),
+                            PoolOuvriers = _ressourceService.GetAllOuvriers()
+                        };
+                        await Task.Run(() => _planningExcelExportService.ExporterPlanningComplet(exportData, saveFileDialog.FileName));
+                        MessageBox.Show($"Le planning a été exporté avec succès vers :\n{saveFileDialog.FileName}", "Export réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Une erreur est survenue lors de l'export Excel :\n{ex.Message}", "Erreur d'export", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        Log($"ERREUR EXPORT EXCEL: {ex}");
+                    }
+                    finally
+                    {
+                        btnExportPlanningExcel.Enabled = true;
+                    }
                 }
             }
         }
 
-        #region Log Helpers
+        private async void btnExportGantt_Click(object sender, EventArgs e)
+        {
+            if (_lastRunResult?.AnalysisReport == null || _planningService.GetCurrentPlanning() == null)
+            {
+                MessageBox.Show("Aucun planning optimisé n'est disponible pour l'export.", "Export impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // --- CORRECTION ---
+            InformationsProjet infosProjet = _projetService.ObtenirInformationsProjet();
+            string nomProjet = infosProjet?.NomProjet ?? "Projet";
+
+            using (var saveFileDialog = new SaveFileDialog
+            {
+                Filter = "Fichiers GanttProject (*.gan)|*.gan",
+                Title = "Exporter vers GanttProject",
+                InitialDirectory = _cheminsPrefereService.ObtenirDernierDossierExport(),
+                FileName = $"Gantt_{nomProjet}_{DateTime.Now:yyyyMMdd_HHmm}.gan"
+            })
+            {
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        btnExportGantt.Enabled = false;
+                        var exportData = new ExportDataProjetDto
+                        {
+                            NomProjet = nomProjet,
+                            Configuration = _projetService.ConfigPlanificationActuelle,
+                            Planning = _planningService.GetCurrentPlanning(),
+                            Report = _lastRunResult.AnalysisReport,
+                            ProjetStructure = _projetService.GetProjetDataPourSauvegarde()
+                        };
+                        await Task.Run(() => _ganttExportService.ExporterVersGanttProjectXml(exportData, saveFileDialog.FileName));
+                        MessageBox.Show($"Le projet a été exporté avec succès vers :\n{saveFileDialog.FileName}", "Export Gantt réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Une erreur est survenue lors de l'export Gantt :\n{ex.Message}", "Erreur d'export", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        Log($"ERREUR EXPORT GANTT: {ex}");
+                    }
+                    finally
+                    {
+                        btnExportGantt.Enabled = true;
+                    }
+                }
+            }
+        }
+        #endregion
+
+        #region Log Helpers & Barre de Progression
+        // ... (Aucun changement dans cette région)
         private void Log(string message)
         {
+            if (this.IsDisposed || !this.IsHandleCreated) return;
             if (rtbLog.InvokeRequired)
             {
                 rtbLog.Invoke(new Action<string>(Log), message);
@@ -226,66 +427,112 @@ namespace PlanAthena.View.Planificator
             rtbLog.AppendText($"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}");
             rtbLog.ScrollToCaret();
         }
-
-        private void AfficherResultatDansLog(PlanAthena.Core.Facade.Dto.Output.ProcessChantierResultDto resultat)
+        private void AfficherResultatDansLog(PlanificationRunResult runResult)
         {
-            if (resultat == null) { Log("Le résultat retourné par la façade est null."); return; }
-            Log($"\n--- Résultat pour le Chantier ID: {resultat.ChantierId} ---");
-            Log($"État du Traitement: {resultat.Etat}");
-            if (resultat.Messages.Any())
+            if (runResult?.RawResult == null)
             {
-                Log("\nMessages de validation et suggestions :");
-                foreach (var msg in resultat.Messages)
+                Log("Le résultat de la planification est invalide.");
+                return;
+            }
+            var sb = new StringBuilder();
+            var rawResult = runResult.RawResult;
+            sb.AppendLine($"--- Résultat pour le Chantier ID: {rawResult.ChantierId} ---");
+            sb.AppendLine($"État du Traitement: {rawResult.Etat}");
+            if (rawResult.OptimisationResultat != null)
+            {
+                sb.AppendLine($"Statut du Solveur: {rawResult.OptimisationResultat.Status}");
+            }
+            if (rawResult.Messages.Any())
+            {
+                sb.AppendLine("\nMessages de validation et suggestions :");
+                foreach (var msg in rawResult.Messages)
                 {
                     string details = !string.IsNullOrEmpty(msg.ElementId) ? $" (Élément: {msg.ElementId})" : "";
-                    Log($"  [{msg.Type}] ({msg.CodeMessage}) {msg.Message}{details}");
+                    sb.AppendLine($"  [{msg.Type}] ({msg.CodeMessage}) {msg.Message}{details}");
                 }
             }
-            if (resultat.AnalyseStatiqueResultat != null)
+            if (runResult.MetierTensionReport != null)
             {
-                Log("\n--- Analyse Statique et Estimation Préliminaire ---");
-                var analyse = resultat.AnalyseStatiqueResultat;
-                if (analyse.CoutTotalEstime.HasValue) Log($"Coût Total Estimé : {analyse.CoutTotalEstime / 100.0m:C}");
-                if (analyse.DureeTotaleEstimeeEnSlots.HasValue) Log($"Durée Totale Estimée : {analyse.DureeTotaleEstimeeEnSlots} heures ({analyse.DureeTotaleEstimeeEnSlots / (double)numHeuresTravail.Value:F1} jours de {numHeuresTravail.Value}h)");
-                if (analyse.OuvriersClesSuggereIds.Any()) Log($"Ouvriers clés suggérés : {string.Join(", ", analyse.OuvriersClesSuggereIds)}");
-            }
-            if (resultat.OptimisationResultat?.Affectations?.Any() ?? false)
-            {
-                Log("\n--- Planning Détaillé (Affectations) ---");
-                var planningParJour = resultat.OptimisationResultat.Affectations.OrderBy(a => a.DateDebut).GroupBy(a => a.DateDebut.Date);
-                foreach (var jour in planningParJour)
+                sb.AppendLine("\n--- Analyse Rapide des Tensions ---");
+                sb.AppendLine($"Conclusion : {runResult.MetierTensionReport.Conclusion}");
+                if (runResult.MetierTensionReport.Repartition.Any())
                 {
-                    Log($"\n  [ Jour: {jour.Key:dddd dd MMMM yyyy} ]");
-                    var tachesParOuvrier = jour.OrderBy(a => a.OuvrierNom).GroupBy(a => a.OuvrierNom);
-                    foreach (var groupeOuvrier in tachesParOuvrier)
+                    sb.AppendLine("Répartition des métiers clés suggérés :");
+                    foreach (var repartition in runResult.MetierTensionReport.Repartition)
                     {
-                        Log($"    > Ouvrier: {groupeOuvrier.Key}");
-                        foreach (var affectation in groupeOuvrier)
-                        {
-                            var dateFinEstimee = affectation.DateDebut.AddHours(affectation.DureeHeures);
-                            Log($"      {affectation.DateDebut:HH:mm}-{dateFinEstimee:HH:mm} ({affectation.DureeHeures}h) | Tâche: {affectation.TacheNom} (Bloc: {affectation.BlocId})");
-                        }
+                        var nomMetier = _ressourceService.GetMetierById(repartition.MetierId)?.Nom ?? repartition.MetierId;
+                        sb.AppendLine($"  - {nomMetier} : {repartition.Count} ouvrier(s)");
                     }
                 }
             }
-            if (resultat.OptimisationResultat != null)
+            if (runResult.AnalysisReport != null)
             {
-                var optimResult = resultat.OptimisationResultat;
-                Log("\n--- Résumé de l'Optimisation ---");
-                Log($"Statut du Solveur: {optimResult.Status}");
-                if (optimResult.CoutTotalEstime.HasValue) Log($"Coût Total Estimé : {optimResult.CoutTotalEstime / 100.0m:C}");
-                if (optimResult.DureeTotaleEnSlots.HasValue) Log($"Durée Totale (en slots de 1h): {optimResult.DureeTotaleEnSlots}");
-            }
-            if (resultat.AnalysePostOptimisationResultat != null)
-            {
-                var analysisResult = resultat.AnalysePostOptimisationResultat;
-                Log("\n--- Analyse Post-Planning (KPIs) ---");
-                Log($"Taux d'Occupation Moyen Pondéré: {analysisResult.KpisGlobaux.TauxOccupationMoyenPondere:F2}%");
-                foreach (var kpi in analysisResult.KpisParOuvrier)
+                sb.AppendLine("\n--- Planning Détaillé ---");
+                var planningParJour = _planningService.RetournePlanningDetailleParJour();
+                if (planningParJour.Any())
                 {
-                    Log($"  - {kpi.OuvrierNom} ({kpi.OuvrierId}): Taux d'Occupation: {kpi.TauxOccupation:F2}% ({kpi.HeuresTravaillees:F1}h travaillées)");
+                    foreach (var jour in planningParJour)
+                    {
+                        sb.AppendLine($"\n  [ Jour: {jour.Jour:dddd dd MMMM yyyy} ]");
+                        foreach (var ouvrier in jour.Ouvriers)
+                        {
+                            sb.AppendLine($"    > Ouvrier: {ouvrier.NomOuvrier}");
+                            foreach (var affectation in ouvrier.Affectations)
+                            {
+                                sb.AppendLine($"      ({affectation.DureeHeures}h) | Tâche: {affectation.TacheNom} (Bloc: {affectation.BlocId})");
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    sb.AppendLine("Aucune affectation générée.");
                 }
             }
+            Log(sb.ToString());
+        }
+        private void SolverTimer_Tick(object sender, EventArgs e)
+        {
+            _elapsedSeconds++;
+            var delay = TimeSpan.FromSeconds(_elapsedSeconds);
+            if (_solverMaxSeconds > 0)
+            {
+                double progressPercentage = ((double)_elapsedSeconds / _solverMaxSeconds) * 100;
+                if (progressPercentage > 100) progressPercentage = 100;
+                SolverProgressBar.Value = (int)progressPercentage;
+                int remainingSeconds = Math.Max(0, _solverMaxSeconds - _elapsedSeconds);
+                int remainingMinutes = remainingSeconds / 60;
+                int remainingSecondsDisplay = remainingSeconds % 60;
+                SolverProgressBar.Values.Text = $"Calcul en cours ({remainingMinutes}:{remainingSecondsDisplay:D2} restant)";
+            }
+            else
+            {
+                SolverProgressBar.Values.Text = $"Planification en cours... {delay:g}";
+            }
+        }
+        private void StartSolverProgress()
+        {
+            _solverMaxSeconds = (int)cmbCalculMax.SelectedItem * 60;
+            _elapsedSeconds = 0;
+            SolverProgressBar.Minimum = 0;
+            SolverProgressBar.Maximum = 100;
+            SolverProgressBar.Value = 0;
+            SolverProgressBar.Values.Text = "Calcul en cours";
+            SolverProgressBar.Visible = true;
+            _solverTimer.Start();
+        }
+        private void StopSolverProgress()
+        {
+            _solverTimer.Stop();
+            SolverProgressBar.Value = 100;
+            SolverProgressBar.Values.Text = "Terminé";
+            Task.Delay(2000).ContinueWith(_ =>
+            {
+                if (this.IsHandleCreated && !this.IsDisposed)
+                {
+                    this.Invoke(new Action(() => SolverProgressBar.Visible = false));
+                }
+            });
         }
         #endregion
     }

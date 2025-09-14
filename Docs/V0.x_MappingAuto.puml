@@ -1,0 +1,119 @@
+@startuml
+'---------------------------------
+' Configuration
+'---------------------------------
+title Diagramme de Séquence Final - Intégration AutoMapper (Arch. v0.4.9)
+autonumber
+
+skinparam sequence {
+    ParticipantBackgroundColor LightBlue
+    ActorBackgroundColor LightGreen
+    LifeLineBorderColor RoyalBlue
+    BoxBorderColor Black
+    BoxPadding 10
+    ArrowColor Black
+    LifeLineBackgroundColor #EFEFEF
+}
+skinparam note {
+    BackgroundColor LightYellow
+    BorderColor DarkOrange
+}
+
+'---------------------------------
+' Participants
+'---------------------------------
+actor Utilisateur
+
+participant "view:TaskManagerView" as TMV
+participant "service:TaskManagerService" as TMS
+participant "service:ProjetService" as PS
+participant "utility:AutoDependanceMapper" as ADM
+participant "utility:DependanceBuilder" as DB
+participant "service:IIdGeneratorService" as IGS
+
+'=================================
+' FLUX PRINCIPAL
+'=================================
+group Mapping Automatique d'un Lot (Architecture Cible v0.4.9)
+
+    Utilisateur -> TMV : Clic sur "Mapping Auto"
+    activate TMV
+
+    TMV -> Utilisateur : Affiche "Confirmer l'opération ?"
+    Utilisateur -> TMV : Confirme
+
+    ' 1. Le point d'entrée est le nouveau service des tâches
+    TMV -> TMS : GenererDependancesAutomatiquesPourLot(lotId)
+    deactivate TMV
+    activate TMS
+    
+    note right of TMS
+        **Phase 1 : Récupération de la Structure**
+        Le service des tâches (TMS) interroge
+        le service du projet (PS) pour obtenir
+        la hiérarchie Lot -> Blocs.
+    end note
+    
+    ' 2. TMS a besoin de la structure, il demande à ProjetService
+    TMS -> PS : ObtenirLotParId(lotId)
+    activate PS
+    PS --> TMS : return lotAvecSesBlocs
+    deactivate PS
+    
+    note right of TMS #LightCyan
+        **Phase 2 : Traitement par Bloc**
+        L'orchestrateur (TMS) itère sur chaque
+        bloc du lot. Chaque bloc est traité
+        de manière indépendante.
+    end note
+    
+    ' 3. Boucle sur chaque bloc du lot
+    loop pour chaque bloc dans lotAvecSesBlocs.Blocs
+        
+        ' TMS récupère les tâches de son propre état pour le bloc courant
+        TMS -> TMS : ObtenirTachesParBloc(bloc.BlocId)
+        
+        ' TMS délègue le calcul complexe à l'utilitaire stateless
+        TMS -> ADM : AppliquerSuggestionsDeDependance(\n  tachesDuBloc,\n  phaseDuLot,\n  dependanceBuilder,\n  idGenerator,\n  lotId, bloc.BlocId)
+        activate ADM
+        
+        note right of ADM
+            L'utilitaire analyse, détecte les
+            besoins de synchronisation, et
+            retourne un plan d'action
+            (jalons à créer, tâches à modifier).
+        end note
+
+        ' ... (logique interne de ADM avec DB et IGS, comme précédemment) ...
+        ADM -> DB : ObtenirDependancesPourTache(...)
+        ADM -> IGS : GenererProchainTacheId(...)
+        
+        ADM --> TMS : return autoMappingResultPourBloc
+        deactivate ADM
+        
+        note right of TMS
+            **Exécution du Plan (par bloc)**
+            TMS applique les modifications
+            sur son propre état.
+        end note
+        
+        loop pour chaque jalon dans resultat.NouvellesTachesACreer
+            TMS -> TMS : CreerTache(nouveauJalon)
+        end
+        
+        loop pour chaque tâche dans resultat.TachesExistantesAModifier
+            TMS -> TMS : ModifierTache(tacheModifiee)
+        end
+        
+    end
+    
+    TMS --> TMV : return (avec rapport d'erreurs éventuel)
+    deactivate TMS
+    activate TMV
+
+    TMV -> TMV : RefreshAll()
+    TMV --> Utilisateur : Affiche le diagramme mis à jour
+    deactivate TMV
+
+end
+@enduml

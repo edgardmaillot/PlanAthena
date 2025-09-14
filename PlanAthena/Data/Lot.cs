@@ -2,8 +2,6 @@
 // Version: 0.4.4
 // Description: Ajout de la collection de Blocs pour créer la hiérarchie de données Lot -> Blocs.
 
-using System.Collections.Generic;
-
 namespace PlanAthena.Data
 {
     /// <summary>

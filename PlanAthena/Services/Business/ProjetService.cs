@@ -1,39 +1,56 @@
-// Fichier: PlanAthena/Services/Business/ProjetService.cs
-// Version: 0.4.4 (Refactorisation Finale)
+// /Services/Business/ProjetService.cs V0.4.8
+
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using PlanAthena.Services.Business.DTOs;
+using PlanAthena.Services.DTOs.Projet;
 
 namespace PlanAthena.Services.Business
 {
+
+
     public class ProjetService
     {
         private readonly IIdGeneratorService _idGenerator;
         private readonly Dictionary<string, Lot> _lots = new();
-        private readonly Dictionary<string, Tache> _taches = new();
+        private InformationsProjet _informationsProjet;
+        public ConfigurationPlanification ConfigPlanificationActuelle { get; private set; }
+
+
 
         public ProjetService(IIdGeneratorService idGenerator)
         {
             _idGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
+            // Initialiser la configuration de session avec des valeurs par défaut
+            InitialiserConfigurationParDefaut();
         }
 
         #region Cycle de vie du projet
-
-        public void InitialiserNouveauProjet()
+        private void InitialiserConfigurationParDefaut()
         {
-            ViderProjet();
+            ConfigPlanificationActuelle = new ConfigurationPlanification
+            {
+                JoursOuvres = new List<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday },
+                HeureDebutJournee = 8,
+                DureeJournaliereStandardHeures = 8,
+                HeuresTravailEffectifParJour = 7,
+                CoutIndirectJournalierAbsolu = 500
+            };
+        }
+        public virtual void InitialiserNouveauProjet()
+        {
+            //ViderProjet();
+            _informationsProjet = new InformationsProjet { NomProjet = "Nouveau Projet" };
             CreerLot("Lot Principal", 50, ChantierPhase.SecondOeuvre);
         }
 
-        public void ChargerProjet(ProjetData projetData)
+        public virtual void ChargerProjet(ProjetData projetData)
         {
-            ViderProjet();
+            //ViderProjet();
             if (projetData == null) return;
 
+            _informationsProjet = projetData.InformationsProjet ?? new InformationsProjet { NomProjet = "Projet sans nom" };
             projetData.Lots?.ForEach(lot => _lots.TryAdd(lot.LotId, lot));
-            projetData.Taches?.ForEach(tache => _taches.TryAdd(tache.TacheId, tache));
 
             if (projetData.Blocs != null && projetData.Blocs.Any())
             {
@@ -52,35 +69,22 @@ namespace PlanAthena.Services.Business
             }
         }
 
-        public ProjetData GetProjetDataPourSauvegarde()
+        public virtual ProjetData GetProjetDataPourSauvegarde()
         {
             return new ProjetData
             {
                 Lots = this.ObtenirTousLesLots(),
-                Taches = this.ObtenirToutesLesTaches(),
+                InformationsProjet = this._informationsProjet
             };
         }
 
-        public void ViderProjet()
+        public virtual void ViderProjet()
         {
             _lots.Clear();
-            _taches.Clear();
+            _informationsProjet = null;
         }
 
-        public void ViderLot(string lotId)
-        {
-            if (string.IsNullOrEmpty(lotId)) return;
-            var tachesASupprimer = ObtenirTachesParLot(lotId);
-            foreach (var tache in tachesASupprimer)
-            {
-                _taches.Remove(tache.TacheId);
-            }
-            var lot = ObtenirLotParId(lotId);
-            if (lot != null)
-            {
-                lot.Blocs.Clear();
-            }
-        }
+        // ViderLot a été retiré car sa logique de suppression des tâches est maintenant gérée ailleurs.
 
         private static string ExtraireLotIdDepuisBlocId(string blocId)
         {
@@ -90,18 +94,15 @@ namespace PlanAthena.Services.Business
 
         #endregion
 
-        #region Gestion des Lots
+        #region Accesseurs
+        public InformationsProjet ObtenirInformationsProjet() => _informationsProjet;
+        #endregion
 
+        #region Gestion des Lots
         public Lot CreerLot(string nom = "Nouveau Lot", int priorite = 99, ChantierPhase phases = ChantierPhase.SecondOeuvre)
         {
             if (string.IsNullOrWhiteSpace(nom)) throw new ArgumentException("Le nom du lot ne peut pas être vide.", nameof(nom));
-            var nouveauLot = new Lot
-            {
-                LotId = _idGenerator.GenererProchainLotId(_lots.Values.ToList()),
-                Nom = nom,
-                Priorite = priorite,
-                Phases = phases
-            };
+            var nouveauLot = new Lot { LotId = _idGenerator.GenererProchainLotId(_lots.Values.ToList()), Nom = nom, Priorite = priorite, Phases = phases };
             _lots.Add(nouveauLot.LotId, nouveauLot);
             return nouveauLot;
         }
@@ -115,30 +116,20 @@ namespace PlanAthena.Services.Business
 
         public void SupprimerLot(string lotId)
         {
-            if (ObtenirTachesParLot(lotId).Any())
-                throw new InvalidOperationException("Impossible de supprimer ce lot car il est utilisé par au moins une tâche.");
             _lots.Remove(lotId);
         }
 
         public List<Lot> ObtenirTousLesLots() => _lots.Values.OrderBy(l => l.Priorite).ThenBy(l => l.Nom).ToList();
-        public Lot ObtenirLotParId(string lotId) => _lots.GetValueOrDefault(lotId);
-
+        public virtual Lot ObtenirLotParId(string lotId) => _lots.GetValueOrDefault(lotId);
         #endregion
 
         #region Gestion des Blocs
-
         public Bloc CreerBloc(string lotIdParent, string nom = "Nouveau Bloc", int capacite = 1)
         {
             var lotParent = ObtenirLotParId(lotIdParent);
             if (lotParent == null) throw new InvalidOperationException($"Lot parent '{lotIdParent}' non trouvé.");
             var tousLesBlocs = _lots.Values.SelectMany(l => l.Blocs).ToList();
-            var nouveauBloc = new Bloc
-            {
-                LotId = lotIdParent,
-                BlocId = _idGenerator.GenererProchainBlocId(lotIdParent, tousLesBlocs),
-                Nom = nom,
-                CapaciteMaxOuvriers = capacite
-            };
+            var nouveauBloc = new Bloc { LotId = lotIdParent, BlocId = _idGenerator.GenererProchainBlocId(lotIdParent, tousLesBlocs), Nom = nom, CapaciteMaxOuvriers = capacite };
             lotParent.Blocs.Add(nouveauBloc);
             return nouveauBloc;
         }
@@ -155,8 +146,6 @@ namespace PlanAthena.Services.Business
 
         public void SupprimerBloc(string blocId)
         {
-            if (ObtenirTachesParBloc(blocId).Any())
-                throw new InvalidOperationException("Impossible de supprimer ce bloc car il est utilisé par au moins une tâche.");
             foreach (var lot in _lots.Values)
             {
                 lot.Blocs.RemoveAll(b => b.BlocId == blocId);
@@ -171,45 +160,6 @@ namespace PlanAthena.Services.Business
 
         public List<Bloc> ObtenirTousLesBlocs() => _lots.Values.SelectMany(l => l.Blocs).OrderBy(b => b.Nom).ToList();
         public Bloc ObtenirBlocParId(string blocId) => _lots.Values.SelectMany(l => l.Blocs).FirstOrDefault(b => b.BlocId == blocId);
-
-        #endregion
-
-        #region Gestion des Tâches
-
-        public Tache CreerTache(string lotId, string blocId, string nom = "Nouvelle Tâche", int heures = 8)
-        {
-            var nouvelleTache = new Tache
-            {
-                LotId = lotId,
-                BlocId = blocId,
-                TacheId = _idGenerator.GenererProchainTacheId(blocId, _taches.Values.ToList()),
-                TacheNom = nom,
-                HeuresHommeEstimees = heures
-            };
-            _taches.Add(nouvelleTache.TacheId, nouvelleTache);
-            return nouvelleTache;
-        }
-
-        public void ModifierTache(Tache tacheModifiee)
-        {
-            if (tacheModifiee == null) throw new ArgumentNullException(nameof(tacheModifiee));
-            if (!_taches.ContainsKey(tacheModifiee.TacheId)) throw new InvalidOperationException($"La tâche '{tacheModifiee.TacheNom}' n'a pas été trouvée.");
-            _taches[tacheModifiee.TacheId] = tacheModifiee;
-        }
-
-        public void SupprimerTache(string tacheId)
-        {
-            if (_taches.Values.Any(t => (t.Dependencies ?? "").Split(',').Select(d => d.Trim()).Contains(tacheId)))
-                throw new InvalidOperationException("Impossible de supprimer cette tâche car d'autres tâches en dépendent.");
-            _taches.Remove(tacheId);
-        }
-
-        public List<Tache> ObtenirToutesLesTaches() => _taches.Values.ToList();
-        public Tache ObtenirTacheParId(string tacheId) => _taches.GetValueOrDefault(tacheId);
-        public List<Tache> ObtenirTachesParLot(string lotId) => _taches.Values.Where(t => t.LotId == lotId).ToList();
-        public List<Tache> ObtenirTachesParBloc(string blocId) => _taches.Values.Where(t => t.BlocId == blocId).ToList();
-        public virtual List<Tache> ObtenirTachesParMetier(string metierId) => _taches.Values.Where(t => t.MetierId == metierId).ToList();
-
         #endregion
     }
 }

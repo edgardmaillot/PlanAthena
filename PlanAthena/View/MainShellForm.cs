@@ -1,116 +1,149 @@
-//Fichier : TaskManagerView.cs Version : 0.4.7.18
 using Krypton.Toolkit;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.Export;
 using PlanAthena.Services.Infrastructure;
+using PlanAthena.Services.Usecases; 
+using PlanAthena.Services.UseCases;
 using PlanAthena.Utilities;
-using PlanAthena.View;
 using PlanAthena.View.Dashboard;
 using PlanAthena.View.Planificator;
 using PlanAthena.View.Ressources;
 using PlanAthena.View.Ressources.MetierDiagram;
 using PlanAthena.View.Structure;
 using PlanAthena.View.TaskManager;
-using System;
-using System.IO;
-using System.Windows.Forms;
-using static Krypton.Toolkit.KryptonManager;
+using static PlanAthena.View.TaskManager.TaskManagerView;
 
 namespace PlanAthena.View
 {
     public partial class MainShellForm : KryptonForm
     {
-        // Stockage des services essentiels
+        // --- NOUVELLE DÉPENDANCE ---
+        private readonly ProjectPersistenceUseCase _persistenceUseCase;
+
+        // Stockage des autres services
         private readonly IServiceProvider _serviceProvider;
-        private readonly ApplicationService _applicationService;
         private readonly ProjetService _projetService;
+        private readonly TaskManagerService _taskManagerService;
         private readonly RessourceService _ressourceService;
         private readonly ImportService _importService;
+        private readonly ImportWizardOrchestrator _importWizardOrchestrator;
+        private readonly ExportService _exportService;
         private readonly CheminsPrefereService _cheminsPrefereService;
         private readonly DependanceBuilder _dependanceBuilder;
-        private readonly PlanificationService _planificationService;
+        private readonly PlanningService _planningService;
         private readonly PlanningExcelExportService _planningExcelExportService;
         private readonly GanttExportService _ganttExportService;
         private readonly UserPreferencesService _userPreferencesService;
+        private readonly PlanificationOrchestrator _planificationOrchestrator;
 
         public MainShellForm(
             IServiceProvider serviceProvider,
-            ApplicationService applicationService,
+            // --- NOUVELLE INJECTION ---
+            ProjectPersistenceUseCase persistenceUseCase,
             ProjetService projetService,
+            TaskManagerService taskManagerService,
             RessourceService ressourceService,
             ImportService importService,
+            ImportWizardOrchestrator ImportWizardOrchestrator,
+            ExportService exportService,
             CheminsPrefereService cheminsPrefereService,
             DependanceBuilder dependanceBuilder,
-            PlanificationService planificationService,
+            PlanificationOrchestrator planificationOrchestrator,
+            PlanningService planningService,
             PlanningExcelExportService planningExcelExportService,
             GanttExportService ganttExportService,
             UserPreferencesService userPreferencesService)
         {
-
             InitializeComponent();
             kryptonManager.GlobalPaletteMode = PaletteMode.Microsoft365SilverDarkMode;
 
             _serviceProvider = serviceProvider;
-            _applicationService = applicationService;
+            // --- NOUVELLE ASSIGNATION ---
+            _persistenceUseCase = persistenceUseCase;
             _projetService = projetService;
+            _taskManagerService = taskManagerService;
             _ressourceService = ressourceService;
             _importService = importService;
+            _importWizardOrchestrator = ImportWizardOrchestrator;
+            _exportService = exportService;
             _cheminsPrefereService = cheminsPrefereService;
             _dependanceBuilder = dependanceBuilder;
-            _planificationService = planificationService;
+            _planificationOrchestrator = planificationOrchestrator;
+            _planningService = planningService;
             _planningExcelExportService = planningExcelExportService;
             _ganttExportService = ganttExportService;
             _userPreferencesService = userPreferencesService;
 
-
+            InitializeMenuHoverOpening();
             InitializeThemeSelector();
-            // Afficher la vue d'accueil au démarrage
             NavigateToAccueil();
-
         }
 
         #region Logique de Navigation Principale
 
+
         private void ShowView(UserControl viewToShow)
         {
             if (viewToShow == null) return;
-
-            // On vide le panel précédent avant d'ajouter la nouvelle vue.
             if (panelContent.Controls.Count > 0)
             {
                 var oldView = panelContent.Controls[0];
                 panelContent.Controls.Remove(oldView);
-                oldView.Dispose(); // Libérer les ressources de l'ancienne vue
+                oldView.Dispose();
             }
-
             panelContent.Controls.Clear();
             viewToShow.Dock = DockStyle.Fill;
             panelContent.Controls.Add(viewToShow);
-
-            // Tentative de chargement automatique du layout APRÈS que la vue soit ajoutée
             var manager = FindActiveDockingManager();
             if (manager != null)
             {
                 string viewIdentifier = viewToShow.GetType().Name;
-                _userPreferencesService.LoadLayout(manager, viewIdentifier);
+
+                // pour l'instant le chargement automatique est désactivé
+                //_userPreferencesService.LoadLayout(manager, viewIdentifier);
             }
         }
-
+        private void InitializeMenuHoverOpening()
+        {
+            foreach (ToolStripItem item in menuStrip.Items)
+            {
+                if (item is ToolStripMenuItem menuItem)
+                {
+                    menuItem.MouseEnter += MenuItem_MouseEnter_OpenOnHover;
+                }
+            }
+        }
+        private void MenuItem_MouseEnter_OpenOnHover(object sender, EventArgs e)
+        {
+            if (sender is ToolStripMenuItem hoveredItem && hoveredItem.HasDropDown && !hoveredItem.IsOnDropDown)
+            {
+                foreach (ToolStripItem item in menuStrip.Items)
+                {
+                    if (item is ToolStripMenuItem menuItem && menuItem != hoveredItem && menuItem.IsOnDropDown)
+                    {
+                        menuItem.HideDropDown();
+                    }
+                }
+                hoveredItem.ShowDropDown();
+            }
+        }
         #endregion
 
         #region Méthodes de Navigation (appelées par les menus et les CTA)
 
         private void NavigateToAccueil()
         {
-            var view = new DashboardView(_applicationService, _cheminsPrefereService);
+            // --- CORRECTION: Le constructeur de DashboardView est mis à jour ---
+            var view = new DashboardView(_persistenceUseCase, _projetService);
             view.NavigateToViewRequested += OnNavigateToViewRequested;
             ShowView(view);
         }
 
         private void NavigateToStructure()
         {
-            var view = new ProjectStructureView(_applicationService, _projetService);
+            // Note: ProjectStructureView devra aussi être mis à jour s'il utilise ApplicationService
+            var view = new ProjectStructureView(_projetService, _taskManagerService);
             view.NavigateToViewRequested += OnNavigateToViewRequested;
             ShowView(view);
         }
@@ -124,26 +157,48 @@ namespace PlanAthena.View
 
         private void NavigateToRessourcesOuvriers()
         {
-            var view = new RessourceOuvrierView(_ressourceService, _projetService, _importService);
+            var view = new RessourceOuvrierView(_ressourceService, _projetService, _importWizardOrchestrator, _exportService);
             ShowView(view);
         }
 
         private void NavigateToPrerequisMetiers()
         {
-            var view = new PrerequisMetierView(_applicationService, _ressourceService, _projetService, _dependanceBuilder);
+            // Note: PrerequisMetierView devra aussi être mis à jour
+            var view = new PrerequisMetierView(_ressourceService, _projetService, _dependanceBuilder);
             view.NavigateToViewRequested += OnNavigateToViewRequested;
             ShowView(view);
         }
 
         private void NavigateToTaskManager()
         {
-            var view = new TaskManagerView(_applicationService, _projetService, _ressourceService, _dependanceBuilder, _importService);
+            // L'appel normal affiche la vue diagramme par défaut
+            var view = new TaskManagerView(_projetService, _taskManagerService, _ressourceService, _dependanceBuilder, _importWizardOrchestrator, _exportService,_cheminsPrefereService);
             view.NavigateToViewRequested += OnNavigateToViewRequested;
             ShowView(view);
         }
+
+        private void NavigateToTaskListView()
+        {
+            // 1. Créer une instance du nouveau formulaire Cockpit.
+            var cockpitForm = new PlanAthena.View.TaskManager.Cockpit.Cockpit();
+
+            // 2. Appeler sa méthode d'initialisation en lui passant les services requis
+            //    qui sont déjà disponibles dans MainShellForm.
+            cockpitForm.Initialize(
+                _taskManagerService,
+                _planningService,
+                _projetService,
+                _ressourceService
+            );
+
+            // 3. Afficher le formulaire en tant que fenêtre de dialogue modale.
+            //    Cela empêche l'interaction avec la fenêtre principale tant que le cockpit est ouvert.
+            cockpitForm.ShowDialog();
+        }
         private void NavigateToPlanificator()
         {
-            var view = new PlanificatorView(_applicationService, _planificationService, _planningExcelExportService, _ganttExportService, _ressourceService);
+            // --- CORRECTION: Le constructeur de PlanificatorView est mis à jour ---
+            var view = new PlanificatorView(_planificationOrchestrator, _planningService, _projetService, _ressourceService, _planningExcelExportService, _ganttExportService, _cheminsPrefereService);
             ShowView(view);
         }
         #endregion
@@ -155,62 +210,31 @@ namespace PlanAthena.View
         private void menuRessourcesMetiers_Click(object sender, EventArgs e) => NavigateToRessourcesMetiers();
         private void menuRessourcesOuvriers_Click(object sender, EventArgs e) => NavigateToRessourcesOuvriers();
         private void menuTachesDiagramme_Click(object sender, EventArgs e) => NavigateToTaskManager();
+        private void menuTachesListe_Click(object sender, EventArgs e) => NavigateToTaskListView();
 
         private void menuNouveauProjet_Click(object sender, EventArgs e)
         {
-            _applicationService.CreerNouveauProjet();
-            // Après création, on redirige vers l'accueil qui est le meilleur endroit pour éditer les détails
+            // --- CORRECTION: Appel au UseCase ---
+            _persistenceUseCase.CreerNouveauProjet();
             NavigateToAccueil();
-            //MessageBox.Show("Nouveau projet initialisé.", "Nouveau Projet", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void menuChargerProjet_Click(object sender, EventArgs e)
         {
-            using var ofd = new OpenFileDialog
-            {
-                InitialDirectory = _cheminsPrefereService.ObtenirDernierDossierProjets(),
-                Filter = "Fichiers projet (*.json)|*.json",
-                Title = "Charger un projet"
-            };
-
-            if (ofd.ShowDialog() == DialogResult.OK)
-            {
-                try
-                {
-                    _applicationService.ChargerProjetDepuisFichier(ofd.FileName);
-                    // On navigue vers l'accueil pour voir le résumé du projet chargé
-                    NavigateToAccueil();
-                    //MessageBox.Show($"Projet '{Path.GetFileNameWithoutExtension(ofd.FileName)}' chargé.", "Chargement réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Erreur lors du chargement du projet :\n{ex.Message}", "Erreur de Chargement", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
+            // --- CORRECTION: Le UseCase gère maintenant la boîte de dialogue ---
+            _persistenceUseCase.ChargerProjet();
+            NavigateToAccueil(); // On rafraîchit la vue pour afficher le projet chargé
         }
 
         private void menuSauvegarderProjet_Click(object sender, EventArgs e)
         {
-            if (_applicationService.ProjetActif == null)
-            {
-                MessageBox.Show("Aucun projet actif à sauvegarder. Veuillez d'abord créer ou charger un projet.", "Action impossible", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+            // --- CORRECTION: Appel au UseCase ---
+            _persistenceUseCase.SauvegarderProjet();
 
-            try
+            // On rafraîchit la vue actuelle si c'est le dashboard
+            if (panelContent.Controls.Count > 0 && panelContent.Controls[0] is DashboardView currentDashboard)
             {
-                _applicationService.SauvegarderProjetActuel();
-                MessageBox.Show("Projet sauvegardé avec succès !", "Sauvegarde", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                // Si la vue actuelle est le dashboard, on la rafraîchit pour mettre à jour le chemin du fichier
-                if (panelContent.Controls.Count > 0 && panelContent.Controls[0] is DashboardView currentDashboard)
-                {
-                    currentDashboard.UpdateDetailsForm(); // Méthode à rendre publique dans DashboardView si nécessaire
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Erreur lors de la sauvegarde du projet :\n{ex.Message}", "Erreur de Sauvegarde", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                currentDashboard.UpdateDetailsForm();
             }
         }
 
@@ -237,7 +261,6 @@ namespace PlanAthena.View
         #endregion
 
         #region Gestionnaires Layout & Thèmes
-
         private void menuSaveLayout_Click(object sender, EventArgs e)
         {
             var manager = FindActiveDockingManager();
@@ -252,7 +275,6 @@ namespace PlanAthena.View
                 MessageBox.Show("Aucune disposition à sauvegarder pour cet écran.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
-
         private void menuLoadLayout_Click(object sender, EventArgs e)
         {
             var manager = FindActiveDockingManager();
@@ -266,19 +288,12 @@ namespace PlanAthena.View
                 MessageBox.Show("Cet écran ne supporte pas le chargement de disposition.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
-
-        /// <summary>
-        /// Trouve le KryptonDockingManager dans la vue actuellement affichée.
-        /// </summary>
-        /// <returns>L'instance du manager, ou null si non trouvé.</returns>
         private Krypton.Docking.KryptonDockingManager FindActiveDockingManager()
         {
             if (panelContent.Controls.Count > 0 && panelContent.Controls[0] is UserControl currentView)
             {
-                // Utilise la réflexion pour trouver un champ privé nommé "kryptonDockingManager"
                 var field = currentView.GetType().GetField("kryptonDockingManager",
                     System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
                 if (field != null)
                 {
                     return field.GetValue(currentView) as Krypton.Docking.KryptonDockingManager;
@@ -286,8 +301,6 @@ namespace PlanAthena.View
             }
             return null;
         }
-
-
         private void InitializeThemeSelector()
         {
             var themes = new[]
@@ -301,21 +314,16 @@ namespace PlanAthena.View
                 new { Name = "Système Professionnel", Value = PaletteMode.ProfessionalSystem },
                 new { Name = "Système Standard", Value = PaletteMode.ProfessionalSystem },
             };
-
             toolStripComboBoxThemes.KryptonComboBoxControl.DataSource = themes;
             toolStripComboBoxThemes.KryptonComboBoxControl.DisplayMember = "Name";
             toolStripComboBoxThemes.KryptonComboBoxControl.ValueMember = "Value";
-
             toolStripComboBoxThemes.KryptonComboBoxControl.SelectedIndexChanged += ThemeSelector_SelectedIndexChanged;
-
-            // On ne charge le thème que si le service est disponible.
             if (_userPreferencesService != null)
             {
                 string savedThemeName = _userPreferencesService.LoadTheme();
                 if (Enum.TryParse<PaletteMode>(savedThemeName, out var savedTheme))
                 {
-                    ApplyTheme(savedTheme, savePreference: false); // On ajoute un flag pour éviter de réécrire la valeur qu'on vient de lire
-
+                    ApplyTheme(savedTheme, savePreference: false);
                     var themeToSelect = themes.FirstOrDefault(t => t.Value == savedTheme);
                     if (themeToSelect != null)
                     {
@@ -329,11 +337,9 @@ namespace PlanAthena.View
             }
             else
             {
-                // Fallback si le service n'a pas été injecté pour une raison quelconque
                 ApplyTheme(PaletteMode.SparkleBlueDarkMode, savePreference: false);
             }
         }
-
         private void ThemeSelector_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (toolStripComboBoxThemes.KryptonComboBoxControl.SelectedItem != null)
@@ -342,7 +348,6 @@ namespace PlanAthena.View
                 ApplyTheme(selectedThemeValue);
             }
         }
-
         private void ApplyTheme(PaletteMode theme, bool savePreference = true)
         {
             kryptonManager.GlobalPaletteMode = theme;

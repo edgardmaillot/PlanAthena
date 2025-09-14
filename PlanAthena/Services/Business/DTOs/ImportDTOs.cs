@@ -24,18 +24,7 @@ namespace PlanAthena.Services.Business.DTOs
         public string BlocNom { get; set; } = "";
         public int BlocCapaciteMaxOuvriers { get; set; }
     }
-    /// <summary>
-    /// DTO représentant une ligne plate du fichier CSV des ouvriers.
-    /// Utilisé comme intermédiaire pour l'import et l'export.
-    /// </summary>
-    public class OuvrierCsvRecord
-    {
-        public string OuvrierId { get; set; }
-        public string Nom { get; set; }
-        public string Prenom { get; set; }
-        public int CoutJournalier { get; set; }
-        public string MetierId { get; set; } // Une seule compétence par ligne
-    }
+    
     /// <summary>
     /// Résultat d'une opération d'import
     /// </summary>
@@ -43,6 +32,7 @@ namespace PlanAthena.Services.Business.DTOs
     {
         public bool EstSucces { get; set; }
         public string MessageErreur { get; set; } = "";
+        public int NbOuvriersImportes { get; set; }
         public int NbTachesImportees { get; set; }
         public int NbLotsTraites { get; set; }
         public int NbBlocsTraites { get; set; }
@@ -58,6 +48,14 @@ namespace PlanAthena.Services.Business.DTOs
                 NbTachesImportees = nbTaches,
                 NbLotsTraites = nbLots,
                 NbBlocsTraites = nbBlocs,
+                Warnings = warnings,
+                DureeImport = duree
+            };
+        public static ImportResult SuccesOuvriers(int nbOuvriers, List<string> warnings, TimeSpan duree) =>
+            new()
+            {
+                EstSucces = true,
+                NbOuvriersImportes = nbOuvriers,
                 Warnings = warnings,
                 DureeImport = duree
             };
@@ -131,4 +129,5 @@ namespace PlanAthena.Services.Business.DTOs
         public int HeuresEstimeesParDefaut { get; set; } = 8;
         public int CapaciteMaxOuvriersBlocParDefaut { get; set; } = 6;
     }
+   
 }

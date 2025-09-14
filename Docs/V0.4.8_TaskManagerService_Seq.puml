@@ -1,0 +1,93 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam sequenceArrowColor #2E8B57
+skinparam sequenceLifeLineBorderColor #3CB371
+skinparam sequenceParticipantBackgroundColor #98FB98
+skinparam shadowing false
+autonumber
+
+title Comportement v0.5.0 : TaskManagerService (Opérations Clés)
+
+actor Utilisateur
+participant "IHM (TaskManagerView)" as UI
+participant "Orchestrateur Planif." as PlanifOrch
+participant "UseCase Persistance" as PersistUseCase
+participant "service:TaskManagerService" as TaskSvc
+participant "service:PlanningService" as PlanSvc
+participant "service:IdGeneratorService" as IdSvc
+
+'=================================
+' GROUPE 1: CRUD initié par l'IHM
+'=================================
+group Création d'une Tâche
+    Utilisateur -> UI : Clic "Nouvelle Tâche"
+    activate UI
+    UI -> TaskSvc : CreerTache(lotId, blocId, ...)
+    activate TaskSvc
+    TaskSvc -> IdSvc : GenererProchainTacheId(...)
+    TaskSvc -> TaskSvc : _taches.Add(nouvelleTacheId, ...)
+    TaskSvc --> UI : nouvelleTache
+    deactivate TaskSvc
+    deactivate UI
+end
+
+group Suppression d'une Tâche (avec cascade)
+    Utilisateur -> UI : Clic "Supprimer Tâche"
+    activate UI
+    UI -> TaskSvc : SupprimerTache(tacheId)
+    activate TaskSvc
+    
+    '-- Logique interne de suppression --'
+    TaskSvc -> TaskSvc : Récupère les enfants de la tâche
+    loop pour chaque enfant
+        TaskSvc -> TaskSvc : Appel récursif: SupprimerTache(enfantId)
+    end
+    
+    TaskSvc -> TaskSvc : _taches.Remove(tacheId)
+    TaskSvc -> PlanSvc : InvaliderTache(tacheId)
+    note right of TaskSvc: Notifie le planning pour qu'il\nse nettoie en mémoire.
+    
+    TaskSvc --> UI : void
+    deactivate TaskSvc
+    deactivate UI
+end
+
+'=================================
+' GROUPE 2: Mises à jour orchestrées
+'=================================
+group Mise à Jour de la Structure (après une planification)
+    PlanifOrch -> TaskSvc : MettreAJourDecompositionTaches(...)
+    activate TaskSvc
+    
+    TaskSvc -> TaskSvc : Nettoie les anciennes sous-tâches
+    TaskSvc -> TaskSvc : Ajoute les nouvelles sous-tâches
+    TaskSvc -> TaskSvc : Met à jour les flags `EstConteneur`
+    
+    '-- Enrichissement des données --'
+    TaskSvc -> PlanSvc : ObtenirInfosPlanificationPourToutesLesTaches()
+    activate PlanSvc
+    PlanSvc --> TaskSvc : planningInfo
+    deactivate PlanSvc
+    
+    TaskSvc -> TaskSvc : Met à jour DateDebut/FinPlanifiee\net Affectations sur toutes les tâches.
+    
+    TaskSvc --> PlanifOrch : void
+    deactivate TaskSvc
+end
+
+group Synchronisation des Statuts (après un chargement de projet)
+    PersistUseCase -> TaskSvc : SynchroniserStatutsTaches()
+    activate TaskSvc
+    
+    loop pour chaque tâche dans _taches
+        alt si tâche.Statut != Terminee
+            TaskSvc -> TaskSvc : Calcule le nouveau statut (Estimée, EnCours...)\nen fonction de DateTime.Now et des dates planifiées.
+        end
+    end
+    
+    TaskSvc --> PersistUseCase : void
+    deactivate TaskSvc
+end
+
+@enduml

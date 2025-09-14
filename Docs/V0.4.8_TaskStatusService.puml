@@ -1,0 +1,56 @@
+@startuml
+' --- Configuration ---
+!theme toy
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+package "DTOs" {
+enum Status
+enum TaskTypeFilter
+class TaskStatusInfo <<(N,SkyBlue)>> {
++ TacheId: string
++ TacheNom: string
++ Statut: Status
++ DateDebutPlanifiee: DateTime?
++ DateFinPlanifiee: DateTime?
++ NomsOuvriersAssignes: List<string>
++ EstTacheConteneur: bool
+}
+}
+package "Business (Sources de Vérité)" {
+class TaskStatusService {
+' --- Champs & Dépendances ---
+- _taskStatuses: Dictionary<string, Status>
+- _projetService: ProjetService
+- _planningService: PlanningService
+- _ressourceService: RessourceService
+--
+' --- Méthodes de Persistance ---
++ ChargerStatuts(statuses: Dictionary<string, Status>)
++ RetourneTousLesStatuts(): IReadOnlyDictionary<string, Status>
+--
+' --- Méthodes de Gestion de l'État ---
++ ModifierStatutTache(tacheIds: IEnumerable<string>, newStatus: Status)
++ ModifierTachePlanifiee(plannedTaskIds: IEnumerable<string>)
++ InitialiserStatutsPourNouveauProjet()
+--
+' --- Méthodes de Consultation Agrégée ---
++ RetourneStatutTache(lotIdFilter: string?, taskTypeFilter: TaskTypeFilter?): IReadOnlyList<TaskStatusInfo>
++ GetTaskStatusInfo(tacheId: string): TaskStatusInfo?
+}
+
+class ProjetService
+class PlanningService
+class RessourceService
+}
+' --- Relations ---
+TaskStatusService --> ProjetService : "dépend de"
+TaskStatusService --> PlanningService : "dépend de"
+TaskStatusService --> RessourceService : "dépend de"
+TaskStatusService ..> TaskStatusInfo : "construit et retourne"
+note top of TaskStatusService
+<b>Source de Vérité des Statuts</b>
+Maintient l'état d'avancement, gère la persistance
+et enrichit les données en agrégeant les informations
+des autres services sources de vérité.
+end note
+@enduml

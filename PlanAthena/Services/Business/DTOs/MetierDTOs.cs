@@ -2,7 +2,6 @@
 // 🆕 NOUVEAU V0.4.2 - DTOs Métiers pour refonte système compétences
 
 using PlanAthena.Data;
-using System.Collections.Generic;
 
 namespace PlanAthena.Services.Business.DTOs
 {

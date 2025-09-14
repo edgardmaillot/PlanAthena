@@ -4,19 +4,14 @@ using Microsoft.Msagl.Layout.Layered;
 using PlanAthena.Data; // Pour Metier
 using PlanAthena.Services.Business; // Pour ProjetService
 using PlanAthena.Utilities; // Pour DependanceBuilder
-using PlanAthena.View.Ressources.MetierDiagram;
 using PlanAthena.View.TaskManager.PertDiagram;
-using System;
-using System.Collections.Generic;
 using System.Drawing.Printing; // Pour PrintDocument, Bitmap
-using System.Linq; // Pour LINQ
 using System.Reflection; // Pour MethodInfo (SauvegarderImage)
-using System.Windows.Forms; // Pour UserControl, Point, ToolTip, MessageBox
 using DrawingNode = Microsoft.Msagl.Drawing.Node; // Alias pour éviter les conflits
 
 namespace PlanAthena.View.Ressources.MetierDiagram
 {
-    
+
     /// <summary>
     /// Arguments d'événement pour la sélection d'un métier via clic.
     /// </summary>
@@ -111,7 +106,7 @@ namespace PlanAthena.View.Ressources.MetierDiagram
         /// <param name="projetService">Le service de gestion du projet (pour les métiers).</param>
         /// <param name="dependanceBuilder">Le service de construction de dépendances (pour les validations).</param>
         /// <param name="settings">Les paramètres de configuration visuelle du diagramme.</param>
-        public void Initialize(ProjetService projetService,RessourceService ressourceService, DependanceBuilder dependanceBuilder, MetierDiagramSettings settings)
+        public void Initialize(ProjetService projetService, RessourceService ressourceService, DependanceBuilder dependanceBuilder, MetierDiagramSettings settings)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));

@@ -1,0 +1,108 @@
+@startuml
+' --- Configuration ---
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam class {
+    BackgroundColor #E6F3FF
+    BorderColor #4682B4
+    ArrowColor #4682B4
+}
+hide empty members
+
+title Structure v0.5.0 : ExportService et Écosystème
+
+package "Services Accès Données" {
+    class "<b>ExportService</b>" as ExportSvc {
+        '-- Export Principal --'
+        + ExporterTachesCSV(tachesAExporter, filePath)
+        + ExporterOuvriersCSV(tousLesOuvriers, filePath)
+    }
+    note right of ExportSvc : **Service d'Export Dédié**\nResponsabilité unique : sérialiser\nles objets métier vers CSV.\nUtilise ChoETL + UTF-8.
+}
+
+package "DTOs Spécialisés" {
+    class "<b>TacheExportDto</b>" as TacheDTO {
+        + IdImporte: string
+        + TacheNom: string  
+        + MetierId: string
+        + HeuresHommeEstimees: int
+        + BlocNom: string
+        + Dependencies: string
+        + ExclusionsDependances: string
+        + Type: string
+        --
+        + <<constructor>> TacheExportDto(tache: Tache)
+    }
+    note bottom of TacheDTO : **DTO de Projection**\nTransforme les objets Tache\nen structure plate pour CSV.\nGère les relations (BlocNom).
+
+    class "<b>OuvrierCsvRecord</b>" as OuvrierDTO {
+        + OuvrierId: string
+        + Nom: string
+        + Prenom: string
+        + CoutJournalier: decimal
+        + MetierId: string
+    }
+    note bottom of OuvrierDTO : **DTO de Dénormalisation**\nUn ouvrier = plusieurs lignes\n(une par compétence).\nFormat natif PlanAthena.
+}
+
+package "Objets Métier (Sources)" {
+    class "Tache" as TacheEntity {
+        + TacheId: string
+        + TacheNom: string
+        + BlocId: string
+        + MetierId: string
+        + HeuresHommeEstimees: int
+        + Dependencies: string
+        + ExclusionsDependances: string
+        + Type: TypeActivite
+        + IdImporte: string
+    }
+
+    class "Ouvrier" as OuvrierEntity {
+        + OuvrierId: string
+        + Nom: string
+        + Prenom: string
+        + CoutJournalier: int
+        + Competences: List<CompetenceOuvrier>
+    }
+
+    class "CompetenceOuvrier" as CompetenceEntity {
+        + MetierId: string
+        + EstMetierPrincipal: bool
+    }
+}
+
+package "Infrastructure ChoETL" {
+    class "ChoCSVWriter<T>" as ChoWriter {
+        + WithFirstLineHeader()
+        + Configure(config => ...)
+        + Write(records: List<T>)
+    }
+    note right of ChoWriter : **Framework d'Export**\nSérialisation automatique\nbasée sur les attributs\ndes propriétés du DTO.
+}
+
+package "IHM" {
+    class "TaskManagerView" as UI_Task {
+        - ExporterTaches(...)
+    }
+    
+    class "RessourceView" as UI_Ressource {
+        - ExporterOuvriers(...)
+    }
+}
+
+' --- Relations ---
+UI_Task ..> ExportSvc : appelle ExporterTachesCSV
+UI_Ressource ..> ExportSvc : appelle ExporterOuvriersCSV
+
+ExportSvc ..> TacheDTO : crée et utilise
+ExportSvc ..> OuvrierDTO : crée et utilise
+ExportSvc ..> ChoWriter : utilise pour sérialisation
+
+TacheDTO ..> TacheEntity : construit à partir de
+OuvrierDTO ..> OuvrierEntity : construit à partir de
+OuvrierDTO ..> CompetenceEntity : utilise pour dénormalisation
+
+OuvrierEntity *-- CompetenceEntity : contient
+
+@enduml

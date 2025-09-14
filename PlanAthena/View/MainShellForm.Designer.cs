@@ -34,6 +34,7 @@ namespace PlanAthena.View
             menuRessourcesOuvriers = new ToolStripMenuItem();
             menuTaches = new ToolStripMenuItem();
             menuTachesDiagramme = new ToolStripMenuItem();
+            menuTachesListe = new ToolStripMenuItem();
             menuPreferences = new System.Windows.Forms.ToolStripMenuItem();
             this.menuSaveLayout = new System.Windows.Forms.ToolStripMenuItem();
             this.menuLoadLayout = new System.Windows.Forms.ToolStripMenuItem();
@@ -134,7 +135,7 @@ namespace PlanAthena.View
             // 
             // menuTaches
             // 
-            menuTaches.DropDownItems.AddRange(new ToolStripItem[] { menuTachesDiagramme });
+            menuTaches.DropDownItems.AddRange(new ToolStripItem[] { menuTachesDiagramme, menuTachesListe });
             menuTaches.Name = "menuTaches";
             menuTaches.Size = new Size(55, 25);
             menuTaches.Text = "Tâches";
@@ -145,6 +146,13 @@ namespace PlanAthena.View
             menuTachesDiagramme.Size = new Size(136, 22);
             menuTachesDiagramme.Text = "Diagramme";
             menuTachesDiagramme.Click += menuTachesDiagramme_Click;
+            // 
+            // menuTachesDiagramme
+            // 
+            menuTachesListe.Name = "menuTachesListe";
+            menuTachesListe.Size = new Size(136, 22);
+            menuTachesListe.Text = "Liste";
+            menuTachesListe.Click += menuTachesListe_Click;
             // 
             // menuPreferences
             // 
@@ -239,6 +247,7 @@ namespace PlanAthena.View
         private System.Windows.Forms.ToolStripMenuItem menuRessourcesMetiers;
         private System.Windows.Forms.ToolStripMenuItem menuRessourcesOuvriers;
         private System.Windows.Forms.ToolStripMenuItem menuTachesDiagramme;
+        private System.Windows.Forms.ToolStripMenuItem menuTachesListe;
         private System.Windows.Forms.ToolStripMenuItem menuPreferences;
         private System.Windows.Forms.ToolStripMenuItem menuSaveLayout;
         private System.Windows.Forms.ToolStripMenuItem menuLoadLayout;

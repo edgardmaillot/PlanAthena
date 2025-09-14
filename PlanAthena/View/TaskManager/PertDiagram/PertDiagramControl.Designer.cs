@@ -7,7 +7,7 @@ namespace PlanAthena.View.TaskManager.PertDiagram
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        
+
 
         #region Code généré par le Concepteur de composants
 
@@ -18,9 +18,19 @@ namespace PlanAthena.View.TaskManager.PertDiagram
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            nodeTooltip = new ToolTip(components);
+            SuspendLayout();
+            // 
+            // PertDiagramControl
+            // 
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            Name = "PertDiagramControl";
+            ResumeLayout(false);
         }
 
         #endregion
+
+        private ToolTip nodeTooltip;
     }
 }

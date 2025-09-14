@@ -1,0 +1,60 @@
+@startuml
+' Titre
+title Diagramme de Séquence - Chargement d'un Projet
+' Définition des acteurs
+actor utilisateur
+' Définition des participants
+participant IHM
+participant "useCase:ProjectPersistenceUseCase" as UseCase
+participant "dataAccess:ProjetServiceDataAccess" as DA
+participant "projetService:ProjetService" as PS
+participant "ressourceService:RessourceService" as RS
+participant "planningService:PlanningService" as PlS
+participant "taskStatusService:TaskStatusService" as TSS
+
+' Début de la séquence
+utilisateur -> IHM : Clique "ChargerProjet"
+activate IHM
+IHM -> UseCase: ChargerProjetDepuisChemin(filePath)
+activate UseCase
+
+opt Projet modifié non sauvegardé (_isDirty == true)
+    UseCase -> IHM: Affiche MessageBox de confirmation
+    alt L'utilisateur annule
+        UseCase --> IHM: return
+        deactivate UseCase
+        deactivate IHM
+        end
+end
+
+group Étape 1 : Lecture des données du disque
+    UseCase -> DA: Charger(filePath)
+    activate DA
+    DA --> UseCase: projetData
+    deactivate DA
+end
+
+group Étape 2 : Réinitialisation de l'état de l'application
+    UseCase -> PS: ViderProjet()
+    UseCase -> RS: ViderMetiers()
+    UseCase -> RS: ViderOuvriers()
+    UseCase -> PlS: ClearPlanning()
+    UseCase -> TSS: ChargerStatuts(null)
+end
+
+group Étape 3 : Distribution des nouvelles données
+    UseCase -> PS: ChargerProjet(projetData)
+    UseCase -> RS: ChargerRessources(projetData.Metiers, projetData.Ouvriers)
+    
+    alt Le projet contient un planning sauvegardé
+        UseCase -> PlS: UpdatePlanning(projetData.Planning, projetData.Configuration)
+    end
+    
+    UseCase -> TSS: ChargerStatuts(projetData.TaskStatuses)
+end
+
+UseCase --> IHM: return
+deactivate UseCase
+deactivate IHM
+
+@enduml

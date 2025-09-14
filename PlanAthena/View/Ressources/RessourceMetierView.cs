@@ -1,11 +1,6 @@
 using Krypton.Toolkit;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
-using System;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using PlanAthena.View.Ressources;
 using PlanAthena.View.Ressources.MetierDiagram;
 
 namespace PlanAthena.View.Ressources
@@ -208,7 +203,7 @@ namespace PlanAthena.View.Ressources
 
             try
             {
-                _ressourceService.SupprimerMetier(metier.MetierId, _projetService);
+                _ressourceService.SupprimerMetier(metier.MetierId);
                 RefreshAll();
             }
             catch (Exception ex)

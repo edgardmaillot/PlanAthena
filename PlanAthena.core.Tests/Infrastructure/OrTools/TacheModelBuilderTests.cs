@@ -1,7 +1,6 @@
 // PlanAthena.core.Tests/Infrastructure/OrTools/TacheModelBuilderTests.cs
 
 using FluentAssertions;
-using FluentAssertions.Numeric;
 using Google.OrTools.Sat;
 using NodaTime;
 using PlanAthena.core.Application.InternalDto;
@@ -617,7 +616,7 @@ namespace PlanAthena.core.Tests.Infrastructure.OrTools
             };
         }
 
-        
+
         // Teste le cas spécifique du problème résolu : jalon d'attente en fin de lot
         // Vérifie que la vraie durée du jalon est prise en compte pour les contraintes inter-lots
         [Fact]

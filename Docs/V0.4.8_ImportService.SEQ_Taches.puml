@@ -1,0 +1,81 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam sequenceArrowColor #8B4513
+skinparam sequenceLifeLineBorderColor #CD853F
+skinparam sequenceParticipantBackgroundColor #FFEBCD
+skinparam shadowing false
+autonumber
+
+title Comportement v0.5.0 : Import de Tâches CSV
+
+actor Utilisateur
+participant "IHM" as UI
+participant "service:ImportService" as ImportSvc
+participant "service:TaskManagerService" as TaskSvc
+participant "service:ProjetService" as ProjSvc
+participant "service:RessourceService" as ResSvc
+
+'=================================
+' GROUPE: Import de Tâches
+'=================================
+group Import de Tâches CSV
+
+    Utilisateur -> UI : Configure et confirme l'import
+    activate UI
+    
+    UI -> ImportSvc : ImporterTachesCSV(filePath, lotId, mappingConfig)
+    activate ImportSvc
+    
+    '-- Phase de pré-vérification --'
+    ImportSvc -> TaskSvc : ObtenirToutesLesTaches(lotId: lotIdCible)
+    
+    alt Le lot contient déjà des tâches
+        ImportSvc --> UI : return ImportResult.DemandeConfirmation
+        deactivate ImportSvc
+        deactivate UI
+        return
+    end
+    
+    '-- Phase de nettoyage (Orchestration) --'
+    ImportSvc -> TaskSvc : ObtenirToutesLesTaches(lotId: lotIdCible)
+    note right of ImportSvc: Orchestration du vidage
+    loop pour chaque tâche à supprimer
+        ImportSvc -> TaskSvc : SupprimerTache(tache.TacheId)
+    end
+    
+    ImportSvc -> ProjSvc : ObtenirBlocsParLot(lotIdCible)
+    loop pour chaque bloc à supprimer
+        ImportSvc -> ProjSvc : SupprimerBloc(bloc.BlocId)
+    end
+    
+    '-- Phase d'import --'
+    ImportSvc -> self : ImporterDonneesInitialTaches(...)
+    activate ImportSvc
+    
+    loop pour chaque ligne de tâche dans le CSV
+        ImportSvc -> ResSvc : GetMetierById(metierId)
+        ImportSvc -> TaskSvc : CreerTache(...)
+    end
+    
+    deactivate ImportSvc
+    
+    '-- Phase de post-traitement --'
+    ImportSvc -> self : RemapperDependancesDesTaches(...)
+    activate ImportSvc
+    
+    ImportSvc -> TaskSvc : ObtenirToutesLesTaches()
+    loop pour chaque tâche à mettre à jour
+        ImportSvc -> TaskSvc : ModifierTache(tache)
+    end
+    
+    deactivate ImportSvc
+    
+    ImportSvc --> UI : return ImportResult.Succes(...)
+    deactivate ImportSvc
+    
+    UI -> Utilisateur : Affiche popup "Import réussi"
+    deactivate UI
+
+end
+@enduml

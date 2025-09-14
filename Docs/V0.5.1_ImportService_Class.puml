@@ -1,0 +1,179 @@
+@startuml
+' --- Configuration ---
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam class {
+    BackgroundColor #F5DEB3
+    BorderColor #A0522D
+    ArrowColor #A0522D
+}
+hide empty members
+
+title Structure v0.5.0 : Architecture Import/Export Complète
+
+package "Services Accès Données" {
+    class "<b>ImportService</b>" as ImportSvc {
+        '-- Dépendances --'
+        - _projetService: ProjetService
+        - _ressourceService: RessourceService
+        - _taskManagerService: TaskManagerService
+        - _csvDataService: CsvDataService
+        --
+        '-- Import Tâches --'
+        + ImporterTachesCSV(filePath, lotIdCible, mappingConfig, confirmerEcrasement)
+        --
+        '-- Import Ouvriers (Chargement Pur) --'
+        + ImporterOuvriers(ouvriersAImporter, remplacerExistants)
+        + ImporterOuvriersFormatNatif(filePath, remplacerExistants)
+        --
+        '-- Utilitaires --'
+        + DetectCsvDelimiter(filePath): string
+        --
+        '-- Méthodes Privées --'
+        - ImporterDonneesInitialTaches(...)
+        - RemapperDependancesDesTaches(...)
+        - LireCsvBrut(...)
+    }
+    note right of ImportSvc : **Service de Chargement Pur**\nNe fait plus de mapping complexe.\nReçoit des objets construits\net les charge dans le système.
+
+    class "<b>ExportService</b>" as ExportSvc {
+        '-- Export vers CSV --'
+        + ExporterTachesCSV(tachesAExporter, filePath)
+        + ExporterOuvriersCSV(tousLesOuvriers, filePath)
+    }
+    note right of ExportSvc : **Service d'Export Dédié**\nUtilise ChoETL et des DTOs\npour sérialiser vers CSV.\nGère l'encodage UTF-8.
+}
+
+package "Services Orchestration" {
+    class "<b>ImportWizardOrchestrator</b>" as Orchestrator {
+        - _importService: ImportService
+        - _ressourceService: RessourceService
+        - _valueMappingService: ValueMappingService
+        --
+        '-- Orchestration Principale --'
+        + LancerWizardImport(typeImport, filePath): ImportResult
+        --
+        '-- Logique ETL Privée --'
+        - TransformerDonneesBrutes(etat): TransformationResult
+        - CreerWizardHostForm(title): Form
+        --
+        '-- Classes Internes --'
+        + ImportState
+    }
+    note right of Orchestrator : **Orchestrateur de Mapping Générique**\nPilote le wizard en 3 étapes (P1, P2, P3).\nConfigure les vues et transforme les données\nen utilisant le ValueMappingService.
+
+    class "ImportState" as State {
+        + FilePath: string
+        + RemplacerExistants: bool
+        + ColumnMappings: Dictionary<string, string>
+        + DefaultValues: Dictionary<string, object>
+        + ValueMappings: Dictionary<string, string>
+    }
+    note bottom of State : **État Partagé du Wizard**\nDTO générique pour passer\nles informations entre\nles étapes du wizard.
+}
+package "Utilitaires" {
+    class "<b>ValueMappingService</b>" as VMSvc {
+        - _preferencesService: UserPreferencesService
+        --
+        + TrouveCorrespondance(valeur): string
+        + AjouteCorrespondance(valeur, traduction)
+        + SupprimeCorrespondance(valeur)
+    }
+    note right of VMSvc : **Service de Traduction Intelligent**\nSuggère des correspondances automatiques.\nApprend les choix de l'utilisateur.
+}
+package "Services Métier (Sources de Vérité)" {
+    class "<b>TaskManagerService</b>" as TaskSvc {
+        + ObtenirToutesLesTaches(lotId, blocId)
+        + CreerTache(...)
+        + ModifierTache(...)
+        + SupprimerTache(...)
+    }
+    class "<b>ProjetService</b>" as ProjSvc {
+        + ObtenirLotParId(...)
+        + ObtenirBlocsParLot(...)
+        + CreerBloc(...)
+        + SupprimerBloc(...)
+    }
+    class "<b>RessourceService</b>" as ResSvc {
+        + GetMetierById(...)
+        + GetAllOuvriers()
+        + CreerOuvrier(...)
+        + ModifierOuvrier(...)
+        + ViderOuvriers()
+        + AjouterCompetence(...)
+    }
+}
+
+package "DTOs Import/Export" {
+    class "TacheExportDto" as TacheDTO {
+        + IdImporte: string
+        + TacheNom: string
+        + MetierId: string
+        + HeuresHommeEstimees: int
+        + BlocNom: string
+        + Dependencies: string
+        + ExclusionsDependances: string
+        + Type: string
+    }
+    
+    class "OuvrierCsvRecord" as OuvrierDTO {
+        + OuvrierId: string
+        + Nom: string
+        + Prenom: string
+        + CoutJournalier: decimal
+        + MetierId: string
+    }
+}
+
+package "IHM" {
+    class "TaskManagerView" as UI_Task {
+        - ExecuterImportTaches(...)
+    }
+    
+    class "RessourceView" as UI_Ressource {
+        - ExecuterImportOuvriers(...)
+    }
+    
+    class "<b>ImportP1</b> (Extraction)" as UI_P1 {
+        + ColumnMappings: Dictionary<string, string>
+        + DefaultValues: Dictionary<string, object>
+        + SuivantClicked: EventHandler
+        --
+        + Initialize(config)
+        }
+    class "<b>ImportP2</b> (Transformation)" as UI_P2 {
+        + ValueMappings: Dictionary<string, string>
+        + SuivantClicked: EventHandler
+        --
+        + Initialize(config)
+    }
+
+    class "<b>ImportP3</b> (Validation)" as UI_P3 {
+        + ValiderClicked: EventHandler
+        --
+        + Initialize(config)
+    }
+}
+
+' --- Relations Principales ---
+UI_Task ..> ImportSvc : appelle ImporterTachesCSV
+UI_Task ..> ExportSvc : appelle ExporterTachesCSV
+UI_Ressource ..> Orchestrator : appelle LancerWizardImportOuvriers
+UI_Ressource ..> ExportSvc : appelle ExporterOuvriersCSV
+
+Orchestrator *-- ImportSvc : utilise pour le chargement final
+Orchestrator *-- ResSvc : utilise pour les validations
+Orchestrator *-- State : utilise comme DTO interne
+
+Orchestrator ..> UI_P1 : instancie et affiche
+Orchestrator ..> UI_P2 : instancie et affiche
+Orchestrator ..> UI_P3 : instancie et affiche
+
+ImportSvc *-- TaskSvc
+ImportSvc *-- ProjSvc
+ImportSvc *-- ResSvc
+
+ExportSvc ..> TacheDTO : utilise pour export tâches
+ExportSvc ..> OuvrierDTO : utilise pour export ouvriers
+
+@enduml

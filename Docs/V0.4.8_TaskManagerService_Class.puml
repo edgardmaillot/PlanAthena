@@ -1,0 +1,120 @@
+@startuml
+' --- Configuration ---
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam class {
+    BackgroundColor #F0F8FF
+    BorderColor #4682B4
+    ArrowColor #4682B4
+}
+hide empty members
+title Structure v0.4.9.1 : TaskManagerService (Source de Vérité des Tâches)
+
+package "Services Métier" {
+    class "<b>TaskManagerService</b>" as TaskSvc {
+        '-- Champs --'
+        - _idGenerator: IIdGeneratorService
+        - _planningService: PlanningService
+        - _taches: Dictionary<string, Tache>
+        --
+        '-- Constructeur --'
+        + TaskManagerService(planningService, idGenerator)
+        --
+        '-- Cycle de vie & Persistance --'
+        + ChargerTaches(taches: List<Tache>)
+        + ViderTaches()
+        + ObtenirToutesLesTachesPourSauvegarde(): List<Tache>
+        --
+        '-- CRUD & Requêtes --'
+        + CreerTache(...): Tache
+        + CreerTacheJalon(...): Tache
+        + ModifierTache(tacheModifiee: Tache)
+        + SupprimerTache(tacheId: string)
+        + ObtenirToutesLesTaches(...): List<Tache>
+        + ObtenirTachesParMetier(metierId): List<Tache>
+        + ObtenirTachesEnfants(parentId): List<Tache>
+        + ObtenirTache(tacheId): Tache
+        --
+        '-- Logique de Synchronisation --'
+        + SynchroniserStatutsTaches()
+        + MettreAJourApresPlanification(planningSvc, prepResult)
+        + MarquerTachesTerminees(tacheIds: List<string>)
+        --
+        '-- Méthodes Privées (Logique de Réconciliation) --'
+        - NettoyerAnciennesDonneesDePlanification(...)
+        - IntegrerNouvelleStructureDeTaches(prepResult)
+        - MettreAJourTachesFeuillesAvecPlanning(infosFeuilles)
+        - MettreAJourTachesMeresAvecPlanning(infosMeres)
+    }
+}
+
+package "Services Dépendants" {
+    interface IIdGeneratorService {
+        + GenererProchainTacheId(...): string
+    }
+    class PlanningService {
+        + ObtenirInfosPlanificationPourToutesLesTaches(): IReadOnlyDictionary<...>
+        + ObtenirInfosPlanificationPourTachesFeuilles(): IReadOnlyDictionary<...>
+        + InvaliderTache(tacheId: string)
+    }
+}
+
+package "Données & DTOs" as Data {
+    class Tache {
+        + TacheId: string
+        + TacheNom: string
+        + HeuresHommeEstimees: int
+        + ParentId: string
+        + Type: TypeActivite
+        -- Propriétés Enrichies --
+        + Statut: Statut
+        + EstConteneur: bool
+        + DateDebutPlanifiee: DateTime?
+        + Affectations: List<AffectationOuvrier>
+    }
+    class AffectationOuvrier <<record>> {
+        + OuvrierId: string
+        + NomOuvrier: string
+        + HeuresTravaillees: int
+    }
+    enum Statut {
+        Estimée
+        Planifiée
+        EnCours
+        Terminée
+        EnRetard
+    }
+    enum TypeActivite {
+        Tache
+        JalonUtilisateur
+        JalonDeSynchronisation
+        JalonTechnique
+    }
+    class PlanningInfoPourTache <<DTO>>
+    class PreparationResult <<DTO>> {
+      + TachesPreparees: List<Tache>
+      + ParentIdParSousTacheId: Dictionary<string, string>
+    }
+}
+
+' --- Relations ---
+TaskSvc "1" *-- "1" IIdGeneratorService : "dépend de"
+TaskSvc "1" *-- "1" PlanningService : "dépend de"
+
+TaskSvc "1" o-- "*" Tache : "gère"
+Tache "1" o-- "*" AffectationOuvrier : "contient"
+Tache --> Statut : "a un"
+Tache --> TypeActivite : "a un"
+
+TaskSvc ..> PlanningInfoPourTache : "utilise"
+TaskSvc ..> PreparationResult : "utilise en entrée"
+
+note left of TaskSvc
+  <b>Responsabilités de TaskManagerService (v0.4.9.1)</b>
+  - Source de vérité unique pour <b>toutes les tâches</b> (mères et enfants).
+  - Gère le <b>cycle de vie complet</b> : CRUD, état, hiérarchie.
+  - S'appuie sur <b>PlanningService</b> pour enrichir ses données après une planification.
+  - La méthode <b>MettreAJourApresPlanification</b> est le point d'entrée
+    transactionnel qui réconcilie l'état des tâches après un calcul réussi.
+end note
+@enduml

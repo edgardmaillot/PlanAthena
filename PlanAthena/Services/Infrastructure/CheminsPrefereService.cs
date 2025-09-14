@@ -1,10 +1,6 @@
 // Fichier: Services/Infrastructure/CheminsPrefereService.cs
 
-using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.IO;
-using System.Linq;
 
 namespace PlanAthena.Services.Infrastructure
 {

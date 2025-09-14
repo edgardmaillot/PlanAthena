@@ -2,10 +2,7 @@ using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
 using QuikGraph;
-using QuikGraph.Algorithms; 
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using QuikGraph.Algorithms;
 
 namespace PlanAthena.Utilities
 {
@@ -30,12 +27,10 @@ namespace PlanAthena.Utilities
     /// </summary>
     public class DependanceBuilder
     {
-        private readonly ProjetService _projetService; 
-        private readonly RessourceService _ressourceService; 
+        private readonly RessourceService _ressourceService;
 
-        public DependanceBuilder(ProjetService projetService, RessourceService ressourceService) 
+        public DependanceBuilder(RessourceService ressourceService)
         {
-            _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
             _ressourceService = ressourceService ?? throw new ArgumentNullException(nameof(ressourceService));
         }
 
@@ -292,46 +287,53 @@ namespace PlanAthena.Utilities
 
             try
             {
-                // Obtenir les prérequis métier via ProjetService
                 var prerequisMetier = _ressourceService.GetPrerequisPourPhase(tache.MetierId, phaseContexte);
                 if (!prerequisMetier.Any()) return suggestions;
 
-                // Identifier les métiers présents parmi les candidats valides
                 var metiersPresentsParmi = candidatsValides
                     .Where(t => !string.IsNullOrEmpty(t.MetierId))
                     .GroupBy(t => t.MetierId)
                     .ToDictionary(g => g.Key, g => g.ToList());
 
-                // Obtenir les exclusions de la tâche cible
+                // --- CORRECTION CENTRALE : Obtenir les dépendances déjà définies ---
+                // On récupère les dépendances que l'utilisateur a déjà explicitement
+                // acceptées (strictes) ou refusées (exclues).
                 var exclusions = ParseDependances(tache.ExclusionsDependances);
+                var strictes = ParseDependances(tache.Dependencies);
+                // --------------------------------------------------------------------
 
-                // Pour chaque prérequis métier, trouver les meilleures tâches à suggérer
                 foreach (var prerequisId in prerequisMetier)
                 {
                     if (metiersPresentsParmi.ContainsKey(prerequisId))
                     {
                         var tachesDuPrerequis = metiersPresentsParmi[prerequisId];
-                        // Filtrer les tâches exclues avant de chercher les meilleures
-                        var tachesDuPrerequisNonExclues = tachesDuPrerequis
-                            .Where(t => !exclusions.Contains(t.TacheId))
+
+                        // --- CORRECTION : Filtrer les tâches déjà définies AVANT de suggérer ---
+                        var tachesSuggérables = tachesDuPrerequis
+                            .Where(t => !exclusions.Contains(t.TacheId) && !strictes.Contains(t.TacheId))
                             .ToList();
-                        var meilleuresTaches = TrouverMeilleuresTachesPourSuggestion(tachesDuPrerequisNonExclues, candidatsValides);
+                        // -------------------------------------------------------------------------
+
+                        var meilleuresTaches = TrouverMeilleuresTachesPourSuggestion(tachesSuggérables, candidatsValides);
                         suggestions.UnionWith(meilleuresTaches.Select(t => t.TacheId));
                     }
                     else
                     {
-                        // Remontée de chaîne : chercher des prérequis plus en amont
+                        // La logique de remontée de chaîne est complexe, assurons-nous qu'elle filtre aussi
                         var prerequisIndirects = RemonterChainePrerequis(prerequisId, metiersPresentsParmi.Keys.ToHashSet(), phaseContexte);
                         foreach (var prerequisIndirect in prerequisIndirects)
                         {
                             if (metiersPresentsParmi.ContainsKey(prerequisIndirect))
                             {
                                 var tachesDuPrerequis = metiersPresentsParmi[prerequisIndirect];
-                                // Filtrer les tâches exclues avant de chercher les meilleures
-                                var tachesDuPrerequisNonExclues = tachesDuPrerequis
-                                    .Where(t => !exclusions.Contains(t.TacheId))
+
+                                // --- CORRECTION (appliquée aussi ici) ---
+                                var tachesSuggérables = tachesDuPrerequis
+                                    .Where(t => !exclusions.Contains(t.TacheId) && !strictes.Contains(t.TacheId))
                                     .ToList();
-                                var meilleuresTaches = TrouverMeilleuresTachesPourSuggestion(tachesDuPrerequisNonExclues, candidatsValides);
+                                // -----------------------------------------
+
+                                var meilleuresTaches = TrouverMeilleuresTachesPourSuggestion(tachesSuggérables, candidatsValides);
                                 suggestions.UnionWith(meilleuresTaches.Select(t => t.TacheId));
                             }
                         }

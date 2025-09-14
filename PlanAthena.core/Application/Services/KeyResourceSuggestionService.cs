@@ -8,7 +8,7 @@ namespace PlanAthena.Core.Application.Services
 {
     public class KeyResourceSuggestionService : IKeyResourceSuggestionService
     {
-        private const int MAX_SUGGESTIONS = 5;
+        private const int MAX_SUGGESTIONS = 4;
 
         /// <summary>
         /// Suggère des ouvriers clés pour le chantier en se basant sur la charge de travail

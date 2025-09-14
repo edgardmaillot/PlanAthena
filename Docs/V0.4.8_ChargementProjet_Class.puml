@@ -1,0 +1,64 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam linetype ortho
+skinparam ranksep 60
+skinparam nodesep 60
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+title Structure v0.5.0 : Architecture des Services Principaux
+
+package "Couche Use Case" {
+    class "<b>ProjectPersistenceUseCase</b>" as UseCase {
+        + ChargerProjetDepuisChemin(filePath)
+        + SauvegarderProjet()
+        + CreerNouveauProjet()
+    }
+    note right of UseCase: **Chef d'Orchestre**\nCoordone tous les services\npour un cas d'usage donné.
+}
+
+package "Couche Accès aux Données" {
+    class "<b>ProjetServiceDataAccess</b>" as DA {
+        + Charger(filePath): ProjetData
+        + Sauvegarder(projetData, filePath)
+    }
+    note top of DA: **Technicien**\nGère la lecture/écriture\ndes fichiers JSON.
+}
+
+package "Services (Sources de Vérité)" {
+    class "<b>ProjetService</b>" as PS {
+        + ChargerProjet(data)
+        + ViderProjet()
+        + GetProjetDataPourSauvegarde(): ProjetData
+    }
+    class "<b>RessourceService</b>" as RS {
+        + ChargerRessources(metiers, ouvriers)
+        + ViderMetiers() / ViderOuvriers()
+        + GetAllMetiers() / GetAllOuvriers()
+    }
+    class "<b>TaskManagerService</b>" as TMS {
+        + ChargerTaches(taches)
+        + ViderTaches()
+        + ObtenirToutesLesTachesPourSauvegarde(): List<Tache>
+        + SynchroniserStatutsTaches()
+    }
+    class "<b>PlanningService</b>" as PlS {
+        + UpdatePlanning(planning, config)
+        + ClearPlanning()
+        + GetCurrentPlanning(): ConsolidatedPlanning
+    }
+}
+
+' --- Relations de dépendance (utilise) ---
+IHM ..> UseCase
+UseCase ..> DA
+UseCase ..> PS
+UseCase ..> RS
+UseCase ..> TMS
+UseCase ..> PlS
+
+PlS ..> RS : utilise pour\nenrichir les données
+
+@enduml

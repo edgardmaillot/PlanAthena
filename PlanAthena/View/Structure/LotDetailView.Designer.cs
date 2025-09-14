@@ -41,6 +41,7 @@ namespace PlanAthena.View.Structure
             // 
             // groupDetails
             // 
+            groupDetails.CaptionOverlap = 0D;
             groupDetails.Dock = DockStyle.Fill;
             groupDetails.Location = new Point(0, 0);
             groupDetails.Margin = new Padding(4, 3, 4, 3);

@@ -33,10 +33,10 @@ namespace PlanAthena.Core.Infrastructure.Services.OrTools
             switch (objectif)
             {
                 case "DELAI":
+                default:
                     model.Minimize(makespan);
                     break;
                 case "COUT":
-                default:
                     model.Minimize(coutTotal);
                     break;
             }

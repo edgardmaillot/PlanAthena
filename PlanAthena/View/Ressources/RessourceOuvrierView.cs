@@ -2,11 +2,9 @@ using Krypton.Toolkit;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
-using System;
-using System.Collections.Generic;
+using PlanAthena.Services.DTOs.ImportExport;
+using PlanAthena.Services.Usecases;
 using System.Data;
-using System.Linq;
-using System.Windows.Forms;
 
 namespace PlanAthena.View.Ressources.MetierDiagram
 {
@@ -14,19 +12,21 @@ namespace PlanAthena.View.Ressources.MetierDiagram
     {
         private readonly RessourceService _ressourceService;
         private readonly ProjetService _projetService;
-        private readonly ImportService _importService;
+        private readonly ImportWizardOrchestrator _importWizardOrchestrator;
+        private readonly ExportService _exportService;
 
         private bool _isLoading = false;
 
-        public RessourceOuvrierView(RessourceService ressourceService, ProjetService projetService, ImportService importService)
+        public RessourceOuvrierView(RessourceService ressourceService, ProjetService projetService, ImportWizardOrchestrator importWizardOrchestrator, ExportService exportService)
         {
             InitializeComponent();
             _ressourceService = ressourceService;
             _projetService = projetService;
-            _importService = importService;
-
+            _importWizardOrchestrator = importWizardOrchestrator;   
+            _exportService = exportService;
             // Appliquer la règle "ID non éditable"
             textId.ReadOnly = true;
+
         }
 
         private void RessourceOuvrierView_Load(object sender, EventArgs e)
@@ -34,6 +34,11 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             if (DesignMode) return;
 
             SetupGrids();
+
+            // Attacher les nouveaux événements
+            cmbAddCompetence.SelectedIndexChanged += CmbAddCompetence_SelectedIndexChanged;
+            gridCompetences.CellContentClick += GridCompetences_CellContentClick;
+
             RefreshAll();
         }
 
@@ -42,17 +47,27 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             // Configuration de la grille des ouvriers
             gridOuvriers.AutoGenerateColumns = false;
             gridOuvriers.Columns.Clear();
-            gridOuvriers.Columns.Add(new KryptonDataGridViewTextBoxColumn { Name = "OuvrierId", HeaderText = "ID", DataPropertyName = "OuvrierId", FillWeight = 20 });
-            gridOuvriers.Columns.Add(new KryptonDataGridViewTextBoxColumn { Name = "NomComplet", HeaderText = "Nom Prénom", DataPropertyName = "NomComplet", FillWeight = 50 });
-            gridOuvriers.Columns.Add(new KryptonDataGridViewTextBoxColumn { Name = "CoutJournalier", HeaderText = "Coût/j", DataPropertyName = "CoutJournalier", FillWeight = 15 });
-            gridOuvriers.Columns.Add(new KryptonDataGridViewTextBoxColumn { Name = "CompetencesCount", HeaderText = "Comp.", DataPropertyName = "Competences.Count", FillWeight = 15 });
+            gridOuvriers.Columns.Add(new KryptonDataGridViewTextBoxColumn { Name = "OuvrierId", HeaderText = "ID", DataPropertyName = "OuvrierId", Visible = false });
+            gridOuvriers.Columns.Add(new KryptonDataGridViewTextBoxColumn { Name = "NomComplet", HeaderText = "Nom Prénom", DataPropertyName = "NomComplet", FillWeight = 60 });
+            gridOuvriers.Columns.Add(new KryptonDataGridViewTextBoxColumn { Name = "CoutJournalier", HeaderText = "Coût/j", DataPropertyName = "CoutJournalier", FillWeight = 20 });
+            gridOuvriers.Columns.Add(new KryptonDataGridViewTextBoxColumn { Name = "CompetencesCount", HeaderText = "Comp.", DataPropertyName = "CompetencesCount", FillWeight = 20 });
 
             // Configuration de la grille des compétences
             gridCompetences.AutoGenerateColumns = false;
             gridCompetences.Columns.Clear();
-            gridCompetences.Columns.Add(new KryptonDataGridViewTextBoxColumn { Name = "MetierId", HeaderText = "ID Métier", DataPropertyName = "MetierId", FillWeight = 30 });
-            gridCompetences.Columns.Add(new KryptonDataGridViewTextBoxColumn { Name = "MetierNom", HeaderText = "Nom du Métier", DataPropertyName = "MetierNom", FillWeight = 50 });
-            gridCompetences.Columns.Add(new KryptonDataGridViewCheckBoxColumn { Name = "EstPrincipal", HeaderText = "Principal", DataPropertyName = "EstMetierPrincipal", FillWeight = 20 });
+            gridCompetences.Columns.Add(new KryptonDataGridViewTextBoxColumn { Name = "MetierId", HeaderText = "ID Métier", DataPropertyName = "MetierId", FillWeight = 1, Visible = false });
+            gridCompetences.Columns.Add(new KryptonDataGridViewTextBoxColumn { Name = "MetierNom", HeaderText = "Nom du Métier", DataPropertyName = "MetierNom", FillWeight = 90 });
+            gridCompetences.Columns.Add(new KryptonDataGridViewCheckBoxColumn { Name = "EstPrincipal", HeaderText = "Principal", DataPropertyName = "EstMetierPrincipal", FillWeight = 10 });
+            var deleteColumn = new KryptonDataGridViewButtonColumn
+            {
+                Name = "DeleteColumn",
+                Text = "Supprimer",
+                UseColumnTextForButtonValue = true, // Affiche "Supprimer" sur chaque bouton
+                HeaderText = "", // Pas de titre pour la colonne
+                FillWeight = 20
+            };
+            gridCompetences.Columns.Add(deleteColumn);
+
         }
 
         #region Logique de rafraîchissement
@@ -76,6 +91,7 @@ namespace PlanAthena.View.Ressources.MetierDiagram
         {
             RefreshDetails();
             RefreshCompetencesGrid();
+            RefreshAddCompetenceComboBox();
             UpdateButtonStates();
         }
 
@@ -83,11 +99,24 @@ namespace PlanAthena.View.Ressources.MetierDiagram
         {
             _isLoading = true;
             var recherche = textSearchOuvrier.Text.ToLowerInvariant();
-            var ouvriers = _ressourceService.GetAllOuvriers()
-                .Where(o => string.IsNullOrWhiteSpace(recherche) || o.NomComplet.ToLowerInvariant().Contains(recherche))
-                .ToList();
 
-            gridOuvriers.DataSource = ouvriers;
+            // On récupère les ouvriers comme avant
+            var ouvriers = _ressourceService.GetAllOuvriers()
+                .Where(o => string.IsNullOrWhiteSpace(recherche) || o.NomComplet.ToLowerInvariant().Contains(recherche));
+
+            // --- MODIFICATION ICI ---
+            // On transforme la liste d'Ouvrier en une liste d'objets faits pour l'affichage
+            var dataSource = ouvriers.Select(o => new
+            {
+                // On garde les propriétés que la grille utilise déjà
+                o.OuvrierId,
+                o.NomComplet,
+                o.CoutJournalier,
+                // On crée une propriété simple et directe pour le comptage
+                CompetencesCount = o.Competences.Count
+            }).ToList();
+
+            gridOuvriers.DataSource = dataSource;
             _isLoading = false;
         }
 
@@ -111,7 +140,42 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             }
             _isLoading = false;
         }
+        // Nouvelle méthode pour rafraîchir le ComboBox
+        private void RefreshAddCompetenceComboBox()
+        {
+            var ouvrier = GetSelectedOuvrier();
+            cmbAddCompetence.DataSource = null; // Vider d'abord
 
+            if (ouvrier == null)
+            {
+                cmbAddCompetence.Enabled = false;
+                cmbAddCompetence.Text = "Sélectionnez un ouvrier";
+                return;
+            }
+
+            var metiersDisponibles = _ressourceService.GetMetiersDisponiblesPourOuvrier(ouvrier.OuvrierId);
+
+            if (metiersDisponibles.Any())
+            {
+                // Astuce pour le placeholder : créer une liste et ajouter un item factice au début
+                var listWithPlaceholder = new List<Metier>
+        {
+            new Metier { MetierId = "-1", Nom = "Ajouter une compétence..." }
+        };
+                listWithPlaceholder.AddRange(metiersDisponibles);
+
+                cmbAddCompetence.DataSource = listWithPlaceholder;
+                cmbAddCompetence.DisplayMember = "Nom";
+                cmbAddCompetence.ValueMember = "MetierId";
+                cmbAddCompetence.SelectedIndex = 0; // Sélectionner le placeholder
+                cmbAddCompetence.Enabled = true;
+            }
+            else
+            {
+                cmbAddCompetence.Enabled = false;
+                cmbAddCompetence.Text = "Toutes les compétences ajoutées";
+            }
+        }
         private void RefreshCompetencesGrid()
         {
             var ouvrier = GetSelectedOuvrier();
@@ -135,15 +199,10 @@ namespace PlanAthena.View.Ressources.MetierDiagram
         private void UpdateButtonStates()
         {
             bool ouvrierSelected = gridOuvriers.SelectedRows.Count > 0;
-            bool competenceSelected = gridCompetences.SelectedRows.Count > 0;
 
             groupDetails.Enabled = ouvrierSelected;
             groupCompetences.Enabled = ouvrierSelected;
             btnDeleteOuvrier.Enabled = ouvrierSelected;
-
-            btnAddCompetence.Enabled = ouvrierSelected;
-            btnModifyCompetence.Enabled = competenceSelected;
-            btnDeleteCompetence.Enabled = competenceSelected;
         }
 
         #endregion
@@ -190,7 +249,75 @@ namespace PlanAthena.View.Ressources.MetierDiagram
         #endregion
 
         #region Événements des contrôles
+        // Nouvel événement pour le ComboBox
+        private void CmbAddCompetence_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_isLoading || cmbAddCompetence.SelectedIndex <= 0) return; // Ignore si loading ou placeholder
 
+            var ouvrier = GetSelectedOuvrier();
+            var selectedMetier = cmbAddCompetence.SelectedItem as Metier;
+
+            if (ouvrier != null && selectedMetier != null)
+            {
+                try
+                {
+                    _ressourceService.AjouterCompetence(ouvrier.OuvrierId, selectedMetier.MetierId);
+
+                    // Rafraîchir ce qui est nécessaire
+                    RefreshCompetencesGrid();
+                    RefreshAddCompetenceComboBox();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+
+        // Nouvel événement unique pour gérer les clics DANS la grille
+        private void GridCompetences_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // Ignorer les clics sur l'en-tête
+            if (e.RowIndex < 0) return;
+
+            var ouvrier = GetSelectedOuvrier();
+            if (ouvrier == null) return;
+
+            // Récupérer l'ID du métier de la ligne cliquée
+            string metierId = gridCompetences.Rows[e.RowIndex].Cells["MetierId"].Value.ToString();
+
+            // -- GESTION DE LA MODIFICATION (CASE À COCHER) --
+            if (gridCompetences.Columns[e.ColumnIndex].Name == "EstPrincipal")
+            {
+                try
+                {
+                    _ressourceService.DefinirMetierPrincipal(ouvrier.OuvrierId, metierId);
+                    RefreshCompetencesGrid(); // Juste rafraîchir la grille pour voir le changement
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+
+            // -- GESTION DE LA SUPPRESSION (BOUTON) --
+            if (gridCompetences.Columns[e.ColumnIndex].Name == "DeleteColumn")
+            {
+                try
+                {
+                    _ressourceService.SupprimerCompetence(ouvrier.OuvrierId, metierId);
+
+                    // Rafraîchir la grille ET le ComboBox (car une compétence redevient disponible)
+                    RefreshCompetencesGrid();
+                    RefreshAddCompetenceComboBox();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Erreur de suppression", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
         private void textSearchOuvrier_TextChanged(object sender, EventArgs e)
         {
             RefreshOuvriersGrid();
@@ -258,64 +385,118 @@ namespace PlanAthena.View.Ressources.MetierDiagram
                 }
             }
         }
+        // Dans votre fichier de vue (ex: RessourcesView.cs)
 
-        private void btnAddCompetence_Click(object sender, EventArgs e)
+        private void btnImporterOuvriers_Click(object sender, EventArgs e)
         {
-            var ouvrier = GetSelectedOuvrier();
-            if (ouvrier == null) return;
-
-            // La logique pour trouver les métiers et afficher une dialog existe déjà. On la réutilise.
-            var metiersDisponibles = _ressourceService.GetMetiersDisponiblesPourOuvrier(ouvrier.OuvrierId);
-            if (!metiersDisponibles.Any())
+            using (var ofd = new OpenFileDialog())
             {
-                MessageBox.Show("Cet ouvrier possède déjà toutes les compétences disponibles.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ofd.Title = "Sélectionner le fichier CSV des ouvriers à importer";
+                ofd.Filter = "Fichiers CSV (*.csv)|*.csv|Tous les fichiers (*.*)|*.*";
+
+                if (ofd.ShowDialog(this.FindForm()) == DialogResult.OK)
+                {
+                    try
+                    {
+                        // La vue ne fait qu'un seul appel : elle lance le wizard.
+                        // Toute la complexité (MessageBox, enchaînement des étapes) est dans l'orchestrateur.
+                        var resultat = _importWizardOrchestrator.LancerWizardImportOuvriers(ofd.FileName);
+
+                        // La vue affiche le résultat final, quel qu'il soit.
+                        if (resultat.EstSucces)
+                        {
+                            MessageBox.Show($"{resultat.NbOuvriersImportes} ouvriers ont été importés avec succès.", // Adapter le message au DTO de résultat
+                                            "Importation Réussie",
+                                            MessageBoxButtons.OK,
+                                            MessageBoxIcon.Information);
+                            RefreshAll(); // Ou le nom de votre méthode de rafraîchissement
+                        }
+                        else if (!string.IsNullOrEmpty(resultat.MessageErreur))
+                        {
+                            // Ne pas afficher de message si l'erreur est "Annulé par l'utilisateur"
+                            if (!resultat.MessageErreur.Contains("annulée par l'utilisateur"))
+                            {
+                                MessageBox.Show($"L'importation a échoué : {resultat.MessageErreur}",
+                                                "Erreur d'Importation",
+                                                MessageBoxButtons.OK,
+                                                MessageBoxIcon.Warning);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Une erreur inattendue est survenue : {ex.Message}",
+                                        "Erreur Critique",
+                                        MessageBoxButtons.OK,
+                                        MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+        private void btnExporterOuvriers_Click(object sender, EventArgs e)
+        {
+            // 1. Récupérer les données depuis le service métier
+            var ouvriersAExporter = _ressourceService.GetAllOuvriers();
+            if (!ouvriersAExporter.Any())
+            {
+                MessageBox.Show("Il n'y a aucun ouvrier à exporter.", "Action impossible", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-
-            // NOTE: Suppose l'existence d'une dialog 'CompetenceDialog'
-            // using var dialog = new CompetenceDialog(metiersDisponibles, null);
-            // if (dialog.ShowDialog() == DialogResult.OK)
-            // {
-            //     _ressourceService.AjouterCompetence(ouvrier.OuvrierId, dialog.MetierSelectionne.MetierId);
-            //     RefreshAll();
-            // }
-
-            // Pour l'instant, sans la dialog, on simule l'ajout de la première compétence dispo
-            _ressourceService.AjouterCompetence(ouvrier.OuvrierId, metiersDisponibles.First().MetierId);
-            RefreshAll();
-        }
-
-        private void btnModifyCompetence_Click(object sender, EventArgs e)
-        {
-            var ouvrierId = GetSelectedOuvrierId();
-            var competenceId = GetSelectedCompetenceId();
-            if (ouvrierId == null || competenceId == null) return;
-
-            try
+            // 2. Créer la liste des DTOs pour l'export
+            var dtosPourExport = new List<OuvrierExportDto>();
+            foreach (var ouvrier in ouvriersAExporter)
             {
-                _ressourceService.DefinirMetierPrincipal(ouvrierId, competenceId);
-                RefreshCompetencesGrid();
+                if (ouvrier.Competences.Any())
+                {
+                    foreach (var competence in ouvrier.Competences)
+                    {
+                        var metier = _ressourceService.GetMetierById(competence.MetierId);
+                        dtosPourExport.Add(new OuvrierExportDto
+                        {
+                            OuvrierId = ouvrier.OuvrierId,
+                            Nom = ouvrier.Nom,
+                            Prenom = ouvrier.Prenom,
+                            CoutJournalier = ouvrier.CoutJournalier,
+                            MetierNom = metier?.Nom ?? competence.MetierId // Traduction
+                        });
+                    }
+                }
+                else
+                {
+                    // Ouvrier sans compétence
+                    dtosPourExport.Add(new OuvrierExportDto
+                    {
+                        OuvrierId = ouvrier.OuvrierId,
+                        Nom = ouvrier.Nom,
+                        Prenom = ouvrier.Prenom,
+                        CoutJournalier = ouvrier.CoutJournalier,
+                        MetierNom = ""
+                    });
+                }
             }
-            catch (Exception ex)
+            // 3. Ouvrir la boîte de dialogue pour choisir l'emplacement du fichier
+            using (var sfd = new SaveFileDialog())
             {
-                MessageBox.Show(ex.Message, "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
+                sfd.Title = "Exporter les ouvriers au format CSV";
+                sfd.Filter = "Fichiers CSV (*.csv)|*.csv|Tous les fichiers (*.*)|*.*";
+                sfd.FileName = $"Export_Ouvriers_{DateTime.Now:yyyyMMdd}.csv";
 
-        private void btnDeleteCompetence_Click(object sender, EventArgs e)
-        {
-            var ouvrierId = GetSelectedOuvrierId();
-            var competenceId = GetSelectedCompetenceId();
-            if (ouvrierId == null || competenceId == null) return;
+                if (sfd.ShowDialog(this.FindForm()) == DialogResult.OK)
+                {
+                    try
+                    {
+                        // 3. Appeler le service d'export avec les données et le chemin
+                        _exportService.ExporterOuvriersCSV(ouvriersAExporter, sfd.FileName);
 
-            try
-            {
-                _ressourceService.SupprimerCompetence(ouvrierId, competenceId);
-                RefreshCompetencesGrid();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Erreur de suppression", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"Exportation terminée avec succès.\n{ouvriersAExporter.Count} ouvriers ont été exportés dans le fichier :\n{sfd.FileName}",
+                                        "Export Réussi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Une erreur est survenue lors de l'exportation :\n{ex.Message}",
+                                        "Erreur d'Exportation", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
             }
         }
 

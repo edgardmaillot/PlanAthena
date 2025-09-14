@@ -1,0 +1,34 @@
+@startuml
+' --- Configuration ---
+!theme toy
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+package "DTOs" {
+class ConsolidatedPlanning
+class ConfigurationPlanification
+}
+package "Business (Sources de Vérité)" {
+class PlanningService {
+' --- Champs Privés ---
+- _currentPlanning: ConsolidatedPlanning
+- _currentConfig: ConfigurationPlanification
+--
+' --- Méthodes de Gestion de l'État ---
++ GetCurrentPlanning(): ConsolidatedPlanning
++ UpdatePlanning(newPlanning: ConsolidatedPlanning, newConfig: ConfigurationPlanification)
++ ClearPlanning()
+--
+' --- Méthodes de Calcul ---
++ GetNombreJoursOuvres(dateDebut: DateTime, dateFin: DateTime): int
+}
+}
+' --- Relations ---
+PlanningService ..> ConsolidatedPlanning : "détient"
+PlanningService ..> ConfigurationPlanification : "détient"
+note top of PlanningService
+<b>Source de Vérité du Planning</b>
+Maintient l'état du planning consolidé
+et de sa configuration.
+Répond aux requêtes calendaires.
+end note
+@enduml

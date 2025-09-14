@@ -1,0 +1,192 @@
+@startuml
+' --- Configuration ---
+skinparam componentStyle uml2
+skinparam sequenceArrowColor #005A31
+skinparam sequenceLifeLineBorderColor #2E8B57
+skinparam sequenceParticipantBackgroundColor #98FB98
+skinparam shadowing false
+autonumber
+
+title Architecture Cible de l'Import de Tâches v0.7.0 (Post-Refactorisation)
+
+actor Utilisateur
+participant "IHM Principale" as UI
+participant "orchestrator:\nImportWizardOrchestrator" as Orchestrator
+participant "wizardP1:\nImportP1 (Extraction)" as WizardP1
+participant "wizardP2:\nImportP2 (Transformation)" as WizardP2
+participant "wizardP3:\nImportP3 (Validation)" as WizardP3
+participant "service:\nValueMappingService" as VMSvc
+participant "service:\nCsvDataService" as CsvSvc
+participant "service:\nImportService" as ImportSvc
+participant "service:\nProjetService" as ProjSvc
+participant "service:\nTaskManagerService" as TaskSvc
+
+'=================================
+' GROUPE: Workflow d'Import de Tâches Refactorisé
+'=================================
+group Workflow d'Import de Tâches (ETL via Wizard)
+
+    Utilisateur -> UI : Lance l'import d'un fichier CSV de tâches
+    activate UI
+    
+    UI -> Orchestrator : LancerWizardImport("Taches", filePath, lotIdCible)
+    activate Orchestrator
+    
+    Orchestrator -> Orchestrator : Configure le workflow pour le type "Taches"
+    
+    '---------------------------------
+    '-- ÉTAPE 1: CONFIGURATION EXTRACTION (Wizard P1)
+    '---------------------------------
+    box "Phase d'Extraction - Configuration des Mappings" #LightBlue
+        Orchestrator -> CsvSvc : LireEntetes(filePath)
+        CsvSvc --> Orchestrator : entetesCsv
+
+        Orchestrator -> VMSvc : TrouveCorrespondance(entete) pour chaque en-tête
+        VMSvc --> Orchestrator : Mappings Suggérés
+        
+        Orchestrator -> WizardP1 : new ImportP1() & Initialize(config)
+        activate WizardP1
+        
+        WizardP1 -> Utilisateur : Affiche aperçu & interface de mapping
+        Utilisateur -> WizardP1 : Configure les mappings de colonnes & valeurs par défaut
+        
+        alt Utilisateur annule
+            WizardP1 --> Orchestrator
+            Orchestrator --> UI : return ImportResult.Echec("Annulé")
+            deactivate WizardP1
+            deactivate Orchestrator
+            deactivate UI
+            return
+        end
+        
+        Utilisateur -> WizardP1 : Clique "Suivant"
+        WizardP1 --> Orchestrator : Retourne le `mappingConfig` final
+        deactivate WizardP1
+    end box
+
+    '---------------------------------
+    '-- ÉTAPE 2: TRANSFORMATION MÉTIER (Wizard P2)
+    '---------------------------------
+    box "Phase de Transformation - Mapping Métier" #LightYellow
+        alt L'import nécessite un mapping de valeurs (ex: métiers)
+            Orchestrator -> Orchestrator : Prépare la configuration pour l'étape 2
+            
+            Orchestrator -> WizardP2 : new ImportP2() & Initialize(config)
+            activate WizardP2
+            
+            WizardP2 -> Utilisateur : Affiche interface de mapping de valeurs (ex: "Dev" -> "MET_DEV")
+            Utilisateur -> WizardP2 : Fait correspondre les valeurs
+            
+            Utilisateur -> WizardP2 : Clique "Suivant"
+            WizardP2 --> Orchestrator : Retourne les mappings de valeurs
+            deactivate WizardP2
+        end
+    end box
+    
+    '---------------------------------
+    '-- ÉTAPE 3: TRANSFORMATION & EXTRACTION TECHNIQUE (E & T)
+    '---------------------------------
+    box "Phase de Transformation & Extraction Technique (E & T)" #LightGoldenRodYellow
+        Orchestrator -> self : **TransformerDonneesBrutes(etat)**
+        activate Orchestrator
+        
+        ' --- Extraction du fichier CSV ---
+        Orchestrator -> CsvSvc : ImportCsv<TacheCsvDto>(filePath)
+        activate CsvSvc
+        note left of CsvSvc #Orange
+            **Refactorisation Clé:**
+            Utilise **ChoETL** en interne pour
+            mapper le CSV vers une liste de DTOs bruts.
+        end note
+
+        alt Fichier illisible ou erreur de parsing
+            CsvSvc --> Orchestrator : lève une CsvImportException
+            Orchestrator -> self : Gère l'exception (ex: tout rejeter)
+            Orchestrator --> self : return TransformationResult (avec rejets)
+            deactivate CsvSvc
+            deactivate Orchestrator
+            return
+        end
+
+        CsvSvc --> Orchestrator : List<TacheCsvDto> enregistrementsBruts
+        deactivate CsvSvc
+        
+        ' --- Transformation ligne par ligne ---
+        loop Pour chaque "enregistrementBrut" dans la liste
+            Orchestrator -> self : Applique les mappings de colonnes
+            Orchestrator -> self : Applique les valeurs par défaut
+            Orchestrator -> self : Applique les mappings de valeurs (métiers)
+            
+            alt Validation de la ligne réussie
+                Orchestrator -> self : Crée l'objet métier propre (ex: TacheImportData)
+                note right: L'objet est complet et prêt pour le chargement
+            else La ligne contient une erreur (ex: métier non mappé)
+                Orchestrator -> self : Crée une "RejectedRow" avec la raison
+                note right: La ligne est écartée
+            end
+        end
+        
+        Orchestrator --> self : **TransformationResult<TacheImportData>** (données valides + rejets)
+        deactivate Orchestrator
+    end box
+    
+    '---------------------------------
+    '-- ÉTAPE 4: VALIDATION UTILISATEUR (Wizard P3)
+    '---------------------------------
+    box "Phase de Validation - Contrôle Utilisateur" #LightCyan
+        Orchestrator -> WizardP3 : new ImportP3() & Initialize(resultat)
+        activate WizardP3
+        
+        WizardP3 -> Utilisateur : Affiche données à importer & rejets
+        Utilisateur -> WizardP3 : Clique "Importer"
+        
+        WizardP3 --> Orchestrator : Validation finale
+        deactivate WizardP3
+    end box
+    
+    '---------------------------------
+    '-- ÉTAPE 5: CHARGEMENT FINAL (L)
+    '---------------------------------
+    box "Phase de Chargement - Persistance des Données (L)" #PaleGreen
+        Orchestrator -> ImportSvc : **ImporterTaches(donneesValides, lotIdCible, remplacer)**
+        activate ImportSvc
+        note left of ImportSvc #LightGreen
+            **Refactorisation Clé:**
+            Nouvelle signature de méthode.
+            Le service reçoit des objets métiers propres,
+            pas un chemin de fichier.
+        end note
+
+        alt Mode remplacement activé
+            ImportSvc -> TaskSvc : SupprimerToutesLesTachesDuLot(lotIdCible)
+            ImportSvc -> ProjSvc : SupprimerTousLesBlocsDuLot(lotIdCible)
+        end
+
+        loop Pour chaque "tacheData" dans la liste "donneesValides"
+            ImportSvc -> ProjSvc : ChercherOuCreerBloc(lotIdCible, tacheData.NomBloc)
+            activate ProjSvc
+            ProjSvc --> ImportSvc : blocId
+            deactivate ProjSvc
+
+            ImportSvc -> TaskSvc : CreerTache(lotIdCible, blocId, tacheData.Nom, ...)
+            activate TaskSvc
+            TaskSvc --> ImportSvc : nouvelleTache
+            deactivate TaskSvc
+        end
+        
+        ' -- Post-traitement des relations qui nécessitent que toutes les tâches existent --
+        ImportSvc -> self : **RemapperDependancesDesTaches()**
+        note over ImportSvc, TaskSvc: Cette étape cruciale traduit les IDs/Noms importés\nen IDs internes PlanAthena pour lier les tâches entre elles.
+
+        ImportSvc --> Orchestrator : return ImportResult.Succes
+        deactivate ImportSvc
+    end box
+    
+    Orchestrator --> UI : return ImportResult (succès avec statistiques)
+    deactivate Orchestrator
+    
+    UI -> Utilisateur : Affiche résumé final de l'import
+    deactivate UI
+
+end
+@enduml

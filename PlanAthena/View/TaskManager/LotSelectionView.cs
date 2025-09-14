@@ -1,11 +1,5 @@
-using Krypton.Toolkit;
 using PlanAthena.Data;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
-using System.IO;
-using System.Windows.Forms;
 
 namespace PlanAthena.View.TaskManager
 {

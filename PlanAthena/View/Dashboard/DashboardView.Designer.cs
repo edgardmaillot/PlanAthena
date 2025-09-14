@@ -1,6 +1,10 @@
+// --- START OF FILE DashboardView.Designer.cs ---
+
 using Krypton.Toolkit;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Infrastructure;
+using System.ComponentModel; // Required for ComponentResourceManager
+using PlanAthena.View.Utils; // For DoubleBufferedTableLayoutPanel
 
 namespace PlanAthena.View.Dashboard
 {
@@ -23,10 +27,12 @@ namespace PlanAthena.View.Dashboard
         {
             kryptonPanelMain = new KryptonPanel();
             kryptonSplitContainer1 = new KryptonSplitContainer();
-            headerProjects = new KryptonHeaderGroup();
-            panelProjectList = new FlowLayoutPanel();
-            btnNewProject = new KryptonButton();
+            kTable4projets = new DoubleBufferedTableLayoutPanel();
+            headerProjects = new KryptonHeader();
             groupDetails = new KryptonGroupBox();
+            btnBrowseIllustration = new KryptonButton();
+            textIllustrationPath = new KryptonTextBox();
+            labelIllustration = new KryptonLabel();
             groupWorkDays = new KryptonGroupBox();
             chkSunday = new KryptonCheckBox();
             chkSaturday = new KryptonCheckBox();
@@ -52,27 +58,26 @@ namespace PlanAthena.View.Dashboard
             labelFilePath = new KryptonLabel();
             textFilePath = new KryptonTextBox();
             panelActions = new KryptonPanel();
+            btnNewProject = new KryptonButton();
             btnManage = new KryptonButton();
             btnSave = new KryptonButton();
             btnDelete = new KryptonButton();
-            ((System.ComponentModel.ISupportInitialize)kryptonPanelMain).BeginInit();
+            openFileDialogIllustration = new OpenFileDialog();
+            ((ISupportInitialize)kryptonPanelMain).BeginInit();
             kryptonPanelMain.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)kryptonSplitContainer1).BeginInit();
+            ((ISupportInitialize)kryptonSplitContainer1).BeginInit();
             (kryptonSplitContainer1.Panel1).BeginInit();
             kryptonSplitContainer1.Panel1.SuspendLayout();
             (kryptonSplitContainer1.Panel2).BeginInit();
             kryptonSplitContainer1.Panel2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)headerProjects).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)headerProjects.Panel).BeginInit();
-            headerProjects.Panel.SuspendLayout();
-            panelProjectList.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)groupDetails).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)groupDetails.Panel).BeginInit();
+            kTable4projets.SuspendLayout();
+            ((ISupportInitialize)groupDetails).BeginInit();
+            ((ISupportInitialize)groupDetails.Panel).BeginInit();
             groupDetails.Panel.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)groupWorkDays).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)groupWorkDays.Panel).BeginInit();
+            ((ISupportInitialize)groupWorkDays).BeginInit();
+            ((ISupportInitialize)groupWorkDays.Panel).BeginInit();
             groupWorkDays.Panel.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)panelActions).BeginInit();
+            ((ISupportInitialize)panelActions).BeginInit();
             panelActions.SuspendLayout();
             SuspendLayout();
             // 
@@ -95,7 +100,7 @@ namespace PlanAthena.View.Dashboard
             // 
             // 
             // 
-            kryptonSplitContainer1.Panel1.Controls.Add(headerProjects);
+            kryptonSplitContainer1.Panel1.Controls.Add(kTable4projets);
             // 
             // 
             // 
@@ -106,47 +111,34 @@ namespace PlanAthena.View.Dashboard
             kryptonSplitContainer1.SplitterDistance = 433;
             kryptonSplitContainer1.TabIndex = 0;
             // 
+            // kTable4projets
+            // 
+            kTable4projets.BackColor = System.Drawing.Color.Transparent;
+            kTable4projets.ColumnCount = 1;
+            kTable4projets.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            kTable4projets.Controls.Add(headerProjects, 0, 0);
+            kTable4projets.Dock = DockStyle.Fill;
+            kTable4projets.Location = new Point(0, 0);
+            kTable4projets.Name = "kTable4projets";
+            kTable4projets.RowCount = 5;
+            kTable4projets.RowStyles.Add(new RowStyle(SizeType.Absolute, 45F));
+            kTable4projets.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            kTable4projets.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            kTable4projets.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            kTable4projets.RowStyles.Add(new RowStyle(SizeType.Percent, 25F));
+            kTable4projets.Size = new Size(433, 725);
+            kTable4projets.TabIndex = 0;
+            // 
             // headerProjects
             // 
             headerProjects.Dock = DockStyle.Fill;
-            headerProjects.HeaderVisibleSecondary = false;
-            headerProjects.Location = new Point(0, 0);
-            headerProjects.Margin = new Padding(4, 3, 4, 3);
-            // 
-            // 
-            // 
-            headerProjects.Panel.Controls.Add(panelProjectList);
-            headerProjects.Size = new Size(433, 725);
+            headerProjects.Location = new Point(3, 3);
+            headerProjects.Name = "headerProjects";
+            headerProjects.Size = new Size(427, 39);
             headerProjects.TabIndex = 0;
-            headerProjects.ValuesPrimary.Heading = "Projets Récents";
-            headerProjects.ValuesPrimary.Image = null;
-            // 
-            // panelProjectList
-            // 
-            panelProjectList.AutoScroll = true;
-            panelProjectList.BackColor = Color.Transparent;
-            panelProjectList.Controls.Add(btnNewProject);
-            panelProjectList.Dock = DockStyle.Fill;
-            panelProjectList.FlowDirection = FlowDirection.TopDown;
-            panelProjectList.Location = new Point(0, 0);
-            panelProjectList.Margin = new Padding(4, 3, 4, 3);
-            panelProjectList.Name = "panelProjectList";
-            panelProjectList.Padding = new Padding(12);
-            panelProjectList.Size = new Size(431, 693);
-            panelProjectList.TabIndex = 0;
-            panelProjectList.WrapContents = false;
-            panelProjectList.Resize += panelProjectList_Resize;
-            // 
-            // btnNewProject
-            // 
-            btnNewProject.Location = new Point(16, 15);
-            btnNewProject.Margin = new Padding(4, 3, 4, 3);
-            btnNewProject.Name = "btnNewProject";
-            btnNewProject.Size = new Size(390, 46);
-            btnNewProject.TabIndex = 0;
-            btnNewProject.Values.DropDownArrowColor = Color.Empty;
-            btnNewProject.Values.Text = "Nouveau Projet";
-            btnNewProject.Click += btnNewProject_Click;
+            headerProjects.Values.Description = "";
+            headerProjects.Values.Heading = "Projets récents";
+            headerProjects.Values.Image = null;
             // 
             // groupDetails
             // 
@@ -156,6 +148,9 @@ namespace PlanAthena.View.Dashboard
             // 
             // 
             // 
+            groupDetails.Panel.Controls.Add(btnBrowseIllustration);
+            groupDetails.Panel.Controls.Add(textIllustrationPath);
+            groupDetails.Panel.Controls.Add(labelIllustration);
             groupDetails.Panel.Controls.Add(groupWorkDays);
             groupDetails.Panel.Controls.Add(numDailyCost);
             groupDetails.Panel.Controls.Add(labelDailyCost);
@@ -177,9 +172,38 @@ namespace PlanAthena.View.Dashboard
             groupDetails.TabIndex = 1;
             groupDetails.Values.Heading = "Édition du Projet";
             // 
+            // btnBrowseIllustration
+            // 
+            btnBrowseIllustration.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnBrowseIllustration.Location = new Point(753, 211);
+            btnBrowseIllustration.Name = "btnBrowseIllustration";
+            btnBrowseIllustration.Size = new Size(90, 25);
+            btnBrowseIllustration.TabIndex = 19;
+            btnBrowseIllustration.Values.DropDownArrowColor = Color.Empty;
+            btnBrowseIllustration.Values.Text = "Parcourir...";
+            btnBrowseIllustration.Click += btnBrowseIllustration_Click;
+            // 
+            // textIllustrationPath
+            // 
+            textIllustrationPath.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            textIllustrationPath.Location = new Point(140, 212);
+            textIllustrationPath.Name = "textIllustrationPath";
+            textIllustrationPath.ReadOnly = true;
+            textIllustrationPath.Size = new Size(607, 23);
+            textIllustrationPath.TabIndex = 18;
+            // 
+            // labelIllustration
+            // 
+            labelIllustration.Location = new Point(20, 212);
+            labelIllustration.Name = "labelIllustration";
+            labelIllustration.Size = new Size(68, 20);
+            labelIllustration.TabIndex = 17;
+            labelIllustration.Values.Text = "Illustration";
+            // 
             // groupWorkDays
             // 
-            groupWorkDays.Location = new Point(20, 331);
+            groupWorkDays.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            groupWorkDays.Location = new Point(20, 368);
             groupWorkDays.Margin = new Padding(4, 3, 4, 3);
             // 
             // 
@@ -191,7 +215,7 @@ namespace PlanAthena.View.Dashboard
             groupWorkDays.Panel.Controls.Add(chkWednesday);
             groupWorkDays.Panel.Controls.Add(chkTuesday);
             groupWorkDays.Panel.Controls.Add(chkMonday);
-            groupWorkDays.Size = new Size(816, 99);
+            groupWorkDays.Size = new Size(823, 99);
             groupWorkDays.TabIndex = 16;
             groupWorkDays.Values.Heading = "Jours Ouvrés";
             // 
@@ -263,7 +287,7 @@ namespace PlanAthena.View.Dashboard
             numDailyCost.AllowDecimals = true;
             numDailyCost.DecimalPlaces = 2;
             numDailyCost.Increment = new decimal(new int[] { 1, 0, 0, 0 });
-            numDailyCost.Location = new Point(635, 277);
+            numDailyCost.Location = new Point(635, 314);
             numDailyCost.Margin = new Padding(4, 3, 4, 3);
             numDailyCost.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
             numDailyCost.Minimum = new decimal(new int[] { 0, 0, 0, 0 });
@@ -274,7 +298,7 @@ namespace PlanAthena.View.Dashboard
             // 
             // labelDailyCost
             // 
-            labelDailyCost.Location = new Point(442, 277);
+            labelDailyCost.Location = new Point(442, 314);
             labelDailyCost.Margin = new Padding(4, 3, 4, 3);
             labelDailyCost.Name = "labelDailyCost";
             labelDailyCost.Size = new Size(146, 20);
@@ -284,7 +308,7 @@ namespace PlanAthena.View.Dashboard
             // numWorkDuration
             // 
             numWorkDuration.Increment = new decimal(new int[] { 1, 0, 0, 0 });
-            numWorkDuration.Location = new Point(140, 277);
+            numWorkDuration.Location = new Point(140, 314);
             numWorkDuration.Margin = new Padding(4, 3, 4, 3);
             numWorkDuration.Maximum = new decimal(new int[] { 24, 0, 0, 0 });
             numWorkDuration.Minimum = new decimal(new int[] { 0, 0, 0, 0 });
@@ -295,7 +319,7 @@ namespace PlanAthena.View.Dashboard
             // 
             // labelWorkDuration
             // 
-            labelWorkDuration.Location = new Point(20, 277);
+            labelWorkDuration.Location = new Point(20, 314);
             labelWorkDuration.Margin = new Padding(4, 3, 4, 3);
             labelWorkDuration.Name = "labelWorkDuration";
             labelWorkDuration.Size = new Size(99, 20);
@@ -304,7 +328,7 @@ namespace PlanAthena.View.Dashboard
             // 
             // labelCalculatedDuration
             // 
-            labelCalculatedDuration.Location = new Point(635, 232);
+            labelCalculatedDuration.Location = new Point(635, 269);
             labelCalculatedDuration.Margin = new Padding(4, 3, 4, 3);
             labelCalculatedDuration.Name = "labelCalculatedDuration";
             labelCalculatedDuration.Size = new Size(25, 20);
@@ -314,7 +338,7 @@ namespace PlanAthena.View.Dashboard
             // 
             // labelDuration
             // 
-            labelDuration.Location = new Point(572, 232);
+            labelDuration.Location = new Point(572, 269);
             labelDuration.Margin = new Padding(4, 3, 4, 3);
             labelDuration.Name = "labelDuration";
             labelDuration.Size = new Size(49, 20);
@@ -324,7 +348,7 @@ namespace PlanAthena.View.Dashboard
             // numClosingTime
             // 
             numClosingTime.Increment = new decimal(new int[] { 1, 0, 0, 0 });
-            numClosingTime.Location = new Point(350, 232);
+            numClosingTime.Location = new Point(350, 269);
             numClosingTime.Margin = new Padding(4, 3, 4, 3);
             numClosingTime.Maximum = new decimal(new int[] { 23, 0, 0, 0 });
             numClosingTime.Minimum = new decimal(new int[] { 0, 0, 0, 0 });
@@ -336,7 +360,7 @@ namespace PlanAthena.View.Dashboard
             // 
             // labelClosingTime
             // 
-            labelClosingTime.Location = new Point(264, 232);
+            labelClosingTime.Location = new Point(264, 269);
             labelClosingTime.Margin = new Padding(4, 3, 4, 3);
             labelClosingTime.Name = "labelClosingTime";
             labelClosingTime.Size = new Size(66, 20);
@@ -346,7 +370,7 @@ namespace PlanAthena.View.Dashboard
             // numOpeningTime
             // 
             numOpeningTime.Increment = new decimal(new int[] { 1, 0, 0, 0 });
-            numOpeningTime.Location = new Point(140, 232);
+            numOpeningTime.Location = new Point(140, 269);
             numOpeningTime.Margin = new Padding(4, 3, 4, 3);
             numOpeningTime.Maximum = new decimal(new int[] { 23, 0, 0, 0 });
             numOpeningTime.Minimum = new decimal(new int[] { 0, 0, 0, 0 });
@@ -358,7 +382,7 @@ namespace PlanAthena.View.Dashboard
             // 
             // labelOpeningTime
             // 
-            labelOpeningTime.Location = new Point(20, 232);
+            labelOpeningTime.Location = new Point(20, 269);
             labelOpeningTime.Margin = new Padding(4, 3, 4, 3);
             labelOpeningTime.Name = "labelOpeningTime";
             labelOpeningTime.Size = new Size(65, 20);
@@ -376,6 +400,7 @@ namespace PlanAthena.View.Dashboard
             // 
             // textDescription
             // 
+            textDescription.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             textDescription.Location = new Point(140, 113);
             textDescription.Margin = new Padding(4, 3, 4, 3);
             textDescription.Multiline = true;
@@ -422,6 +447,7 @@ namespace PlanAthena.View.Dashboard
             // 
             // panelActions
             // 
+            panelActions.Controls.Add(btnNewProject);
             panelActions.Controls.Add(btnManage);
             panelActions.Controls.Add(btnSave);
             panelActions.Controls.Add(btnDelete);
@@ -431,6 +457,17 @@ namespace PlanAthena.View.Dashboard
             panelActions.Name = "panelActions";
             panelActions.Size = new Size(860, 58);
             panelActions.TabIndex = 0;
+            // 
+            // btnNewProject
+            // 
+            btnNewProject.Location = new Point(4, 12);
+            btnNewProject.Margin = new Padding(4, 3, 4, 3);
+            btnNewProject.Name = "btnNewProject";
+            btnNewProject.Size = new Size(125, 35);
+            btnNewProject.TabIndex = 3;
+            btnNewProject.Values.DropDownArrowColor = Color.Empty;
+            btnNewProject.Values.Text = "Nouveau Projet";
+            btnNewProject.Click += btnNewProject_Click;
             // 
             // btnManage
             // 
@@ -442,7 +479,7 @@ namespace PlanAthena.View.Dashboard
             btnManage.TabIndex = 2;
             btnManage.Values.DropDownArrowColor = Color.Empty;
             btnManage.Values.Text = "Gérer";
-            this.btnManage.Click += new System.EventHandler(this.btnManage_Click);
+            btnManage.Click += btnManage_Click;
             // 
             // btnSave
             // 
@@ -467,6 +504,11 @@ namespace PlanAthena.View.Dashboard
             btnDelete.Values.DropDownArrowColor = Color.Empty;
             btnDelete.Values.Text = "Supprimer";
             // 
+            // openFileDialogIllustration
+            // 
+            openFileDialogIllustration.Filter = "Fichiers images (*.png;*.jpg;*.jpeg;*.gif;*.bmp)|*.png;*.jpg;*.jpeg;*.gif;*.bmp|Tous les fichiers (*.*)|*.*";
+            openFileDialogIllustration.Title = "Sélectionner une illustration pour le projet";
+            // 
             // DashboardView
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -475,69 +517,67 @@ namespace PlanAthena.View.Dashboard
             Margin = new Padding(4, 3, 4, 3);
             Name = "DashboardView";
             Size = new Size(1328, 749);
-            ((System.ComponentModel.ISupportInitialize)kryptonPanelMain).EndInit();
+            ((ISupportInitialize)kryptonPanelMain).EndInit();
             kryptonPanelMain.ResumeLayout(false);
             (kryptonSplitContainer1.Panel1).EndInit();
             kryptonSplitContainer1.Panel1.ResumeLayout(false);
             (kryptonSplitContainer1.Panel2).EndInit();
             kryptonSplitContainer1.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)kryptonSplitContainer1).EndInit();
-            ((System.ComponentModel.ISupportInitialize)headerProjects.Panel).EndInit();
-            headerProjects.Panel.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)headerProjects).EndInit();
-            panelProjectList.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)groupDetails.Panel).EndInit();
+            ((ISupportInitialize)kryptonSplitContainer1).EndInit();
+            kTable4projets.ResumeLayout(false);
+            kTable4projets.PerformLayout();
+            ((ISupportInitialize)groupDetails.Panel).EndInit();
             groupDetails.Panel.ResumeLayout(false);
             groupDetails.Panel.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)groupDetails).EndInit();
-            ((System.ComponentModel.ISupportInitialize)groupWorkDays.Panel).EndInit();
+            ((ISupportInitialize)groupDetails).EndInit();
+            ((ISupportInitialize)groupWorkDays.Panel).EndInit();
             groupWorkDays.Panel.ResumeLayout(false);
             groupWorkDays.Panel.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)groupWorkDays).EndInit();
-            ((System.ComponentModel.ISupportInitialize)panelActions).EndInit();
+            ((ISupportInitialize)groupWorkDays).EndInit();
+            ((ISupportInitialize)panelActions).EndInit();
             panelActions.ResumeLayout(false);
             ResumeLayout(false);
         }
 
         #endregion
 
-        private KryptonPanel kryptonPanelMain;
-        private KryptonSplitContainer kryptonSplitContainer1;
-        private KryptonHeaderGroup headerProjects;
-        private System.Windows.Forms.FlowLayoutPanel panelProjectList;
-        private KryptonButton btnNewProject;
-        private KryptonPanel panelActions;
-        private KryptonButton btnManage;
-        private KryptonButton btnSave;
-        private KryptonButton btnDelete;
-        private KryptonGroupBox groupDetails;
-        private KryptonLabel labelDescription;
-        private KryptonTextBox textDescription;
-        private KryptonLabel labelName;
-        private KryptonTextBox textName;
-        private KryptonLabel labelFilePath;
-        private KryptonTextBox textFilePath;
-        private KryptonLabel labelOpeningTime;
-        private KryptonLabel labelCalculatedDuration;
-        private KryptonLabel labelDuration;
-        private KryptonNumericUpDown numClosingTime;
-        private KryptonLabel labelClosingTime;
-        private KryptonNumericUpDown numOpeningTime;
-        private KryptonGroupBox groupWorkDays;
-        private KryptonNumericUpDown numDailyCost;
-        private KryptonLabel labelDailyCost;
-        private KryptonNumericUpDown numWorkDuration;
-        private KryptonLabel labelWorkDuration;
-        private KryptonCheckBox chkSaturday;
-        private KryptonCheckBox chkFriday;
-        private KryptonCheckBox chkThursday;
-        private KryptonCheckBox chkWednesday;
-        private KryptonCheckBox chkTuesday;
-        private KryptonCheckBox chkMonday;
-        private KryptonCheckBox chkSunday;
-        private ApplicationService applicationService;
-        private CheminsPrefereService cheminsPrefereService;
-
-       
+        private Krypton.Toolkit.KryptonPanel kryptonPanelMain;
+        private Krypton.Toolkit.KryptonSplitContainer kryptonSplitContainer1;
+        private Krypton.Toolkit.KryptonPanel panelActions;
+        private Krypton.Toolkit.KryptonButton btnManage;
+        private Krypton.Toolkit.KryptonButton btnSave;
+        private Krypton.Toolkit.KryptonButton btnDelete;
+        private Krypton.Toolkit.KryptonGroupBox groupDetails;
+        private Krypton.Toolkit.KryptonLabel labelDescription;
+        private Krypton.Toolkit.KryptonTextBox textDescription;
+        private Krypton.Toolkit.KryptonLabel labelName;
+        private Krypton.Toolkit.KryptonTextBox textName;
+        private Krypton.Toolkit.KryptonLabel labelFilePath;
+        private Krypton.Toolkit.KryptonTextBox textFilePath;
+        private Krypton.Toolkit.KryptonLabel labelOpeningTime;
+        private Krypton.Toolkit.KryptonLabel labelCalculatedDuration;
+        private Krypton.Toolkit.KryptonLabel labelDuration;
+        private Krypton.Toolkit.KryptonNumericUpDown numClosingTime;
+        private Krypton.Toolkit.KryptonLabel labelClosingTime;
+        private Krypton.Toolkit.KryptonNumericUpDown numOpeningTime;
+        private Krypton.Toolkit.KryptonGroupBox groupWorkDays;
+        private Krypton.Toolkit.KryptonNumericUpDown numDailyCost;
+        private Krypton.Toolkit.KryptonLabel labelDailyCost;
+        private Krypton.Toolkit.KryptonNumericUpDown numWorkDuration;
+        private Krypton.Toolkit.KryptonLabel labelWorkDuration;
+        private Krypton.Toolkit.KryptonCheckBox chkSaturday;
+        private Krypton.Toolkit.KryptonCheckBox chkFriday;
+        private Krypton.Toolkit.KryptonCheckBox chkThursday;
+        private Krypton.Toolkit.KryptonCheckBox chkWednesday;
+        private Krypton.Toolkit.KryptonCheckBox chkTuesday;
+        private Krypton.Toolkit.KryptonCheckBox chkMonday;
+        private Krypton.Toolkit.KryptonCheckBox chkSunday;
+        private Krypton.Toolkit.KryptonButton btnNewProject;
+        private PlanAthena.View.Utils.DoubleBufferedTableLayoutPanel kTable4projets; // Changed type here
+        private Krypton.Toolkit.KryptonHeader headerProjects;
+        private Krypton.Toolkit.KryptonButton btnBrowseIllustration;
+        private Krypton.Toolkit.KryptonTextBox textIllustrationPath;
+        private Krypton.Toolkit.KryptonLabel labelIllustration;
+        private System.Windows.Forms.OpenFileDialog openFileDialogIllustration;
     }
 }
