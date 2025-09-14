@@ -15,7 +15,7 @@ namespace PlanAthenaTests.Utilities
         private IIdGeneratorService _idGenerator;
         private ProjetService _projetService;
         private RessourceService _ressourceService;
-        private TaskManagerService _taskManagerService; // NOUVEAU
+        private TaskManagerService _taskManagerService;
         private DependanceBuilder _dependanceBuilder;
 
         private const ChantierPhase TestPhaseContexte = ChantierPhase.SecondOeuvre;

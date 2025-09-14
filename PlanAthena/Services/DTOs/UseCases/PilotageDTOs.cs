@@ -61,6 +61,7 @@ namespace PlanAthena.Services.DTOs.UseCases
     {
         Sunny,      // Tout va bien
         Cloudy,     // Orages en vue
+        Rainy,      // Problèmes à gérer
         Stormy      // Situation critique
     }
 
@@ -93,6 +94,8 @@ namespace PlanAthena.Services.DTOs.UseCases
         public Dictionary<string, List<PlanningBlock>[]> BlocksParOuvrier { get; init; } = new();
 
         public List<Ouvrier> Ouvriers { get; init; } = new();
+        public Dictionary<string, Metier> Metiers { get; set; } = new Dictionary<string, Metier>();
+        public Dictionary<string, Color> MetierColors { get; set; } = new Dictionary<string, Color>();
         public List<DateTime> Jours { get; init; } = new();
     }
 }

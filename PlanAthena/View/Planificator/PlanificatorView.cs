@@ -2,6 +2,7 @@
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DTOs.ImportExport;
+using PlanAthena.Services.DTOs.Projet;
 using PlanAthena.Services.Export;
 using PlanAthena.Services.Infrastructure;
 using PlanAthena.Services.UseCases;

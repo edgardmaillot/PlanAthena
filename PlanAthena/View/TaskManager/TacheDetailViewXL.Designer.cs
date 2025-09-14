@@ -30,6 +30,16 @@ namespace PlanAthena.View.TaskManager
         {
             splitContainer1 = new SplitContainer();
             kryptonPanel1 = new Krypton.Toolkit.KryptonPanel();
+            cmbEtat = new Krypton.Toolkit.KryptonComboBox();
+            kryptonCheckBox1 = new Krypton.Toolkit.KryptonCheckBox();
+            kryptonLabel5 = new Krypton.Toolkit.KryptonLabel();
+            ChkOuvriersAffect = new Krypton.Toolkit.KryptonCheckedListBox();
+            heureFin = new Krypton.Toolkit.KryptonTextBox();
+            heureDebut = new Krypton.Toolkit.KryptonTextBox();
+            kryptonLabel7 = new Krypton.Toolkit.KryptonLabel();
+            kryptonLabel6 = new Krypton.Toolkit.KryptonLabel();
+            StatutColor = new Krypton.Toolkit.KryptonPanel();
+            kryptonLabel4 = new Krypton.Toolkit.KryptonLabel();
             kryptonLabel3 = new Krypton.Toolkit.KryptonLabel();
             cmbBlocNom = new Krypton.Toolkit.KryptonComboBox();
             kryptonLabel2 = new Krypton.Toolkit.KryptonLabel();
@@ -46,31 +56,24 @@ namespace PlanAthena.View.TaskManager
             chkListDependances = new Krypton.Toolkit.KryptonCheckedListBox();
             kryptonHeader2 = new Krypton.Toolkit.KryptonHeader();
             kryptonPanel3 = new Krypton.Toolkit.KryptonPanel();
+            kryptonTableLayoutPanel1 = new Krypton.Toolkit.KryptonTableLayoutPanel();
+            kryptonHeader3 = new Krypton.Toolkit.KryptonHeader();
+            kryptonRichTextBox1 = new Krypton.Toolkit.KryptonRichTextBox();
             DataGridSousTaches = new Krypton.Toolkit.KryptonDataGridView();
             TacheID = new DataGridViewTextBoxColumn();
             TacheNom = new DataGridViewTextBoxColumn();
             OuvrierNom = new DataGridViewTextBoxColumn();
-            kryptonRichTextBox1 = new Krypton.Toolkit.KryptonRichTextBox();
-            kryptonHeader3 = new Krypton.Toolkit.KryptonHeader();
             kryptonPanel4 = new Krypton.Toolkit.KryptonPanel();
             btnSupprimer = new Krypton.Toolkit.KryptonButton();
             btnSauvegarder = new Krypton.Toolkit.KryptonButton();
-            StatutColor = new Krypton.Toolkit.KryptonPanel();
-            cmbEtat = new Krypton.Toolkit.KryptonComboBox();
-            kryptonLabel4 = new Krypton.Toolkit.KryptonLabel();
-            heureFin = new Krypton.Toolkit.KryptonTextBox();
-            heureDebut = new Krypton.Toolkit.KryptonTextBox();
-            kryptonLabel7 = new Krypton.Toolkit.KryptonLabel();
-            kryptonLabel6 = new Krypton.Toolkit.KryptonLabel();
-            kryptonCheckBox1 = new Krypton.Toolkit.KryptonCheckBox();
-            kryptonLabel5 = new Krypton.Toolkit.KryptonLabel();
-            ChkOuvriersAffect = new Krypton.Toolkit.KryptonCheckedListBox();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
             splitContainer1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)kryptonPanel1).BeginInit();
             kryptonPanel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)cmbEtat).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)StatutColor).BeginInit();
             ((System.ComponentModel.ISupportInitialize)cmbBlocNom).BeginInit();
             ((System.ComponentModel.ISupportInitialize)cmbMetier).BeginInit();
             ((System.ComponentModel.ISupportInitialize)splitContainer2).BeginInit();
@@ -85,11 +88,10 @@ namespace PlanAthena.View.TaskManager
             kryptonPanel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)kryptonPanel3).BeginInit();
             kryptonPanel3.SuspendLayout();
+            kryptonTableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)DataGridSousTaches).BeginInit();
             ((System.ComponentModel.ISupportInitialize)kryptonPanel4).BeginInit();
             kryptonPanel4.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)StatutColor).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)cmbEtat).BeginInit();
             SuspendLayout();
             // 
             // splitContainer1
@@ -112,6 +114,7 @@ namespace PlanAthena.View.TaskManager
             // 
             // kryptonPanel1
             // 
+            kryptonPanel1.Controls.Add(cmbEtat);
             kryptonPanel1.Controls.Add(kryptonCheckBox1);
             kryptonPanel1.Controls.Add(kryptonLabel5);
             kryptonPanel1.Controls.Add(ChkOuvriersAffect);
@@ -120,7 +123,6 @@ namespace PlanAthena.View.TaskManager
             kryptonPanel1.Controls.Add(kryptonLabel7);
             kryptonPanel1.Controls.Add(kryptonLabel6);
             kryptonPanel1.Controls.Add(StatutColor);
-            kryptonPanel1.Controls.Add(cmbEtat);
             kryptonPanel1.Controls.Add(kryptonLabel4);
             kryptonPanel1.Controls.Add(kryptonLabel3);
             kryptonPanel1.Controls.Add(cmbBlocNom);
@@ -137,6 +139,89 @@ namespace PlanAthena.View.TaskManager
             kryptonPanel1.Name = "kryptonPanel1";
             kryptonPanel1.Size = new Size(745, 159);
             kryptonPanel1.TabIndex = 0;
+            // 
+            // cmbEtat
+            // 
+            cmbEtat.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbEtat.DropDownWidth = 142;
+            cmbEtat.Enabled = false;
+            cmbEtat.Location = new Point(81, 103);
+            cmbEtat.Name = "cmbEtat";
+            cmbEtat.Size = new Size(142, 22);
+            cmbEtat.StateCommon.ComboBox.Content.TextH = Krypton.Toolkit.PaletteRelativeAlign.Near;
+            cmbEtat.TabIndex = 29;
+            // 
+            // kryptonCheckBox1
+            // 
+            kryptonCheckBox1.Location = new Point(669, 42);
+            kryptonCheckBox1.Name = "kryptonCheckBox1";
+            kryptonCheckBox1.RightToLeft = RightToLeft.Yes;
+            kryptonCheckBox1.Size = new Size(58, 20);
+            kryptonCheckBox1.TabIndex = 28;
+            kryptonCheckBox1.Values.Text = "Forcer";
+            // 
+            // kryptonLabel5
+            // 
+            kryptonLabel5.Location = new Point(546, 42);
+            kryptonLabel5.Name = "kryptonLabel5";
+            kryptonLabel5.Size = new Size(65, 20);
+            kryptonLabel5.TabIndex = 27;
+            kryptonLabel5.Values.Text = "Affectée à";
+            // 
+            // ChkOuvriersAffect
+            // 
+            ChkOuvriersAffect.Location = new Point(546, 62);
+            ChkOuvriersAffect.Name = "ChkOuvriersAffect";
+            ChkOuvriersAffect.Size = new Size(181, 91);
+            ChkOuvriersAffect.TabIndex = 26;
+            // 
+            // heureFin
+            // 
+            heureFin.Location = new Point(364, 133);
+            heureFin.Name = "heureFin";
+            heureFin.Size = new Size(151, 23);
+            heureFin.TabIndex = 25;
+            heureFin.Text = "JJ/MM/AA : 00h00";
+            // 
+            // heureDebut
+            // 
+            heureDebut.Location = new Point(364, 104);
+            heureDebut.Name = "heureDebut";
+            heureDebut.Size = new Size(151, 23);
+            heureDebut.TabIndex = 24;
+            heureDebut.Text = "JJ/MM/AA : 00h00";
+            // 
+            // kryptonLabel7
+            // 
+            kryptonLabel7.Location = new Point(261, 133);
+            kryptonLabel7.Name = "kryptonLabel7";
+            kryptonLabel7.Size = new Size(92, 20);
+            kryptonLabel7.TabIndex = 23;
+            kryptonLabel7.Values.Text = "Date/heure Fin";
+            // 
+            // kryptonLabel6
+            // 
+            kryptonLabel6.Location = new Point(249, 107);
+            kryptonLabel6.Name = "kryptonLabel6";
+            kryptonLabel6.Size = new Size(109, 20);
+            kryptonLabel6.TabIndex = 22;
+            kryptonLabel6.Values.Text = "Date/heure Début";
+            // 
+            // StatutColor
+            // 
+            StatutColor.Location = new Point(81, 136);
+            StatutColor.Name = "StatutColor";
+            StatutColor.Size = new Size(142, 20);
+            StatutColor.StateCommon.Color1 = Color.FromArgb(0, 192, 0);
+            StatutColor.TabIndex = 21;
+            // 
+            // kryptonLabel4
+            // 
+            kryptonLabel4.Location = new Point(44, 105);
+            kryptonLabel4.Name = "kryptonLabel4";
+            kryptonLabel4.Size = new Size(31, 20);
+            kryptonLabel4.TabIndex = 19;
+            kryptonLabel4.Values.Text = "Etat";
             // 
             // kryptonLabel3
             // 
@@ -294,39 +379,79 @@ namespace PlanAthena.View.TaskManager
             // 
             // kryptonPanel3
             // 
-            kryptonPanel3.Controls.Add(DataGridSousTaches);
-            kryptonPanel3.Controls.Add(kryptonRichTextBox1);
-            kryptonPanel3.Controls.Add(kryptonHeader3);
+            kryptonPanel3.Controls.Add(kryptonTableLayoutPanel1);
             kryptonPanel3.Dock = DockStyle.Fill;
             kryptonPanel3.Location = new Point(0, 0);
             kryptonPanel3.Name = "kryptonPanel3";
             kryptonPanel3.Size = new Size(484, 395);
             kryptonPanel3.TabIndex = 0;
             // 
+            // kryptonTableLayoutPanel1
+            // 
+            kryptonTableLayoutPanel1.ColumnCount = 1;
+            kryptonTableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            kryptonTableLayoutPanel1.Controls.Add(kryptonHeader3, 0, 0);
+            kryptonTableLayoutPanel1.Controls.Add(kryptonRichTextBox1, 0, 1);
+            kryptonTableLayoutPanel1.Controls.Add(DataGridSousTaches, 0, 2);
+            kryptonTableLayoutPanel1.Dock = DockStyle.Fill;
+            kryptonTableLayoutPanel1.Location = new Point(0, 0);
+            kryptonTableLayoutPanel1.Name = "kryptonTableLayoutPanel1";
+            kryptonTableLayoutPanel1.RowCount = 3;
+            kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
+            kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            kryptonTableLayoutPanel1.Size = new Size(484, 395);
+            kryptonTableLayoutPanel1.TabIndex = 3;
+            // 
+            // kryptonHeader3
+            // 
+            kryptonHeader3.Dock = DockStyle.Fill;
+            kryptonHeader3.Location = new Point(3, 3);
+            kryptonHeader3.Name = "kryptonHeader3";
+            kryptonHeader3.Size = new Size(478, 28);
+            kryptonHeader3.TabIndex = 0;
+            kryptonHeader3.Values.Description = "";
+            kryptonHeader3.Values.Heading = "Détail";
+            kryptonHeader3.Values.Image = null;
+            // 
+            // kryptonRichTextBox1
+            // 
+            kryptonRichTextBox1.Dock = DockStyle.Fill;
+            kryptonRichTextBox1.Location = new Point(3, 37);
+            kryptonRichTextBox1.Name = "kryptonRichTextBox1";
+            kryptonRichTextBox1.Size = new Size(478, 174);
+            kryptonRichTextBox1.TabIndex = 1;
+            kryptonRichTextBox1.Text = "kryptonRichTextBox1";
+            // 
             // DataGridSousTaches
             // 
             DataGridSousTaches.AllowUserToAddRows = false;
             DataGridSousTaches.AllowUserToDeleteRows = false;
             DataGridSousTaches.AllowUserToOrderColumns = true;
+            DataGridSousTaches.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            DataGridSousTaches.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
             DataGridSousTaches.BorderStyle = BorderStyle.None;
             DataGridSousTaches.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             DataGridSousTaches.Columns.AddRange(new DataGridViewColumn[] { TacheID, TacheNom, OuvrierNom });
             DataGridSousTaches.Dock = DockStyle.Fill;
-            DataGridSousTaches.Location = new Point(0, 220);
+            DataGridSousTaches.Location = new Point(3, 217);
             DataGridSousTaches.Name = "DataGridSousTaches";
             DataGridSousTaches.ReadOnly = true;
-            DataGridSousTaches.Size = new Size(484, 175);
+            DataGridSousTaches.Size = new Size(478, 175);
             DataGridSousTaches.TabIndex = 2;
             // 
             // TacheID
             // 
+            TacheID.FillWeight = 30F;
             TacheID.HeaderText = "Id";
+            TacheID.MinimumWidth = 30;
             TacheID.Name = "TacheID";
             TacheID.ReadOnly = true;
             // 
             // TacheNom
             // 
             TacheNom.HeaderText = "Nom";
+            TacheNom.MinimumWidth = 50;
             TacheNom.Name = "TacheNom";
             TacheNom.ReadOnly = true;
             // 
@@ -335,26 +460,6 @@ namespace PlanAthena.View.TaskManager
             OuvrierNom.HeaderText = "Affecté à";
             OuvrierNom.Name = "OuvrierNom";
             OuvrierNom.ReadOnly = true;
-            // 
-            // kryptonRichTextBox1
-            // 
-            kryptonRichTextBox1.Dock = DockStyle.Top;
-            kryptonRichTextBox1.Location = new Point(0, 31);
-            kryptonRichTextBox1.Name = "kryptonRichTextBox1";
-            kryptonRichTextBox1.Size = new Size(484, 189);
-            kryptonRichTextBox1.TabIndex = 1;
-            kryptonRichTextBox1.Text = "kryptonRichTextBox1";
-            // 
-            // kryptonHeader3
-            // 
-            kryptonHeader3.Dock = DockStyle.Top;
-            kryptonHeader3.Location = new Point(0, 0);
-            kryptonHeader3.Name = "kryptonHeader3";
-            kryptonHeader3.Size = new Size(484, 31);
-            kryptonHeader3.TabIndex = 0;
-            kryptonHeader3.Values.Description = "";
-            kryptonHeader3.Values.Heading = "Détail";
-            kryptonHeader3.Values.Image = null;
             // 
             // kryptonPanel4
             // 
@@ -384,88 +489,6 @@ namespace PlanAthena.View.TaskManager
             btnSauvegarder.Values.DropDownArrowColor = Color.Empty;
             btnSauvegarder.Values.Text = "Sauvegarder";
             // 
-            // StatutColor
-            // 
-            StatutColor.Location = new Point(81, 136);
-            StatutColor.Name = "StatutColor";
-            StatutColor.Size = new Size(142, 20);
-            StatutColor.StateCommon.Color1 = Color.FromArgb(0, 192, 0);
-            StatutColor.TabIndex = 21;
-            // 
-            // cmbEtat
-            // 
-            cmbEtat.DropDownWidth = 142;
-            cmbEtat.Location = new Point(81, 105);
-            cmbEtat.Name = "cmbEtat";
-            cmbEtat.Size = new Size(142, 22);
-            cmbEtat.StateCommon.ComboBox.Content.TextH = Krypton.Toolkit.PaletteRelativeAlign.Near;
-            cmbEtat.TabIndex = 20;
-            cmbEtat.Text = "Non planifiée";
-            // 
-            // kryptonLabel4
-            // 
-            kryptonLabel4.Location = new Point(44, 105);
-            kryptonLabel4.Name = "kryptonLabel4";
-            kryptonLabel4.Size = new Size(31, 20);
-            kryptonLabel4.TabIndex = 19;
-            kryptonLabel4.Values.Text = "Etat";
-            // 
-            // heureFin
-            // 
-            heureFin.Location = new Point(364, 133);
-            heureFin.Name = "heureFin";
-            heureFin.Size = new Size(151, 23);
-            heureFin.TabIndex = 25;
-            heureFin.Text = "JJ/MM/AA : 00h00";
-            // 
-            // heureDebut
-            // 
-            heureDebut.Location = new Point(364, 104);
-            heureDebut.Name = "heureDebut";
-            heureDebut.Size = new Size(151, 23);
-            heureDebut.TabIndex = 24;
-            heureDebut.Text = "JJ/MM/AA : 00h00";
-            // 
-            // kryptonLabel7
-            // 
-            kryptonLabel7.Location = new Point(261, 133);
-            kryptonLabel7.Name = "kryptonLabel7";
-            kryptonLabel7.Size = new Size(92, 20);
-            kryptonLabel7.TabIndex = 23;
-            kryptonLabel7.Values.Text = "Date/heure Fin";
-            // 
-            // kryptonLabel6
-            // 
-            kryptonLabel6.Location = new Point(249, 107);
-            kryptonLabel6.Name = "kryptonLabel6";
-            kryptonLabel6.Size = new Size(109, 20);
-            kryptonLabel6.TabIndex = 22;
-            kryptonLabel6.Values.Text = "Date/heure Début";
-            // 
-            // kryptonCheckBox1
-            // 
-            kryptonCheckBox1.Location = new Point(669, 42);
-            kryptonCheckBox1.Name = "kryptonCheckBox1";
-            kryptonCheckBox1.RightToLeft = RightToLeft.Yes;
-            kryptonCheckBox1.Size = new Size(58, 20);
-            kryptonCheckBox1.TabIndex = 28;
-            kryptonCheckBox1.Values.Text = "Forcer";
-            // 
-            // kryptonLabel5
-            // 
-            kryptonLabel5.Location = new Point(546, 42);
-            kryptonLabel5.Name = "kryptonLabel5";
-            kryptonLabel5.Size = new Size(65, 20);
-            kryptonLabel5.TabIndex = 27;
-            kryptonLabel5.Values.Text = "Affectée à";
-            // 
-            // ChkOuvriersAffect
-            // 
-            ChkOuvriersAffect.Location = new Point(546, 62);
-            ChkOuvriersAffect.Name = "ChkOuvriersAffect";
-            ChkOuvriersAffect.Size = new Size(181, 91);
-            ChkOuvriersAffect.TabIndex = 26;
-            // 
             // TacheDetailViewXL
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -480,6 +503,8 @@ namespace PlanAthena.View.TaskManager
             ((System.ComponentModel.ISupportInitialize)kryptonPanel1).EndInit();
             kryptonPanel1.ResumeLayout(false);
             kryptonPanel1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)cmbEtat).EndInit();
+            ((System.ComponentModel.ISupportInitialize)StatutColor).EndInit();
             ((System.ComponentModel.ISupportInitialize)cmbBlocNom).EndInit();
             ((System.ComponentModel.ISupportInitialize)cmbMetier).EndInit();
             splitContainer2.Panel1.ResumeLayout(false);
@@ -495,12 +520,11 @@ namespace PlanAthena.View.TaskManager
             kryptonPanel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)kryptonPanel3).EndInit();
             kryptonPanel3.ResumeLayout(false);
-            kryptonPanel3.PerformLayout();
+            kryptonTableLayoutPanel1.ResumeLayout(false);
+            kryptonTableLayoutPanel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)DataGridSousTaches).EndInit();
             ((System.ComponentModel.ISupportInitialize)kryptonPanel4).EndInit();
             kryptonPanel4.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)StatutColor).EndInit();
-            ((System.ComponentModel.ISupportInitialize)cmbEtat).EndInit();
             ResumeLayout(false);
         }
 
@@ -527,14 +551,10 @@ namespace PlanAthena.View.TaskManager
         private Krypton.Toolkit.KryptonLabel kryptonLabel3;
         private Krypton.Toolkit.KryptonRichTextBox kryptonRichTextBox1;
         private Krypton.Toolkit.KryptonDataGridView DataGridSousTaches;
-        private DataGridViewTextBoxColumn TacheID;
-        private DataGridViewTextBoxColumn TacheNom;
-        private DataGridViewTextBoxColumn OuvrierNom;
         private Krypton.Toolkit.KryptonCheckedListBox chkListDependances;
         private Krypton.Toolkit.KryptonButton btnSupprimer;
         private Krypton.Toolkit.KryptonButton btnSauvegarder;
         private Krypton.Toolkit.KryptonPanel StatutColor;
-        private Krypton.Toolkit.KryptonComboBox cmbEtat;
         private Krypton.Toolkit.KryptonLabel kryptonLabel4;
         private Krypton.Toolkit.KryptonCheckBox kryptonCheckBox1;
         private Krypton.Toolkit.KryptonLabel kryptonLabel5;
@@ -543,5 +563,10 @@ namespace PlanAthena.View.TaskManager
         private Krypton.Toolkit.KryptonTextBox heureDebut;
         private Krypton.Toolkit.KryptonLabel kryptonLabel7;
         private Krypton.Toolkit.KryptonLabel kryptonLabel6;
+        private Krypton.Toolkit.KryptonTableLayoutPanel kryptonTableLayoutPanel1;
+        private DataGridViewTextBoxColumn TacheID;
+        private DataGridViewTextBoxColumn TacheNom;
+        private DataGridViewTextBoxColumn OuvrierNom;
+        private Krypton.Toolkit.KryptonComboBox cmbEtat;
     }
 }

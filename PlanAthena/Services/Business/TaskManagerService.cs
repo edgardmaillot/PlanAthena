@@ -271,6 +271,29 @@ namespace PlanAthena.Services.Business
                 t.DateFinPlanifiee.Value.Date <= dateReference.Date
             );
         }
+
+        /// <summary>
+        /// Calcule et retourne un résumé de l'état des tâches mères.
+        /// Idéal pour obtenir des statistiques juste avant une sauvegarde.
+        /// </summary>
+        /// <returns>Un DTO contenant les comptes de tâches.</returns>
+        public virtual TachesSummaryDto ObtenirResumeTaches()
+        {
+            var tachesMeres = _taches.Values.Where(t => string.IsNullOrEmpty(t.ParentId)).ToList();
+
+            return new TachesSummaryDto
+            {
+                Total = tachesMeres.Count,
+                Terminees = tachesMeres.Count(t => t.Statut == Statut.Terminée),
+                EnRetard = tachesMeres.Count(t => t.Statut == Statut.EnRetard)
+            };
+        }
+        public class TachesSummaryDto
+        {
+            public int Total { get; set; }
+            public int Terminees { get; set; }
+            public int EnRetard { get; set; }
+        }
         #endregion
 
         #region Gestion de Statut Manuel

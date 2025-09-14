@@ -3,6 +3,7 @@
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
 using PlanAthena.Services.Business.DTOs;
+using PlanAthena.Services.DTOs.Projet;
 
 namespace PlanAthena.Services.Business
 {

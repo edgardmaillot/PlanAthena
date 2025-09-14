@@ -9,25 +9,30 @@ namespace PlanAthena.Services.DTOs.Projet
     /// </summary>
     public class InformationsProjet
     {
-        // --- Champs d'identification du projet ---
+        // --- Identification ---
         public string NomProjet { get; set; } = "Nouveau Projet";
         public string Description { get; set; } = "";
+        public string ImagePath { get; set; } = ""; // Pour l'illustration
+        public string Auteur { get; set; } = "";
         public DateTime DateCreation { get; set; }
         public DateTime DateDerniereModification { get; set; }
-        public string Auteur { get; set; } = "";
 
-        // --- Champs de configuration stable fusionnés ---
-
-        public List<DayOfWeek> JoursOuvres { get; set; } = new List<DayOfWeek>();
+        // --- Configuration de la Planification ---
+        public List<DayOfWeek> JoursOuvres { get; set; } = new List<DayOfWeek>
+        {
+            DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
+            DayOfWeek.Thursday, DayOfWeek.Friday
+        };
 
         public int HeureOuverture { get; set; } = 8;
-
-        public int HeureFermeture { get; set; } = 16;
-
-        public int DureeJournaliereStandardHeures { get; set; } = 8;
-
-        public int DureeTravailHeures { get; set; } = 7;
-
-        public decimal CoutJournalier { get; set; } = 500;
+        public int HeureFermeture { get; set; } = 17; // Plus logique que DureeJournaliere
+        public int HeuresTravailEffectifParJour { get; set; } = 7;
+        public decimal CoutIndirectJournalierAbsolu { get; set; } = 500;
+    }
+    public class ProjectSummaryData
+    {
+        public int NombreTotalTaches { get; set; }
+        public int NombreTachesTerminees { get; set; }
+        public int NombreTachesEnRetard { get; set; }
     }
 }

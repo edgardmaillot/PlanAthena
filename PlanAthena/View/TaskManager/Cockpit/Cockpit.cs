@@ -154,20 +154,27 @@ namespace PlanAthena.View.TaskManager.Cockpit
             lblDispoRessources.Text = $"{meteoData.DisponibiliteRessourcesPourcentage:P0}";
             lblDeviationBudget.Text = $"{meteoData.DeviationBudgetPourcentage:P0}";
 
-            // Mise à jour de l'image de fond du kryptonPanel1
+            // Mise à jour de l'image de fond du kryptonPictureBox1
             switch (meteoData.Statut)
             {
                 case ProjectWeatherStatus.Sunny:
-                    kryptonPanel1.BackgroundImage = Properties.Resources.sunny; // Nom à adapter
+                    kryptonPictureBox1.Image = Properties.Resources.sunny; // Nom à adapter
+                    kryptonPictureBox1.BackgroundImage = Properties.Resources.sunny; // Nom à adapter
                     break;
                 case ProjectWeatherStatus.Cloudy:
-                    kryptonPanel1.BackgroundImage = Properties.Resources.cloudy;
+                    kryptonPictureBox1.Image = Properties.Resources.cloudy;
+                    kryptonPictureBox1.BackgroundImage = Properties.Resources.cloudy;
+                    break;
+                case ProjectWeatherStatus.Rainy:
+                    kryptonPictureBox1.Image = Properties.Resources.rainy;
+                    kryptonPictureBox1.BackgroundImage = Properties.Resources.rainy;
                     break;
                 case ProjectWeatherStatus.Stormy:
-                    kryptonPanel1.BackgroundImage = Properties.Resources.stormy;
+                    kryptonPictureBox1.Image = Properties.Resources.stormy;
+                    kryptonPictureBox1.BackgroundImage = Properties.Resources.stormy;
                     break;
             }
-            kryptonPanel1.BackgroundImageLayout = ImageLayout.Stretch; // Pour que l'image remplisse le panel
+            kryptonPictureBox1.BackgroundImageLayout = ImageLayout.Stretch; // Pour que l'image remplisse le panel
         }
     }
 }

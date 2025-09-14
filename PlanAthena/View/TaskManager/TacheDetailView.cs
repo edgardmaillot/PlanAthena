@@ -318,18 +318,33 @@ namespace PlanAthena.View.TaskManager
             var dependancesStricts = new List<string>();
             var exclusions = new List<string>();
 
+            var nouvellesDependances = new List<string>();
+            var nouvellesExclusions = new List<string>();
+
             for (int i = 0; i < chkListDependances.Items.Count; i++)
             {
                 var item = (DependanceDisplayItem)chkListDependances.Items[i];
-                bool estCochee = chkListDependances.GetItemChecked(i);
+                bool estCocheeMaintenant = chkListDependances.GetItemChecked(i);
                 var tacheIdPredecesseur = item.OriginalData.TachePredecesseur.TacheId;
 
-                if (!item.OriginalData.EstHeritee && estCochee) dependancesStricts.Add(tacheIdPredecesseur);
-                else if (item.OriginalData.EstHeritee && !estCochee) exclusions.Add(tacheIdPredecesseur);
+                bool etaitDependanceAvant = item.OriginalData.Etat == EtatDependance.Stricte ||
+                                            item.OriginalData.Etat == EtatDependance.Suggeree;
+
+                if (estCocheeMaintenant)
+                {
+                    nouvellesDependances.Add(tacheIdPredecesseur);
+                }
+                else
+                {
+                    if (etaitDependanceAvant)
+                    {
+                        nouvellesExclusions.Add(tacheIdPredecesseur);
+                    }
+                }
             }
 
-            _currentTache.Dependencies = string.Join(",", dependancesStricts.Distinct());
-            _currentTache.ExclusionsDependances = string.Join(",", exclusions.Distinct());
+            _currentTache.Dependencies = string.Join(",", nouvellesDependances.Distinct());
+            _currentTache.ExclusionsDependances = string.Join(",", nouvellesExclusions.Distinct());
 
             SaveRequested?.Invoke(this, _currentTache);
         }

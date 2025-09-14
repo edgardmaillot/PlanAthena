@@ -83,7 +83,7 @@ namespace PlanAthena.View.TaskManager
 
                 cmbBlocNom.SelectedValue = tache.BlocId ?? "";
                 cmbMetier.SelectedValue = tache.MetierId ?? "";
-                cmbEtat.SelectedItem = tache.Statut;
+                cmbEtat.Text = tache.Statut.ToString();
 
                 heureDebut.Text = tache.DateDebutPlanifiee?.ToString("dd/MM/yy HH:mm") ?? "N/A";
                 heureFin.Text = tache.DateFinPlanifiee?.ToString("dd/MM/yy HH:mm") ?? "N/A";
@@ -394,19 +394,38 @@ namespace PlanAthena.View.TaskManager
             var dependancesStricts = new List<string>();
             var exclusions = new List<string>();
 
+            var nouvellesDependances = new List<string>();
+            var nouvellesExclusions = new List<string>();
+
             for (int i = 0; i < chkListDependances.Items.Count; i++)
             {
                 if (chkListDependances.Items[i] is DependanceDisplayItem item)
                 {
-                    bool estCochee = chkListDependances.GetItemChecked(i);
+                    bool estCocheeMaintenant = chkListDependances.GetItemChecked(i);
                     var tacheIdPredecesseur = item.OriginalData.TachePredecesseur.TacheId;
 
-                    if (!item.OriginalData.EstHeritee && estCochee) dependancesStricts.Add(tacheIdPredecesseur);
-                    else if (item.OriginalData.EstHeritee && !estCochee) exclusions.Add(tacheIdPredecesseur);
+                    // Était-ce une dépendance active à l'origine (soit stricte, soit suggérée) ?
+                    bool etaitDependanceAvant = item.OriginalData.Etat == EtatDependance.Stricte ||
+                                                item.OriginalData.Etat == EtatDependance.Suggeree;
+
+                    if (estCocheeMaintenant)
+                    {
+                        // RÈGLE A : Si c'est coché, ça devient une dépendance.
+                        nouvellesDependances.Add(tacheIdPredecesseur);
+                    }
+                    else // La case n'est pas cochée
+                    {
+                        // RÈGLE B : Si ce n'est PAS coché ALORS que c'était une dépendance active,
+                        // l'utilisateur l'a explicitement refusée. Ça devient une exclusion.
+                        if (etaitDependanceAvant)
+                        {
+                            nouvellesExclusions.Add(tacheIdPredecesseur);
+                        }
+                    }
                 }
             }
-            _currentTache.Dependencies = string.Join(",", dependancesStricts.Distinct());
-            _currentTache.ExclusionsDependances = string.Join(",", exclusions.Distinct());
+            _currentTache.Dependencies = string.Join(",", nouvellesDependances.Distinct());
+            _currentTache.ExclusionsDependances = string.Join(",", nouvellesExclusions.Distinct());
         }
     }
 }

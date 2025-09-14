@@ -61,6 +61,11 @@ namespace PlanAthena.Services.Usecases
                 statut = ProjectWeatherStatus.Cloudy;
             }
 
+            if (deriveMaxJours > 3 || disponibilitePourcentage <0.9)
+            {  
+                statut = ProjectWeatherStatus.Rainy;
+            }
+
             // Critères pour passer à "Orageux" (Situation critique)
             //if (deriveMaxJours > 10 || disponibilitePourcentage < 0.15) // Plus de 10 jours de retard OU moins de 15% de dispo
             if (deriveMaxJours > 5 && disponibilitePourcentage < 0.50)
@@ -244,38 +249,85 @@ namespace PlanAthena.Services.Usecases
         #endregion
 
         #region Planning
+        public virtual (DateTime? Start, DateTime? End) ObtenirPlageDeDatesDuPlanning()
+        {
+            var planning = _planningService.GetCurrentPlanning();
+            if (planning == null || !planning.SegmentsParOuvrierId.Any())
+            {
+                return (null, null);
+            }
+
+            var tousLesSegments = planning.SegmentsParOuvrierId.SelectMany(kvp => kvp.Value).ToList();
+
+            if (!tousLesSegments.Any())
+            {
+                return (null, null);
+            }
+
+            DateTime dateMin = tousLesSegments.Min(s => s.Jour);
+            DateTime dateMax = tousLesSegments.Max(s => s.Jour);
+
+            return (dateMin, dateMax);
+        }
 
         public virtual PlanningViewData ObtenirDonneesPourPlanningView(DateTime dateDebut, int nombreDeJours)
         {
             var planning = _planningService.GetCurrentPlanning();
-            var config = _planningService.GetCurrentConfig(); // Vient d'être ajouté à PlanningService
+            var config = _planningService.GetCurrentConfig();
             if (planning == null || config == null || !planning.SegmentsParOuvrierId.Any())
             {
-                return new PlanningViewData(); // Retourne des données vides
+                return new PlanningViewData();
             }
 
             var toutesLesTaches = _taskManagerService.ObtenirToutesLesTaches();
             var mapStatuts = toutesLesTaches.ToDictionary(t => t.TacheId, t => t.Statut);
-
             var dateFin = dateDebut.Date.AddDays(nombreDeJours);
 
-            // 1. Filtrer les segments pertinents et les ouvriers concernés
-            var segmentsFiltres = planning.SegmentsParOuvrierId
-                .SelectMany(kvp => kvp.Value)
-                .Where(s => s.Jour >= dateDebut.Date && s.Jour < dateFin)
+
+
+            // 1. OBTENIR TOUS LES OUVRIERS DU PLANNING COMPLET
+            // On ne filtre plus par date à ce stade.
+            var tousLesSegmentsDuProjet = planning.SegmentsParOuvrierId.SelectMany(kvp => kvp.Value);
+            var tousLesOuvrierIds = tousLesSegmentsDuProjet.Select(s => s.OuvrierId).Distinct().ToList();
+            var tousLesOuvriersConcernes = _ressourceService.GetAllOuvriers()
+                .Where(o => tousLesOuvrierIds.Contains(o.OuvrierId))
+                .OrderBy(o => o.MetierId) // <-- MODIFIÉ : On trie par MetierId, puis par nom
+                .ThenBy(o => o.NomComplet)
                 .ToList();
 
-            var ouvrierIdsConcernes = segmentsFiltres.Select(s => s.OuvrierId).Distinct().ToList();
-            var ouvriersConcernes = _ressourceService.GetAllOuvriers().Where(o => ouvrierIdsConcernes.Contains(o.OuvrierId)).OrderBy(o => o.NomComplet).ToList();
+            // Si aucun ouvrier n'est planifié du tout, on s'arrête.
+            if (!tousLesOuvriersConcernes.Any())
+            {
+                return new PlanningViewData();
+            }
 
-            // 2. Préparer la structure de données finale
+            // 2. Préparer la structure de données finale AVEC LA LISTE STABLE
             var resultat = new PlanningViewData
             {
-                Ouvriers = ouvriersConcernes,
+                Ouvriers = tousLesOuvriersConcernes, // <-- Utilise la liste complète et stable
                 Jours = Enumerable.Range(0, nombreDeJours).Select(i => dateDebut.Date.AddDays(i)).ToList()
             };
-
-            foreach (var ouvrier in ouvriersConcernes)
+            var tousLesMetiers = _ressourceService.GetAllMetiers();
+            resultat.Metiers = tousLesMetiers.ToDictionary(m => m.MetierId, m => m);
+            // On suppose l'existence d'une méthode pour générer/récupérer les couleurs.
+            // Pour l'exemple, on crée une map simple. Dans une vraie app, ce serait un service.
+            resultat.MetierColors = tousLesMetiers.ToDictionary(
+        m => m.MetierId,
+        m => {
+            try
+            {
+                // ColorTranslator peut convertir des noms de couleur ("Red") ou des codes hex ("#FF0000")
+                return ColorTranslator.FromHtml(m.CouleurHex);
+            }
+            catch
+            {
+                // Si la couleur est invalide dans la DB, on met une couleur par défaut
+                return Color.LightGray;
+            }
+        }
+    );
+            // Initialiser les listes de blocks pour chaque ouvrier
+            foreach (var ouvrier in tousLesOuvriersConcernes)
             {
                 resultat.BlocksParOuvrier[ouvrier.OuvrierId] = new List<PlanningBlock>[nombreDeJours];
                 for (int i = 0; i < nombreDeJours; i++)
@@ -284,11 +336,15 @@ namespace PlanAthena.Services.Usecases
                 }
             }
 
-            // 3. Transformer les segments en PlanningBlocks
+            // 3. MAINTENANT, filtrer les segments pour la période visible et les transformer en PlanningBlocks
+            var segmentsFiltresPourPeriode = tousLesSegmentsDuProjet
+                .Where(s => s.Jour >= dateDebut.Date && s.Jour < dateFin)
+                .ToList();
+
             var heuresDebutJournee = config.HeureDebutJournee;
             var heuresTravailJournee = config.DureeJournaliereStandardHeures;
 
-            foreach (var segment in segmentsFiltres)
+            foreach (var segment in segmentsFiltresPourPeriode) // <-- Itère sur la liste filtrée
             {
                 double startOffset = (segment.HeureDebut.TotalHours - heuresDebutJournee) / heuresTravailJournee;
                 double width = segment.HeuresTravaillees / heuresTravailJournee;
@@ -298,14 +354,18 @@ namespace PlanAthena.Services.Usecases
                     TacheId = segment.TacheId,
                     TacheNom = segment.TacheNom,
                     Statut = mapStatuts.GetValueOrDefault(segment.ParentTacheId ?? segment.TacheId, Statut.Planifiée),
-                    StartOffsetPercent = Math.Max(0, Math.Min(1, startOffset)), // Clamp entre 0 et 1
+                    StartOffsetPercent = Math.Max(0, Math.Min(1, startOffset)),
                     WidthPercent = Math.Max(0, Math.Min(1, width))
                 };
 
                 int dayIndex = (segment.Jour.Date - dateDebut.Date).Days;
                 if (dayIndex >= 0 && dayIndex < nombreDeJours)
                 {
-                    resultat.BlocksParOuvrier[segment.OuvrierId][dayIndex].Add(block);
+                    // Vérifier que l'ouvrier existe bien dans le dictionnaire (devrait toujours être le cas)
+                    if (resultat.BlocksParOuvrier.ContainsKey(segment.OuvrierId))
+                    {
+                        resultat.BlocksParOuvrier[segment.OuvrierId][dayIndex].Add(block);
+                    }
                 }
             }
 

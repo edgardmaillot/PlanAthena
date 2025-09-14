@@ -4,6 +4,7 @@ using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.DTOs.ProjectPersistence;
+using PlanAthena.Services.DTOs.Projet;
 using PlanAthena.Services.Infrastructure;
 
 
@@ -18,7 +19,6 @@ namespace PlanAthena.Services.Usecases
         private readonly ProjetService _projetService;
         private readonly RessourceService _ressourceService;
         private readonly PlanningService _planningService;
-        // REMPLACÉ: TaskStatusService est maintenant TaskManagerService
         private readonly TaskManagerService _taskManagerService;
         private readonly ProjetServiceDataAccess _dataAccess;
         private readonly CheminsPrefereService _cheminsService;
@@ -135,9 +135,7 @@ namespace PlanAthena.Services.Usecases
         public List<ProjetSummaryDto> ObtenirSummariesProjetsRecents()
         {
             var summaries = new List<ProjetSummaryDto>();
-            // ... (logique inchangée, mais le calcul du statut devrait être ajusté si nécessaire)
-            // Pour le POC, nous laissons cette partie telle quelle.
-            // Elle pourrait être améliorée en calculant le statut EnRetard dynamiquement.
+
             var recentFiles = _cheminsService.ObtenirFichiersRecents(TypeOperation.ProjetChargement);
 
             foreach (var filePath in recentFiles)
@@ -146,17 +144,31 @@ namespace PlanAthena.Services.Usecases
                 {
                     var tempDataAccess = new ProjetServiceDataAccess(_cheminsService);
                     ProjetData data = tempDataAccess.Charger(filePath);
-                    var taches = data.Taches ?? new List<Tache>();
+
+                    // --- MODIFIÉ : Logique de lecture directe du résumé ---
+                    // Si le résumé n'existe pas (anciens fichiers), on le calcule pour la compatibilité.
+                    if (data.Summary == null)
+                    {
+                        var tachesMeres = (data.Taches ?? new List<Tache>()).Where(t => string.IsNullOrEmpty(t.ParentId)).ToList();
+                        data.Summary = new ProjectSummaryData
+                        {
+                            NombreTotalTaches = tachesMeres.Count,
+                            NombreTachesTerminees = tachesMeres.Count(t => t.Statut == Statut.Terminée),
+                            NombreTachesEnRetard = tachesMeres.Count(t => t.Statut == Statut.EnRetard)
+                        };
+                    }
 
                     summaries.Add(new ProjetSummaryDto
                     {
                         FilePath = filePath,
                         NomProjet = data.InformationsProjet?.NomProjet ?? Path.GetFileNameWithoutExtension(filePath),
                         Description = data.InformationsProjet?.Description,
-                        NombreTotalTaches = taches.Count(t => string.IsNullOrEmpty(t.ParentId)), // Ne compter que les tâches mères
-                        NombreTachesTerminees = taches.Count(t => string.IsNullOrEmpty(t.ParentId) && t.Statut == Statut.Terminée),
-                        NombreTachesEnRetard = 0, // Simplifié pour le moment
-                        ErreurLecture = false
+                        NombreTotalTaches = data.Summary.NombreTotalTaches,
+                        NombreTachesTerminees = data.Summary.NombreTachesTerminees,
+                        NombreTachesEnRetard = data.Summary.NombreTachesEnRetard,
+                        ErreurLecture = false,
+                        ImagePath = data.InformationsProjet?.ImagePath,
+                        IsFavorite = false
                     });
                 }
                 catch
@@ -183,12 +195,17 @@ namespace PlanAthena.Services.Usecases
             data.Ouvriers = _ressourceService.GetAllOuvriers();
             data.Planning = _planningService.GetCurrentPlanning();
 
-            // SUPPRIMÉ: La propriété TaskStatuses est obsolète
-            // data.TaskStatuses = (Dictionary<string, Status>)_taskStatusService.RetourneTousLesStatuts();
+            var resumeTaches = _taskManagerService.ObtenirResumeTaches();
+            data.Summary = new ProjectSummaryData
+            {
+                NombreTotalTaches = resumeTaches.Total,
+                NombreTachesTerminees = resumeTaches.Terminees,
+                NombreTachesEnRetard = resumeTaches.EnRetard
+            };
 
             data.DateSauvegarde = DateTime.Now;
             // Version mise à jour pour refléter cette modification majeure
-            data.VersionApplication = "0.5.0";
+            data.VersionApplication = "0.5.1";
 
             return data;
         }

@@ -372,6 +372,9 @@ namespace PlanAthena.View.TaskManager.PertDiagram
 
             foreach (var tache in tachesDuBloc.OrderBy(t => t.TacheId))
             {
+                //ne pas afficher les taches ayant un ParentId
+                if (!string.IsNullOrEmpty(tache.ParentId)) continue;
+
                 cluster.AddNode(_nodeBuilder.BuildNodeFromTache(tache, _graph));
             }
             _graph.RootSubgraph.AddSubgraph(cluster);

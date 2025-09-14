@@ -70,7 +70,10 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonTableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 7.142856F));
             kryptonTableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 7.142856F));
             kryptonTableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 7.142856F));
-            kryptonTableLayoutPanel1.Dock = DockStyle.Fill;
+            kryptonTableLayoutPanel1.Dock = DockStyle.None;
+            kryptonTableLayoutPanel1.Dock = DockStyle.Top;
+            kryptonTableLayoutPanel1.AutoSize = true;
+            kryptonTableLayoutPanel1.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             kryptonTableLayoutPanel1.Location = new Point(0, 0);
             kryptonTableLayoutPanel1.Margin = new Padding(0);
             kryptonTableLayoutPanel1.Name = "kryptonTableLayoutPanel1";
@@ -103,6 +106,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             // 
             // kpCentre
             // 
+            kpCentre.AutoScroll = true;
             kpCentre.Controls.Add(kryptonTableLayoutPanel1);
             kpCentre.Dock = DockStyle.Fill;
             kpCentre.Location = new Point(3, 53);
@@ -124,7 +128,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             // 
             // klEnd
             // 
-            klEnd.Location = new Point(645, 19);
+            klEnd.Location = new Point(593, 19);
             klEnd.Name = "klEnd";
             klEnd.Size = new Size(27, 20);
             klEnd.TabIndex = 3;
@@ -132,7 +136,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             // 
             // klStart
             // 
-            klStart.Location = new Point(317, 16);
+            klStart.Location = new Point(238, 16);
             klStart.Name = "klStart";
             klStart.Size = new Size(44, 20);
             klStart.TabIndex = 2;
@@ -149,7 +153,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             // 
             // kryptonTrackBar1
             // 
-            kryptonTrackBar1.Location = new Point(367, 14);
+            kryptonTrackBar1.Location = new Point(301, 14);
             kryptonTrackBar1.Name = "kryptonTrackBar1";
             kryptonTrackBar1.Size = new Size(273, 27);
             kryptonTrackBar1.TabIndex = 0;

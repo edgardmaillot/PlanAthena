@@ -133,6 +133,16 @@ namespace PlanAthena.Properties {
         /// <summary>
         ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap image_immeuble {
+            get {
+                object obj = ResourceManager.GetObject("image_immeuble", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Import_Ouvriers {
             get {
                 object obj = ResourceManager.GetObject("Import_Ouvriers", resourceCulture);

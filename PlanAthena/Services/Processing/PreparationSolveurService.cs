@@ -1,4 +1,4 @@
-// Fichier: Services/Processing/PreparationSolveurService.cs V0.4.9.1 (Corrigé)
+// Fichier: Services/Processing/PreparationSolveurService.cs V0.4.9.1 
 using PlanAthena.Data;
 using PlanAthena.Services.Business.DTOs;
 using System.Collections.Generic;
@@ -29,9 +29,27 @@ namespace PlanAthena.Services.Processing
             if (tachesDuProjet == null || !tachesDuProjet.Any())
                 return new PreparationResult();
 
+            // 1. Identifier les tâches mères dont le travail a déjà commencé via un enfant.
+            var enfantsEnCoursOuTermines = tachesDuProjet
+                .Where(t => !string.IsNullOrEmpty(t.ParentId) && (t.Statut == Statut.EnCours || t.Statut == Statut.Terminée));
+
+            var parentIdsAExclure = enfantsEnCoursOuTermines
+                .Select(t => t.ParentId)
+                .Distinct()
+                .ToHashSet();
+
+            // 2. Filtrer les tâches à planifier en excluant :
+            //    a) Celles qui sont déjà EnCours ou Terminées.
+            //    b) Les conteneurs dont un enfant a démarré.
+            //    c) Les enfants de ces conteneurs (pour être propre, même si leur statut est déjà filtré).
             var tachesAPlanifier = tachesDuProjet
-                .Where(t => t.Statut != Statut.Terminée && t.Statut != Statut.EnCours)
+                .Where(t =>
+                    (t.Statut != Statut.Terminée && t.Statut != Statut.EnCours) && // Filtre de base
+                    !parentIdsAExclure.Contains(t.TacheId) &&                     // Exclut les mères "commencées"
+                    !parentIdsAExclure.Contains(t.ParentId)                       // Exclut les enfants des mères "commencées"
+                )
                 .ToList();
+
 
             var tachesDejaTraiteesMap = tachesDuProjet
                 .Where(t => t.Statut == Statut.Terminée || t.Statut == Statut.EnCours)
@@ -44,9 +62,10 @@ namespace PlanAthena.Services.Processing
             int heureLimiteDecoupage = (maxHeuresParSousTache * configuration.SeuilJoursDecoupageTache) + 1;
 
             var tachesDeTravail = tachesAPlanifier.Select(CopierTache).ToList();
+
+            // MODIFICATION : Il faut maintenant passer tachesAPlanifier pour retrouver les enfants.
             var (tachesDecoupees, tableDecoupage) = DecouperTachesLongues(tachesDeTravail, heureLimiteDecoupage, maxHeuresParSousTache);
 
-            // CORRECTION: Construire la table de mappage ICI, avant qu'elle ne soit modifiée.
             var parentIdParSousTacheId = ConstruireTableMappageInversee(tableDecoupage);
 
             var tachesAvecJalons = CreerJalonsTechniques(tachesDecoupees, tableDecoupage);
@@ -55,7 +74,7 @@ namespace PlanAthena.Services.Processing
             return new PreparationResult
             {
                 TachesPreparees = tachesFinales,
-                ParentIdParSousTacheId = parentIdParSousTacheId // Utilisation de la table correcte
+                ParentIdParSousTacheId = parentIdParSousTacheId
             };
         }
 
@@ -74,16 +93,35 @@ namespace PlanAthena.Services.Processing
         }
 
         private static (List<Tache> TachesDecoupees, Dictionary<string, List<string>> TableDecoupage) DecouperTachesLongues(
-            IReadOnlyList<Tache> taches, int heureLimiteDecoupage, int maxHeuresParSousTache)
+    IReadOnlyList<Tache> taches, int heureLimiteDecoupage, int maxHeuresParSousTache)
         {
             var tachesResultat = new List<Tache>();
             var tableDecoupage = new Dictionary<string, List<string>>();
-            foreach (var tache in taches)
+
+            // Pour retrouver facilement les enfants d'un conteneur qui est dans la liste `taches`
+            var enfantsParParentId = taches.Where(t => !string.IsNullOrEmpty(t.ParentId)).ToLookup(t => t.ParentId);
+            // On ne traite que les tâches qui ne sont pas des enfants, pour éviter de les ajouter deux fois.
+            var tachesPrincipales = taches.Where(t => string.IsNullOrEmpty(t.ParentId));
+
+            foreach (var tache in tachesPrincipales)
             {
-                if (tache.EstJalon || tache.HeuresHommeEstimees < heureLimiteDecoupage)
+                // CAS 1: C'est un conteneur dont le travail n'a pas commencé.
+                if (tache.EstConteneur)
+                {
+                    // On récupère ses enfants, qui sont aussi dans la liste `taches`.
+                    var enfantsExistants = enfantsParParentId[tache.TacheId].ToList();
+                    if (enfantsExistants.Any())
+                    {
+                        tachesResultat.AddRange(enfantsExistants); // Pas besoin de copier, déjà des copies
+                        tableDecoupage[tache.TacheId] = enfantsExistants.Select(e => e.TacheId).ToList();
+                    }
+                }
+                // CAS 2: Tâche courte ou jalon.
+                else if (tache.EstJalon || tache.HeuresHommeEstimees < heureLimiteDecoupage)
                 {
                     tachesResultat.Add(tache);
                 }
+                // CAS 3: Tâche longue à découper pour la première fois.
                 else
                 {
                     var sousTaches = DecouperTacheUnique(tache, maxHeuresParSousTache);
@@ -205,7 +243,11 @@ namespace PlanAthena.Services.Processing
                 ExclusionsDependances = source.ExclusionsDependances,
                 LotId = source.LotId,
                 BlocId = source.BlocId,
-                Type = source.Type
+                Type = source.Type,
+
+                // --- CORRECTIONS À AJOUTER ---
+                EstConteneur = source.EstConteneur,
+                ParentId = source.ParentId
             };
         }
     }

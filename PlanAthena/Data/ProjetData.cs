@@ -1,4 +1,5 @@
-using PlanAthena.Services.Business.DTOs; // Pour ConsolidatedPlanning et ConfigurationPlanification
+using PlanAthena.Services.DTOs.Projet; // Pour ConsolidatedPlanning et ConfigurationPlanification
+using PlanAthena.Services.Business.DTOs; // Pour Statut
 
 namespace PlanAthena.Data
 {
@@ -31,7 +32,7 @@ namespace PlanAthena.Data
         /// </summary>
         public Dictionary<string, Statut> TaskStatuses { get; set; }
 
-
+        public ProjectSummaryData Summary { get; set; }
         // --- MÉTADONNÉES DE SAUVEGARDE ---
 
         public DateTime DateSauvegarde { get; set; }

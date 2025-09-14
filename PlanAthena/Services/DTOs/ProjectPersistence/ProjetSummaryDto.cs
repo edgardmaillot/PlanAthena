@@ -11,7 +11,11 @@ namespace PlanAthena.Services.DTOs.ProjectPersistence
         public string Description { get; set; }
         public int NombreTotalTaches { get; set; }
         public int NombreTachesTerminees { get; set; }
-        public int NombreTachesEnRetard { get; set; } // Note : Sera calculé dynamiquement
+        public int NombreTachesEnRetard { get; set; } 
         public bool ErreurLecture { get; set; }
+        public string ImagePath { get; set; }
+        public bool IsFavorite { get; set; }
     }
+
+    
 }
