@@ -1,5 +1,5 @@
-using PlanAthena.Services.DTOs.Projet; // Pour ConsolidatedPlanning et ConfigurationPlanification
 using PlanAthena.Services.Business.DTOs; // Pour Statut
+using PlanAthena.Services.DTOs.Projet; // Pour ConsolidatedPlanning et ConfigurationPlanification
 
 namespace PlanAthena.Data
 {

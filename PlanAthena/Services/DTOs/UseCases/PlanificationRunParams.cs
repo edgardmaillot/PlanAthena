@@ -1,5 +1,3 @@
-using System;
-
 namespace PlanAthena.Services.DTOs.UseCases
 {
     /// <summary>

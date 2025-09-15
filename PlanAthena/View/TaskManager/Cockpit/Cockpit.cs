@@ -3,9 +3,6 @@ using Krypton.Navigator;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DTOs.UseCases;
 using PlanAthena.Services.Usecases;
-using System;
-using System.Windows.Forms;
-using static PlanAthena.Services.Usecases.PilotageProjetUseCase;
 
 namespace PlanAthena.View.TaskManager.Cockpit
 {

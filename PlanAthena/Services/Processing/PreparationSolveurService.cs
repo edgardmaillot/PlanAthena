@@ -1,8 +1,6 @@
 // Fichier: Services/Processing/PreparationSolveurService.cs V0.4.9.1 
 using PlanAthena.Data;
 using PlanAthena.Services.Business.DTOs;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PlanAthena.Services.Processing
 {

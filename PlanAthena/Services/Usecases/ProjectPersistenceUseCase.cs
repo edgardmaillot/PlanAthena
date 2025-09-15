@@ -29,14 +29,14 @@ namespace PlanAthena.Services.Usecases
             ProjetService projetService,
             RessourceService ressourceService,
             PlanningService planningService,
-            TaskManagerService taskManagerService, 
+            TaskManagerService taskManagerService,
             ProjetServiceDataAccess dataAccess,
             CheminsPrefereService cheminsService)
         {
             _projetService = projetService;
             _ressourceService = ressourceService;
             _planningService = planningService;
-            _taskManagerService = taskManagerService; 
+            _taskManagerService = taskManagerService;
             _dataAccess = dataAccess;
             _cheminsService = cheminsService;
         }

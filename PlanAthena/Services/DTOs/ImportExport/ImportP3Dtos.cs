@@ -1,6 +1,4 @@
 // Version 0.5.1
-using System.Collections.Generic;
-using System.Drawing;
 using System.ComponentModel;
 
 namespace PlanAthena.Services.DTOs.ImportExport
@@ -11,7 +9,7 @@ namespace PlanAthena.Services.DTOs.ImportExport
     /// DTO générique fourni par l'Orchestrateur pour configurer l'écran ImportP3.
     /// </summary>
     /// <typeparam name="T">Le type d'objet métier à afficher (Tache, Ouvrier, etc.)</typeparam>
-    public class ImportP3Config 
+    public class ImportP3Config
     {
         public string EntityDisplayName { get; set; }
         public Image EntityImage { get; set; }

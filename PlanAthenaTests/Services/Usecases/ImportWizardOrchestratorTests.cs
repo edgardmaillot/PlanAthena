@@ -1,4 +1,3 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
@@ -8,9 +7,6 @@ using PlanAthena.Services.DTOs.ImportExport;
 using PlanAthena.Services.Infrastructure;
 using PlanAthena.Services.Usecases;
 using PlanAthena.Utilities;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace PlanAthenaTests.Services.Usecases
 {

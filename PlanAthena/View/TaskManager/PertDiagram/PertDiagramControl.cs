@@ -46,7 +46,7 @@ namespace PlanAthena.View.TaskManager.PertDiagram
 
         #endregion
 
-        
+
 
         public PertDiagramControl()
         {
@@ -86,12 +86,53 @@ namespace PlanAthena.View.TaskManager.PertDiagram
             _lastKnownZoomFactor = _viewer.ZoomF;
         }
 
-        public void ChargerDonnees(List<Tache> taches, string filtreRecherche = "")
+        public void ChargerDonnees(List<Tache> taches, string filtreRecherche = "", PertViewState stateToRestore = null)
         {
             _taches = taches ?? new List<Tache>();
-            GenererDiagramme(filtreRecherche);
-        }
+            GenererDiagramme(filtreRecherche); // Cette méthode assigne _viewer.Graph
 
+            // Si un état a été fourni, on l'applique APRÈS avoir chargé le nouveau graphe.
+            if (stateToRestore != null && _viewer.Graph != null)
+            {
+                // Suspendre le layout pour éviter le scintillement
+                this.SuspendLayout();
+
+                _viewer.Transform = stateToRestore.Transform;
+                _viewer.Invalidate(); // Forcer le redessin avec la nouvelle transformation
+
+                this.ResumeLayout(true);
+
+                // Mettre à jour notre variable interne de suivi du zoom
+                NotifyIfZoomChanged();
+            }
+        }
+        public void MettreAJourTache(Tache tacheMiseAJour)
+        {
+            if (_graph == null || tacheMiseAJour == null) return;
+
+            // On recherche le nœud correspondant dans le graphe existant
+            var nodeToUpdate = _graph.FindNode(tacheMiseAJour.TacheId) as DrawingNode;
+
+            if (nodeToUpdate != null)
+            {
+                // On met à jour les données associées (important pour les tooltips)
+                nodeToUpdate.UserData = tacheMiseAJour;
+
+                // On ré-applique le style (couleurs, texte, etc.)
+                // La méthode BuildNodeFromTache est un peu lourde, il vaut mieux avoir une méthode qui met juste à jour
+                // le style. Utilisons _nodeBuilder.ApplyNodeStyle qui existe déjà.
+                _nodeBuilder.ApplyNodeStyle(nodeToUpdate, tacheMiseAJour);
+
+                // On demande au viewer de se redessiner, sans recalculer tout le layout.
+                _viewer.Invalidate();
+            }
+            else
+            {
+                // La tâche n'a pas été trouvée, peut-être qu'elle était filtrée.
+                // Dans ce cas, on se rabat sur un rechargement complet, mais c'est un cas rare.
+                // Pour l'instant, ne faisons rien. Le prochain refresh complet corrigera l'affichage.
+            }
+        }
         #region Gestionnaires d'Événements
         private void Viewer_ViewChangeEvent(object sender, EventArgs e)
         {
@@ -328,6 +369,7 @@ namespace PlanAthena.View.TaskManager.PertDiagram
                     }
                     AjouterDependances(tachesAffichees);
                 }
+                //Doit être fait en dernier
                 _viewer.Graph = _graph;
             }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Erreur génération diagramme: {ex.Message}"); }
@@ -500,20 +542,35 @@ namespace PlanAthena.View.TaskManager.PertDiagram
                 ZoomChanged?.Invoke(this, new ZoomChangedEventArgs(currentZoom));
             }
         }
+        public PertViewState GetViewState()
+        {
+            if (_viewer == null) return null;
+
+            return new PertViewState
+            {
+                // La propriété Transform contient à la fois le zoom et le décalage (pan)
+                Transform = _viewer.Transform
+            };
+        }
+        public class PertViewState
+        {
+            public Microsoft.Msagl.Core.Geometry.Curves.PlaneTransformation Transform { get; set; }
+        }
     }
 
     #region Classes d'Arguments d'Événements
-    
+
     public enum TacheInteractionType
     {
         SingleClick,
         DoubleClick
     }
+    
 
     public class TacheSelectedEventArgs : EventArgs
     {
         public Tache Tache { get; }
-        public TacheInteractionType InteractionType { get; } 
+        public TacheInteractionType InteractionType { get; }
 
         public TacheSelectedEventArgs(Tache tache, TacheInteractionType interactionType = TacheInteractionType.SingleClick)
         {

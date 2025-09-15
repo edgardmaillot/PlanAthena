@@ -34,6 +34,7 @@ namespace PlanAthena.View.TaskManager
             numHeuresHomme = new KryptonNumericUpDown();
             kryptonTableLayoutPanel1 = new KryptonTableLayoutPanel();
             kryptonPanel2 = new KryptonPanel();
+            kryptonHeader2 = new KryptonHeader();
             lblBlocNom = new KryptonLabel();
             cmbBlocNom = new KryptonComboBox();
             lblMetier = new KryptonLabel();
@@ -42,7 +43,9 @@ namespace PlanAthena.View.TaskManager
             lblHeures = new KryptonLabel();
             lblTacheNom = new KryptonLabel();
             kryptonPanel3 = new KryptonPanel();
-            kryptonHeader2 = new KryptonHeader();
+            lblStatut = new KryptonLabel();
+            lblStatutValeur = new KryptonLabel();
+            lblStatutPicto = new KryptonLabel();
             ((System.ComponentModel.ISupportInitialize)panelActions).BeginInit();
             panelActions.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)cmbLots).BeginInit();
@@ -110,7 +113,7 @@ namespace PlanAthena.View.TaskManager
             chkListDependances.Location = new Point(0, 0);
             chkListDependances.Margin = new Padding(4, 3, 4, 3);
             chkListDependances.Name = "chkListDependances";
-            chkListDependances.Size = new Size(282, 342);
+            chkListDependances.Size = new Size(282, 338);
             chkListDependances.TabIndex = 20;
             // 
             // cmbLots
@@ -152,7 +155,7 @@ namespace PlanAthena.View.TaskManager
             kryptonPanel1.Controls.Add(cmbLots);
             kryptonPanel1.Location = new Point(3, 3);
             kryptonPanel1.Name = "kryptonPanel1";
-            kryptonPanel1.Size = new Size(280, 244);
+            kryptonPanel1.Size = new Size(280, 237);
             kryptonPanel1.TabIndex = 28;
             // 
             // txtTacheNom
@@ -167,7 +170,7 @@ namespace PlanAthena.View.TaskManager
             // 
             numHeuresHomme.Anchor = AnchorStyles.Top;
             numHeuresHomme.Increment = new decimal(new int[] { 1, 0, 0, 0 });
-            numHeuresHomme.Location = new Point(149, 36);
+            numHeuresHomme.Location = new Point(149, 33);
             numHeuresHomme.Margin = new Padding(4, 3, 4, 3);
             numHeuresHomme.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
             numHeuresHomme.Minimum = new decimal(new int[] { 0, 0, 0, 0 });
@@ -189,8 +192,8 @@ namespace PlanAthena.View.TaskManager
             kryptonTableLayoutPanel1.Location = new Point(0, 36);
             kryptonTableLayoutPanel1.Name = "kryptonTableLayoutPanel1";
             kryptonTableLayoutPanel1.RowCount = 4;
-            kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 250F));
-            kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 160F));
+            kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 243F));
+            kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 171F));
             kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 51F));
             kryptonTableLayoutPanel1.Size = new Size(280, 809);
@@ -198,6 +201,9 @@ namespace PlanAthena.View.TaskManager
             // 
             // kryptonPanel2
             // 
+            kryptonPanel2.Controls.Add(lblStatutPicto);
+            kryptonPanel2.Controls.Add(lblStatutValeur);
+            kryptonPanel2.Controls.Add(lblStatut);
             kryptonPanel2.Controls.Add(kryptonHeader2);
             kryptonPanel2.Controls.Add(lblBlocNom);
             kryptonPanel2.Controls.Add(cmbBlocNom);
@@ -208,10 +214,22 @@ namespace PlanAthena.View.TaskManager
             kryptonPanel2.Controls.Add(lblTacheNom);
             kryptonPanel2.Controls.Add(txtTacheNom);
             kryptonPanel2.Controls.Add(numHeuresHomme);
-            kryptonPanel2.Location = new Point(3, 253);
+            kryptonPanel2.Location = new Point(3, 246);
             kryptonPanel2.Name = "kryptonPanel2";
-            kryptonPanel2.Size = new Size(277, 154);
+            kryptonPanel2.Size = new Size(277, 165);
             kryptonPanel2.TabIndex = 21;
+            // 
+            // kryptonHeader2
+            // 
+            kryptonHeader2.Dock = DockStyle.Bottom;
+            kryptonHeader2.HeaderStyle = HeaderStyle.Secondary;
+            kryptonHeader2.Location = new Point(0, 143);
+            kryptonHeader2.Name = "kryptonHeader2";
+            kryptonHeader2.Size = new Size(277, 22);
+            kryptonHeader2.TabIndex = 43;
+            kryptonHeader2.Values.Description = "";
+            kryptonHeader2.Values.Heading = "Dépendances";
+            kryptonHeader2.Values.Image = null;
             // 
             // lblBlocNom
             // 
@@ -259,7 +277,7 @@ namespace PlanAthena.View.TaskManager
             // 
             // chkIsJalon
             // 
-            chkIsJalon.Location = new Point(24, 36);
+            chkIsJalon.Location = new Point(24, 33);
             chkIsJalon.Margin = new Padding(4, 3, 4, 3);
             chkIsJalon.Name = "chkIsJalon";
             chkIsJalon.Size = new Size(86, 20);
@@ -269,7 +287,7 @@ namespace PlanAthena.View.TaskManager
             // lblHeures
             // 
             lblHeures.Anchor = AnchorStyles.Top;
-            lblHeures.Location = new Point(207, 36);
+            lblHeures.Location = new Point(207, 33);
             lblHeures.Margin = new Padding(4, 3, 4, 3);
             lblHeures.Name = "lblHeures";
             lblHeures.Size = new Size(47, 20);
@@ -289,22 +307,37 @@ namespace PlanAthena.View.TaskManager
             // 
             kryptonPanel3.Controls.Add(chkListDependances);
             kryptonPanel3.Dock = DockStyle.Fill;
-            kryptonPanel3.Location = new Point(3, 413);
+            kryptonPanel3.Location = new Point(3, 417);
             kryptonPanel3.Name = "kryptonPanel3";
-            kryptonPanel3.Size = new Size(282, 342);
+            kryptonPanel3.Size = new Size(282, 338);
             kryptonPanel3.TabIndex = 27;
             // 
-            // kryptonHeader2
+            // lblStatut
             // 
-            kryptonHeader2.Dock = DockStyle.Bottom;
-            kryptonHeader2.HeaderStyle = HeaderStyle.Secondary;
-            kryptonHeader2.Location = new Point(0, 132);
-            kryptonHeader2.Name = "kryptonHeader2";
-            kryptonHeader2.Size = new Size(277, 22);
-            kryptonHeader2.TabIndex = 43;
-            kryptonHeader2.Values.Description = "";
-            kryptonHeader2.Values.Heading = "Dépendances";
-            kryptonHeader2.Values.Image = null;
+            lblStatut.Location = new Point(11, 117);
+            lblStatut.Name = "lblStatut";
+            lblStatut.Size = new Size(49, 20);
+            lblStatut.TabIndex = 44;
+            lblStatut.Values.Text = "Statut :";
+            // 
+            // lblStatutValeur
+            // 
+            lblStatutValeur.Location = new Point(103, 117);
+            lblStatutValeur.Name = "lblStatutValeur";
+            lblStatutValeur.Size = new Size(56, 20);
+            lblStatutValeur.TabIndex = 45;
+            lblStatutValeur.Values.Text = "Planifiée";
+            // 
+            // lblStatutPicto
+            // 
+            lblStatutPicto.Location = new Point(66, 117);
+            lblStatutPicto.MaximumSize = new Size(32, 22);
+            lblStatutPicto.MinimumSize = new Size(32, 22);
+            lblStatutPicto.Name = "lblStatutPicto";
+            lblStatutPicto.Size = new Size(32, 22);
+            lblStatutPicto.StateNormal.ShortText.Font = new Font("Segoe UI Symbol", 14F);
+            lblStatutPicto.TabIndex = 46;
+            lblStatutPicto.Values.Text = "";
             // 
             // TacheDetailView
             // 
@@ -358,5 +391,8 @@ namespace PlanAthena.View.TaskManager
         private KryptonLabel lblTacheNom;
         private KryptonPanel kryptonPanel3;
         private KryptonHeader kryptonHeader2;
+        private KryptonLabel lblStatut;
+        private KryptonLabel lblStatutPicto;
+        private KryptonLabel lblStatutValeur;
     }
 }

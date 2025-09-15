@@ -23,7 +23,7 @@ namespace PlanAthena.View.TaskManager.PertDiagram
         public double LayoutLayerSeparation { get; set; } = 90;
         public double LayoutMinNodeHeight { get; set; } = 50;
         public double LayoutMinNodeWidth { get; set; } = 220; // Augmenté pour le nouveau format
-        public double? TacheFixedWidth { get; set; } = 220;  
+        public double? TacheFixedWidth { get; set; } = 220;
         public double LayoutMargin { get; set; } = 20;
 
         // Paramètres spécifiques à l'algorithme Sugiyama

@@ -14,9 +14,6 @@ using PlanAthena.Services.Usecases;
 using PlanAthena.Services.UseCases;
 using PlanAthena.Utilities;
 using PlanAthena.View;
-using System.Linq; // Ajouté pour .Any()
-using System;
-using System.Windows.Forms;
 
 
 namespace PlanAthena
@@ -60,12 +57,12 @@ namespace PlanAthena
             // 2. Sources de Vérité (Stateful, Singletons) - Enregistrement simple
             services.AddSingleton<ProjetService>();
             services.AddSingleton<RessourceService>();
-            services.AddSingleton<PlanningService>(); 
+            services.AddSingleton<PlanningService>();
             services.AddSingleton<TaskManagerService>();
 
             // 3. Use Cases / Orchestrateurs
             services.AddSingleton<ImportService>();
-            services.AddSingleton <ExportService>();
+            services.AddSingleton<ExportService>();
             services.AddSingleton<PlanificationOrchestrator>();
             services.AddSingleton<ProjectPersistenceUseCase>();
             services.AddSingleton<ImportWizardOrchestrator>();

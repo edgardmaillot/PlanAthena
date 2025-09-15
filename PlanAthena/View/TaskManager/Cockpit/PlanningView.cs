@@ -3,12 +3,6 @@ using Krypton.Toolkit;
 using PlanAthena.Data;
 using PlanAthena.Services.DTOs.UseCases;
 using PlanAthena.Services.Usecases;
-using PlanAthena.View.Utils;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
 
 namespace PlanAthena.View.TaskManager.Cockpit
 {
@@ -174,7 +168,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             _dayHeaders = new KryptonHeader[dayCount];
             _ouvrierHeaders = new KryptonHeader[ouvrierCount];
             _cellPanels = new KryptonPanel[ouvrierCount, dayCount];
-            
+
 
             // Création des en-têtes des jours
             for (int i = 0; i < dayCount; i++)

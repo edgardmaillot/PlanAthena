@@ -1,12 +1,10 @@
 // /Services/UseCases/PlanificationOrchestrator.cs V0.4.9.1
 
 using PlanAthena.Core.Facade;
-using PlanAthena.Data; // Ajout pour Statut
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.Processing;
 using PlanAthena.Utilities;
-using System.Linq; // Ajout pour LINQ
 
 namespace PlanAthena.Services.UseCases
 {

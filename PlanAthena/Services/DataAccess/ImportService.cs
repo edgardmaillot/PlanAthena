@@ -1,13 +1,11 @@
 // PlanAthena/Services/DataAccess/ImportService.cs V0.4.8
 
-using ChoETL; 
+using ChoETL;
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DTOs.ImportExport;
-using PlanAthena.Services.Usecases;
-using PlanAthena.View.Utils;
 using System.Diagnostics;
 using System.Text;
 
@@ -30,7 +28,7 @@ namespace PlanAthena.Services.DataAccess
         {
             _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
             _ressourceService = ressourceService ?? throw new ArgumentNullException(nameof(ressourceService));
-            _taskManagerService = taskManagerService ?? throw new ArgumentNullException(nameof(taskManagerService)); 
+            _taskManagerService = taskManagerService ?? throw new ArgumentNullException(nameof(taskManagerService));
             _idGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
             _csvDataService = csvDataService ?? throw new ArgumentNullException(nameof(csvDataService));
         }

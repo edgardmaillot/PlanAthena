@@ -2,9 +2,7 @@ using ChoETL;
 using PlanAthena.Data;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DTOs.ImportExport;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text; 
+using System.Text;
 
 namespace PlanAthena.Services.DataAccess
 {
@@ -33,12 +31,12 @@ namespace PlanAthena.Services.DataAccess
                 writer.Write(tachesPourExport);
             }
         }
-            /// <summary>
-            /// Exporte une liste d'ouvriers et leurs compétences au format CSV.
-            /// Un ouvrier avec plusieurs compétences générera plusieurs lignes.
-            /// </summary>
-            /// <param name="tousLesOuvriers">La liste des objets de domaine Ouvrier à exporter.</param>
-            /// <param name="filePath">Le chemin complet du fichier CSV de destination.</param>
+        /// <summary>
+        /// Exporte une liste d'ouvriers et leurs compétences au format CSV.
+        /// Un ouvrier avec plusieurs compétences générera plusieurs lignes.
+        /// </summary>
+        /// <param name="tousLesOuvriers">La liste des objets de domaine Ouvrier à exporter.</param>
+        /// <param name="filePath">Le chemin complet du fichier CSV de destination.</param>
         public void ExporterOuvriersCSV(List<Ouvrier> tousLesOuvriers, string filePath)
         {
             // 1. Logique de transformation (mise à plat) des Ouvriers en DTOs.

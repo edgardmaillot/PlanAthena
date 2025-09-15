@@ -1,6 +1,5 @@
 // Emplacement: /PlanAthena.Tests/Services/Usecases/ProjectPersistenceUseCaseTests.cs
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
@@ -8,9 +7,6 @@ using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.Infrastructure;
 using PlanAthena.Services.Usecases;
-using System.Collections.Generic;
-using PlanAthena.Services.Business.DTOs; // Ajouté pour Status
-using PlanAthena.Services.DTOs.TaskManager; // Ajouté pour Statut
 
 namespace PlanAthenaTests.Services.Usecases
 {

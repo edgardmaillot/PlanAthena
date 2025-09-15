@@ -4,11 +4,7 @@ using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DTOs.UseCases;
 using PlanAthena.Services.Usecases;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Windows.Forms;
 
 namespace PlanAthena.View.TaskManager
 {
@@ -193,7 +189,8 @@ namespace PlanAthena.View.TaskManager
             var selectedLotNom = cmbFiltreLot.SelectedItem?.ToString();
             if (!string.IsNullOrEmpty(selectedLotNom) && selectedLotNom != "Tous")
             {
-                filteredItems = filteredItems.Where(item => {
+                filteredItems = filteredItems.Where(item =>
+                {
                     var lotId = item.TacheOriginale.LotId;
                     if (string.IsNullOrEmpty(lotId)) return false;
                     var lot = _projetService.ObtenirLotParId(lotId);

@@ -1,14 +1,12 @@
 // --- START OF FILE DashboardView.cs ---
 
 using Krypton.Toolkit;
+using PlanAthena.Properties; // For Resources.image_immeuble
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DTOs.ProjectPersistence; // For ProjetSummaryDto and ValidationProjet
+using PlanAthena.Services.DTOs.Projet; // For InformationsProjet (your new consolidated class)
 using PlanAthena.Services.Usecases;
 using PlanAthena.View.TaskManager;
-using System.ComponentModel; // Required for ComponentResourceManager
-using System.IO; // Required for File.Exists
-using PlanAthena.Properties; // For Resources.image_immeuble
-using PlanAthena.Services.DTOs.Projet; // For InformationsProjet (your new consolidated class)
 
 namespace PlanAthena.View.Dashboard
 {
@@ -16,7 +14,7 @@ namespace PlanAthena.View.Dashboard
     {
         private readonly ProjectPersistenceUseCase _persistenceUseCase;
         private readonly ProjetService _projetService;
-        
+
         // Stocker une image par défaut pour éviter de la recharger
         private static readonly Image DefaultProjectImage = GetDefaultImage();
 
@@ -141,7 +139,7 @@ namespace PlanAthena.View.Dashboard
             {
                 HeaderStyle = HeaderStyle.Secondary,
                 Dock = DockStyle.Fill,
-                Values = { Heading = summary.NomProjet, Description="", Image=null }
+                Values = { Heading = summary.NomProjet, Description = "", Image = null }
             };
             cardLayout.Controls.Add(header, 1, 0);
 

@@ -2,7 +2,7 @@
 
 using ChoETL;
 
-namespace PlanAthena.Services.Business.DTOs 
+namespace PlanAthena.Services.Business.DTOs
 {
     /// <summary>
     /// DTO pour l'import/export CSV des ouvriers.

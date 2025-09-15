@@ -5,10 +5,7 @@ using PlanAthena.Data;
 using PlanAthena.Interfaces;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DTOs.TaskManager; // Ajout de la référence au DTO
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 
 namespace PlanAthena.Services.Business
 {
@@ -23,6 +20,7 @@ namespace PlanAthena.Services.Business
         private readonly Dictionary<string, Tache> _taches = new();
         private readonly PlanningService _planningService;
         private readonly IIdGeneratorService _idGenerator;
+        public bool EtatSynchroPlanning { get; private set; } = true;
 
         public TaskManagerService(PlanningService planningService, IIdGeneratorService idGenerator)
         {
@@ -31,6 +29,11 @@ namespace PlanAthena.Services.Business
         }
 
         #region Persistance & Cycle de Vie
+
+        public void InvaliderPlanification()
+        {
+            EtatSynchroPlanning = false;
+        }
 
         /// <summary>
         /// Charge une liste de tâches dans le service, en remplaçant les données existantes.
@@ -93,6 +96,7 @@ namespace PlanAthena.Services.Business
 
             // 3. Synchroniser les statuts (EnCours, EnRetard) en fonction de la date du jour
             SynchroniserStatutsTaches();
+            EtatSynchroPlanning = true;
         }
 
         /// <summary>

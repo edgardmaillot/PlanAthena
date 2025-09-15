@@ -1,10 +1,7 @@
 // Emplacement: /Services/Usecases/PilotageProjetUseCase.cs Version 0.5.0
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
-using PlanAthena.Services.DTOs.UseCases; 
-using System.Collections.Generic;
-using System.Linq;
-using System;
+using PlanAthena.Services.DTOs.UseCases;
 
 namespace PlanAthena.Services.Usecases
 {
@@ -61,8 +58,8 @@ namespace PlanAthena.Services.Usecases
                 statut = ProjectWeatherStatus.Cloudy;
             }
 
-            if (deriveMaxJours > 3 || disponibilitePourcentage <0.9)
-            {  
+            if (deriveMaxJours > 3 || disponibilitePourcentage < 0.9)
+            {
                 statut = ProjectWeatherStatus.Rainy;
             }
 
@@ -110,7 +107,8 @@ namespace PlanAthena.Services.Usecases
             var lotsAvecDerive = tachesNonConteneurs
                 .Where(t => (t.Statut == Statut.EnCours || t.Statut == Statut.EnRetard) && t.DateFinPlanifiee.HasValue && t.DateFinPlanifiee.Value < dateReference)
                 .GroupBy(t => t.LotId)
-                .Select(g => new {
+                .Select(g => new
+                {
                     LotId = g.Key,
                     DeriveMoyenne = g.Average(t => (dateReference - t.DateFinPlanifiee.Value).TotalDays)
                 })
@@ -313,7 +311,8 @@ namespace PlanAthena.Services.Usecases
             // Pour l'exemple, on crée une map simple. Dans une vraie app, ce serait un service.
             resultat.MetierColors = tousLesMetiers.ToDictionary(
         m => m.MetierId,
-        m => {
+        m =>
+        {
             try
             {
                 // ColorTranslator peut convertir des noms de couleur ("Red") ou des codes hex ("#FF0000")

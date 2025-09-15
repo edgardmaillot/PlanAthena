@@ -1,7 +1,4 @@
 // Version 0.5.1
-using System.Collections.Generic;
-using System.Drawing;
-
 namespace PlanAthena.Services.DTOs.ImportExport
 {
     // --- DTO d'Entrée ---

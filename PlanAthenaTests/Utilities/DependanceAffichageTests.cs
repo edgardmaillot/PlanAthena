@@ -283,10 +283,6 @@ namespace PlanAthenaTests.Utilities
                 new DependanceAffichage { TachePredecesseur = tache, Etat = EtatDependance.Neutre, EstHeritee = false }
             };
 
-            // Act - Simulation de la logique de détermination pour sauvegarde
-            // (Cochée = true simulé pour le test)
-            bool estCochee = true;
-
             // Assert - Vérification logique de sauvegarde selon TacheDetailForm
             foreach (var dep in dependances)
             {

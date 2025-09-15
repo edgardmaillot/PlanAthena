@@ -22,7 +22,7 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             InitializeComponent();
             _ressourceService = ressourceService;
             _projetService = projetService;
-            _importWizardOrchestrator = importWizardOrchestrator;   
+            _importWizardOrchestrator = importWizardOrchestrator;
             _exportService = exportService;
             // Appliquer la règle "ID non éditable"
             textId.ReadOnly = true;

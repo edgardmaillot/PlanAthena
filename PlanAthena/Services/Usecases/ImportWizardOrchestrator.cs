@@ -7,13 +7,8 @@ using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.DTOs.ImportExport;
 using PlanAthena.Utilities;
 using PlanAthena.View.Utils;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
-using System.Linq;
 using System.Text;
-using System.Windows.Forms;
 
 namespace PlanAthena.Services.Usecases
 {
@@ -562,7 +557,8 @@ namespace PlanAthena.Services.Usecases
                 var eventInfo = view.GetType().GetEvent(eventName);
                 if (eventInfo != null)
                 {
-                    var handler = new EventHandler((s, e) => {
+                    var handler = new EventHandler((s, e) =>
+                    {
                         host.DialogResult = dialogResult;
                         if (dialogResult != DialogResult.None) host.Close();
                     });

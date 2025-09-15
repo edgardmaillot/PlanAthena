@@ -3,7 +3,7 @@ using PlanAthena.Services.Business;
 using PlanAthena.Services.DataAccess;
 using PlanAthena.Services.Export;
 using PlanAthena.Services.Infrastructure;
-using PlanAthena.Services.Usecases; 
+using PlanAthena.Services.Usecases;
 using PlanAthena.Services.UseCases;
 using PlanAthena.Utilities;
 using PlanAthena.View.Dashboard;
@@ -12,7 +12,6 @@ using PlanAthena.View.Ressources;
 using PlanAthena.View.Ressources.MetierDiagram;
 using PlanAthena.View.Structure;
 using PlanAthena.View.TaskManager;
-using static PlanAthena.View.TaskManager.TaskManagerView;
 
 namespace PlanAthena.View
 {
@@ -172,7 +171,7 @@ namespace PlanAthena.View
         private void NavigateToTaskManager()
         {
             // L'appel normal affiche la vue diagramme par défaut
-            var view = new TaskManagerView(_projetService, _taskManagerService, _ressourceService, _dependanceBuilder, _importWizardOrchestrator, _exportService,_cheminsPrefereService);
+            var view = new TaskManagerView(_projetService, _taskManagerService, _ressourceService, _dependanceBuilder, _importWizardOrchestrator, _exportService, _cheminsPrefereService);
             view.NavigateToViewRequested += OnNavigateToViewRequested;
             ShowView(view);
         }

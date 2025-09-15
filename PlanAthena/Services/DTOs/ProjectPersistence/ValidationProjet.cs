@@ -1,6 +1,4 @@
-using PlanAthena.Data; 
 using PlanAthena.Services.DTOs.Projet;
-using System.Collections.Generic;
 namespace PlanAthena.Services.DTOs.ProjectPersistence
 {
     /// <summary>

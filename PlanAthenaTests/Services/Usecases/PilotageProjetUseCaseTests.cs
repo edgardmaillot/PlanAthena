@@ -1,13 +1,9 @@
 // Emplacement: /PlanAthena.Tests/Services/Usecases/PilotageProjetUseCaseTests.cs
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DTOs.UseCases;
 using PlanAthena.Services.Usecases;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PlanAthenaTests.Services.Usecases
 {

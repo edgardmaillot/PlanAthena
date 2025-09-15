@@ -3,9 +3,7 @@ using Microsoft.Web.WebView2.Core;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.View.TaskManager.PertDiagram;
-using System.IO;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace PlanAthena.View.TaskManager.WebPertDiagram
 {
@@ -51,7 +49,8 @@ namespace PlanAthena.View.TaskManager.WebPertDiagram
                 .GroupBy(t => t.BlocId)
                 .Select(g => _projetService.ObtenirBlocParId(g.Key)) // Récupérer l'objet Bloc complet
                 .Where(b => b != null)
-                .Select(b => new {
+                .Select(b => new
+                {
                     Id = b.BlocId,
                     Nom = b.Nom
                     // Ajoutez d'autres propriétés du bloc si nécessaire pour l'affichage
@@ -59,7 +58,8 @@ namespace PlanAthena.View.TaskManager.WebPertDiagram
                 .ToList();
 
             // 1. Préparer les données pour le JavaScript
-            var nodes = _taches.Select(t => {
+            var nodes = _taches.Select(t =>
+            {
                 var metier = _ressourceService.GetMetierById(t.MetierId);
                 var metierColor = _ressourceService.GetDisplayColorForMetier(t.MetierId);
                 var depsCount = !string.IsNullOrEmpty(t.Dependencies) ? t.Dependencies.Split(',').Length : 0;
@@ -125,7 +125,8 @@ namespace PlanAthena.View.TaskManager.WebPertDiagram
                 var tache = _taches.FirstOrDefault(t => t.TacheId == nodeId);
                 if (tache != null)
                 {
-                    this.Invoke((MethodInvoker)delegate {
+                    this.Invoke((MethodInvoker)delegate
+                    {
                         TacheClick?.Invoke(this, new TacheSelectedEventArgs(tache));
                     });
                 }
@@ -137,7 +138,8 @@ namespace PlanAthena.View.TaskManager.WebPertDiagram
                 // Le `BlocClick` attend un string, donc pas besoin de chercher l'objet complet
                 if (!string.IsNullOrEmpty(blocId))
                 {
-                    this.Invoke((MethodInvoker)delegate {
+                    this.Invoke((MethodInvoker)delegate
+                    {
                         BlocClick?.Invoke(this, new BlocSelectedEventArgs(blocId));
                     });
                 }

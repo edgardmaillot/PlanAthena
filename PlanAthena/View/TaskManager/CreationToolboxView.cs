@@ -14,8 +14,6 @@ namespace PlanAthena.View.TaskManager
         {
             InitializeComponent();
 
-            // On s'assure que les boutons dynamiques s'étirent sur toute la largeur
-            //panelDynamicButtons.Resize += PanelDynamicButtons_Resize;
         }
 
         /// <summary>
@@ -71,7 +69,7 @@ namespace PlanAthena.View.TaskManager
                         Dock = DockStyle.Left,
                         Width = 30,
                         StateNormal = { ShortText = { Color1 = Color.Black, Font = new Font("Segoe UI Symbol", 16F, FontStyle.Regular, GraphicsUnit.Point) } },
-                        
+
                     };
                     // --- ÉTAPE 4: Créer le bouton qui ira À L'INTÉRIEUR du panel de bordure ---
                     var metierButton = new KryptonButton
@@ -120,17 +118,5 @@ namespace PlanAthena.View.TaskManager
             // Lever l'événement simple
             AddBlocRequested?.Invoke(this, EventArgs.Empty);
         }
-        /*
-        private void PanelDynamicButtons_Resize(object sender, EventArgs e)
-        {
-            foreach (Control control in panelDynamicButtons.Controls)
-            {
-                if (control is KryptonButton)
-                {
-                    control.Width = panelDynamicButtons.ClientSize.Width - control.Margin.Left - control.Margin.Right;
-                }
-            }
-        }
-        */
     }
 }

@@ -24,7 +24,7 @@ namespace PlanAthena.Services.Business.DTOs
         public string BlocNom { get; set; } = "";
         public int BlocCapaciteMaxOuvriers { get; set; }
     }
-    
+
     /// <summary>
     /// Résultat d'une opération d'import
     /// </summary>
@@ -129,5 +129,5 @@ namespace PlanAthena.Services.Business.DTOs
         public int HeuresEstimeesParDefaut { get; set; } = 8;
         public int CapaciteMaxOuvriersBlocParDefaut { get; set; } = 6;
     }
-   
+
 }

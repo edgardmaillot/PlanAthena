@@ -1,6 +1,4 @@
 using PlanAthena.Services.Business;
-using System;
-using System.Collections.Generic;
 using System.Globalization; // Pour la comparaison de chaînes
 using System.Text;         // Pour la normalisation
 

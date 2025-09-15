@@ -195,7 +195,8 @@ namespace PlanAthena.Services.Business
 
             // Calcul du taux d'occupation et recherche du maximum
             var tensionParMetier = heuresPlanifieesParMetierId
-                .Select(kvp => {
+                .Select(kvp =>
+                {
                     var metierId = kvp.Key;
                     var heuresPlanifiees = kvp.Value;
                     heuresDisponiblesParMetierId.TryGetValue(metierId, out var heuresDisponibles);

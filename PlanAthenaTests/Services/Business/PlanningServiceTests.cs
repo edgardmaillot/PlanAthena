@@ -1,13 +1,10 @@
 // Emplacement: /PlanAthena.Tests/Services/Business/PlanningServiceTests.cs
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
-using System;
-using System.Collections.Generic;
 
 namespace PlanAthenaTests.Services.Business
 {

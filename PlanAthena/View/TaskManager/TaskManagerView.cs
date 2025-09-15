@@ -1,6 +1,5 @@
 using Krypton.Docking;
 using Krypton.Navigator;
-using Krypton.Workspace;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
@@ -10,7 +9,7 @@ using PlanAthena.Services.Usecases;
 using PlanAthena.Utilities;
 using PlanAthena.View.Planificator;
 using PlanAthena.View.TaskManager.PertDiagram;
-using PlanAthena.View.Utils;
+using PlanAthena.View.TaskManager.Utilitaires;
 using System.Text;
 
 namespace PlanAthena.View.TaskManager
@@ -31,10 +30,16 @@ namespace PlanAthena.View.TaskManager
         private readonly ImportWizardOrchestrator _orchestrator;
         private readonly ExportService _exportService;
         private readonly CheminsPrefereService _cheminsService;
+        private readonly PertDiagramSettings _pertSettings = new PertDiagramSettings();
+        private readonly TacheDetailViewController _tacheDetailController;
+
+        private bool _suppressPlanningWarning = false;
 
         // État de la vue
         private string _activeLotId;
         public event EventHandler<Type> NavigateToViewRequested;
+
+        private string _lastSelectedBlocId;
 
         // Éléments d'UI managés par le DockingManager
         private KryptonPage _detailsPage;
@@ -53,6 +58,7 @@ namespace PlanAthena.View.TaskManager
             _orchestrator = orchestrator;
             _exportService = exportService;
             _cheminsService = cheminsPrefereService;
+            _tacheDetailController = new TacheDetailViewController(_taskManagerService);
 
             this.Load += TaskManagerView_Load;
         }
@@ -72,8 +78,8 @@ namespace PlanAthena.View.TaskManager
         /// </summary>
         private void InitializeServicesForControls()
         {
-            tacheDetailView1.InitializeServices(_projetService, _taskManagerService, _ressourceService, this);
-            pertDiagramControl1.Initialize(_projetService, _ressourceService, _dependanceBuilder, new PertDiagram.PertDiagramSettings());
+            tacheDetailView1.InitializeServices(_projetService, _taskManagerService, _ressourceService, this, _pertSettings, _tacheDetailController);
+            pertDiagramControl1.Initialize(_projetService, _ressourceService, _dependanceBuilder, _pertSettings);
         }
 
         #endregion
@@ -176,12 +182,14 @@ namespace PlanAthena.View.TaskManager
             if (lot != null && lot.LotId != _activeLotId)
             {
                 _activeLotId = lot.LotId;
+                _lastSelectedBlocId = null;
                 RefreshUIForActiveLot();
             }
         }
 
         private void OnDiagramTacheClick(object sender, TacheSelectedEventArgs e)
         {
+            _lastSelectedBlocId = e.Tache.BlocId;
             if (e.InteractionType == TacheInteractionType.SingleClick)
             {
                 //vérifier ce qui est affiché dans tacheDetailView1
@@ -199,6 +207,7 @@ namespace PlanAthena.View.TaskManager
             var bloc = _projetService.ObtenirBlocParId(e.BlocId);
             if (bloc != null)
             {
+                _lastSelectedBlocId = e.BlocId;
                 ShowBlocDetails(bloc);
             }
         }
@@ -206,14 +215,39 @@ namespace PlanAthena.View.TaskManager
         private void OnTacheSaveRequested(object sender, Tache tacheToSave)
         {
             if (tacheToSave == null) return;
+
+            // Règle 1: on ne fait rien pour les statuts verrouillés (la UI devrait déjà bloquer)
+            if (tacheToSave.Statut == Statut.EnCours || tacheToSave.Statut == Statut.Terminée)
+            {
+                MessageBox.Show("Cette tâche ne peut être modifiée.", "Action impossible", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                return;
+            }
+
+            // Règle 3: Demander confirmation pour les tâches planifiées
+            if (tacheToSave.Statut == Statut.Planifiée || tacheToSave.Statut == Statut.EnRetard)
+            {
+                if (!DemanderConfirmationModificationPlanifiee())
+                {
+                    return; // L'utilisateur a annulé
+                }
+                // L'utilisateur a confirmé, on invalide le planning
+                _taskManagerService.InvaliderPlanification();
+            }
+
+            // Si on arrive ici, la modification est autorisée
             _taskManagerService.ModifierTache(tacheToSave);
-            RefreshUIForActiveLot();
+            pertDiagramControl1.MettreAJourTache(tacheToSave);
             ShowTacheDetails(tacheToSave);
         }
 
-        private void OnTacheXLSaved(object sender, EventArgs e)
+        private void OnTacheXLSaved(object sender, Tache tacheToSave)
         {
-            RefreshAll();
+            if (tacheToSave == null) return;
+            _taskManagerService.ModifierTache(tacheToSave);
+
+            // On rafraîchit tout car la vue XL peut modifier plus de choses
+            // et qu'elle est indépendante du flux principal.
+            RefreshAll(true); // 'true' pour préserver la position du diagramme
         }
 
         private void OnBlocChanged(object sender, Bloc blocToSave)
@@ -231,8 +265,13 @@ namespace PlanAthena.View.TaskManager
             {
                 try
                 {
+                    // 1. Sauvegarder l'état de la vue AVANT la modification
+                    var viewState = pertDiagramControl1.GetViewState();
+
                     _taskManagerService.SupprimerTache(tache.TacheId);
-                    RefreshUIForActiveLot();
+
+                    // 2. Lancer le rafraîchissement en passant l'état sauvegardé
+                    RefreshUIForActiveLot(viewState);
                 }
                 catch (Exception ex)
                 {
@@ -248,8 +287,10 @@ namespace PlanAthena.View.TaskManager
         private void OnAddBlocRequested(object sender, EventArgs e)
         {
             if (!IsLotActive("Veuillez sélectionner un lot pour y ajouter un bloc.")) return;
-            _projetService.CreerBloc(_activeLotId);
-            RefreshUIForActiveLot();
+            var viewState = pertDiagramControl1.GetViewState();
+            var newBloc = _projetService.CreerBloc(_activeLotId);
+            _taskManagerService.CreerTacheJalon(_activeLotId, newBloc.BlocId, "Début", 0);
+            RefreshUIForActiveLot(viewState);
         }
 
         private void OnAddTacheRequested(object sender, Metier metier)
@@ -257,12 +298,30 @@ namespace PlanAthena.View.TaskManager
             if (!IsLotActiveWithBlocks("Veuillez créer un bloc dans ce lot avant d'ajouter une tâche.")) return;
 
             var lot = _projetService.ObtenirLotParId(_activeLotId);
-            var firstBlocId = lot.Blocs.First().BlocId;
-            var newTask = _taskManagerService.CreerTache(_activeLotId, firstBlocId, $"Nouvelle tâche - {metier.Nom}", 8);
+            string targetBlocId;
+
+            // --- LOGIQUE AMÉLIORÉE ---
+            // 1. On vérifie si un bloc a été sélectionné récemment ET s'il existe toujours dans le lot actuel.
+            if (!string.IsNullOrEmpty(_lastSelectedBlocId) && lot.Blocs.Any(b => b.BlocId == _lastSelectedBlocId))
+            {
+                // On utilise le dernier bloc sélectionné, c'est le cas idéal.
+                targetBlocId = _lastSelectedBlocId;
+            }
+            else
+            {
+                // 2. Cas de repli : aucun bloc sélectionné ou l'ID n'est plus valide.
+                // On prend le premier bloc du lot, comme avant.
+                targetBlocId = lot.Blocs.First().BlocId;
+            }
+            // --- FIN DE LA LOGIQUE AMÉLIORÉE ---
+
+            // On utilise la variable targetBlocId pour la création
+            var newTask = _taskManagerService.CreerTache(_activeLotId, targetBlocId, $"Nouvelle tâche - {metier.Nom}", 8);
             newTask.MetierId = metier.MetierId;
             _taskManagerService.ModifierTache(newTask);
 
-            RefreshUIForActiveLot();
+            var viewState = pertDiagramControl1.GetViewState();
+            RefreshUIForActiveLot(viewState);
             ShowTacheDetails(newTask);
         }
 
@@ -271,10 +330,31 @@ namespace PlanAthena.View.TaskManager
             if (!IsLotActiveWithBlocks("Veuillez créer un bloc dans ce lot avant d'ajouter un jalon.")) return;
 
             var lot = _projetService.ObtenirLotParId(_activeLotId);
-            var firstBlocId = lot.Blocs.First().BlocId;
-            var newMilestone = _taskManagerService.CreerTacheJalon(_activeLotId, firstBlocId, "Jalon", 8);
+            string targetBlocId;
 
-            RefreshUIForActiveLot();
+            // --- LOGIQUE RÉPLIQUÉE ---
+            // 1. On vérifie si un bloc a été sélectionné récemment ET s'il existe toujours dans le lot actuel.
+            if (!string.IsNullOrEmpty(_lastSelectedBlocId) && lot.Blocs.Any(b => b.BlocId == _lastSelectedBlocId))
+            {
+                // On utilise le dernier bloc sélectionné.
+                targetBlocId = _lastSelectedBlocId;
+            }
+            else
+            {
+                // 2. Cas de repli : aucun bloc sélectionné ou l'ID n'est plus valide.
+                // On prend le premier bloc du lot.
+                targetBlocId = lot.Blocs.First().BlocId;
+            }
+            // --- FIN DE LA LOGIQUE RÉPLIQUÉE ---
+
+            // 1. Sauvegarder l'état de la vue AVANT la modification
+            var viewState = pertDiagramControl1.GetViewState();
+
+            // On utilise la variable targetBlocId pour la création du jalon
+            var newMilestone = _taskManagerService.CreerTacheJalon(_activeLotId, targetBlocId, "Jalon", 0); // Un jalon a souvent une durée de 0
+
+            // 2. Lancer le rafraîchissement en passant l'état sauvegardé
+            RefreshUIForActiveLot(viewState);
             ShowTacheDetails(newMilestone);
         }
 
@@ -306,57 +386,102 @@ namespace PlanAthena.View.TaskManager
 
         /// <summary>
         /// Rafraîchit l'ensemble des données de la vue, y compris la liste des lots.
+        /// Peut préserver la position et le zoom actuels du diagramme.
         /// </summary>
-        public void RefreshAll()
+        /// <param name="preserveViewState">Si true, la position et le zoom du diagramme PERT sont conservés.</param>
+        public void RefreshAll(bool preserveViewState = false)
         {
+            // 1. Sauvegarde de l'état de la vue du diagramme si demandé.
+            // C'est utile pour les rafraîchissements qui ne doivent pas perturber l'utilisateur.
+            var viewState = preserveViewState ? pertDiagramControl1.GetViewState() : null;
+
+            // 2. Récupération des données à jour (la liste de tous les lots).
             var allLots = _projetService.ObtenirTousLesLots();
+
+            // 3. Mise à jour du contrôle enfant (TacheDetailView) avec la nouvelle liste de lots.
+            // C'est le contrôle enfant qui gère l'affichage de sa ComboBox.
             tacheDetailView1.PopulateLots(allLots);
 
+            // 4. Détermination du lot actif pour la vue parente (TaskManagerView).
+            // Cette logique assure que le contexte est maintenu après le rechargement.
             if (!string.IsNullOrEmpty(_activeLotId) && allLots.Any(l => l.LotId == _activeLotId))
             {
+                // Le lot actif existe toujours, on le resélectionne dans la vue enfant
+                // pour synchroniser l'état de la ComboBox.
                 tacheDetailView1.SetSelectedLot(_activeLotId);
             }
             else if (allLots.Any())
             {
+                // L'ancien lot actif n'existe plus (ou aucun n'était sélectionné), 
+                // on sélectionne le premier de la nouvelle liste.
                 _activeLotId = allLots.First().LotId;
                 tacheDetailView1.SetSelectedLot(_activeLotId);
             }
             else
             {
+                // Il n'y a plus aucun lot. On vide l'ID actif.
                 _activeLotId = null;
+                tacheDetailView1.SetSelectedLot(null); // On s'assure que la vue enfant est aussi vidée.
             }
-            RefreshUIForActiveLot();
+
+            // 5. Rafraîchissement du diagramme et des autres éléments de l'UI
+            // avec le lot actif et l'état de la vue sauvegardé.
+            RefreshUIForActiveLot(viewState);
         }
 
         /// <summary>
         /// Met à jour l'interface utilisateur pour le lot actuellement sélectionné.
         /// </summary>
-        private void RefreshUIForActiveLot()
+        private void RefreshUIForActiveLot(PertDiagramControl.PertViewState stateToRestore = null)
         {
             var lot = _projetService.ObtenirLotParId(_activeLotId);
             if (lot == null)
             {
                 creationToolboxView1.PopulateMetiers(null, null, null);
-                pertDiagramControl1.ChargerDonnees(null);
+                pertDiagramControl1.ChargerDonnees(null, "", stateToRestore);
                 // --- MODIFICATION : On vide le panneau unifié ---
                 tacheDetailView1.Clear();
                 return;
             }
 
-            // ... (le reste de la méthode est inchangé) ...
             var metiersPourLot = _ressourceService.GetAllMetiers().Where(m => m.Phases.HasFlag(lot.Phases));
             var metiersActifs = _ressourceService.GetMetierIdsAvecCompetences();
             creationToolboxView1.PopulateMetiers(metiersPourLot, _ressourceService.GetDisplayColorForMetier, metiersActifs);
 
             var tachesDuLot = _taskManagerService.ObtenirToutesLesTaches(lotId: _activeLotId);
-            pertDiagramControl1.ChargerDonnees(tachesDuLot);
+            pertDiagramControl1.ChargerDonnees(tachesDuLot, "", stateToRestore);
 
             tacheDetailView1.UpdateDropdowns(_activeLotId);
 
             // --- MODIFICATION : On vide uniquement la partie "tâche" du panneau ---
             tacheDetailView1.ClearTacheDetails();
         }
+        private bool DemanderConfirmationModificationPlanifiee()
+        {
+            if (_suppressPlanningWarning) return true;
 
+            var message = "Attention : Vous modifiez une tâche déjà planifiée.\n\n" +
+                          "Cela va désynchroniser votre planning jusqu'au prochain calcul.\n\n" +
+                          "Voulez-vous continuer ?";
+
+            // Pour un vrai "Ne plus me demander", il faudrait une fenêtre personnalisée.
+            // Simulons avec deux MessageBox pour rester simple.
+            var result = MessageBox.Show(this, message, "Confirmation de modification",
+                                         MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+            if (result == DialogResult.Yes)
+            {
+                var result2 = MessageBox.Show(this, "Voulez-vous désactiver cette alerte pour le reste de la session ?",
+                                              "Désactiver l'alerte", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (result2 == DialogResult.Yes)
+                {
+                    _suppressPlanningWarning = true;
+                }
+                return true;
+            }
+
+            return false;
+        }
         /// <summary>
         /// Affiche le panneau de détails simple pour une tâche.
         /// </summary>
@@ -421,14 +546,16 @@ namespace PlanAthena.View.TaskManager
                 };
 
                 var newDetailView = new TacheDetailViewXL();
-                newDetailView.InitializeServices(_projetService, _ressourceService, _taskManagerService, this);
+                newDetailView.InitializeServices(_projetService, _ressourceService, _taskManagerService, this, _tacheDetailController);
                 newDetailView.Dock = DockStyle.Fill;
 
-                newDetailView.TacheSaved += OnTacheXLSaved;
+                newDetailView.SaveRequested += OnTacheXLSaved;
                 newDetailView.TacheDeleteRequested += OnTacheXLDeleteRequested;
 
-                newDetailPage.Disposed += (s, e) => {
-                    newDetailView.TacheSaved -= OnTacheXLSaved;
+                newDetailPage.Disposed += (s, e) =>
+                {
+                    // On se désabonne du bon événement
+                    newDetailView.SaveRequested -= OnTacheXLSaved;
                     newDetailView.TacheDeleteRequested -= OnTacheXLDeleteRequested;
                 };
 
@@ -495,13 +622,7 @@ namespace PlanAthena.View.TaskManager
             }
         }
 
-        private void ClearDetailsPanel()
-        {
-            _detailsPage.Controls.Clear();
-            tacheDetailView1.Clear();
-            blocDetailView1.Clear();
-            kryptonDockingManager.HidePage(_detailsPage);
-        }
+
 
         #endregion
 

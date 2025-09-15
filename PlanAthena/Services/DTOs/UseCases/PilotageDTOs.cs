@@ -1,7 +1,5 @@
 // Emplacement: /Services/DTOs/UseCases/PilotageDTOs.cs
 using PlanAthena.Data;
-using System.Collections.Generic;
-using System;
 
 namespace PlanAthena.Services.DTOs.UseCases
 {

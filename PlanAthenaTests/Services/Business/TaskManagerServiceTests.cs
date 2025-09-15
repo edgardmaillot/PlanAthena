@@ -1,16 +1,12 @@
 // Emplacement: /PlanAthena.Tests/Services/Business/TaskManagerServiceTests.cs
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using PlanAthena.Data;
 using PlanAthena.Interfaces;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DTOs.TaskManager;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 
 namespace PlanAthenaTests.Services.Business
 {
@@ -243,7 +239,7 @@ namespace PlanAthenaTests.Services.Business
             var heures = 8;
             var metierId = "MET1";
 
-            _mockIdGenerator.Setup(x => x.GenererProchainTacheId(blocId, It.IsAny<List<Tache>>(),TypeActivite.Tache))
+            _mockIdGenerator.Setup(x => x.GenererProchainTacheId(blocId, It.IsAny<List<Tache>>(), TypeActivite.Tache))
                            .Returns("T1");
 
             // ACT

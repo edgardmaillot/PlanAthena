@@ -3,7 +3,6 @@
 using Microsoft.Msagl.Drawing;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
-using System;
 using MsaglColor = Microsoft.Msagl.Drawing.Color;
 
 namespace PlanAthena.View.TaskManager.PertDiagram
@@ -177,6 +176,6 @@ namespace PlanAthena.View.TaskManager.PertDiagram
             return new MsaglColor(systemColor.R, systemColor.G, systemColor.B);
         }
 
-        
+
     }
 }
