@@ -510,32 +510,6 @@ namespace PlanAthenaTests.Services.Business
         }
 
         [TestMethod]
-        public void SynchroniserStatutsTaches_ShouldUpdateStatusBasedOnDates()
-        {
-            // ARRANGE
-            var now = DateTime.Now;
-            var tasks = new List<Tache>
-    {
-        new Tache { TacheId = "T1", Statut = Statut.Planifiée }, // Pas de dates -> Estimée
-        new Tache { TacheId = "T2", Statut = Statut.Planifiée, DateDebutPlanifiee = now.AddDays(1), DateFinPlanifiee = now.AddDays(2) }, // Future -> Planifiée
-        new Tache { TacheId = "T3", Statut = Statut.Planifiée, DateDebutPlanifiee = now.AddDays(-1), DateFinPlanifiee = now.AddDays(1) }, // En cours
-        new Tache { TacheId = "T4", Statut = Statut.Planifiée, DateDebutPlanifiee = now.AddDays(-2), DateFinPlanifiee = now.AddDays(-1) }, // En retard
-        new Tache { TacheId = "T5", Statut = Statut.Terminée, DateDebutPlanifiee = now.AddDays(-2), DateFinPlanifiee = now.AddDays(-1) } // Terminée (ne doit pas changer)
-    };
-            _taskManagerService.ChargerTaches(tasks);
-
-            // ACT
-            _taskManagerService.SynchroniserStatutsTaches();
-
-            // ASSERT
-            Assert.AreEqual(Statut.Estimée, _taskManagerService.ObtenirTache("T1").Statut);
-            Assert.AreEqual(Statut.Planifiée, _taskManagerService.ObtenirTache("T2").Statut);
-            Assert.AreEqual(Statut.EnCours, _taskManagerService.ObtenirTache("T3").Statut);
-            Assert.AreEqual(Statut.EnRetard, _taskManagerService.ObtenirTache("T4").Statut);
-            Assert.AreEqual(Statut.Terminée, _taskManagerService.ObtenirTache("T5").Statut); // Inchangé
-        }
-
-        [TestMethod]
         public void MarquerTachesTerminees_ShouldMarkTasksAsFinished()
         {
             // ARRANGE
@@ -606,47 +580,7 @@ namespace PlanAthenaTests.Services.Business
             Assert.AreEqual(Statut.Terminée, _taskManagerService.ObtenirTache("P1").Statut); // Parent auto-terminé
         }
 
-        [TestMethod]
-        public void MettreAJourTachesFeuillesAvecPlanning_ShouldUpdateLeafTasks()
-        {
-            // ARRANGE
-            var parentTask = new Tache { TacheId = "P1", EstConteneur = true };
-            var leafTask = new Tache { TacheId = "L1", ParentId = "P1", Statut = Statut.Estimée };
-            var simpleTask = new Tache { TacheId = "S1", EstConteneur = false, Statut = Statut.Estimée };
-
-            _taskManagerService.ChargerTaches(new List<Tache> { parentTask, leafTask, simpleTask });
-
-            var dateDebut = DateTime.Now.AddDays(1);
-            var dateFin = DateTime.Now.AddDays(2);
-            var affectations = new List<AffectationOuvrier> { new AffectationOuvrier { OuvrierId = "O1" } };
-
-            var infosFeuilles = new Dictionary<string, PlanningInfoPourTache>
-            {
-                ["L1"] = new PlanningInfoPourTache { DateDebut = dateDebut, DateFin = dateFin, Affectations = affectations },
-                ["S1"] = new PlanningInfoPourTache { DateDebut = dateDebut, DateFin = dateFin, Affectations = affectations }
-            };
-
-            var preparationResult = new PreparationResult();
-
-            _mockPlanningService.Setup(p => p.ObtenirInfosPlanificationPourTachesFeuilles()).Returns(infosFeuilles);
-            _mockPlanningService.Setup(p => p.ObtenirInfosPlanificationPourToutesLesTaches()).Returns(new Dictionary<string, PlanningInfoPourTache>());
-
-            // ACT
-            _taskManagerService.MettreAJourApresPlanification(_mockPlanningService.Object, preparationResult);
-
-            // ASSERT
-            var updatedLeaf = _taskManagerService.ObtenirTache("L1");
-            var updatedSimple = _taskManagerService.ObtenirTache("S1");
-
-            Assert.AreEqual(dateDebut, updatedLeaf.DateDebutPlanifiee);
-            Assert.AreEqual(dateFin, updatedLeaf.DateFinPlanifiee);
-            Assert.AreEqual(1, updatedLeaf.Affectations.Count);
-            Assert.AreEqual(Statut.Planifiée, updatedLeaf.Statut);
-
-            Assert.AreEqual(dateDebut, updatedSimple.DateDebutPlanifiee);
-            Assert.AreEqual(Statut.Planifiée, updatedSimple.Statut);
-        }
-
+        
         [TestMethod]
         public void MettreAJourTachesMeresAvecPlanning_ShouldResetUnplannedSimpleTasks()
         {

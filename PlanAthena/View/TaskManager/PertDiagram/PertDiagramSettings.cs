@@ -65,6 +65,7 @@ namespace PlanAthena.View.TaskManager.PertDiagram
 
         // --- Style pour les tâches en retard
         public MsaglColor TacheEnRetardBorderColor { get; set; } = MsaglColor.Red;
+        public Style[] TacheEnRetardBorderStyle { get; set; } = { Style.Dashed };
         public double TacheEnRetardLineWidth { get; set; } = 4;
 
         #endregion

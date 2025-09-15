@@ -1,4 +1,8 @@
-// PlanAthena Version 0.5.1 - Refactoring persistance
+// --- START OF FILE PlanificatorView.cs ---
+
+// PlanAthena Version 0.5.3 - Correction complète et finale UI
+using PlanAthena.Core.Facade.Dto.Enums;
+using PlanAthena.Core.Facade.Dto.Output;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.DTOs.ImportExport;
@@ -10,6 +14,7 @@ using System.Data;
 using System.Globalization;
 using System.Text;
 using System.Windows.Forms.DataVisualization.Charting;
+using Krypton.Toolkit;
 using Timer = System.Windows.Forms.Timer;
 
 namespace PlanAthena.View.Planificator
@@ -22,7 +27,7 @@ namespace PlanAthena.View.Planificator
         private readonly RessourceService _ressourceService;
         private readonly PlanningExcelExportService _planningExcelExportService;
         private readonly GanttExportService _ganttExportService;
-        private readonly CheminsPrefereService _cheminsPrefereService; // Retiré l'initialisation directe
+        private readonly CheminsPrefereService _cheminsPrefereService;
         private PlanificationRunResult _lastRunResult = null;
         private int _elapsedSeconds = 0;
         private Timer _solverTimer;
@@ -35,7 +40,7 @@ namespace PlanAthena.View.Planificator
             RessourceService ressourceService,
             PlanningExcelExportService planningExcelExportService,
             GanttExportService ganttExportService,
-            CheminsPrefereService cheminsPrefereService) // Dépendance injectée
+            CheminsPrefereService cheminsPrefereService)
         {
             InitializeComponent();
             _planificationOrchestrator = planificationOrchestrator;
@@ -44,7 +49,7 @@ namespace PlanAthena.View.Planificator
             _ressourceService = ressourceService;
             _planningExcelExportService = planningExcelExportService;
             _ganttExportService = ganttExportService;
-            _cheminsPrefereService = cheminsPrefereService; // Assignation par injection
+            _cheminsPrefereService = cheminsPrefereService;
             _solverTimer = new Timer { Interval = 1000 };
             _solverTimer.Tick += SolverTimer_Tick;
             this.Load += PlanificatorView_Load;
@@ -75,10 +80,14 @@ namespace PlanAthena.View.Planificator
 
             dtpDateDebut.Value = DateTime.Today;
             dtpDateFin.Value = DateTime.Today.AddDays(90);
-            chkDateDebut.Checked = true;
-            chkDateFin.Checked = true;
 
             dgvAnalyseOuvriers.AutoGenerateColumns = false;
+
+            // Associer les ToolTips avec le composant KryptonToolTip
+            kryptonToolTip.SetToolTip(lblHelpCoutIndirect, "Coût journalier fixe du chantier (location, charges, etc.).\nImpacte directement l'optimisation des délais.");
+            kryptonToolTip.SetToolTip(lblHelpPenalite, "Surcoût en % appliqué lorsqu'un ouvrier est réaffecté à un autre bloc dans la même journée.\nDécourage la fragmentation du travail.");
+            kryptonToolTip.SetToolTip(lblHelpTypeSortie, "Choisir l'objectif principal de la planification :\n- Analyse : Estimation rapide sans optimisation.\n- Optimisation Coût : Cherche la solution la moins chère.\n- Optimisation Délai : Cherche la solution la plus rapide.");
+            kryptonToolTip.SetToolTip(lblHelpDecoupage, "Si une tâche unitaire dépasse ce nombre de jours, l'IA est autorisée à la diviser pour mieux l'intégrer dans le planning.");
         }
 
         private void PopulateFormFromSessionConfig()
@@ -117,11 +126,9 @@ namespace PlanAthena.View.Planificator
             config.DureeCalculMaxMinutes = (int)cmbCalculMax.SelectedItem;
             config.SeuilJoursDecoupageTache = (int)numSeuilDecoupage.Value;
 
-            config.DateDebutSouhaitee = chkDateDebut.Checked ? dtpDateDebut.Value.Date : DateTime.Today;
-            config.DateFinSouhaitee = chkDateFin.Checked ? dtpDateFin.Value.Date : DateTime.Today.AddYears(5);
+            config.DateDebutSouhaitee = dtpDateDebut.Value.Date;
+            config.DateFinSouhaitee = dtpDateFin.Value.Date;
 
-            // --- CORRECTION ---
-            // On récupère les informations du projet depuis le service source de vérité.
             InformationsProjet infosProjet = _projetService.ObtenirInformationsProjet();
             config.Description = infosProjet?.NomProjet ?? "Nouveau Projet";
 
@@ -146,8 +153,6 @@ namespace PlanAthena.View.Planificator
         #region Logique Principale et Barre de Progression
         private async void btnLaunch_Click(object sender, EventArgs e)
         {
-            // --- CORRECTION ---
-            // La vérification se fait sur l'état du ProjetService.
             if (_projetService.ObtenirInformationsProjet() == null)
             {
                 MessageBox.Show("Veuillez charger un projet avant de lancer la planification.", "Projet requis", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -155,11 +160,8 @@ namespace PlanAthena.View.Planificator
             }
 
             btnLaunch.Enabled = false;
-            navigatorResultats.Visible = false;
-            rtbLog.Clear();
+            ResetResultDisplay();
             _elapsedSeconds = 0;
-            progressBar.Style = ProgressBarStyle.Marquee;
-            progressBar.Visible = true;
             StartSolverProgress();
 
             Log("Lancement de la planification...");
@@ -169,32 +171,141 @@ namespace PlanAthena.View.Planificator
                 var configuration = GetConfigFromForm();
                 _lastRunResult = await _planificationOrchestrator.ExecuteAsync(configuration);
                 AfficherResultats(_lastRunResult);
-                UpdateExportButtonsState();
             }
             catch (Exception ex)
             {
                 Log($"ERREUR CRITIQUE : {ex.Message}");
                 MessageBox.Show($"Une erreur est survenue : {ex.Message}", "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                DisplayErrorState(new List<MessageValidationDto>
+                {
+                    new() { Type = TypeMessageValidation.Erreur, CodeMessage = "FATAL", Message = $"Erreur interne de l'application: {ex.Message}" }
+                });
             }
             finally
             {
                 StopSolverProgress();
-                progressBar.Visible = false;
                 btnLaunch.Enabled = true;
+                UpdateExportButtonsState();
                 Log("PLANIFICATION TERMINÉE.");
             }
         }
         #endregion
 
         #region Affichage des Résultats
-        // ... (Aucun changement dans cette région, elle est déjà correcte)
+
+        private void ResetResultDisplay()
+        {
+            navigatorResultats.Visible = false;
+            rtbLog.Clear();
+            khgNotification.Visible = false;
+            rtbNotification.Clear();
+            kryptonPanelKpis.Visible = true;
+            NettoyerAffichageKpis();
+        }
+
+
         private void AfficherResultats(PlanificationRunResult runResult)
         {
-            if (runResult == null) return;
+            if (runResult == null)
+            {
+                DisplayErrorState(new List<MessageValidationDto>
+        {
+            new() { Type = TypeMessageValidation.Erreur, CodeMessage = "NULL_RESULT", Message = "Le service de planification n'a retourné aucun résultat." }
+        });
+                return;
+            }
 
             navigatorResultats.Visible = true;
-            var culture = CultureInfo.GetCultureInfo("fr-FR");
 
+            // Un échec n'est pas seulement une "Erreur", mais aussi un solveur qui retourne "Infeasible".
+            bool hasCriticalErrors = runResult.RawResult?.Messages.Any(m => m.Type == TypeMessageValidation.Erreur) ?? false;
+            bool isSolverInfeasible = runResult.RawResult?.OptimisationResultat?.Status == OptimizationStatus.Infeasible;
+
+            bool isFailureState = hasCriticalErrors || isSolverInfeasible;
+            // --- FIN MODIFICATION ---
+
+            bool isAnalysisMode = cmbTypeDeSortie.SelectedItem?.ToString() == "Analyse et Estimation";
+
+            if (isFailureState)
+            {
+                // On passe tous les messages, y compris les avertissements qui expliquent l'échec.
+                DisplayErrorState(runResult.RawResult.Messages);
+            }
+            else if (isAnalysisMode && runResult.MetierTensionReport != null)
+            {
+                DisplayAnalysisState(runResult);
+            }
+            else
+            {
+                DisplayOptimizationState(runResult);
+            }
+
+            AfficherResultatDansLog(runResult);
+            navigatorResultats.SelectedPage = tabPageSynthese;
+        }
+
+        private void DisplayErrorState(IReadOnlyList<MessageValidationDto> messages)
+        {
+            SetupNotificationBanner(
+                "ERREUR CRITIQUE",
+                "Planification impossible",
+                Color.FromArgb(192, 0, 0), // Rouge foncé
+                null // Mettre une icône depuis les ressources si disponible
+            );
+
+            rtbNotification.Clear();
+            var boldFont = new Font(rtbNotification.Font, FontStyle.Bold);
+            foreach (var msg in messages.Where(m => m.Type == TypeMessageValidation.Erreur))
+            {
+                rtbNotification.SelectionFont = boldFont;
+                rtbNotification.AppendText("• ");
+                rtbNotification.SelectionFont = rtbNotification.Font;
+                string elementInfo = !string.IsNullOrEmpty(msg.ElementId) ? $" (Élément: {msg.ElementId})" : "";
+                rtbNotification.AppendText($"{msg.Message}{elementInfo}{Environment.NewLine}");
+            }
+
+            kryptonPanelKpis.Visible = false; // Masquer les KPIs car invalides
+        }
+
+        private void DisplayAnalysisState(PlanificationRunResult runResult)
+        {
+            SetupNotificationBanner(
+                "Synthèse de l'Analyse Rapide",
+                "Recommandations basées sur les données du projet",
+                Color.FromArgb(0, 102, 204), // Bleu informatif
+                null // Mettre une icône depuis les ressources si disponible
+            );
+
+            rtbNotification.Clear();
+            var boldFont = new Font(rtbNotification.Font, FontStyle.Bold);
+
+            rtbNotification.SelectionFont = boldFont;
+            rtbNotification.AppendText("Conclusion : ");
+            rtbNotification.SelectionFont = rtbNotification.Font;
+            rtbNotification.AppendText($"{runResult.MetierTensionReport.Conclusion}{Environment.NewLine}");
+
+            if (runResult.MetierTensionReport.Repartition.Any())
+            {
+                rtbNotification.SelectionFont = boldFont;
+                rtbNotification.AppendText($"Répartition suggérée des métiers clés :{Environment.NewLine}");
+                rtbNotification.SelectionFont = rtbNotification.Font;
+                foreach (var repartition in runResult.MetierTensionReport.Repartition)
+                {
+                    var nomMetier = _ressourceService.GetMetierById(repartition.MetierId)?.Nom ?? repartition.MetierId;
+                    rtbNotification.AppendText($"  - {nomMetier} : {repartition.Count} ouvrier(s){Environment.NewLine}");
+                }
+            }
+
+            kryptonPanelKpis.Visible = true;
+            UpdateKpisForAnalysis(runResult);
+        }
+
+        private void DisplayOptimizationState(PlanificationRunResult runResult)
+        {
+            khgNotification.Visible = false; // Pas de bannière si tout va bien
+            kryptonPanelKpis.Visible = true;
+
+            var culture = CultureInfo.GetCultureInfo("fr-FR");
             string solverStatus = runResult.RawResult?.OptimisationResultat?.Status.ToString();
             UpdateSolverStatusDisplay(solverStatus);
 
@@ -208,9 +319,30 @@ namespace PlanAthena.View.Planificator
                 lblDureeValue.Text = synthese.DureeJoursOuvres.ToString();
                 AfficherAnalyseRessources(runResult.AnalysisReport);
             }
-            else if (runResult.RawResult?.AnalyseStatiqueResultat != null)
+            else
             {
-                var estimation = runResult.RawResult.AnalyseStatiqueResultat;
+                NettoyerAffichageKpis();
+            }
+        }
+
+        private void SetupNotificationBanner(string title, string subtitle, Color backColor, Image image)
+        {
+            khgNotification.ValuesPrimary.Heading = title;
+            khgNotification.ValuesSecondary.Heading = subtitle;
+            khgNotification.StateCommon.HeaderPrimary.Back.Color1 = backColor;
+            khgNotification.StateCommon.HeaderPrimary.Back.Color2 = backColor;
+            khgNotification.StateCommon.HeaderSecondary.Back.Color1 = ControlPaint.Light(backColor);
+            khgNotification.StateCommon.HeaderSecondary.Back.Color2 = ControlPaint.Light(backColor);
+            khgNotification.ValuesPrimary.Image = image;
+            khgNotification.Visible = true;
+        }
+
+        private void UpdateKpisForAnalysis(PlanificationRunResult runResult)
+        {
+            var culture = CultureInfo.GetCultureInfo("fr-FR");
+            var estimation = runResult.RawResult.AnalyseStatiqueResultat;
+            if (estimation != null)
+            {
                 decimal coutRhEstime = (estimation.CoutTotalEstime ?? 0) / 100.0m;
                 long coutIndirectJournalier = (long)numCoutIndirect.Value;
                 decimal heuresTravailParJour = numHeuresTravail.Value > 0 ? numHeuresTravail.Value : 8.0m;
@@ -221,53 +353,59 @@ namespace PlanAthena.View.Planificator
                 lblCoutTotalValue.Text = coutTotalFinal.ToString("C", culture);
                 lblCoutIndirectValue.Text = coutIndirectEstime.ToString("C", culture);
                 lblDureeValue.Text = $"{estimation.DureeTotaleEstimeeEnSlots ?? 0} heures";
-                lblCoutRhValue.Text = "N/A";
-                lblJoursHommeValue.Text = "N/A";
-                NettoyerAnalyseRessources();
+                lblCoutRhValue.Text = coutRhEstime.ToString("C", culture);
             }
-            else
-            {
-                NettoyerAffichageKpis();
-            }
-
-            AfficherResultatDansLog(runResult);
-            navigatorResultats.SelectedPage = tabPageSynthese;
+            lblJoursHommeValue.Text = "N/A";
+            UpdateSolverStatusDisplay("ANALYSE");
+            NettoyerAnalyseRessources();
         }
 
         private void UpdateSolverStatusDisplay(string status)
         {
-            khgStatutSolveur.Visible = !string.IsNullOrEmpty(status);
+            khgSolverStatus.Visible = !string.IsNullOrEmpty(status);
             if (string.IsNullOrEmpty(status)) return;
             var defaultBackColor = SystemColors.ControlDark;
             var optimalColor = Color.FromArgb(0, 150, 0);
             var feasibleColor = Color.FromArgb(204, 132, 0);
             var infeasibleColor = Color.FromArgb(192, 0, 0);
+
             switch (status.ToUpperInvariant())
             {
                 case "OPTIMAL":
-                    khgStatutSolveur.ValuesPrimary.Heading = "OPTIMAL";
-                    khgStatutSolveur.StateCommon.HeaderPrimary.Back.Color1 = optimalColor;
+                    khgSolverStatus.ValuesPrimary.Heading = "OPTIMAL";
+                    khgSolverStatus.StateCommon.HeaderPrimary.Back.Color1 = optimalColor;
                     lblStatutExplication.Text = "La meilleure solution\npossible a été trouvée.";
                     break;
                 case "FEASIBLE":
-                    khgStatutSolveur.ValuesPrimary.Heading = "FAISABLE";
-                    khgStatutSolveur.StateCommon.HeaderPrimary.Back.Color1 = feasibleColor;
+                    khgSolverStatus.ValuesPrimary.Heading = "FAISABLE";
+                    khgSolverStatus.StateCommon.HeaderPrimary.Back.Color1 = feasibleColor;
                     lblStatutExplication.Text = "Une solution a été trouvée,\nmais elle n'est peut-être pas la meilleure.\nLe temps de calcul était peut-être insuffisant.";
                     break;
                 case "INFEASIBLE":
-                    khgStatutSolveur.ValuesPrimary.Heading = "IMPOSSIBLE";
-                    khgStatutSolveur.StateCommon.HeaderPrimary.Back.Color1 = infeasibleColor;
+                    khgSolverStatus.ValuesPrimary.Heading = "IMPOSSIBLE";
+                    khgSolverStatus.StateCommon.HeaderPrimary.Back.Color1 = infeasibleColor;
                     lblStatutExplication.Text = "Aucune solution possible.\nAccordez plus de délai à l'IA.";
                     break;
+                case "ANALYSE":
+                    khgSolverStatus.ValuesPrimary.Heading = "ANALYSE";
+                    khgSolverStatus.StateCommon.HeaderPrimary.Back.Color1 = Color.FromArgb(0, 102, 204);
+                    lblStatutExplication.Text = "Mode analyse rapide.\nAucune optimisation effectuée.";
+                    break;
                 default:
-                    khgStatutSolveur.ValuesPrimary.Heading = status.ToUpperInvariant();
-                    khgStatutSolveur.StateCommon.HeaderPrimary.Back.Color1 = defaultBackColor;
+                    khgSolverStatus.ValuesPrimary.Heading = status.ToUpperInvariant();
+                    khgSolverStatus.StateCommon.HeaderPrimary.Back.Color1 = defaultBackColor;
                     lblStatutExplication.Text = "Statut du solveur non reconnu.";
                     break;
             }
         }
+
         private void AfficherAnalyseRessources(AnalysisReport report)
         {
+            if (report == null)
+            {
+                NettoyerAnalyseRessources();
+                return;
+            }
             dgvAnalyseOuvriers.DataSource = null;
             dgvAnalyseOuvriers.DataSource = report.AnalysesOuvriers;
             foreach (DataGridViewRow row in dgvAnalyseOuvriers.Rows)
@@ -289,6 +427,7 @@ namespace PlanAthena.View.Planificator
             chartChargeJournaliere.ChartAreas[0].AxisX.LabelStyle.Format = "dd/MM";
             chartChargeJournaliere.ChartAreas[0].RecalculateAxesScale();
         }
+
         private void NettoyerAffichageKpis()
         {
             lblCoutTotalValue.Text = "N/A";
@@ -296,20 +435,30 @@ namespace PlanAthena.View.Planificator
             lblCoutIndirectValue.Text = "N/A";
             lblJoursHommeValue.Text = "N/A";
             lblDureeValue.Text = "N/A";
+            UpdateSolverStatusDisplay(null);
             NettoyerAnalyseRessources();
         }
+
         private void NettoyerAnalyseRessources()
         {
             dgvAnalyseOuvriers.DataSource = null;
             chartChargeJournaliere.Series.Clear();
         }
-
         #endregion
 
         #region Exports et États
         private void UpdateExportButtonsState()
         {
-            bool canExport = _lastRunResult?.AnalysisReport != null;
+            // --- MODIFICATION : Condition d'export beaucoup plus stricte ---
+            bool hasReport = _lastRunResult?.AnalysisReport != null;
+            var status = _lastRunResult?.RawResult?.OptimisationResultat?.Status;
+
+            // L'export n'est possible QUE si un rapport existe ET que le statut est Optimal ou Faisable.
+            bool isSuccessfulStatus = (status == OptimizationStatus.Optimal || status == OptimizationStatus.Feasible);
+
+            bool canExport = hasReport && isSuccessfulStatus;
+            // --- FIN MODIFICATION ---
+
             btnExportPlanningExcel.Enabled = canExport;
             btnExportGantt.Enabled = canExport;
         }
@@ -322,7 +471,6 @@ namespace PlanAthena.View.Planificator
                 return;
             }
 
-            // --- CORRECTION ---
             InformationsProjet infosProjet = _projetService.ObtenirInformationsProjet();
             string nomProjet = infosProjet?.NomProjet ?? "Projet";
 
@@ -372,7 +520,6 @@ namespace PlanAthena.View.Planificator
                 return;
             }
 
-            // --- CORRECTION ---
             InformationsProjet infosProjet = _projetService.ObtenirInformationsProjet();
             string nomProjet = infosProjet?.NomProjet ?? "Projet";
 
@@ -415,7 +562,6 @@ namespace PlanAthena.View.Planificator
         #endregion
 
         #region Log Helpers & Barre de Progression
-        // ... (Aucun changement dans cette région)
         private void Log(string message)
         {
             if (this.IsDisposed || !this.IsHandleCreated) return;

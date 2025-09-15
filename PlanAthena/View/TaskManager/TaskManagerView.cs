@@ -236,7 +236,8 @@ namespace PlanAthena.View.TaskManager
 
             // Si on arrive ici, la modification est autorisée
             _taskManagerService.ModifierTache(tacheToSave);
-            pertDiagramControl1.MettreAJourTache(tacheToSave);
+            //pertDiagramControl1.MettreAJourTache(tacheToSave);
+            RefreshAll(true);
             ShowTacheDetails(tacheToSave);
         }
 

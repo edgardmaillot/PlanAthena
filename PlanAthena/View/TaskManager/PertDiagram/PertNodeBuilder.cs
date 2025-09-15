@@ -1,5 +1,6 @@
 // PertNodeBuilder.cs
 
+using ChoETL;
 using Microsoft.Msagl.Drawing;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
@@ -145,6 +146,8 @@ namespace PlanAthena.View.TaskManager.PertDiagram
                     node.Attr.FillColor = GetFillColor(tache);
                     // La couleur de la police reste par défaut (noir)
                     node.Attr.Color = _settings.TacheEnRetardBorderColor;
+                    node.Attr.AddStyle(Style.Dotted);
+                    
                     node.Attr.LineWidth = _settings.TacheEnRetardLineWidth;
                 }
                 else // Pour tous les autres statuts (Estimée, Planifiée, EnCours)

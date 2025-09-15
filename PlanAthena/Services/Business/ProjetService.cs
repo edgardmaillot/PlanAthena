@@ -46,7 +46,7 @@ namespace PlanAthena.Services.Business
 
         public virtual void ChargerProjet(ProjetData projetData)
         {
-            //ViderProjet();
+            //ViderProjet(); 
             if (projetData == null) return;
 
             _informationsProjet = projetData.InformationsProjet ?? new InformationsProjet { NomProjet = "Projet sans nom" };
@@ -66,6 +66,19 @@ namespace PlanAthena.Services.Business
                         }
                     }
                 }
+            }
+
+
+            // On met à jour la configuration du planificateur
+            // avec les données du projet qui vient d'être chargé.
+            if (_informationsProjet != null)
+            {
+                ConfigPlanificationActuelle.JoursOuvres = _informationsProjet.JoursOuvres;
+                ConfigPlanificationActuelle.HeureDebutJournee = _informationsProjet.HeureOuverture;
+                // Calcule la durée d'ouverture à partir des heures de début et de fin.
+                ConfigPlanificationActuelle.DureeJournaliereStandardHeures = Math.Max(0, _informationsProjet.HeureFermeture - _informationsProjet.HeureOuverture);
+                ConfigPlanificationActuelle.HeuresTravailEffectifParJour = _informationsProjet.HeuresTravailEffectifParJour;
+                ConfigPlanificationActuelle.CoutIndirectJournalierAbsolu = (long)_informationsProjet.CoutIndirectJournalierAbsolu;
             }
         }
 
