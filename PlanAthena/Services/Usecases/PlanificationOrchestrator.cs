@@ -1,6 +1,7 @@
-// /Services/UseCases/PlanificationOrchestrator.cs V0.4.9.1
+// Fichier: /Services/UseCases/PlanificationOrchestrator.cs Version 0.6.0
 
 using PlanAthena.Core.Facade;
+using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.Business.DTOs;
 using PlanAthena.Services.Processing;
@@ -11,7 +12,7 @@ namespace PlanAthena.Services.UseCases
     /// <summary>
     /// Exécute le cas d'utilisation "Lancer une nouvelle planification".
     /// Il agit comme un chef d'orchestre, appelant les services appropriés dans le bon ordre.
-    /// Ce service est stateless.
+    /// Version 0.6.0 : Ajout de la logique de création de la PlanningBaseline.
     /// </summary>
     public class PlanificationOrchestrator
     {
@@ -47,19 +48,20 @@ namespace PlanAthena.Services.UseCases
             _analysisService = analysisService ?? throw new ArgumentNullException(nameof(analysisService));
         }
 
-        public async Task<PlanificationRunResult> ExecuteAsync(ConfigurationPlanification config)
+        /// <summary>
+        /// Exécute un cycle de planification complet.
+        /// </summary>
+        /// <param name="config">La configuration de la planification.</param>
+        /// <param name="reinitialiserBaseline">Si vrai, la baseline existante sera écrasée par le résultat de cette planification.</param>
+        /// <returns>Un DTO encapsulant tous les résultats du cycle.</returns>
+        public virtual async Task<PlanificationRunResult> ExecuteAsync(ConfigurationPlanification config, bool reinitialiserBaseline)
         {
-            // --- PHASE 1 : COLLECTE & PRÉPARATION (SANS EFFET DE BORD) ---
+            // --- PHASE 1 : COLLECTE & PRÉPARATION ---
             var projetData = _projetService.GetProjetDataPourSauvegarde();
             var poolOuvriers = _ressourceService.GetAllOuvriers();
             var poolMetiers = _ressourceService.GetAllMetiers();
-
-            // La source de vérité pour les tâches est TaskManagerService. On prend tout.
             var tachesOriginales = _taskManagerService.ObtenirToutesLesTaches();
-
-            // Le service de préparation filtre et transforme les tâches sans modifier l'état original.
             var preparationResult = _preparationService.PreparerPourSolveur(tachesOriginales, config);
-
             var inputDto = _transformerService.TransformToChantierSetupDto(
                  projetData, poolOuvriers, poolMetiers, preparationResult.TachesPreparees, config);
 
@@ -73,34 +75,62 @@ namespace PlanAthena.Services.UseCases
                     rawResult.AnalyseStatiqueResultat.OuvriersClesSuggereIds, poolOuvriers);
                 return new PlanificationRunResult { RawResult = rawResult, MetierTensionReport = tensionReport };
             }
-            // MODIFIÉ : On applique les changements SEULEMENT SI l'optimisation a réussi.
             else if (rawResult.OptimisationResultat != null)
             {
-                // --- CAS B : OPTIMISATION ---
                 var consolidatedPlanning = _consolidationService.Process(rawResult, config);
                 _planningService.UpdatePlanning(consolidatedPlanning, config);
-
-                // La réconciliation se fait ici, de manière transactionnelle, après le succès.
                 _taskManagerService.MettreAJourApresPlanification(_planningService, preparationResult);
+
+                // *** NOUVELLE LOGIQUE DE GESTION DE LA BASELINE ***
+                if (reinitialiserBaseline || _planningService.GetBaseline() == null)
+                {
+                    _CreerEtStockerNouvelleBaseline(consolidatedPlanning, config, poolOuvriers);
+                }
 
                 var joursOuvresCalculator = new AnalysisService.JoursOuvresCalculator((start, end) =>
                     _planningService.GetNombreJoursOuvres(start, end));
 
                 var analysisReport = _analysisService.GenerateReport(
-                    consolidatedPlanning,
-                    poolOuvriers,
-                    poolMetiers,
-                    config,
-                    joursOuvresCalculator);
+                    consolidatedPlanning, poolOuvriers, poolMetiers, config, joursOuvresCalculator);
 
                 return new PlanificationRunResult { RawResult = rawResult, AnalysisReport = analysisReport };
             }
             else
             {
-                // En cas d'échec de la planification, on ne fait rien et on retourne le résultat brut.
-                // L'état du projet dans TaskManagerService reste inchangé.
                 return new PlanificationRunResult { RawResult = rawResult };
             }
+        }
+
+        /// <summary>
+        /// Méthode privée pour encapsuler la logique de création de la baseline.
+        /// </summary>
+        private void _CreerEtStockerNouvelleBaseline(
+            ConsolidatedPlanning planning,
+            ConfigurationPlanification config,
+            IReadOnlyList<Ouvrier> poolOuvriers)
+        {
+            var joursOuvresCalculator = new AnalysisService.JoursOuvresCalculator((start, end) =>
+                _planningService.GetNombreJoursOuvres(start, end));
+
+            // 1. Calculer les données de la baseline
+            var bac = _analysisService.CalculerBudgetTotal(planning, poolOuvriers, config, joursOuvresCalculator);
+            var courbePV = _analysisService.CalculerCourbePlannedValueCumulative(planning, poolOuvriers, config);
+            var budgetTaches = _analysisService.CalculerBudgetParTache(planning, poolOuvriers, config);
+
+            // 2. Créer l'objet Baseline
+            var nouvelleBaseline = new PlanningBaseline
+            {
+                DateCreation = DateTime.Now,
+                BudgetAtCompletion = bac,
+                DateFinPlanifieeInitiale = planning.DateFinProjet,
+                CourbePlannedValueCumulative = courbePV,
+                BudgetInitialParTacheId = budgetTaches,
+                ConsPlanningInitial = planning,       // Stocke une copie du planning
+                ConfigurationInitiale = config        // Stocke une copie de la config
+            };
+
+            // 3. Stocker la baseline dans le service d'état
+            _planningService.SetBaseline(nouvelleBaseline);
         }
     }
 }

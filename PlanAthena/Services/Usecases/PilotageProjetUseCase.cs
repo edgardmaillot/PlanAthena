@@ -1,24 +1,31 @@
-// Emplacement: /Services/Usecases/PilotageProjetUseCase.cs Version 0.5.0
+// Fichier: /Services/Usecases/PilotageProjetUseCase.cs Version 0.6.0.2
+
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DTOs.UseCases;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
 
 namespace PlanAthena.Services.Usecases
 {
-
+    /// <summary>
+    /// Cas d'utilisation pour tout ce qui concerne le pilotage et le suivi du projet.
+    /// Il agrège les données de plusieurs services pour les présenter aux vues du Cockpit.
+    /// Version 0.6.0 : Intègre les calculs EVM pour les KPIs du Cockpit.
+    /// </summary>
     public class PilotageProjetUseCase
     {
         private readonly TaskManagerService _taskManagerService;
         private readonly PlanningService _planningService;
-        private readonly ProjetService _projetService; // AJOUT
+        private readonly ProjetService _projetService;
         private readonly RessourceService _ressourceService;
-        // private readonly AnalysisService _analysisService; // N'est plus utilisé ici
-        // private readonly PlanningExcelExportService _exportService; // Pas utilisé en V1
 
         public PilotageProjetUseCase(
             TaskManagerService taskManagerService,
             PlanningService planningService,
-            ProjetService projetService, // AJOUT
+            ProjetService projetService,
             RessourceService ressourceService)
         {
             _taskManagerService = taskManagerService ?? throw new ArgumentNullException(nameof(taskManagerService));
@@ -28,78 +35,71 @@ namespace PlanAthena.Services.Usecases
         }
 
         #region Cockpit (Alimentation des KPIs)
+
         public virtual ProjectWeatherData ObtenirMeteoProjet()
         {
             var toutesLesTaches = _taskManagerService.ObtenirToutesLesTaches();
-
-            // 1. Calcul de la Dérive Planning (NOUVELLE LOGIQUE)
-            // Somme des retards de toutes les tâches, hors jalons et tâches enfants.
-            double deriveJours = 0;
             var dateReference = DateTime.Today;
 
-            var tachesAConsiderer = toutesLesTaches
-                .Where(t => t.Type == TypeActivite.Tache && string.IsNullOrEmpty(t.ParentId) && !t.EstJalon)
-                .ToList();
-
-            foreach (var tache in tachesAConsiderer)
-            {
-                double retard = 0;
-
-                if (tache.DateFinReelle.HasValue && tache.DateFinPlanifiee.HasValue)
-                {
-                    // Si la tâche est terminée, on compare les deux dates de fin
-                    retard = (tache.DateFinReelle.Value - tache.DateFinPlanifiee.Value).TotalDays;
-                }
-                else if (tache.DateFinPlanifiee.HasValue && tache.DateFinPlanifiee.Value < dateReference)
-                {
-                    // Si la tâche est en retard par rapport à la date du jour
-                    retard = (dateReference - tache.DateFinPlanifiee.Value).TotalDays;
-                }
-
-                deriveJours += Math.Max(0, retard); // On ne prend que les retards (pas les avances)
-            }
-
-            // Conversion en jours entiers, en arrondissant au supérieur.
+            // --- Logique de Dérive en Jours (inchangée) ---
+            double deriveJours = toutesLesTaches
+                .Where(t => t.Statut != Statut.Terminée &&
+                            t.DateFinPlanifiee.HasValue &&
+                            t.DateFinPlanifiee.Value.Date < dateReference.Date)
+                .Sum(t => (dateReference.Date - t.DateFinPlanifiee.Value.Date).TotalDays);
             int deriveJoursEntiers = (int)Math.Ceiling(deriveJours);
 
+            // --- Logique de Tension des Ressources (inchangée) ---
+            var tensionMetier = _planningService.CalculerTensionMetierPourPeriodeFuture(dateReference, 14);
+            double disponibilitePourcentage = 1.0 - tensionMetier.TauxOccupation;
 
-            // 2. Calcul de la Disponibilité des Ressources
-            // On réutilise la méthode existante qui calcule la tension
-            var tensionMetier = _planningService.CalculerTensionMetierPourPeriodeFuture(DateTime.Today, 14);
-            double disponibilitePourcentage = 1.0 - tensionMetier.TauxOccupation; // C'est une approximation globale
+            // --- Calcul des indicateurs EVM pour la Météo ---
+            var evmReport = _planningService.GetRapportEVMComplet(dateReference, toutesLesTaches);
 
-            // 3. Déviation Budget (V1)
-            double deviationBudget = 0.0;
-
-            // 4. Détermination du Statut Météo (utilisant la nouvelle dérive)
-            ProjectWeatherStatus statut = ProjectWeatherStatus.Sunny;
-
-            // Critères pour passer à "Nuageux" (Orages en vue)
-            if (deriveJoursEntiers > 1)
+            // a) NOUVEAU : Calcul de la déviation budgétaire en pourcentage
+            double deviationBudgetPourcentage = 0.0;
+            if (evmReport.BaselineExists && evmReport.BudgetAtCompletion > 0)
             {
-                statut = ProjectWeatherStatus.Cloudy;
+                // On recalcule l'EAC ici pour être sûr
+                double cpi = (double)(evmReport.EarnedValue/evmReport.ActualCost);
+                double eac = cpi > 0 ? (double)evmReport.BudgetAtCompletion / cpi : (double)evmReport.BudgetAtCompletion;
+                deviationBudgetPourcentage = (eac - (double)evmReport.BudgetAtCompletion) / (double)evmReport.BudgetAtCompletion;
             }
 
-            if (deriveJoursEntiers > 5)
+            // b) NOUVEAU : Logique de Météo basée sur SPI et CPI
+            ProjectWeatherStatus statut;
+            if (evmReport.BaselineExists)
             {
-                statut = ProjectWeatherStatus.Rainy;
-            }
+                var spi = (double)(evmReport.EarnedValue / evmReport.PlannedValue);
+                var cpi = (double)(evmReport.EarnedValue / evmReport.ActualCost);
 
-            // Critères pour passer à "Orageux" (Situation critique)
-            if (deriveJoursEntiers > 10)
+                if (spi < 0.80 || cpi < 0.80)
+                    statut = ProjectWeatherStatus.Stormy;   // Situation critique
+                else if (spi < 0.90 || cpi < 0.90)
+                    statut = ProjectWeatherStatus.Rainy;    // Problèmes à gérer
+                else if (spi < 0.95 || cpi < 0.95)
+                    statut = ProjectWeatherStatus.Cloudy;   // Orages en vue
+                else
+                    statut = ProjectWeatherStatus.Sunny;      // Tout va bien
+            }
+            else
             {
-                statut = ProjectWeatherStatus.Stormy;
+                // Fallback sur l'ancienne logique si pas de baseline
+                statut = ProjectWeatherStatus.Sunny;
+                if (deriveJoursEntiers > 1) statut = ProjectWeatherStatus.Cloudy;
+                if (deriveJoursEntiers > 5) statut = ProjectWeatherStatus.Rainy;
+                if (deriveJoursEntiers > 10) statut = ProjectWeatherStatus.Stormy;
             }
 
             return new ProjectWeatherData
             {
-                // La propriété DerivPlanningJours est un double, mais on lui passe un entier. C'est valide.
                 DerivPlanningJours = deriveJoursEntiers,
                 DisponibiliteRessourcesPourcentage = disponibilitePourcentage,
-                DeviationBudgetPourcentage = deviationBudget,
+                DeviationBudgetPourcentage = deviationBudgetPourcentage,
                 Statut = statut
             };
         }
+
         public virtual CockpitKpiData ObtenirIndicateursCockpit(List<Tache> tachesFiltrees = null)
         {
             var toutesLesTaches = tachesFiltrees ?? _taskManagerService.ObtenirToutesLesTaches();
@@ -114,17 +114,10 @@ namespace PlanAthena.Services.Usecases
             int nombreTerminees = tachesNonConteneurs.Count(t => t.Statut == Statut.Terminée);
             double progressionGlobale = (tachesNonConteneurs.Count > 0) ? (nombreTerminees * 100.0 / tachesNonConteneurs.Count) : 0;
 
-            // 2. SPI (Schedule Performance Index)
-            var dateReference = DateTime.Today;
-            int nombreDevraientEtreTerminees = _planningService.ObtenirNombreTachesQuiDevraientEtreTerminees(dateReference, toutesLesTaches);
-            double spi = (nombreDevraientEtreTerminees > 0) ? (nombreTerminees / (double)nombreDevraientEtreTerminees) : 1.0;
-
-            // 3. CPI (Cost Performance Index)
-            double cpi = _planningService.CalculerPerformanceCoutCPI(toutesLesTaches);
-
-            // 4. Lot le plus à risque
+            // 2. Lot le plus à risque
             string nomLotRisque = "N/A";
             double deriveJoursRisque = 0;
+            var dateReference = DateTime.Today;
 
             var lotsAvecDerive = tachesNonConteneurs
                 .Where(t => (t.Statut == Statut.EnCours || t.Statut == Statut.EnRetard) && t.DateFinPlanifiee.HasValue && t.DateFinPlanifiee.Value < dateReference)
@@ -143,18 +136,54 @@ namespace PlanAthena.Services.Usecases
                 deriveJoursRisque = Math.Round(lotsAvecDerive.DeriveMoyenne, 1);
             }
 
-            // 5. Métier le plus en tension
-            var tensionMetier = _planningService.CalculerTensionMetierPourPeriodeFuture(DateTime.Today, 14);
+            // 3. Métier le plus en tension
+            var tensionMetier = _planningService.CalculerTensionMetierPourPeriodeFuture(dateReference, 14);
+
+            // --- Calcul des KPIs EVM ---
+            var evmReport = _planningService.GetRapportEVMComplet(dateReference, toutesLesTaches);
+            decimal cv = 0, eac = 0;
+            double spi = 1.0, cpi = 1.0;
+            double svDays = 0.0; // NOUVEAU
+
+            if (evmReport.BaselineExists)
+            {
+                decimal sv = evmReport.EarnedValue - evmReport.PlannedValue;
+                cv = evmReport.EarnedValue - evmReport.ActualCost;
+                spi = evmReport.PlannedValue > 0 ? (double)evmReport.EarnedValue / (double)evmReport.PlannedValue : 1.0;
+                cpi = evmReport.ActualCost > 0 ? (double)evmReport.EarnedValue / (double)evmReport.ActualCost : 1.0;
+                eac = cpi > 0 ? evmReport.BudgetAtCompletion / (decimal)cpi : evmReport.BudgetAtCompletion;
+
+                // --- NOUVELLE LOGIQUE : Conversion de SV en jours ---
+                var baseline = _planningService.GetBaseline();
+                if (baseline != null)
+                {
+                    double dureePlanifieeJours = (baseline.DateFinPlanifieeInitiale - baseline.DateCreation).TotalDays;
+                    if (dureePlanifieeJours > 0 && baseline.BudgetAtCompletion > 0)
+                    {
+                        decimal coutMoyenParJour = baseline.BudgetAtCompletion / (decimal)dureePlanifieeJours;
+                        if (coutMoyenParJour > 0)
+                        {
+                            svDays = (double)(sv / coutMoyenParJour);
+                        }
+                    }
+                }
+            }
 
             return new CockpitKpiData
             {
                 ProgressionGlobalePourcentage = progressionGlobale,
-                PerformanceCalendrierSPI = spi,
-                PerformanceCoutCPI = cpi,
                 LotLePlusARisqueNom = nomLotRisque,
                 LotLePlusARisqueDeriveJours = deriveJoursRisque,
                 MetierLePlusEnTensionNom = tensionMetier.NomMetier,
-                MetierLePlusEnTensionTauxOccupation = tensionMetier.TauxOccupation
+                MetierLePlusEnTensionTauxOccupation = tensionMetier.TauxOccupation,
+
+                // KPIs EVM
+                BudgetAtCompletion = evmReport.BudgetAtCompletion,
+                EstimateAtCompletion = eac,
+                ScheduleVarianceDays = svDays, // MODIFIÉ
+                CostVariance = cv,
+                SchedulePerformanceIndex = spi,
+                CostPerformanceIndex = cpi
             };
         }
 
@@ -221,15 +250,12 @@ namespace PlanAthena.Services.Usecases
 
             var maintenant = DateTime.Now;
 
-            // --- NOUVELLE LOGIQUE DE STATUT ---
             if (debutReel.HasValue && finReelle.HasValue)
             {
-                // Un état final : la tâche est terminée, peu importe si elle était en retard.
                 tache.Statut = Statut.Terminée;
             }
-            else if (debutReel.HasValue) // La tâche a démarré mais n'est pas finie
+            else if (debutReel.HasValue)
             {
-                // On vérifie si elle est déjà en retard par rapport à sa fin planifiée.
                 if (tache.DateFinPlanifiee.HasValue && maintenant > tache.DateFinPlanifiee.Value)
                 {
                     tache.Statut = Statut.EnRetard;
@@ -239,11 +265,10 @@ namespace PlanAthena.Services.Usecases
                     tache.Statut = Statut.EnCours;
                 }
             }
-            else // Aucune date réelle saisie, on revient à un statut prévisionnel
+            else
             {
                 if (tache.DateFinPlanifiee.HasValue && maintenant > tache.DateFinPlanifiee.Value)
                 {
-                    // Même si on a effacé les dates réelles, elle est toujours en retard.
                     tache.Statut = Statut.EnRetard;
                 }
                 else if (tache.DateDebutPlanifiee.HasValue)
@@ -260,7 +285,6 @@ namespace PlanAthena.Services.Usecases
             _planningService.ReconcilierAvecAvancementReel(tache);
         }
 
-        // ExporterVueTaskList est hors périmètre pour la V1
         public virtual void ExporterVueTaskList(List<Tache> tachesAExporter)
         {
             throw new NotImplementedException("Export non implémenté en V1.");
@@ -269,6 +293,7 @@ namespace PlanAthena.Services.Usecases
         #endregion
 
         #region Planning
+
         public virtual (DateTime? Start, DateTime? End) ObtenirPlageDeDatesDuPlanning()
         {
             var planning = _planningService.GetCurrentPlanning();
@@ -303,51 +328,33 @@ namespace PlanAthena.Services.Usecases
             var mapStatuts = toutesLesTaches.ToDictionary(t => t.TacheId, t => t.Statut);
             var dateFin = dateDebut.Date.AddDays(nombreDeJours);
 
-
-
-            // 1. OBTENIR TOUS LES OUVRIERS DU PLANNING COMPLET
-            // On ne filtre plus par date à ce stade.
             var tousLesSegmentsDuProjet = planning.SegmentsParOuvrierId.SelectMany(kvp => kvp.Value);
             var tousLesOuvrierIds = tousLesSegmentsDuProjet.Select(s => s.OuvrierId).Distinct().ToList();
             var tousLesOuvriersConcernes = _ressourceService.GetAllOuvriers()
                 .Where(o => tousLesOuvrierIds.Contains(o.OuvrierId))
-                .OrderBy(o => o.MetierId) // <-- MODIFIÉ : On trie par MetierId, puis par nom
+                .OrderBy(o => o.MetierId)
                 .ThenBy(o => o.NomComplet)
                 .ToList();
 
-            // Si aucun ouvrier n'est planifié du tout, on s'arrête.
             if (!tousLesOuvriersConcernes.Any())
             {
                 return new PlanningViewData();
             }
 
-            // 2. Préparer la structure de données finale AVEC LA LISTE STABLE
             var resultat = new PlanningViewData
             {
-                Ouvriers = tousLesOuvriersConcernes, // <-- Utilise la liste complète et stable
+                Ouvriers = tousLesOuvriersConcernes,
                 Jours = Enumerable.Range(0, nombreDeJours).Select(i => dateDebut.Date.AddDays(i)).ToList()
             };
             var tousLesMetiers = _ressourceService.GetAllMetiers();
             resultat.Metiers = tousLesMetiers.ToDictionary(m => m.MetierId, m => m);
-            // On suppose l'existence d'une méthode pour générer/récupérer les couleurs.
-            // Pour l'exemple, on crée une map simple. Dans une vraie app, ce serait un service.
             resultat.MetierColors = tousLesMetiers.ToDictionary(
-        m => m.MetierId,
-        m =>
-        {
-            try
-            {
-                // ColorTranslator peut convertir des noms de couleur ("Red") ou des codes hex ("#FF0000")
-                return ColorTranslator.FromHtml(m.CouleurHex);
-            }
-            catch
-            {
-                // Si la couleur est invalide dans la DB, on met une couleur par défaut
-                return Color.LightGray;
-            }
-        }
-    );
-            // Initialiser les listes de blocks pour chaque ouvrier
+                m => m.MetierId,
+                m => {
+                    try { return ColorTranslator.FromHtml(m.CouleurHex); }
+                    catch { return Color.LightGray; }
+                });
+
             foreach (var ouvrier in tousLesOuvriersConcernes)
             {
                 resultat.BlocksParOuvrier[ouvrier.OuvrierId] = new List<PlanningBlock>[nombreDeJours];
@@ -357,7 +364,6 @@ namespace PlanAthena.Services.Usecases
                 }
             }
 
-            // 3. MAINTENANT, filtrer les segments pour la période visible et les transformer en PlanningBlocks
             var segmentsFiltresPourPeriode = tousLesSegmentsDuProjet
                 .Where(s => s.Jour >= dateDebut.Date && s.Jour < dateFin)
                 .ToList();
@@ -365,7 +371,7 @@ namespace PlanAthena.Services.Usecases
             var heuresDebutJournee = config.HeureDebutJournee;
             var heuresTravailJournee = config.DureeJournaliereStandardHeures;
 
-            foreach (var segment in segmentsFiltresPourPeriode) // <-- Itère sur la liste filtrée
+            foreach (var segment in segmentsFiltresPourPeriode)
             {
                 double startOffset = (segment.HeureDebut.TotalHours - heuresDebutJournee) / heuresTravailJournee;
                 double width = segment.HeuresTravaillees / heuresTravailJournee;
@@ -382,7 +388,6 @@ namespace PlanAthena.Services.Usecases
                 int dayIndex = (segment.Jour.Date - dateDebut.Date).Days;
                 if (dayIndex >= 0 && dayIndex < nombreDeJours)
                 {
-                    // Vérifier que l'ouvrier existe bien dans le dictionnaire (devrait toujours être le cas)
                     if (resultat.BlocksParOuvrier.ContainsKey(segment.OuvrierId))
                     {
                         resultat.BlocksParOuvrier[segment.OuvrierId][dayIndex].Add(block);

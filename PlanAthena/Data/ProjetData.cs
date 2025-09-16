@@ -14,7 +14,10 @@ namespace PlanAthena.Data
         [Obsolete("Les blocs sont maintenant imbriqués dans les lots. Laisser pour compatibilité ascendante.")]
         public List<Bloc> Blocs { get; set; }
 
-        // --- NOUVELLES PROPRIÉTÉS POUR LA PERSISTANCE COMPLÈTE ---
+        /// <summary>
+        /// L'état du premier planning généré (baseline).
+        /// </summary> 
+        public PlanningBaseline? Baseline { get; set; }
 
         /// <summary>
         /// L'état du dernier planning généré.
@@ -31,6 +34,8 @@ namespace PlanAthena.Data
         /// La clé est le TacheId.
         /// </summary>
         public Dictionary<string, Statut> TaskStatuses { get; set; }
+
+
 
         public ProjectSummaryData Summary { get; set; }
         // --- MÉTADONNÉES DE SAUVEGARDE ---

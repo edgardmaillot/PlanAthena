@@ -1,0 +1,79 @@
+@startuml
+' --- Configuration ---
+title Cas d'Usage : Gérer le Cycle de Vie d'un Projet (ProjectPersistenceUseCase)
+skinparam componentStyle uml2
+skinparam wrapWidth 250
+skinparam participantPadding 5
+skinparam sequenceMessageAlign center
+skinparam lifelineStrategy solid
+skinparam shadowing false
+<style>
+    activityDiagram {
+        FontColor #222222; BorderColor #555555; BackgroundColor #FFFFFF; ArrowColor #333333;
+        node { BackgroundColor #LightSkyBlue; BorderColor #0077BE; }
+        partition { BackgroundColor #F0F0F0; BorderColor #AAAAAA; }
+        diamond { BackgroundColor #FFFFAA; BorderColor #DDBB00; }
+        note { BackgroundColor #FFFFEE; BorderColor #DDBB88; }
+    }
+</style>
+
+' --- Début du Flux ---
+start
+
+partition "Cas d'Usage : Sauvegarder" {
+    if (Le chemin du fichier est-il déjà connu ?) then (oui)
+        :Assemblage de toutes les données du projet\n(Tâches, Ressources, Planning, Baseline...);
+        :Sauvegarde directe du fichier;
+        stop
+    else (non)
+        -> Redirige vers "Sauvegarder Sous";
+    endif
+}
+
+partition "Cas d'Usage : Sauvegarder Sous" {
+    :Affichage de la boîte de dialogue "Enregistrer sous";
+    if (L'utilisateur a validé ?) then (oui)
+        :Assemblage de toutes les données du projet;
+        :Sauvegarde du fichier au nouvel emplacement;
+    else (non)
+        :Action annulée;
+    endif
+    stop
+}
+
+partition "Cas d'Usage : Charger un Projet" {
+    if (Modifications non sauvegardées ?) then (oui)
+        if (L'utilisateur confirme la perte des changements ?) then (oui)
+            'continue
+        else (non)
+            :Action annulée;
+            stop
+        endif
+    endif
+    :Affichage de la boîte de dialogue "Ouvrir";
+    if (L'utilisateur a sélectionné un fichier ?) then (oui)
+        :Nettoyage de l'état de l'application;
+        :Lecture et décompression du fichier projet;
+        :Chargement des données dans les services\n(Projet, Tâches, Planning, Baseline...);
+        :Mise à jour des statuts des tâches (ex: 'En Retard');
+    else (non)
+        :Action annulée;
+    endif
+    stop
+}
+
+partition "Cas d'Usage : Créer un Nouveau Projet" {
+    if (Modifications non sauvegardées ?) then (oui)
+        if (L'utilisateur confirme la perte des changements ?) then (oui)
+            'continue
+        else (non)
+            :Action annulée;
+            stop
+        endif
+    endif
+    :Nettoyage de l'état de l'application;
+    :Création d'une structure de projet vierge;
+    :Chargement des métiers par défaut;
+    stop
+}
+@enduml

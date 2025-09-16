@@ -37,6 +37,14 @@ namespace PlanAthena.View.TaskManager.Cockpit
             tabPageTaskList = new Krypton.Navigator.KryptonPage();
             tabPagePlanning = new Krypton.Navigator.KryptonPage();
             kryptonTableLayoutPanel3 = new Krypton.Toolkit.KryptonTableLayoutPanel();
+            kryptonPanel1 = new Krypton.Toolkit.KryptonPanel();
+            kryptonLabel8 = new Krypton.Toolkit.KryptonLabel();
+            kryptonLabel7 = new Krypton.Toolkit.KryptonLabel();
+            kryptonLabel6 = new Krypton.Toolkit.KryptonLabel();
+            lblDeviationBudget = new Krypton.Toolkit.KryptonLabel();
+            lblDispoRessources = new Krypton.Toolkit.KryptonLabel();
+            lblSvValue = new Krypton.Toolkit.KryptonLabel();
+            kryptonPictureBox1 = new Krypton.Toolkit.KryptonPictureBox();
             kryptonPanel2 = new Krypton.Toolkit.KryptonPanel();
             kryptonLabel5 = new Krypton.Toolkit.KryptonLabel();
             kryptonLabel4 = new Krypton.Toolkit.KryptonLabel();
@@ -46,22 +54,23 @@ namespace PlanAthena.View.TaskManager.Cockpit
             lblProgression = new Krypton.Toolkit.KryptonLabel();
             kryptonHeaderGroup1 = new Krypton.Toolkit.KryptonHeaderGroup();
             kryptonPanel3 = new Krypton.Toolkit.KryptonPanel();
+            lblDerivePlanning = new Krypton.Toolkit.KryptonLabel();
+            kryptonLabel13 = new Krypton.Toolkit.KryptonLabel();
             lblMetierTension = new Krypton.Toolkit.KryptonLabel();
             kryptonLabel3 = new Krypton.Toolkit.KryptonLabel();
             lblLotRisque = new Krypton.Toolkit.KryptonLabel();
             kryptonLabel1 = new Krypton.Toolkit.KryptonLabel();
             kryptonHeaderGroup2 = new Krypton.Toolkit.KryptonHeaderGroup();
             kryptonPanel4 = new Krypton.Toolkit.KryptonPanel();
+            kryptonLabel12 = new Krypton.Toolkit.KryptonLabel();
+            kryptonLabel10 = new Krypton.Toolkit.KryptonLabel();
+            kryptonLabel9 = new Krypton.Toolkit.KryptonLabel();
+            lblCvValue = new Krypton.Toolkit.KryptonLabel();
+            lblEacValue = new Krypton.Toolkit.KryptonLabel();
+            lblBacValue = new Krypton.Toolkit.KryptonLabel();
+            kryptonHeaderGroup3 = new Krypton.Toolkit.KryptonHeaderGroup();
             kryptonPanel5 = new Krypton.Toolkit.KryptonPanel();
             kryptonButton2 = new Krypton.Toolkit.KryptonButton();
-            lblDerivePlanning = new Krypton.Toolkit.KryptonLabel();
-            lblDispoRessources = new Krypton.Toolkit.KryptonLabel();
-            lblDeviationBudget = new Krypton.Toolkit.KryptonLabel();
-            kryptonLabel6 = new Krypton.Toolkit.KryptonLabel();
-            kryptonLabel7 = new Krypton.Toolkit.KryptonLabel();
-            kryptonLabel8 = new Krypton.Toolkit.KryptonLabel();
-            kryptonPanel1 = new Krypton.Toolkit.KryptonPanel();
-            kryptonPictureBox1 = new Krypton.Toolkit.KryptonPictureBox();
             kryptonTableLayoutPanel1.SuspendLayout();
             kryptonTableLayoutPanel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)kryptonPanel0).BeginInit();
@@ -70,6 +79,9 @@ namespace PlanAthena.View.TaskManager.Cockpit
             ((System.ComponentModel.ISupportInitialize)tabPageTaskList).BeginInit();
             ((System.ComponentModel.ISupportInitialize)tabPagePlanning).BeginInit();
             kryptonTableLayoutPanel3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)kryptonPanel1).BeginInit();
+            kryptonPanel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)kryptonPictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)kryptonPanel2).BeginInit();
             kryptonPanel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)kryptonHeaderGroup1).BeginInit();
@@ -79,11 +91,11 @@ namespace PlanAthena.View.TaskManager.Cockpit
             ((System.ComponentModel.ISupportInitialize)kryptonHeaderGroup2).BeginInit();
             ((System.ComponentModel.ISupportInitialize)kryptonHeaderGroup2.Panel).BeginInit();
             ((System.ComponentModel.ISupportInitialize)kryptonPanel4).BeginInit();
+            kryptonPanel4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)kryptonHeaderGroup3).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)kryptonHeaderGroup3.Panel).BeginInit();
             ((System.ComponentModel.ISupportInitialize)kryptonPanel5).BeginInit();
             kryptonPanel5.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)kryptonPanel1).BeginInit();
-            kryptonPanel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)kryptonPictureBox1).BeginInit();
             SuspendLayout();
             // 
             // kryptonTableLayoutPanel1
@@ -202,6 +214,96 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonTableLayoutPanel3.Size = new Size(244, 755);
             kryptonTableLayoutPanel3.TabIndex = 2;
             // 
+            // kryptonPanel1
+            // 
+            kryptonPanel1.Controls.Add(kryptonLabel8);
+            kryptonPanel1.Controls.Add(kryptonLabel7);
+            kryptonPanel1.Controls.Add(kryptonLabel6);
+            kryptonPanel1.Controls.Add(lblDeviationBudget);
+            kryptonPanel1.Controls.Add(lblDispoRessources);
+            kryptonPanel1.Controls.Add(lblSvValue);
+            kryptonPanel1.Controls.Add(kryptonPictureBox1);
+            kryptonPanel1.Dock = DockStyle.Fill;
+            kryptonPanel1.Location = new Point(3, 3);
+            kryptonPanel1.Name = "kryptonPanel1";
+            kryptonPanel1.Size = new Size(238, 174);
+            kryptonPanel1.StateCommon.Image = Properties.Resources.sunny;
+            kryptonPanel1.StateCommon.ImageStyle = Krypton.Toolkit.PaletteImageStyle.Stretch;
+            kryptonPanel1.TabIndex = 1;
+            // 
+            // kryptonLabel8
+            // 
+            kryptonLabel8.Location = new Point(139, 94);
+            kryptonLabel8.Name = "kryptonLabel8";
+            kryptonLabel8.Size = new Size(30, 26);
+            kryptonLabel8.TabIndex = 5;
+            kryptonLabel8.Values.Image = Properties.Resources.Ic_Budget;
+            kryptonLabel8.Values.Text = "";
+            // 
+            // kryptonLabel7
+            // 
+            kryptonLabel7.Location = new Point(139, 62);
+            kryptonLabel7.Name = "kryptonLabel7";
+            kryptonLabel7.Size = new Size(30, 26);
+            kryptonLabel7.TabIndex = 4;
+            kryptonLabel7.Values.Image = Properties.Resources.Ic_Ressource;
+            kryptonLabel7.Values.Text = "";
+            // 
+            // kryptonLabel6
+            // 
+            kryptonLabel6.Location = new Point(139, 31);
+            kryptonLabel6.Name = "kryptonLabel6";
+            kryptonLabel6.Size = new Size(30, 26);
+            kryptonLabel6.TabIndex = 3;
+            kryptonLabel6.Values.Image = Properties.Resources.Ic_Planning;
+            kryptonLabel6.Values.Text = "";
+            // 
+            // lblDeviationBudget
+            // 
+            lblDeviationBudget.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            lblDeviationBudget.LabelStyle = Krypton.Toolkit.LabelStyle.BoldControl;
+            lblDeviationBudget.Location = new Point(184, 95);
+            lblDeviationBudget.MaximumSize = new Size(120, 22);
+            lblDeviationBudget.Name = "lblDeviationBudget";
+            lblDeviationBudget.PaletteMode = Krypton.Toolkit.PaletteMode.Office2007BlackDarkMode;
+            lblDeviationBudget.Size = new Size(53, 20);
+            lblDeviationBudget.TabIndex = 2;
+            lblDeviationBudget.Values.Text = "Budget";
+            // 
+            // lblDispoRessources
+            // 
+            lblDispoRessources.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            lblDispoRessources.LabelStyle = Krypton.Toolkit.LabelStyle.BoldControl;
+            lblDispoRessources.Location = new Point(163, 65);
+            lblDispoRessources.MaximumSize = new Size(120, 22);
+            lblDispoRessources.Name = "lblDispoRessources";
+            lblDispoRessources.PaletteMode = Krypton.Toolkit.PaletteMode.Office2007BlackDarkMode;
+            lblDispoRessources.Size = new Size(74, 20);
+            lblDispoRessources.TabIndex = 1;
+            lblDispoRessources.Values.Text = "Ressources";
+            // 
+            // lblSvValue
+            // 
+            lblSvValue.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            lblSvValue.LabelStyle = Krypton.Toolkit.LabelStyle.BoldPanel;
+            lblSvValue.Location = new Point(165, 36);
+            lblSvValue.Name = "lblSvValue";
+            lblSvValue.PaletteMode = Krypton.Toolkit.PaletteMode.Office2007BlackDarkMode;
+            lblSvValue.Size = new Size(71, 20);
+            lblSvValue.TabIndex = 3;
+            lblSvValue.Values.Text = "lblSvValue";
+            // 
+            // kryptonPictureBox1
+            // 
+            kryptonPictureBox1.Dock = DockStyle.Fill;
+            kryptonPictureBox1.Image = Properties.Resources.cloudy;
+            kryptonPictureBox1.Location = new Point(0, 0);
+            kryptonPictureBox1.Name = "kryptonPictureBox1";
+            kryptonPictureBox1.Size = new Size(238, 174);
+            kryptonPictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+            kryptonPictureBox1.TabIndex = 6;
+            kryptonPictureBox1.TabStop = false;
+            // 
             // kryptonPanel2
             // 
             kryptonPanel2.Controls.Add(kryptonLabel5);
@@ -286,6 +388,8 @@ namespace PlanAthena.View.TaskManager.Cockpit
             // 
             // kryptonPanel3
             // 
+            kryptonPanel3.Controls.Add(lblDerivePlanning);
+            kryptonPanel3.Controls.Add(kryptonLabel13);
             kryptonPanel3.Controls.Add(lblMetierTension);
             kryptonPanel3.Controls.Add(kryptonLabel3);
             kryptonPanel3.Controls.Add(lblLotRisque);
@@ -296,6 +400,25 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonPanel3.Name = "kryptonPanel3";
             kryptonPanel3.Size = new Size(238, 169);
             kryptonPanel3.TabIndex = 3;
+            // 
+            // lblDerivePlanning
+            // 
+            lblDerivePlanning.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            lblDerivePlanning.Location = new Point(144, 119);
+            lblDerivePlanning.MaximumSize = new Size(120, 22);
+            lblDerivePlanning.Name = "lblDerivePlanning";
+            lblDerivePlanning.Size = new Size(58, 20);
+            lblDerivePlanning.TabIndex = 0;
+            lblDerivePlanning.Values.Text = "Planning";
+            // 
+            // kryptonLabel13
+            // 
+            kryptonLabel13.LabelStyle = Krypton.Toolkit.LabelStyle.BoldPanel;
+            kryptonLabel13.Location = new Point(4, 119);
+            kryptonLabel13.Name = "kryptonLabel13";
+            kryptonLabel13.Size = new Size(87, 20);
+            kryptonLabel13.TabIndex = 5;
+            kryptonLabel13.Values.Text = "Retard total :";
             // 
             // lblMetierTension
             // 
@@ -347,11 +470,79 @@ namespace PlanAthena.View.TaskManager.Cockpit
             // 
             // kryptonPanel4
             // 
+            kryptonPanel4.Controls.Add(kryptonLabel12);
+            kryptonPanel4.Controls.Add(kryptonLabel10);
+            kryptonPanel4.Controls.Add(kryptonLabel9);
+            kryptonPanel4.Controls.Add(lblCvValue);
+            kryptonPanel4.Controls.Add(lblEacValue);
+            kryptonPanel4.Controls.Add(lblBacValue);
+            kryptonPanel4.Controls.Add(kryptonHeaderGroup3);
             kryptonPanel4.Dock = DockStyle.Fill;
             kryptonPanel4.Location = new Point(3, 533);
             kryptonPanel4.Name = "kryptonPanel4";
             kryptonPanel4.Size = new Size(238, 169);
             kryptonPanel4.TabIndex = 4;
+            // 
+            // kryptonLabel12
+            // 
+            kryptonLabel12.LabelStyle = Krypton.Toolkit.LabelStyle.BoldPanel;
+            kryptonLabel12.Location = new Point(4, 115);
+            kryptonLabel12.Name = "kryptonLabel12";
+            kryptonLabel12.Size = new Size(115, 20);
+            kryptonLabel12.TabIndex = 8;
+            kryptonLabel12.Values.Text = "Dérive budgétaire";
+            // 
+            // kryptonLabel10
+            // 
+            kryptonLabel10.LabelStyle = Krypton.Toolkit.LabelStyle.BoldPanel;
+            kryptonLabel10.Location = new Point(4, 80);
+            kryptonLabel10.Name = "kryptonLabel10";
+            kryptonLabel10.Size = new Size(108, 20);
+            kryptonLabel10.TabIndex = 6;
+            kryptonLabel10.Values.Text = "Budget probable";
+            // 
+            // kryptonLabel9
+            // 
+            kryptonLabel9.LabelStyle = Krypton.Toolkit.LabelStyle.BoldPanel;
+            kryptonLabel9.Location = new Point(4, 51);
+            kryptonLabel9.Name = "kryptonLabel9";
+            kryptonLabel9.Size = new Size(100, 20);
+            kryptonLabel9.TabIndex = 5;
+            kryptonLabel9.Values.Text = "Budget planifié";
+            // 
+            // lblCvValue
+            // 
+            lblCvValue.Location = new Point(139, 115);
+            lblCvValue.Name = "lblCvValue";
+            lblCvValue.Size = new Size(68, 20);
+            lblCvValue.TabIndex = 4;
+            lblCvValue.Values.Text = "lblCvValue";
+            // 
+            // lblEacValue
+            // 
+            lblEacValue.Location = new Point(139, 80);
+            lblEacValue.Name = "lblEacValue";
+            lblEacValue.Size = new Size(72, 20);
+            lblEacValue.TabIndex = 2;
+            lblEacValue.Values.Text = "lblEacValue";
+            // 
+            // lblBacValue
+            // 
+            lblBacValue.Location = new Point(139, 51);
+            lblBacValue.Name = "lblBacValue";
+            lblBacValue.Size = new Size(73, 20);
+            lblBacValue.TabIndex = 1;
+            lblBacValue.Values.Text = "lblBacValue";
+            // 
+            // kryptonHeaderGroup3
+            // 
+            kryptonHeaderGroup3.Dock = DockStyle.Fill;
+            kryptonHeaderGroup3.Location = new Point(0, 0);
+            kryptonHeaderGroup3.Size = new Size(238, 169);
+            kryptonHeaderGroup3.TabIndex = 0;
+            kryptonHeaderGroup3.ValuesPrimary.Heading = "Finance";
+            kryptonHeaderGroup3.ValuesPrimary.Image = Properties.Resources.Ic_Budget;
+            kryptonHeaderGroup3.ValuesSecondary.Heading = "";
             // 
             // kryptonPanel5
             // 
@@ -373,100 +564,6 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonButton2.Values.DropDownArrowColor = Color.Empty;
             kryptonButton2.Values.Text = "Fermer";
             // 
-            // lblDerivePlanning
-            // 
-            lblDerivePlanning.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            lblDerivePlanning.LabelStyle = Krypton.Toolkit.LabelStyle.BoldControl;
-            lblDerivePlanning.Location = new Point(175, 35);
-            lblDerivePlanning.MaximumSize = new Size(120, 22);
-            lblDerivePlanning.Name = "lblDerivePlanning";
-            lblDerivePlanning.PaletteMode = Krypton.Toolkit.PaletteMode.Office2007BlackDarkMode;
-            lblDerivePlanning.Size = new Size(62, 20);
-            lblDerivePlanning.StateCommon.LongText.Color1 = Color.White;
-            lblDerivePlanning.StateCommon.ShortText.Color1 = Color.White;
-            lblDerivePlanning.TabIndex = 0;
-            lblDerivePlanning.Values.ImageTransparentColor = Color.Black;
-            lblDerivePlanning.Values.Text = "Planning";
-            // 
-            // lblDispoRessources
-            // 
-            lblDispoRessources.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            lblDispoRessources.LabelStyle = Krypton.Toolkit.LabelStyle.BoldControl;
-            lblDispoRessources.Location = new Point(163, 65);
-            lblDispoRessources.MaximumSize = new Size(120, 22);
-            lblDispoRessources.Name = "lblDispoRessources";
-            lblDispoRessources.PaletteMode = Krypton.Toolkit.PaletteMode.Office2007BlackDarkMode;
-            lblDispoRessources.Size = new Size(74, 20);
-            lblDispoRessources.TabIndex = 1;
-            lblDispoRessources.Values.Text = "Ressources";
-            // 
-            // lblDeviationBudget
-            // 
-            lblDeviationBudget.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            lblDeviationBudget.LabelStyle = Krypton.Toolkit.LabelStyle.BoldControl;
-            lblDeviationBudget.Location = new Point(184, 95);
-            lblDeviationBudget.MaximumSize = new Size(120, 22);
-            lblDeviationBudget.Name = "lblDeviationBudget";
-            lblDeviationBudget.PaletteMode = Krypton.Toolkit.PaletteMode.Office2007BlackDarkMode;
-            lblDeviationBudget.Size = new Size(53, 20);
-            lblDeviationBudget.TabIndex = 2;
-            lblDeviationBudget.Values.Text = "Budget";
-            // 
-            // kryptonLabel6
-            // 
-            kryptonLabel6.Location = new Point(139, 31);
-            kryptonLabel6.Name = "kryptonLabel6";
-            kryptonLabel6.Size = new Size(30, 26);
-            kryptonLabel6.TabIndex = 3;
-            kryptonLabel6.Values.Image = Properties.Resources.Ic_Planning;
-            kryptonLabel6.Values.Text = "";
-            // 
-            // kryptonLabel7
-            // 
-            kryptonLabel7.Location = new Point(139, 62);
-            kryptonLabel7.Name = "kryptonLabel7";
-            kryptonLabel7.Size = new Size(30, 26);
-            kryptonLabel7.TabIndex = 4;
-            kryptonLabel7.Values.Image = Properties.Resources.Ic_Ressource;
-            kryptonLabel7.Values.Text = "";
-            // 
-            // kryptonLabel8
-            // 
-            kryptonLabel8.Location = new Point(139, 94);
-            kryptonLabel8.Name = "kryptonLabel8";
-            kryptonLabel8.Size = new Size(30, 26);
-            kryptonLabel8.TabIndex = 5;
-            kryptonLabel8.Values.Image = Properties.Resources.Ic_Budget;
-            kryptonLabel8.Values.Text = "";
-            // 
-            // kryptonPanel1
-            // 
-            kryptonPanel1.Controls.Add(kryptonLabel8);
-            kryptonPanel1.Controls.Add(kryptonLabel7);
-            kryptonPanel1.Controls.Add(kryptonLabel6);
-            kryptonPanel1.Controls.Add(lblDeviationBudget);
-            kryptonPanel1.Controls.Add(lblDispoRessources);
-            kryptonPanel1.Controls.Add(lblDerivePlanning);
-            kryptonPanel1.Controls.Add(kryptonPictureBox1);
-            kryptonPanel1.Dock = DockStyle.Fill;
-            kryptonPanel1.Location = new Point(3, 3);
-            kryptonPanel1.Name = "kryptonPanel1";
-            kryptonPanel1.Size = new Size(238, 174);
-            kryptonPanel1.StateCommon.Image = Properties.Resources.sunny;
-            kryptonPanel1.StateCommon.ImageStyle = Krypton.Toolkit.PaletteImageStyle.Stretch;
-            kryptonPanel1.TabIndex = 1;
-            // 
-            // kryptonPictureBox1
-            // 
-            kryptonPictureBox1.Dock = DockStyle.Fill;
-            kryptonPictureBox1.Image = Properties.Resources.cloudy;
-            kryptonPictureBox1.Location = new Point(0, 0);
-            kryptonPictureBox1.Name = "kryptonPictureBox1";
-            kryptonPictureBox1.Size = new Size(238, 174);
-            kryptonPictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
-            kryptonPictureBox1.TabIndex = 6;
-            kryptonPictureBox1.TabStop = false;
-            // 
             // Cockpit
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -485,6 +582,10 @@ namespace PlanAthena.View.TaskManager.Cockpit
             ((System.ComponentModel.ISupportInitialize)tabPageTaskList).EndInit();
             ((System.ComponentModel.ISupportInitialize)tabPagePlanning).EndInit();
             kryptonTableLayoutPanel3.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)kryptonPanel1).EndInit();
+            kryptonPanel1.ResumeLayout(false);
+            kryptonPanel1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)kryptonPictureBox1).EndInit();
             ((System.ComponentModel.ISupportInitialize)kryptonPanel2).EndInit();
             kryptonPanel2.ResumeLayout(false);
             kryptonPanel2.PerformLayout();
@@ -496,12 +597,12 @@ namespace PlanAthena.View.TaskManager.Cockpit
             ((System.ComponentModel.ISupportInitialize)kryptonHeaderGroup2.Panel).EndInit();
             ((System.ComponentModel.ISupportInitialize)kryptonHeaderGroup2).EndInit();
             ((System.ComponentModel.ISupportInitialize)kryptonPanel4).EndInit();
+            kryptonPanel4.ResumeLayout(false);
+            kryptonPanel4.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)kryptonHeaderGroup3.Panel).EndInit();
+            ((System.ComponentModel.ISupportInitialize)kryptonHeaderGroup3).EndInit();
             ((System.ComponentModel.ISupportInitialize)kryptonPanel5).EndInit();
             kryptonPanel5.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)kryptonPanel1).EndInit();
-            kryptonPanel1.ResumeLayout(false);
-            kryptonPanel1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)kryptonPictureBox1).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -541,5 +642,14 @@ namespace PlanAthena.View.TaskManager.Cockpit
         private Krypton.Toolkit.KryptonLabel lblDispoRessources;
         private Krypton.Toolkit.KryptonLabel lblDerivePlanning;
         private Krypton.Toolkit.KryptonPictureBox kryptonPictureBox1;
+        private Krypton.Toolkit.KryptonHeaderGroup kryptonHeaderGroup3;
+        private Krypton.Toolkit.KryptonLabel lblEacValue;
+        private Krypton.Toolkit.KryptonLabel lblBacValue;
+        private Krypton.Toolkit.KryptonLabel lblCvValue;
+        private Krypton.Toolkit.KryptonLabel lblSvValue;
+        private Krypton.Toolkit.KryptonLabel kryptonLabel12;
+        private Krypton.Toolkit.KryptonLabel kryptonLabel10;
+        private Krypton.Toolkit.KryptonLabel kryptonLabel9;
+        private Krypton.Toolkit.KryptonLabel kryptonLabel13;
     }
 }

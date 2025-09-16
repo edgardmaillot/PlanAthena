@@ -1,0 +1,56 @@
+@startuml
+' --- Configuration ---
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+package "DTOs" {
+class ConsolidatedPlanning
+class ConfigurationPlanification
+class PlanningBaseline {
++ BudgetAtCompletion: decimal
++ CourbePlannedValueCumulative: Dictionary
++ BudgetInitialParTacheId: Dictionary
++ ConsPlanningInitial: ConsolidatedPlanning
+}
+class EvmReportDto {
++ BaselineExists: bool
++ PlannedValue: decimal
++ EarnedValue: decimal
++ ActualCost: decimal
+}
+}
+package "Business (Sources de Vérité)" {
+class PlanningService {
+' --- Champs Privés ---
+- _currentPlanning: ConsolidatedPlanning
+- _currentConfig: ConfigurationPlanification
+- _currentBaseline: PlanningBaseline
+--
+' --- Méthodes de Gestion de l'État ---
++ LoadPlanning(planning, config, baseline)
++ UpdatePlanning(newPlanning, newConfig)
++ ClearPlanning()
++ SetBaseline(baseline: PlanningBaseline)
++ GetBaseline(): PlanningBaseline
+--
+' --- Méthodes d'Analyse ---
++ GetRapportEVMComplet(dateRef, taches): EvmReportDto
++ ObtenirInfosPlanificationPourToutesLesTaches(): Dictionary
++ GetNombreJoursOuvres(dateDebut, dateFin): int
+}
+'TaskManagerService update planning when task is deleted or receive mass update from Planificator
+class TaskManagerService {
+    + UpdatePlanning(planning, config)
+    + SupprimerTache(tacheId)
+}
+' --- Relations ---
+TaskManagerService ..> PlanningService : "utilise"
+PlanningService ..> ConsolidatedPlanning : "détient"
+PlanningService ..> ConfigurationPlanification : "détient"
+PlanningService ..> PlanningBaseline : "détient"
+PlanningService ..> EvmReportDto : "retourne"
+note top of PlanningService
+<b>Source de Vérité de la Performance</b>
+Maintient l'état du planning et de la baseline.
+Calcule et expose les indicateurs de performance EVM.
+end note
+@enduml

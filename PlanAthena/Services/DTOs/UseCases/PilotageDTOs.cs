@@ -1,4 +1,4 @@
-// Emplacement: /Services/DTOs/UseCases/PilotageDTOs.cs
+// Emplacement: /Services/DTOs/UseCases/PilotageDTOs.cs Version 0.6.0 : Intègre les indicateurs EVM.
 using PlanAthena.Data;
 
 namespace PlanAthena.Services.DTOs.UseCases
@@ -8,13 +8,20 @@ namespace PlanAthena.Services.DTOs.UseCases
     /// </summary>
     public record CockpitKpiData
     {
+        // Indicateurs existants
         public double ProgressionGlobalePourcentage { get; init; }
-        public double PerformanceCalendrierSPI { get; init; }
-        public double PerformanceCoutCPI { get; init; }
         public string LotLePlusARisqueNom { get; init; }
         public double LotLePlusARisqueDeriveJours { get; init; }
         public string MetierLePlusEnTensionNom { get; init; }
         public double MetierLePlusEnTensionTauxOccupation { get; init; }
+
+        // Nouveaux indicateurs EVM
+        public decimal BudgetAtCompletion { get; init; } // BAC
+        public decimal EstimateAtCompletion { get; init; } // EAC
+        public double ScheduleVarianceDays { get; init; }  // SV
+        public decimal CostVariance { get; init; } // CV
+        public double SchedulePerformanceIndex { get; init; } // SPI
+        public double CostPerformanceIndex { get; init; } // CPI
     }
 
     /// <summary>

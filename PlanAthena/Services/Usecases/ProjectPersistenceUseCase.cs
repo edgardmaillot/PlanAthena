@@ -1,4 +1,4 @@
-// /Services/Usecases/ProjectPersistenceUseCase.cs V0.4.8
+// Fichier: /Services/Usecases/ProjectPersistenceUseCase.cs Version 0.6.0
 
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
@@ -7,12 +7,12 @@ using PlanAthena.Services.DTOs.ProjectPersistence;
 using PlanAthena.Services.DTOs.Projet;
 using PlanAthena.Services.Infrastructure;
 
-
 namespace PlanAthena.Services.Usecases
 {
     /// <summary>
     /// Point d'entrée unique et chef d'orchestre pour toutes les opérations
     /// de cycle de vie d'un projet (Créer, Charger, Sauvegarder).
+    /// Version 0.6.0 : Intègre la persistance de la PlanningBaseline.
     /// </summary>
     public class ProjectPersistenceUseCase
     {
@@ -83,7 +83,7 @@ namespace PlanAthena.Services.Usecases
             ChargerProjetDepuisChemin(path);
         }
 
-        public void ChargerProjetDepuisChemin(string filePath)
+        public virtual void ChargerProjetDepuisChemin(string filePath)
         {
             if (_isDirty && !_ConfirmDiscardChanges()) return;
 
@@ -92,21 +92,17 @@ namespace PlanAthena.Services.Usecases
                 ProjetData data = _dataAccess.Charger(filePath);
                 _ViderEtatApplication();
 
-                // --- NOUVELLE LOGIQUE DE CHARGEMENT ---
-                // 1. Charger les données structurelles
                 _projetService.ChargerProjet(data);
                 _ressourceService.ChargerRessources(data.Metiers, data.Ouvriers);
-                _taskManagerService.ChargerTaches(data.Taches); // Charger les tâches avec leur statut persistant
+                _taskManagerService.ChargerTaches(data.Taches);
 
-                // 2. Charger les données du planning s'il existe
                 if (data.Planning != null)
                 {
-                    // On doit aussi récupérer la config qui était active
-                    var config = _projetService.ConfigPlanificationActuelle; // Ou la sauvegarder/charger
-                    _planningService.LoadPlanning(data.Planning, config);
+                    var config = data.Configuration ?? _projetService.ConfigPlanificationActuelle;
+                    // MODIFIÉ : On passe la baseline chargée depuis le fichier
+                    _planningService.LoadPlanning(data.Planning, config, data.Baseline);
                 }
 
-                // 3. Synchroniser les statuts pour refléter l'état actuel (EnCours, EnRetard, etc.)
                 _taskManagerService.SynchroniserStatutsTaches();
 
                 _isDirty = false;
@@ -127,7 +123,6 @@ namespace PlanAthena.Services.Usecases
 
             _projetService.InitialiserNouveauProjet();
             _ressourceService.ChargerMetiersParDefaut();
-            // Pas besoin d'initialiser les tâches, le service est déjà vide.
 
             _isDirty = false;
         }
@@ -135,7 +130,6 @@ namespace PlanAthena.Services.Usecases
         public List<ProjetSummaryDto> ObtenirSummariesProjetsRecents()
         {
             var summaries = new List<ProjetSummaryDto>();
-
             var recentFiles = _cheminsService.ObtenirFichiersRecents(TypeOperation.ProjetChargement);
 
             foreach (var filePath in recentFiles)
@@ -145,8 +139,6 @@ namespace PlanAthena.Services.Usecases
                     var tempDataAccess = new ProjetServiceDataAccess(_cheminsService);
                     ProjetData data = tempDataAccess.Charger(filePath);
 
-                    // --- MODIFIÉ : Logique de lecture directe du résumé ---
-                    // Si le résumé n'existe pas (anciens fichiers), on le calcule pour la compatibilité.
                     if (data.Summary == null)
                     {
                         var tachesMeres = (data.Taches ?? new List<Tache>()).Where(t => string.IsNullOrEmpty(t.ParentId)).ToList();
@@ -185,15 +177,14 @@ namespace PlanAthena.Services.Usecases
 
         private ProjetData _AssemblerDonneesProjet()
         {
-            // Collecter les données de la structure du projet (Lots, etc.)
             var data = _projetService.GetProjetDataPourSauvegarde();
 
-            // --- NOUVELLE LOGIQUE D'ASSEMBLAGE ---
-            // Collecter les autres "sources de vérité"
             data.Taches = _taskManagerService.ObtenirToutesLesTachesPourSauvegarde();
             data.Metiers = _ressourceService.GetAllMetiers();
             data.Ouvriers = _ressourceService.GetAllOuvriers();
             data.Planning = _planningService.GetCurrentPlanning();
+            data.Configuration = _planningService.GetCurrentConfig();
+            data.Baseline = _planningService.GetBaseline(); // << AJOUT
 
             var resumeTaches = _taskManagerService.ObtenirResumeTaches();
             data.Summary = new ProjectSummaryData
@@ -204,8 +195,7 @@ namespace PlanAthena.Services.Usecases
             };
 
             data.DateSauvegarde = DateTime.Now;
-            // Version mise à jour pour refléter cette modification majeure
-            data.VersionApplication = "0.5.1";
+            data.VersionApplication = "0.6.0"; // Mise à jour de la version
 
             return data;
         }
@@ -216,7 +206,6 @@ namespace PlanAthena.Services.Usecases
             _ressourceService.ViderMetiers();
             _ressourceService.ViderOuvriers();
             _planningService.ClearPlanning();
-            // MODIFIÉ: Appeler la méthode de vidage du nouveau service
             _taskManagerService.ViderTaches();
         }
 

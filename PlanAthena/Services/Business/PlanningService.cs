@@ -1,4 +1,4 @@
-// /Services/Business/PlanningService.cs V0.5 (Cockpit)
+// Fichier: /Services/Business/PlanningService.cs Version 0.6.0
 
 using PlanAthena.Data;
 using PlanAthena.Services.Business.DTOs;
@@ -10,13 +10,15 @@ namespace PlanAthena.Services.Business
     /// <summary>
     /// Agit comme la Source de Vérité unique pour le planning de projet actuellement chargé.
     /// Il expose des vues et des données agrégées sur ce planning.
+    /// Version 0.6.0 : Intègre la gestion de la PlanningBaseline et les calculs EVM.
     /// </summary>
     public class PlanningService
     {
         private ConsolidatedPlanning? _currentPlanning;
         private ConfigurationPlanification? _currentConfig;
+        private PlanningBaseline? _currentBaseline; 
 
-        // NOUVEAU : Calque d'informations pour stocker l'état réel des tâches planifiées.
+        // Le calque d'informations sur l'état réel des tâches.
         private Dictionary<string, Statut> _statutsReelsParTacheId = new();
 
         private readonly RessourceService _ressourceService;
@@ -25,25 +27,36 @@ namespace PlanAthena.Services.Business
         {
             _ressourceService = ressourceService ?? throw new ArgumentNullException(nameof(ressourceService));
         }
-        public virtual void LoadPlanning(ConsolidatedPlanning planning, ConfigurationPlanification config)
+
+        #region Gestion de l'État (Planning & Baseline)
+
+        /// <summary>
+        /// Charge un planning et une configuration, effaçant les données précédentes.
+        /// </summary>
+        public virtual void LoadPlanning(ConsolidatedPlanning? planning, ConfigurationPlanification config)
         {
-            ClearPlanning(); // On s'assure de partir d'un état propre
+            ClearPlanning();
             _currentPlanning = planning;
             _currentConfig = config;
         }
 
-        #region Méthodes de Gestion de l'État
+        /// <summary>
+        /// Surcharge pour charger également la baseline lors de l'ouverture d'un projet.
+        /// </summary>
+        public virtual void LoadPlanning(ConsolidatedPlanning? planning, ConfigurationPlanification config, PlanningBaseline? baseline)
+        {
+            LoadPlanning(planning, config);
+            _currentBaseline = baseline;
+        }
 
         /// <summary>
-        /// MODIFIÉ : Met à jour le planning actuel en fusionnant les nouvelles données de planification.
-        /// Cette approche non-destructive préserve l'état des tâches qui n'ont pas été replanifiées.
+        /// Met à jour le planning actuel en fusionnant les nouvelles données de planification.
         /// </summary>
         public virtual void UpdatePlanning(ConsolidatedPlanning newPlanning, ConfigurationPlanification newConfig)
         {
             if (newPlanning == null) throw new ArgumentNullException(nameof(newPlanning));
             if (newConfig == null) throw new ArgumentNullException(nameof(newConfig));
 
-            // Si aucun planning n'existe, on prend le nouveau.
             if (_currentPlanning == null)
             {
                 _currentPlanning = newPlanning;
@@ -51,22 +64,17 @@ namespace PlanAthena.Services.Business
                 return;
             }
 
-            // --- Logique de Fusion ---
-
-            // 1. Identifier les tâches "mères" qui ont été replanifiées.
             var idsTachesMeresReplanifiees = newPlanning.SegmentsParOuvrierId.Values
                 .SelectMany(segments => segments)
                 .Select(s => s.ParentTacheId ?? s.TacheId)
                 .Distinct()
                 .ToHashSet();
 
-            // 2. Nettoyer l'ancien planning : supprimer tous les segments liés à ces tâches mères.
             foreach (var segmentsList in _currentPlanning.SegmentsParOuvrierId.Values)
             {
                 segmentsList.RemoveAll(s => idsTachesMeresReplanifiees.Contains(s.ParentTacheId ?? s.TacheId));
             }
 
-            // 3. Fusionner le nouveau planning dans l'ancien.
             foreach (var kvp in newPlanning.SegmentsParOuvrierId)
             {
                 var ouvrierId = kvp.Key;
@@ -81,25 +89,23 @@ namespace PlanAthena.Services.Business
                     _currentPlanning.SegmentsParOuvrierId[ouvrierId] = nouveauxSegments;
                 }
             }
-
-            // Mettre à jour la configuration avec la plus récente.
             _currentConfig = newConfig;
         }
 
-        public virtual ConsolidatedPlanning? GetCurrentPlanning() => _currentPlanning;
-
+        /// <summary>
+        /// Efface toutes les données de planning et de baseline en mémoire.
+        /// </summary>
         public virtual void ClearPlanning()
         {
             _currentPlanning = null;
             _currentConfig = null;
-            _statutsReelsParTacheId.Clear(); // Nettoyer aussi les statuts réels
+            _statutsReelsParTacheId.Clear();
+            ClearBaseline();
         }
-
 
         public virtual void InvaliderTache(string tacheId)
         {
             if (_currentPlanning == null) return;
-
             foreach (var segmentsList in _currentPlanning.SegmentsParOuvrierId.Values)
             {
                 segmentsList.RemoveAll(s => s.TacheId == tacheId || s.ParentTacheId == tacheId);
@@ -108,34 +114,72 @@ namespace PlanAthena.Services.Business
 
         #endregion
 
-        #region Méthodes pour le Cockpit
+        #region NOUVEAU : API pour la Gestion de la Baseline
 
         /// <summary>
-        /// NOUVEAU : Met à jour le calque de statut réel pour une seule tâche de manière ciblée.
+        /// Définit la baseline active pour le projet.
         /// </summary>
+        public virtual void SetBaseline(PlanningBaseline baseline) => _currentBaseline = baseline;
+
+        /// <summary>
+        /// Récupère la baseline active.
+        /// </summary>
+        public virtual PlanningBaseline? GetBaseline() => _currentBaseline;
+
+        /// <summary>
+        /// Efface la baseline active.
+        /// </summary>
+        public virtual void ClearBaseline() => _currentBaseline = null;
+
+        #endregion
+
+        #region NOUVEAU : API pour les calculs EVM
+
+        /// <summary>
+        /// Point d'entrée principal pour obtenir un rapport complet sur la performance du projet (EVM).
+        /// </summary>
+        /// <param name="dateRef">La date à laquelle les calculs doivent être effectués.</param>
+        /// <param name="toutesLesTaches">La liste complète des tâches provenant de TaskManagerService.</param>
+        /// <returns>Un DTO contenant les indicateurs PV, EV, AC et BAC.</returns>
+        public virtual EvmReportDto GetRapportEVMComplet(DateTime dateRef, IReadOnlyList<Tache> toutesLesTaches)
+        {
+            if (_currentBaseline == null)
+            {
+                return new EvmReportDto { BaselineExists = false };
+            }
+
+            var pv = _CalculerValeurPlanifieeCumulative(dateRef);
+            var ev = _CalculerValeurAcquiseCumulative(dateRef, toutesLesTaches);
+            var ac = _SimulerCoutReelCumulatif(dateRef);
+
+            return new EvmReportDto
+            {
+                BaselineExists = true,
+                BudgetAtCompletion = _currentBaseline.BudgetAtCompletion,
+                PlannedValue = pv,
+                EarnedValue = ev,
+                ActualCost = ac
+            };
+        }
+
+        #endregion
+
+        #region Méthodes pour le Cockpit
+
         public virtual void ReconcilierAvecAvancementReel(Tache tache)
         {
             if (tache == null) return;
 
-            // On met à jour ou on ajoute le statut réel pour cette tâche spécifique.
             if (tache.Statut != Statut.Estimée && tache.Statut != Statut.Planifiée)
             {
                 _statutsReelsParTacheId[tache.TacheId] = tache.Statut;
             }
             else
             {
-                // Si le statut redevient "prévisionnel", on retire la tâche du calque.
                 _statutsReelsParTacheId.Remove(tache.TacheId);
             }
         }
 
-        /// <summary>
-        /// Calcule le nombre de tâches (non-conteneurs) dont la date de fin planifiée est passée.
-        /// Utilisé pour le calcul du KPI "SPI Simplifié".
-        /// </summary>
-        /// <param name="dateReference">La date à laquelle comparer la date de fin planifiée.</param>
-        /// <param name="toutesLesTaches">La liste complète des tâches du projet.</param>
-        /// <returns>Le nombre de tâches qui auraient dû être terminées.</returns>
         public virtual int ObtenirNombreTachesQuiDevraientEtreTerminees(DateTime dateReference, IReadOnlyList<Tache> toutesLesTaches)
         {
             return toutesLesTaches.Count(t =>
@@ -145,23 +189,11 @@ namespace PlanAthena.Services.Business
            );
         }
 
-        /// <summary>
-        /// Calcule l'indicateur de performance des coûts (CPI).
-        /// Pour la V1, cette méthode retourne une valeur par défaut.
-        /// </summary>
-        /// <returns>Le CPI calculé (0.0 pour la V1).</returns>
         public virtual double CalculerPerformanceCoutCPI(IReadOnlyList<Tache> toutesLesTaches)
         {
-            // La logique de calcul du CPI sera implémentée dans une version future.
             return 0.0;
         }
 
-        /// <summary>
-        /// Analyse le planning futur pour identifier le métier le plus sollicité.
-        /// </summary>
-        /// <param name="dateDebut">La date de début de la période d'analyse.</param>
-        /// <param name="nombreJours">Le nombre de jours à analyser dans le futur.</param>
-        /// <returns>Un DTO contenant le nom et le taux d'occupation du métier le plus en tension.</returns>
         public virtual MetierTensionData CalculerTensionMetierPourPeriodeFuture(DateTime dateDebut, int nombreJours)
         {
             if (_currentPlanning == null || _currentConfig == null)
@@ -171,7 +203,6 @@ namespace PlanAthena.Services.Business
             var ouvriers = _ressourceService.GetAllOuvriers();
             var metiers = _ressourceService.GetAllMetiers().ToDictionary(m => m.MetierId, m => m.Nom);
 
-            // Heures planifiées par métier sur la période
             var heuresPlanifieesParMetierId = _currentPlanning.SegmentsParOuvrierId.Values
                 .SelectMany(segments => segments)
                 .Where(s => s.Jour >= dateDebut.Date && s.Jour < dateFin.Date)
@@ -185,7 +216,6 @@ namespace PlanAthena.Services.Business
             if (!heuresPlanifieesParMetierId.Any())
                 return new MetierTensionData { NomMetier = "Aucun travail planifié", TauxOccupation = 0 };
 
-            // Heures disponibles par métier sur la période
             int joursOuvresPeriode = GetNombreJoursOuvres(dateDebut, dateFin);
             double heuresDisponiblesParOuvrier = joursOuvresPeriode * _currentConfig.HeuresTravailEffectifParJour;
 
@@ -193,7 +223,6 @@ namespace PlanAthena.Services.Business
                 .GroupBy(o => o.MetierId)
                 .ToDictionary(g => g.Key, g => g.Count() * heuresDisponiblesParOuvrier);
 
-            // Calcul du taux d'occupation et recherche du maximum
             var tensionParMetier = heuresPlanifieesParMetierId
                 .Select(kvp =>
                 {
@@ -215,17 +244,11 @@ namespace PlanAthena.Services.Business
                 TauxOccupation = tensionParMetier.TauxOccupation
             };
         }
-
         #endregion
 
-
-
         #region Méthodes d'Agrégation pour TaskManagerService
-
-
         public virtual IReadOnlyDictionary<string, PlanningInfoPourTache> ObtenirInfosPlanificationPourToutesLesTaches()
         {
-            // Logique existante inchangée
             if (_currentPlanning == null) return new Dictionary<string, PlanningInfoPourTache>();
             var allSegments = _currentPlanning.SegmentsParOuvrierId.Values.SelectMany(list => list).ToList();
             if (!allSegments.Any()) return new Dictionary<string, PlanningInfoPourTache>();
@@ -244,7 +267,6 @@ namespace PlanAthena.Services.Business
 
         public virtual IReadOnlyDictionary<string, PlanningInfoPourTache> ObtenirInfosPlanificationPourTachesFeuilles()
         {
-            // Logique existante inchangée
             if (_currentPlanning == null) return new Dictionary<string, PlanningInfoPourTache>();
             var allSegments = _currentPlanning.SegmentsParOuvrierId.Values.SelectMany(list => list).ToList();
             if (!allSegments.Any()) return new Dictionary<string, PlanningInfoPourTache>();
@@ -264,9 +286,6 @@ namespace PlanAthena.Services.Business
         #endregion
 
         #region Méthodes de Vue & Calcul
-
-        // NOTE: Cette méthode n'est PAS modifiée pour l'instant, comme convenu.
-        // Le UseCase se chargera de la jointure avec le statut réel.
         public virtual IReadOnlyList<LogPlanningJournalier> RetournePlanningDetailleParJour()
         {
             if (_currentPlanning == null || !_currentPlanning.SegmentsParOuvrierId.Any())
@@ -306,7 +325,7 @@ namespace PlanAthena.Services.Business
             return resultatFinal;
         }
 
-        public int GetNombreJoursOuvres(DateTime dateDebut, DateTime dateFin)
+        public virtual int GetNombreJoursOuvres(DateTime dateDebut, DateTime dateFin)
         {
             if (_currentConfig?.JoursOuvres == null || !_currentConfig.JoursOuvres.Any() || dateFin < dateDebut)
                 return 0;
@@ -320,9 +339,86 @@ namespace PlanAthena.Services.Business
             return nombreJoursOuvres;
         }
 
+        public virtual ConfigurationPlanification? GetCurrentConfig() => _currentConfig;
+        public virtual ConsolidatedPlanning? GetCurrentPlanning() => _currentPlanning;
+
         #endregion
 
-        // consommé par PilotageProjetUseCase
-        public virtual ConfigurationPlanification? GetCurrentConfig() => _currentConfig;
+        #region NOUVEAU : Méthodes privées pour le calcul EVM
+
+        private decimal _CalculerValeurPlanifieeCumulative(DateTime dateRef)
+        {
+            if (_currentBaseline?.CourbePlannedValueCumulative == null || !_currentBaseline.CourbePlannedValueCumulative.Any())
+            {
+                return 0m;
+            }
+
+            return _currentBaseline.CourbePlannedValueCumulative
+                .Where(kvp => kvp.Key.Date <= dateRef.Date)
+                .OrderByDescending(kvp => kvp.Key)
+                .Select(kvp => kvp.Value)
+                .FirstOrDefault();
+        }
+
+        private decimal _CalculerValeurAcquiseCumulative(DateTime dateRef, IReadOnlyList<Tache> toutesLesTaches)
+        {
+            if (_currentBaseline?.BudgetInitialParTacheId == null)
+            {
+                return 0m;
+            }
+
+            decimal totalEV = 0m;
+
+            var tachesTerminees = toutesLesTaches
+                .Where(t => t.Statut == Statut.Terminée &&
+                            t.DateFinReelle.HasValue &&
+                            t.DateFinReelle.Value.Date <= dateRef.Date);
+
+            foreach (var tache in tachesTerminees)
+            {
+                if (_currentBaseline.BudgetInitialParTacheId.TryGetValue(tache.TacheId, out decimal budgetTache))
+                {
+                    totalEV += budgetTache;
+                }
+            }
+
+            return totalEV;
+        }
+
+        private decimal _SimulerCoutReelCumulatif(DateTime dateRef)
+        {
+            if (_currentPlanning == null || _currentConfig == null) return 0m;
+
+            decimal totalAC = 0m;
+            var heuresParJour = (decimal)_currentConfig.HeuresTravailEffectifParJour;
+            if (heuresParJour == 0) return 0m;
+
+            // 1. Coûts de main-d'œuvre (RH)
+            var segmentsPasses = _currentPlanning.SegmentsParOuvrierId.Values
+                .SelectMany(s => s)
+                .Where(s => s.Jour.Date < dateRef.Date);
+
+            foreach (var segment in segmentsPasses)
+            {
+                var ouvrier = _ressourceService.GetOuvrierById(segment.OuvrierId);
+                if (ouvrier != null)
+                {
+                    totalAC += ((decimal)segment.HeuresTravaillees / heuresParJour) * ouvrier.CoutJournalier;
+                }
+            }
+
+            // 2. Coûts indirects
+            var dateDebutProjet = _currentPlanning.DateDebutProjet;
+            if (dateDebutProjet != default)
+            {
+                var dateFinCalcul = (dateRef > _currentPlanning.DateFinProjet) ? _currentPlanning.DateFinProjet : dateRef;
+                int joursOuvresPasses = GetNombreJoursOuvres(dateDebutProjet, dateFinCalcul);
+                totalAC += (decimal)joursOuvresPasses * _currentConfig.CoutIndirectJournalierAbsolu;
+            }
+
+            return totalAC;
+        }
+
+        #endregion
     }
 }

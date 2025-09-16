@@ -4,6 +4,10 @@ using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DTOs.UseCases;
 using PlanAthena.Services.Usecases;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
 
 namespace PlanAthenaTests.Services.Usecases
 {
@@ -63,8 +67,18 @@ namespace PlanAthenaTests.Services.Usecases
 
             // Setup des mocks avec les valeurs attendues
             _mockTaskManagerService.Setup(s => s.ObtenirToutesLesTaches(null, null)).Returns(taches);
-            _mockPlanningService.Setup(s => s.ObtenirNombreTachesQuiDevraientEtreTerminees(It.IsAny<DateTime>(), It.IsAny<List<Tache>>())).Returns(2);
-            _mockPlanningService.Setup(s => s.CalculerPerformanceCoutCPI(It.IsAny<List<Tache>>())).Returns(1.0);
+
+            // Configurer le mock pour GetRapportEVMComplet
+            var evmReport = new EvmReportDto
+            {
+                BaselineExists = false,
+                BudgetAtCompletion = 100000m,
+                PlannedValue = 50000m,
+                EarnedValue = 40000m,
+                ActualCost = 45000m
+            };
+            _mockPlanningService.Setup(s => s.GetRapportEVMComplet(It.IsAny<DateTime>(), It.IsAny<List<Tache>>())).Returns(evmReport);
+
             _mockPlanningService.Setup(s => s.CalculerTensionMetierPourPeriodeFuture(It.IsAny<DateTime>(), It.IsAny<int>()))
                 .Returns(new MetierTensionData { NomMetier = "TestMetier", TauxOccupation = 0.8 });
 
@@ -77,34 +91,44 @@ namespace PlanAthenaTests.Services.Usecases
 
             // Vérifier que les mocks ont été appelés
             _mockTaskManagerService.Verify(s => s.ObtenirToutesLesTaches(null, null), Times.Once);
-            _mockPlanningService.Verify(s => s.ObtenirNombreTachesQuiDevraientEtreTerminees(It.IsAny<DateTime>(), It.IsAny<List<Tache>>()), Times.Once);
+            _mockPlanningService.Verify(s => s.GetRapportEVMComplet(It.IsAny<DateTime>(), It.IsAny<List<Tache>>()), Times.Once);
         }
 
         [TestMethod]
-        public void ObtenirIndicateursCockpit_AvecTachesEnRetard_CalculeSpiCorrectement()
+        public void ObtenirIndicateursCockpit_AvecBaseline_CalculeIndicesEVMCorrectement()
         {
             // Arrange
-            var aujourdhui = DateTime.Today;
+            // Fournir au moins une tâche valide pour passer la clause de garde initiale.
             var taches = new List<Tache>
             {
-                new Tache { TacheId = "T1", EstConteneur = false, Statut = Statut.Terminée },
-                new Tache { TacheId = "T2", EstConteneur = false, Statut = Statut.Terminée },
-                new Tache { TacheId = "T3", EstConteneur = false, Statut = Statut.EnCours },
+                new Tache { TacheId = "T1", EstConteneur = false, Statut = Statut.Planifiée }
             };
-
             _mockTaskManagerService.Setup(s => s.ObtenirToutesLesTaches(null, null)).Returns(taches);
-            // 3 tâches auraient dû être terminées mais seulement 2 le sont
-            _mockPlanningService.Setup(s => s.ObtenirNombreTachesQuiDevraientEtreTerminees(aujourdhui, taches)).Returns(3);
-            _mockPlanningService.Setup(s => s.CalculerPerformanceCoutCPI(It.IsAny<List<Tache>>())).Returns(1.0);
+
+            var evmReport = new EvmReportDto
+            {
+                BaselineExists = true,
+                BudgetAtCompletion = 100000m,
+                PlannedValue = 50000m,
+                EarnedValue = 40000m,
+                ActualCost = 45000m
+            };
+            _mockPlanningService.Setup(s => s.GetRapportEVMComplet(It.IsAny<DateTime>(), It.IsAny<IReadOnlyList<Tache>>())).Returns(evmReport);
             _mockPlanningService.Setup(s => s.CalculerTensionMetierPourPeriodeFuture(It.IsAny<DateTime>(), It.IsAny<int>()))
-                .Returns(new MetierTensionData { NomMetier = "TestMetier", TauxOccupation = 0.8 });
+                .Returns(new MetierTensionData { NomMetier = "N/A", TauxOccupation = 0 });
 
             // Act
             var result = _useCase.ObtenirIndicateursCockpit();
 
             // Assert
-            // SPI = (Tâches terminées) / (Tâches qui auraient dû être terminées) = 2 / 3
-            Assert.AreEqual(2.0 / 3.0, result.PerformanceCalendrierSPI, 0.001);
+            Assert.AreEqual(100000m, result.BudgetAtCompletion);
+            Assert.AreEqual(-10000m, result.ScheduleVariance, "SV = 40k - 50k");
+            Assert.AreEqual(-5000m, result.CostVariance, "CV = 40k - 45k");
+            Assert.AreEqual(0.8, result.SchedulePerformanceIndex, 0.001, "SPI = 40k / 50k");
+            Assert.AreEqual(40000.0 / 45000.0, result.CostPerformanceIndex, 0.001, "CPI = 40k / 45k");
+
+            // CORRIGÉ : Ajout d'une tolérance (delta) à l'assertion pour gérer l'imprécision
+            Assert.AreEqual(112500m, result.EstimateAtCompletion, 0.01m, "EAC = 100k / (40k/45k)");
         }
 
         [TestMethod]
@@ -124,8 +148,16 @@ namespace PlanAthenaTests.Services.Usecases
             };
 
             _mockTaskManagerService.Setup(s => s.ObtenirToutesLesTaches(null, null)).Returns(taches);
-            _mockPlanningService.Setup(s => s.ObtenirNombreTachesQuiDevraientEtreTerminees(It.IsAny<DateTime>(), It.IsAny<List<Tache>>())).Returns(1);
-            _mockPlanningService.Setup(s => s.CalculerPerformanceCoutCPI(It.IsAny<List<Tache>>())).Returns(1.0);
+
+            var evmReport = new EvmReportDto
+            {
+                BaselineExists = false,
+                BudgetAtCompletion = 100000m,
+                PlannedValue = 50000m,
+                EarnedValue = 40000m,
+                ActualCost = 45000m
+            };
+            _mockPlanningService.Setup(s => s.GetRapportEVMComplet(It.IsAny<DateTime>(), It.IsAny<List<Tache>>())).Returns(evmReport);
             _mockPlanningService.Setup(s => s.CalculerTensionMetierPourPeriodeFuture(It.IsAny<DateTime>(), It.IsAny<int>()))
                 .Returns(new MetierTensionData { NomMetier = "TestMetier", TauxOccupation = 0.8 });
 
@@ -135,6 +167,120 @@ namespace PlanAthenaTests.Services.Usecases
             // Assert
             Assert.AreEqual("N/A", result.LotLePlusARisqueNom);
             Assert.AreEqual(0, result.LotLePlusARisqueDeriveJours);
+        }
+
+        #endregion
+
+        #region Tests pour ObtenirMeteoProjet
+
+        [TestMethod]
+        public void ObtenirMeteoProjet_SansBaseline_RetourneStatutSunny()
+        {
+            // Arrange
+            var taches = new List<Tache>
+            {
+                new Tache { TacheId = "T1", EstConteneur = false, Statut = Statut.Terminée }
+            };
+
+            _mockTaskManagerService.Setup(s => s.ObtenirToutesLesTaches(null, null)).Returns(taches);
+
+            var evmReport = new EvmReportDto
+            {
+                BaselineExists = false,
+                BudgetAtCompletion = 100000m,
+                PlannedValue = 50000m,
+                EarnedValue = 40000m,
+                ActualCost = 45000m
+            };
+            _mockPlanningService.Setup(s => s.GetRapportEVMComplet(It.IsAny<DateTime>(), It.IsAny<List<Tache>>())).Returns(evmReport);
+            _mockPlanningService.Setup(s => s.CalculerTensionMetierPourPeriodeFuture(It.IsAny<DateTime>(), It.IsAny<int>()))
+                .Returns(new MetierTensionData { NomMetier = "TestMetier", TauxOccupation = 0.8 });
+
+            // Act
+            var result = _useCase.ObtenirMeteoProjet();
+
+            // Assert
+            Assert.AreEqual(ProjectWeatherStatus.Sunny, result.Statut);
+            Assert.AreEqual(0, result.DerivPlanningJours); // Pas de dérive sans baseline
+        }
+
+        [TestMethod]
+        public void ObtenirMeteoProjet_AvecBaselineEtSPI1_RetourneStatutSunny()
+        {
+            // Arrange
+            var taches = new List<Tache>
+            {
+                new Tache { TacheId = "T1", EstConteneur = false, Statut = Statut.Terminée }
+            };
+
+            _mockTaskManagerService.Setup(s => s.ObtenirToutesLesTaches(null, null)).Returns(taches);
+
+            var evmReport = new EvmReportDto
+            {
+                BaselineExists = true,
+                BudgetAtCompletion = 100000m,
+                PlannedValue = 50000m,
+                EarnedValue = 50000m, // SPI = 1
+                ActualCost = 45000m
+            };
+            _mockPlanningService.Setup(s => s.GetRapportEVMComplet(It.IsAny<DateTime>(), It.IsAny<List<Tache>>())).Returns(evmReport);
+
+            var baseline = new PlanningBaseline
+            {
+                DateCreation = DateTime.Today.AddDays(-10),
+                DateFinPlanifieeInitiale = DateTime.Today.AddDays(10)
+            };
+            _mockPlanningService.Setup(s => s.GetBaseline()).Returns(baseline);
+
+            _mockPlanningService.Setup(s => s.CalculerTensionMetierPourPeriodeFuture(It.IsAny<DateTime>(), It.IsAny<int>()))
+                .Returns(new MetierTensionData { NomMetier = "TestMetier", TauxOccupation = 0.8 });
+
+            // Act
+            var result = _useCase.ObtenirMeteoProjet();
+
+            // Assert
+            Assert.AreEqual(ProjectWeatherStatus.Sunny, result.Statut);
+            Assert.AreEqual(0, result.DerivPlanningJours); // SPI=1 => pas de dérive
+        }
+
+        [TestMethod]
+        public void ObtenirMeteoProjet_AvecBaselineEtSPI05_RetourneStatutStormy()
+        {
+            // Arrange
+            var taches = new List<Tache>
+            {
+                new Tache { TacheId = "T1", EstConteneur = false, Statut = Statut.Terminée }
+            };
+
+            _mockTaskManagerService.Setup(s => s.ObtenirToutesLesTaches(null, null)).Returns(taches);
+
+            var evmReport = new EvmReportDto
+            {
+                BaselineExists = true,
+                BudgetAtCompletion = 100000m,
+                PlannedValue = 50000m,
+                EarnedValue = 25000m, // SPI = 0.5
+                ActualCost = 45000m
+            };
+            _mockPlanningService.Setup(s => s.GetRapportEVMComplet(It.IsAny<DateTime>(), It.IsAny<List<Tache>>())).Returns(evmReport);
+
+            var baseline = new PlanningBaseline
+            {
+                DateCreation = DateTime.Today.AddDays(-10),
+                DateFinPlanifieeInitiale = DateTime.Today.AddDays(10) // Durée planifiée: 20 jours
+            };
+            _mockPlanningService.Setup(s => s.GetBaseline()).Returns(baseline);
+
+            _mockPlanningService.Setup(s => s.CalculerTensionMetierPourPeriodeFuture(It.IsAny<DateTime>(), It.IsAny<int>()))
+                .Returns(new MetierTensionData { NomMetier = "TestMetier", TauxOccupation = 0.8 });
+
+            // Act
+            var result = _useCase.ObtenirMeteoProjet();
+
+            // Assert
+            // SPI = 0.5 => durée estimée = 20 / 0.5 = 40 jours => dérive = 40 - 20 = 20 jours => Stormy
+            Assert.AreEqual(ProjectWeatherStatus.Stormy, result.Statut);
+            Assert.IsTrue(result.DerivPlanningJours > 10); // Dérive de 20 jours
         }
 
         #endregion

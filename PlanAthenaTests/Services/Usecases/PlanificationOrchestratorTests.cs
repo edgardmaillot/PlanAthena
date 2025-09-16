@@ -12,7 +12,7 @@ using PlanAthena.Services.Processing;
 using PlanAthena.Services.UseCases;
 using PlanAthena.Utilities;
 
-namespace PlanAthenaTests.Services.UseCases
+namespace PlanAthenaTests.Services.Usecases
 {
     [TestClass]
     public class PlanificationOrchestratorTests
@@ -84,6 +84,7 @@ namespace PlanAthenaTests.Services.UseCases
             var config = new ConfigurationPlanification();
             var sampleMetiers = new List<Metier> { new Metier { MetierId = "TEST" } };
             var sampleOuvriers = new List<Ouvrier> { new Ouvrier { OuvrierId = "O1" } };
+            bool reinitialiserBaseline = false;
 
             _mockRessourceService.Setup(r => r.GetAllMetiers()).Returns(sampleMetiers);
             _mockRessourceService.Setup(r => r.GetAllOuvriers()).Returns(sampleOuvriers);
@@ -99,7 +100,7 @@ namespace PlanAthenaTests.Services.UseCases
             _mockPreparationService.Setup(p => p.PreparerPourSolveur(It.IsAny<IReadOnlyList<Tache>>(), It.IsAny<ConfigurationPlanification>()))
                 .Returns(preparationResult);
 
-            var consolidatedPlanning = new ConsolidatedPlanning();
+            var consolidatedPlanning = new ConsolidatedPlanning { DateFinProjet = DateTime.Now.AddDays(30) };
             _mockConsolidationService.Setup(c => c.Process(It.IsAny<ProcessChantierResultDto>(), It.IsAny<ConfigurationPlanification>()))
                 .Returns(consolidatedPlanning);
 
@@ -117,8 +118,32 @@ namespace PlanAthenaTests.Services.UseCases
                 It.IsAny<PlanningService>(),
                 It.IsAny<PreparationResult>()));
 
+            // Setup pour les nouvelles méthodes liées à la baseline
+            _mockPlanningService.Setup(p => p.GetBaseline()).Returns((PlanningBaseline)null); // Pas de baseline existante
+            _mockPlanningService.Setup(p => p.GetNombreJoursOuvres(It.IsAny<DateTime>(), It.IsAny<DateTime>())).Returns(20);
+
+            // Setup pour les méthodes d'analyse de baseline
+            _mockAnalysisService.Setup(a => a.CalculerBudgetTotal(
+                It.IsAny<ConsolidatedPlanning>(),
+                It.IsAny<IReadOnlyList<Ouvrier>>(),
+                It.IsAny<ConfigurationPlanification>(),
+                It.IsAny<AnalysisService.JoursOuvresCalculator>()))
+                .Returns(100000m);
+
+            _mockAnalysisService.Setup(a => a.CalculerCourbePlannedValueCumulative(
+                It.IsAny<ConsolidatedPlanning>(),
+                It.IsAny<IReadOnlyList<Ouvrier>>(),
+                It.IsAny<ConfigurationPlanification>()))
+                .Returns(new Dictionary<DateTime, decimal>());
+
+            _mockAnalysisService.Setup(a => a.CalculerBudgetParTache(
+                It.IsAny<ConsolidatedPlanning>(),
+                It.IsAny<IReadOnlyList<Ouvrier>>(),
+                It.IsAny<ConfigurationPlanification>()))
+                .Returns(new Dictionary<string, decimal>());
+
             // --- ACT ---
-            var result = await _orchestrator.ExecuteAsync(config);
+            var result = await _orchestrator.ExecuteAsync(config, reinitialiserBaseline);
 
             // --- ASSERT ---
             _mockPlanningService.Verify(p => p.UpdatePlanning(consolidatedPlanning, config), Times.Once);
@@ -127,6 +152,17 @@ namespace PlanAthenaTests.Services.UseCases
             _mockTaskManagerService.Verify(t => t.MettreAJourApresPlanification(
                 _mockPlanningService.Object,
                 preparationResult), Times.Once);
+
+            // Vérifier que la baseline est créée (car GetBaseline retourne null)
+            _mockPlanningService.Verify(p => p.GetBaseline(), Times.Once);
+            _mockPlanningService.Verify(p => p.SetBaseline(It.IsAny<PlanningBaseline>()), Times.Once);
+
+            // Vérifier les appels aux méthodes d'analyse pour la baseline
+            _mockAnalysisService.Verify(a => a.CalculerBudgetTotal(
+                consolidatedPlanning,
+                sampleOuvriers,
+                config,
+                It.IsAny<AnalysisService.JoursOuvresCalculator>()), Times.Once);
 
             _mockAnalysisService.Verify(a => a.GenerateReport(
                 consolidatedPlanning,
@@ -140,11 +176,104 @@ namespace PlanAthenaTests.Services.UseCases
         }
 
         [TestMethod]
+        public async Task ExecuteAsync_WhenReinitialiserBaselineIsTrue_ShouldAlwaysCreateNewBaseline()
+        {
+            // --- ARRANGE ---
+            var config = new ConfigurationPlanification();
+            var sampleMetiers = new List<Metier> { new Metier { MetierId = "TEST" } };
+            var sampleOuvriers = new List<Ouvrier> { new Ouvrier { OuvrierId = "O1" } };
+            bool reinitialiserBaseline = true;
+
+            _mockRessourceService.Setup(r => r.GetAllMetiers()).Returns(sampleMetiers);
+            _mockRessourceService.Setup(r => r.GetAllOuvriers()).Returns(sampleOuvriers);
+
+            var rawResult = new ProcessChantierResultDto { OptimisationResultat = new PlanningOptimizationResultDto() };
+            _mockFacade.Setup(f => f.ProcessChantierAsync(It.IsAny<ChantierSetupInputDto>())).ReturnsAsync(rawResult);
+
+            var preparationResult = new PreparationResult
+            {
+                TachesPreparees = new List<Tache>(),
+                ParentIdParSousTacheId = new Dictionary<string, string>()
+            };
+            _mockPreparationService.Setup(p => p.PreparerPourSolveur(It.IsAny<IReadOnlyList<Tache>>(), It.IsAny<ConfigurationPlanification>()))
+                .Returns(preparationResult);
+
+            var consolidatedPlanning = new ConsolidatedPlanning { DateFinProjet = DateTime.Now.AddDays(30) };
+            _mockConsolidationService.Setup(c => c.Process(It.IsAny<ProcessChantierResultDto>(), It.IsAny<ConfigurationPlanification>()))
+                .Returns(consolidatedPlanning);
+
+            // Setup avec une baseline existante
+            var existingBaseline = new PlanningBaseline { DateCreation = DateTime.Now.AddDays(-10) };
+            _mockPlanningService.Setup(p => p.GetBaseline()).Returns(existingBaseline);
+            _mockPlanningService.Setup(p => p.GetNombreJoursOuvres(It.IsAny<DateTime>(), It.IsAny<DateTime>())).Returns(20);
+
+            // Setup pour les méthodes d'analyse
+            _mockAnalysisService.Setup(a => a.CalculerBudgetTotal(It.IsAny<ConsolidatedPlanning>(), It.IsAny<IReadOnlyList<Ouvrier>>(), It.IsAny<ConfigurationPlanification>(), It.IsAny<AnalysisService.JoursOuvresCalculator>())).Returns(100000m);
+            _mockAnalysisService.Setup(a => a.CalculerCourbePlannedValueCumulative(It.IsAny<ConsolidatedPlanning>(), It.IsAny<IReadOnlyList<Ouvrier>>(), It.IsAny<ConfigurationPlanification>())).Returns(new Dictionary<DateTime, decimal>());
+            _mockAnalysisService.Setup(a => a.CalculerBudgetParTache(It.IsAny<ConsolidatedPlanning>(), It.IsAny<IReadOnlyList<Ouvrier>>(), It.IsAny<ConfigurationPlanification>())).Returns(new Dictionary<string, decimal>());
+            _mockAnalysisService.Setup(a => a.GenerateReport(It.IsAny<ConsolidatedPlanning>(), It.IsAny<IReadOnlyList<Ouvrier>>(), It.IsAny<IReadOnlyList<Metier>>(), It.IsAny<ConfigurationPlanification>(), It.IsAny<AnalysisService.JoursOuvresCalculator>())).Returns(new AnalysisReport());
+
+            // --- ACT ---
+            var result = await _orchestrator.ExecuteAsync(config, reinitialiserBaseline);
+
+            // --- ASSERT ---
+            // La baseline doit être réinitialisée même s'il y en avait une existante
+            _mockPlanningService.Verify(p => p.SetBaseline(It.IsAny<PlanningBaseline>()), Times.Once);
+        }
+
+        [TestMethod]
+        public async Task ExecuteAsync_WhenBaselineExistsAndReinitialiserIsFalse_ShouldNotCreateNewBaseline()
+        {
+            // --- ARRANGE ---
+            var config = new ConfigurationPlanification();
+            var sampleMetiers = new List<Metier> { new Metier { MetierId = "TEST" } };
+            var sampleOuvriers = new List<Ouvrier> { new Ouvrier { OuvrierId = "O1" } };
+            bool reinitialiserBaseline = false;
+
+            _mockRessourceService.Setup(r => r.GetAllMetiers()).Returns(sampleMetiers);
+            _mockRessourceService.Setup(r => r.GetAllOuvriers()).Returns(sampleOuvriers);
+
+            var rawResult = new ProcessChantierResultDto { OptimisationResultat = new PlanningOptimizationResultDto() };
+            _mockFacade.Setup(f => f.ProcessChantierAsync(It.IsAny<ChantierSetupInputDto>())).ReturnsAsync(rawResult);
+
+            var preparationResult = new PreparationResult
+            {
+                TachesPreparees = new List<Tache>(),
+                ParentIdParSousTacheId = new Dictionary<string, string>()
+            };
+            _mockPreparationService.Setup(p => p.PreparerPourSolveur(It.IsAny<IReadOnlyList<Tache>>(), It.IsAny<ConfigurationPlanification>()))
+                .Returns(preparationResult);
+
+            var consolidatedPlanning = new ConsolidatedPlanning { DateFinProjet = DateTime.Now.AddDays(30) };
+            _mockConsolidationService.Setup(c => c.Process(It.IsAny<ProcessChantierResultDto>(), It.IsAny<ConfigurationPlanification>()))
+                .Returns(consolidatedPlanning);
+
+            // Setup avec une baseline existante
+            var existingBaseline = new PlanningBaseline { DateCreation = DateTime.Now.AddDays(-10) };
+            _mockPlanningService.Setup(p => p.GetBaseline()).Returns(existingBaseline);
+            _mockPlanningService.Setup(p => p.GetNombreJoursOuvres(It.IsAny<DateTime>(), It.IsAny<DateTime>())).Returns(20);
+
+            _mockAnalysisService.Setup(a => a.GenerateReport(It.IsAny<ConsolidatedPlanning>(), It.IsAny<IReadOnlyList<Ouvrier>>(), It.IsAny<IReadOnlyList<Metier>>(), It.IsAny<ConfigurationPlanification>(), It.IsAny<AnalysisService.JoursOuvresCalculator>())).Returns(new AnalysisReport());
+
+            // --- ACT ---
+            var result = await _orchestrator.ExecuteAsync(config, reinitialiserBaseline);
+
+            // --- ASSERT ---
+            // Aucune nouvelle baseline ne doit être créée car une existe déjà et reinitialiserBaseline est false
+            _mockPlanningService.Verify(p => p.GetBaseline(), Times.Once);
+            _mockPlanningService.Verify(p => p.SetBaseline(It.IsAny<PlanningBaseline>()), Times.Never);
+
+            // Les méthodes de calcul de baseline ne doivent pas être appelées
+            _mockAnalysisService.Verify(a => a.CalculerBudgetTotal(It.IsAny<ConsolidatedPlanning>(), It.IsAny<IReadOnlyList<Ouvrier>>(), It.IsAny<ConfigurationPlanification>(), It.IsAny<AnalysisService.JoursOuvresCalculator>()), Times.Never);
+        }
+
+        [TestMethod]
         public async Task ExecuteAsync_WhenAnalyseRapideSucceeds_ShouldCallAnalysisWorkflow()
         {
             // --- ARRANGE ---
             var config = new ConfigurationPlanification();
             var sampleOuvriers = new List<Ouvrier> { new Ouvrier { OuvrierId = "O1" } };
+            bool reinitialiserBaseline = false;
 
             _mockRessourceService.Setup(r => r.GetAllOuvriers()).Returns(sampleOuvriers);
 
@@ -165,7 +294,7 @@ namespace PlanAthenaTests.Services.UseCases
                 .Returns(tensionReport);
 
             // --- ACT ---
-            var result = await _orchestrator.ExecuteAsync(config);
+            var result = await _orchestrator.ExecuteAsync(config, reinitialiserBaseline);
 
             // --- ASSERT ---
             _mockAnalysisService.Verify(a => a.AnalyzeMetierTension(
@@ -177,6 +306,10 @@ namespace PlanAthenaTests.Services.UseCases
                 It.IsAny<PlanningService>(),
                 It.IsAny<PreparationResult>()), Times.Never);
 
+            // Aucune baseline ne doit être créée dans ce cas
+            _mockPlanningService.Verify(p => p.GetBaseline(), Times.Never);
+            _mockPlanningService.Verify(p => p.SetBaseline(It.IsAny<PlanningBaseline>()), Times.Never);
+
             Assert.IsNotNull(result.MetierTensionReport);
             Assert.AreSame(rawResult, result.RawResult);
             Assert.IsNull(result.AnalysisReport);
@@ -187,13 +320,14 @@ namespace PlanAthenaTests.Services.UseCases
         {
             // --- ARRANGE ---
             var config = new ConfigurationPlanification();
+            bool reinitialiserBaseline = false;
             var rawResult = new ProcessChantierResultDto { OptimisationResultat = null, AnalyseStatiqueResultat = null };
             _mockFacade.Setup(f => f.ProcessChantierAsync(It.IsAny<ChantierSetupInputDto>())).ReturnsAsync(rawResult);
             _mockPreparationService.Setup(p => p.PreparerPourSolveur(It.IsAny<IReadOnlyList<Tache>>(), It.IsAny<ConfigurationPlanification>()))
                .Returns(new PreparationResult { TachesPreparees = new List<Tache>(), ParentIdParSousTacheId = new Dictionary<string, string>() });
 
             // --- ACT ---
-            var result = await _orchestrator.ExecuteAsync(config);
+            var result = await _orchestrator.ExecuteAsync(config, reinitialiserBaseline);
 
             // --- ASSERT ---
             Assert.IsNull(result.AnalysisReport);
@@ -204,6 +338,10 @@ namespace PlanAthenaTests.Services.UseCases
             _mockTaskManagerService.Verify(t => t.MettreAJourApresPlanification(
                 It.IsAny<PlanningService>(),
                 It.IsAny<PreparationResult>()), Times.Never);
+
+            // Aucune baseline ne doit être créée dans ce cas
+            _mockPlanningService.Verify(p => p.GetBaseline(), Times.Never);
+            _mockPlanningService.Verify(p => p.SetBaseline(It.IsAny<PlanningBaseline>()), Times.Never);
         }
 
         [TestMethod]
@@ -211,6 +349,7 @@ namespace PlanAthenaTests.Services.UseCases
         {
             // --- ARRANGE ---
             var config = new ConfigurationPlanification();
+            bool reinitialiserBaseline = false;
             var rawResult = new ProcessChantierResultDto();
             _mockFacade.Setup(f => f.ProcessChantierAsync(It.IsAny<ChantierSetupInputDto>())).ReturnsAsync(rawResult);
 
@@ -227,11 +366,30 @@ namespace PlanAthenaTests.Services.UseCases
                 .Returns(preparationResult);
 
             // --- ACT ---
-            await _orchestrator.ExecuteAsync(config);
+            await _orchestrator.ExecuteAsync(config, reinitialiserBaseline);
 
             // --- ASSERT ---
             _mockTaskManagerService.Verify(t => t.ObtenirToutesLesTaches(It.IsAny<string?>(), It.IsAny<string>()), Times.Once);
             _mockPreparationService.Verify(p => p.PreparerPourSolveur(It.IsAny<IReadOnlyList<Tache>>(), config), Times.Once);
+        }
+
+        [TestMethod]
+        public async Task ExecuteAsync_ShouldCallProjetServiceGetProjetDataPourSauvegarde()
+        {
+            // --- ARRANGE ---
+            var config = new ConfigurationPlanification();
+            bool reinitialiserBaseline = false;
+            var rawResult = new ProcessChantierResultDto();
+            _mockFacade.Setup(f => f.ProcessChantierAsync(It.IsAny<ChantierSetupInputDto>())).ReturnsAsync(rawResult);
+
+            _mockPreparationService.Setup(p => p.PreparerPourSolveur(It.IsAny<IReadOnlyList<Tache>>(), It.IsAny<ConfigurationPlanification>()))
+                .Returns(new PreparationResult { TachesPreparees = new List<Tache>(), ParentIdParSousTacheId = new Dictionary<string, string>() });
+
+            // --- ACT ---
+            await _orchestrator.ExecuteAsync(config, reinitialiserBaseline);
+
+            // --- ASSERT ---
+            _mockProjetService.Verify(p => p.GetProjetDataPourSauvegarde(), Times.Once);
         }
     }
 }

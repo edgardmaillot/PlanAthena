@@ -1,0 +1,64 @@
+@startuml
+' --- Configuration ---
+title Cas d'Usage : Lancer une Planification (PlanificationOrchestrator)
+skinparam componentStyle uml2
+skinparam wrapWidth 300
+skinparam participantPadding 5
+skinparam sequenceMessageAlign center
+skinparam lifelineStrategy solid
+skinparam shadowing false
+<style>
+    activityDiagram {
+        FontColor #222222; BorderColor #555555; BackgroundColor #FFFFFF; ArrowColor #333333;
+        node { BackgroundColor #LightSkyBlue; BorderColor #0077BE; }
+        partition { BackgroundColor #F0F0F0; BorderColor #AAAAAA; }
+        diamond { BackgroundColor #FFFFAA; BorderColor #DDBB00; }
+        note { BackgroundColor #FFFFEE; BorderColor #DDBB88; }
+    }
+</style>
+
+' --- Début du Flux ---
+start
+
+partition "PlanificationOrchestrator" {
+    :Collecte des données du projet\n(Tâches, Ressources, Configuration);
+    :Préparation des données pour le moteur de calcul;
+    
+    note right
+        Cette phase est en lecture seule.
+        L'état du projet n'est pas encore modifié.
+    endnote
+
+    :Appel du moteur de calcul (Solveur IA);
+
+    if (Le résultat est une "Analyse Rapide" ?) then (oui)
+        :<b>Cas : Analyse Rapide</b>;
+        :Génération du rapport de tension des métiers;
+    
+    else if (Le résultat est une "Optimisation Réussie" ?) then (oui)
+        :<b>Cas : Optimisation Réussie</b>;
+        :Traitement et consolidation du planning;
+        :Mise à jour de l'état du planning global;
+        :Synchronisation des tâches avec le nouveau planning;
+        
+        if (Créer / Réinitialiser la baseline ?) then (oui)
+            :Création de la "photographie" du projet (Baseline);
+            note right: La Baseline est créée lors de la 1ère planification
+        else (non)
+        endif
+        
+        :Génération du rapport d'analyse complet (KPIs);
+        
+    else (non)
+        :<b>Cas : Échec de la planification</b>;
+        note right
+            Aucune modification de l'état du projet.
+            Seul le message d'erreur est retourné.
+        endnote
+    endif
+}
+
+:Retourner le résultat complet à l'interface utilisateur;
+
+stop
+@enduml

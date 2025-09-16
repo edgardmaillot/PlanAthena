@@ -169,7 +169,10 @@ namespace PlanAthena.View.Planificator
             try
             {
                 var configuration = GetConfigFromForm();
-                _lastRunResult = await _planificationOrchestrator.ExecuteAsync(configuration);
+                // --- CORRECTIF ---
+                bool reinitialiser = chkReinitialiserBaseline.Checked;
+                _lastRunResult = await _planificationOrchestrator.ExecuteAsync(configuration, reinitialiser);
+
                 AfficherResultats(_lastRunResult);
             }
             catch (Exception ex)

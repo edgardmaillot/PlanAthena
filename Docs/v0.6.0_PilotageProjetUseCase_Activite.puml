@@ -1,0 +1,62 @@
+@startuml
+' --- Configuration ---
+title Diagramme d'Activité : PilotageProjetUseCase.ObtenirIndicateursCockpit() (Version 0.6.0)
+skinparam componentStyle uml2
+skinparam wrapWidth 250
+skinparam participantPadding 5
+skinparam sequenceMessageAlign center
+skinparam lifelineStrategy solid
+skinparam shadowing false
+<style>
+    activityDiagram {
+        FontColor #222222; BorderColor #555555; BackgroundColor #FFFFFF; ArrowColor #333333;
+        node { BackgroundColor #LightSkyBlue; BorderColor #0077BE; }
+        partition { BackgroundColor #F0F0F0; BorderColor #AAAAAA; }
+        diamond { BackgroundColor #FFFFAA; BorderColor #DDBB00; }
+        note { BackgroundColor #FFFFEE; BorderColor #DDBB88; }
+    }
+</style>
+
+' --- Début du Flux ---
+start
+
+partition "PilotageProjetUseCase" {
+    :Obtenir la date de référence (Aujourd'hui);
+    
+    :Appeler **TaskManagerService** pour obtenir `toutesLesTaches`;
+    
+    if (Liste de tâches non vide ?) then (oui)
+        :Calculer les KPIs non-EVM (Progression, Lot à risque...);
+        :Initialiser `CockpitKpiData` avec ces valeurs de base;
+
+        note right: Calculs existants.
+        
+        :Appeler **PlanningService**.GetRapportEVMComplet(dateRef, toutesLesTaches);
+        note left
+            <b>Appel unique et de haut niveau.</b>
+            Le UseCase fournit toutes les données
+            nécessaires au calcul.
+        end note
+        
+        if (Rapport EVM retourné est valide ?) then (oui)
+            :Récupérer PV, EV, AC et BAC depuis le rapport;
+            
+            :<b>Calculer les indicateurs finaux</b>\n- SV = EV - PV\n- CV = EV - AC\n- SPI = EV / PV\n- CPI = EV / AC\n- EAC = BAC / CPI;
+            note right: Protection contre la division par zéro gérée ici.
+            
+            :Mettre à jour `CockpitKpiData` avec les valeurs EVM;
+            
+        else (non)
+            :Laisser les KPIs EVM à leurs valeurs par défaut;
+            note right: Cas où aucune baseline n'existe.
+        endif
+    
+    else (non)
+      :Créer un `CockpitKpiData` vide;
+    endif
+}
+
+:Retourner l'objet `CockpitKpiData` complet;
+
+stop
+@enduml

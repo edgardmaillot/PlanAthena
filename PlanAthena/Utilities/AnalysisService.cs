@@ -1,4 +1,4 @@
-// Emplacement: /Utilities/AnalysisService.cs
+// Fichier: /Utilities/AnalysisService.cs Version 0.6.0
 
 using PlanAthena.Data;
 using PlanAthena.Services.Business.DTOs;
@@ -7,24 +7,19 @@ namespace PlanAthena.Utilities
 {
     /// <summary>
     /// Service utilitaire stateless pour calculer un ensemble complet d'indicateurs de performance 
-    /// clés (KPIs) à partir d'un planning consolidé.
+    /// clés (KPIs) et de données d'analyse à partir d'un planning consolidé.
+    /// Version 0.6.0 : Ajout des calculateurs pour la baseline EVM.
     /// </summary>
     public class AnalysisService
     {
         // Type alias pour améliorer la lisibilité de la signature de la méthode.
         public delegate int JoursOuvresCalculator(DateTime start, DateTime end);
 
-        #region Points d'Entrée Publics
+        #region Points d'Entrée Publics - Analyse de Planning
 
         /// <summary>
         /// Génère un rapport d'analyse complet à partir d'un planning optimisé.
         /// </summary>
-        /// <param name="planning">Le planning consolidé et propre.</param>
-        /// <param name="allOuvriers">La liste de tous les ouvriers disponibles pour le projet.</param>
-        /// <param name="allMetiers">La liste de tous les métiers disponibles, requise pour déterminer le nom du métier principal.</param>
-        /// <param name="config">La configuration de planification utilisée.</param>
-        /// <param name="joursOuvresCalculator">Une fonction externe pour calculer le nombre de jours ouvrés dans un intervalle.</param>
-        /// <returns>Un rapport d'analyse détaillé.</returns>
         public virtual AnalysisReport GenerateReport(
             ConsolidatedPlanning planning,
             IReadOnlyList<Ouvrier> allOuvriers,
@@ -47,9 +42,6 @@ namespace PlanAthena.Utilities
         /// <summary>
         /// Analyse la liste des IDs d'ouvriers clés retournée par l'analyse rapide pour en déduire la tension par métier.
         /// </summary>
-        /// <param name="ouvrierClesIds">Liste des IDs des 4 ouvriers les plus en tension.</param>
-        /// <param name="allOuvriers">La liste de tous les ouvriers pour retrouver leur métier principal.</param>
-        /// <returns>Un rapport sur la tension des métiers.</returns>
         public virtual MetierTensionReport AnalyzeMetierTension(IReadOnlyList<string> ouvrierClesIds, IReadOnlyList<Ouvrier> allOuvriers)
         {
             if (ouvrierClesIds == null || !ouvrierClesIds.Any() || allOuvriers == null || !allOuvriers.Any())
@@ -85,6 +77,115 @@ namespace PlanAthena.Utilities
                 Repartition = repartition
             };
         }
+
+        #endregion
+
+        #region NOUVEAU : Points d'Entrée Publics - Calculateurs EVM pour Baseline
+
+        /// <summary>
+        /// Calcule le coût total du projet (Budget à l'Achèvement - BAC) pour un planning donné.
+        /// </summary>
+        public virtual decimal CalculerBudgetTotal(
+            ConsolidatedPlanning planning,
+            IReadOnlyList<Ouvrier> allOuvriers,
+            ConfigurationPlanification config,
+            JoursOuvresCalculator joursOuvresCalculator)
+        {
+            var synthese = _CalculerSyntheseProjet(planning, allOuvriers, config, joursOuvresCalculator);
+            return synthese.CoutTotalProjet;
+        }
+
+        /// <summary>
+        /// Calcule la courbe de la Valeur Planifiée (PV) cumulative pour un planning donné.
+        /// </summary>
+        public virtual Dictionary<DateTime, decimal> CalculerCourbePlannedValueCumulative(
+            ConsolidatedPlanning planning,
+            IReadOnlyList<Ouvrier> allOuvriers,
+            ConfigurationPlanification config)
+        {
+            var mapOuvriers = allOuvriers.ToDictionary(o => o.OuvrierId);
+            var heuresParJour = (decimal)config.HeuresTravailEffectifParJour;
+            if (heuresParJour == 0) return new Dictionary<DateTime, decimal>();
+
+            // 1. Calculer le coût journalier RH
+            var coutsJournaliers = planning.SegmentsParOuvrierId.Values
+                .SelectMany(segments => segments)
+                .GroupBy(s => s.Jour.Date)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Sum(s => {
+                        if (mapOuvriers.TryGetValue(s.OuvrierId, out var ouvrier))
+                        {
+                            return ((decimal)s.HeuresTravaillees / heuresParJour) * ouvrier.CoutJournalier;
+                        }
+                        return 0m;
+                    })
+                );
+
+            // 2. Ajouter les coûts indirects
+            if (planning.DateDebutProjet != default && planning.DateFinProjet != default)
+            {
+                var joursOuvres = config.JoursOuvres ?? new List<DayOfWeek>();
+                for (var jour = planning.DateDebutProjet.Date; jour <= planning.DateFinProjet.Date; jour = jour.AddDays(1))
+                {
+                    if (joursOuvres.Contains(jour.DayOfWeek))
+                    {
+                        if (!coutsJournaliers.ContainsKey(jour))
+                        {
+                            coutsJournaliers[jour] = 0;
+                        }
+                        coutsJournaliers[jour] += config.CoutIndirectJournalierAbsolu;
+                    }
+                }
+            }
+
+            // 3. Créer la courbe cumulative
+            var courbeCumulative = new Dictionary<DateTime, decimal>();
+            decimal totalCumulatif = 0m;
+            foreach (var kvp in coutsJournaliers.OrderBy(kv => kv.Key))
+            {
+                totalCumulatif += kvp.Value;
+                courbeCumulative[kvp.Key] = totalCumulatif;
+            }
+
+            return courbeCumulative;
+        }
+
+        /// <summary>
+        /// Calcule le budget RH initial pour chaque tâche mère d'un planning donné.
+        /// </summary>
+        public virtual Dictionary<string, decimal> CalculerBudgetParTache(
+            ConsolidatedPlanning planning,
+            IReadOnlyList<Ouvrier> allOuvriers,
+            ConfigurationPlanification config)
+        {
+            var mapOuvriers = allOuvriers.ToDictionary(o => o.OuvrierId);
+            var heuresParJour = (decimal)config.HeuresTravailEffectifParJour;
+            if (heuresParJour == 0) return new Dictionary<string, decimal>();
+
+            var budgetParTache = new Dictionary<string, decimal>();
+
+            var allSegments = planning.SegmentsParOuvrierId.Values.SelectMany(s => s);
+
+            foreach (var segment in allSegments)
+            {
+                var tacheMereId = segment.ParentTacheId ?? segment.TacheId;
+                if (string.IsNullOrEmpty(tacheMereId)) continue;
+
+                if (mapOuvriers.TryGetValue(segment.OuvrierId, out var ouvrier))
+                {
+                    decimal coutSegment = ((decimal)segment.HeuresTravaillees / heuresParJour) * ouvrier.CoutJournalier;
+                    if (!budgetParTache.ContainsKey(tacheMereId))
+                    {
+                        budgetParTache[tacheMereId] = 0;
+                    }
+                    budgetParTache[tacheMereId] += coutSegment;
+                }
+            }
+
+            return budgetParTache;
+        }
+
 
         #endregion
 
@@ -145,9 +246,8 @@ namespace PlanAthena.Utilities
 
             foreach (var ouvrier in allOuvriers)
             {
-                // Étape 1: Extraire le métier principal. Cette information est requise pour tous les ouvriers, qu'ils aient travaillé ou non.
                 var competencePrincipale = ouvrier.Competences?.FirstOrDefault(c => c.EstMetierPrincipal)
-                                           ?? ouvrier.Competences?.FirstOrDefault(); // Fallback
+                                           ?? ouvrier.Competences?.FirstOrDefault();
 
                 string metierPrincipalId = competencePrincipale?.MetierId ?? string.Empty;
                 string metierPrincipalNom = "Non défini";
@@ -156,7 +256,6 @@ namespace PlanAthena.Utilities
                     metierPrincipalNom = metier.Nom;
                 }
 
-                // Étape 2: Calculer les KPIs basés sur le planning.
                 double heuresTravaillees = 0;
                 int joursTravailles = 0;
                 double tauxOccupation = 0;
@@ -164,7 +263,6 @@ namespace PlanAthena.Utilities
 
                 if (planning.SegmentsParOuvrierId.TryGetValue(ouvrier.OuvrierId, out var segmentsOuvrier) && segmentsOuvrier.Any())
                 {
-                    // L'ouvrier a travaillé, on calcule ses KPIs.
                     heuresTravaillees = segmentsOuvrier.Sum(s => s.HeuresTravaillees);
                     joursTravailles = segmentsOuvrier.Select(s => s.Jour.Date).Distinct().Count();
 
@@ -177,7 +275,6 @@ namespace PlanAthena.Utilities
                     tauxFragmentation = (joursOuvresSurPeriode > 0) ? (1.0 - ((double)joursTravailles / joursOuvresSurPeriode)) : 0;
                 }
 
-                // Étape 3: Construire le rapport final en combinant les informations.
                 reports.Add(new AnalyseOuvrierReport
                 {
                     OuvrierId = ouvrier.OuvrierId,
@@ -202,11 +299,11 @@ namespace PlanAthena.Utilities
             }
 
             return planning.SegmentsParOuvrierId
-                .SelectMany(kvp => kvp.Value) // Aplatir tous les segments
-                .GroupBy(segment => segment.Jour.Date) // Grouper par jour
+                .SelectMany(kvp => kvp.Value)
+                .GroupBy(segment => segment.Jour.Date)
                 .ToDictionary(
-                    group => group.Key, // Clé = Date
-                    group => group.Select(s => s.OuvrierId).Distinct().Count() // Valeur = Nombre d'ouvriers uniques
+                    group => group.Key,
+                    group => group.Select(s => s.OuvrierId).Distinct().Count()
                 );
         }
 

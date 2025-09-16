@@ -111,6 +111,7 @@ namespace PlanAthena.View.Planificator
             numHeuresTravail = new KryptonNumericUpDown();
             planningTimer = new System.Windows.Forms.Timer(components);
             kryptonToolTip = new ToolTip(components);
+            chkReinitialiserBaseline = new KryptonCheckBox();
             ((System.ComponentModel.ISupportInitialize)kryptonPanelMain).BeginInit();
             kryptonPanelMain.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)navigatorResultats).BeginInit();
@@ -165,6 +166,7 @@ namespace PlanAthena.View.Planificator
             // 
             // kryptonPanelMain
             // 
+            kryptonPanelMain.Controls.Add(chkReinitialiserBaseline);
             kryptonPanelMain.Controls.Add(SolverProgressBar);
             kryptonPanelMain.Controls.Add(navigatorResultats);
             kryptonPanelMain.Controls.Add(groupConfig);
@@ -930,6 +932,14 @@ namespace PlanAthena.View.Planificator
             numHeuresTravail.TabIndex = 5;
             numHeuresTravail.Value = new decimal(new int[] { 0, 0, 0, 0 });
             // 
+            // chkReinitialiserBaseline
+            // 
+            chkReinitialiserBaseline.Location = new Point(466, 138);
+            chkReinitialiserBaseline.Name = "chkReinitialiserBaseline";
+            chkReinitialiserBaseline.Size = new Size(208, 36);
+            chkReinitialiserBaseline.TabIndex = 4;
+            chkReinitialiserBaseline.Values.Text = "Réinitialiser les rapports financiers\r\navec ce nouveau planning";
+            // 
             // PlanificatorView
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -940,6 +950,7 @@ namespace PlanAthena.View.Planificator
             Size = new Size(1000, 800);
             ((System.ComponentModel.ISupportInitialize)kryptonPanelMain).EndInit();
             kryptonPanelMain.ResumeLayout(false);
+            kryptonPanelMain.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)navigatorResultats).EndInit();
             ((System.ComponentModel.ISupportInitialize)tabPageSynthese).EndInit();
             tabPageSynthese.ResumeLayout(false);
@@ -1068,5 +1079,6 @@ namespace PlanAthena.View.Planificator
         private KryptonButton btnExportGantt;
         private KryptonButton btnExportPlanningExcel;
         private ToolTip kryptonToolTip;
+        private KryptonCheckBox chkReinitialiserBaseline;
     }
 }
