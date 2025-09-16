@@ -32,13 +32,36 @@ namespace PlanAthena.Services.Usecases
         {
             var toutesLesTaches = _taskManagerService.ObtenirToutesLesTaches();
 
-            // 1. Calcul de la Dérive Planning
-            var tachesEnRetard = toutesLesTaches.Where(t => t.Statut == Statut.EnRetard && t.DateFinPlanifiee.HasValue).ToList();
-            double deriveMaxJours = 0;
-            if (tachesEnRetard.Any())
+            // 1. Calcul de la Dérive Planning (NOUVELLE LOGIQUE)
+            // Somme des retards de toutes les tâches, hors jalons et tâches enfants.
+            double deriveJours = 0;
+            var dateReference = DateTime.Today;
+
+            var tachesAConsiderer = toutesLesTaches
+                .Where(t => t.Type == TypeActivite.Tache && string.IsNullOrEmpty(t.ParentId) && !t.EstJalon)
+                .ToList();
+
+            foreach (var tache in tachesAConsiderer)
             {
-                deriveMaxJours = tachesEnRetard.Max(t => (DateTime.Today - t.DateFinPlanifiee.Value).TotalDays);
+                double retard = 0;
+
+                if (tache.DateFinReelle.HasValue && tache.DateFinPlanifiee.HasValue)
+                {
+                    // Si la tâche est terminée, on compare les deux dates de fin
+                    retard = (tache.DateFinReelle.Value - tache.DateFinPlanifiee.Value).TotalDays;
+                }
+                else if (tache.DateFinPlanifiee.HasValue && tache.DateFinPlanifiee.Value < dateReference)
+                {
+                    // Si la tâche est en retard par rapport à la date du jour
+                    retard = (dateReference - tache.DateFinPlanifiee.Value).TotalDays;
+                }
+
+                deriveJours += Math.Max(0, retard); // On ne prend que les retards (pas les avances)
             }
+
+            // Conversion en jours entiers, en arrondissant au supérieur.
+            int deriveJoursEntiers = (int)Math.Ceiling(deriveJours);
+
 
             // 2. Calcul de la Disponibilité des Ressources
             // On réutilise la méthode existante qui calcule la tension
@@ -48,31 +71,30 @@ namespace PlanAthena.Services.Usecases
             // 3. Déviation Budget (V1)
             double deviationBudget = 0.0;
 
-            // 4. Détermination du Statut Météo
+            // 4. Détermination du Statut Météo (utilisant la nouvelle dérive)
             ProjectWeatherStatus statut = ProjectWeatherStatus.Sunny;
 
             // Critères pour passer à "Nuageux" (Orages en vue)
-            //if (deriveMaxJours > 5 || disponibilitePourcentage < 0.30) // Plus de 5 jours de retard OU moins de 30% de dispo
-            if (deriveMaxJours > 1 || disponibilitePourcentage < 1.00)
+            if (deriveJoursEntiers > 1)
             {
                 statut = ProjectWeatherStatus.Cloudy;
             }
 
-            if (deriveMaxJours > 3 || disponibilitePourcentage < 0.9)
+            if (deriveJoursEntiers > 5)
             {
                 statut = ProjectWeatherStatus.Rainy;
             }
 
             // Critères pour passer à "Orageux" (Situation critique)
-            //if (deriveMaxJours > 10 || disponibilitePourcentage < 0.15) // Plus de 10 jours de retard OU moins de 15% de dispo
-            if (deriveMaxJours > 5 && disponibilitePourcentage < 0.50)
+            if (deriveJoursEntiers > 10)
             {
                 statut = ProjectWeatherStatus.Stormy;
             }
 
             return new ProjectWeatherData
             {
-                DerivPlanningJours = Math.Round(deriveMaxJours, 1),
+                // La propriété DerivPlanningJours est un double, mais on lui passe un entier. C'est valide.
+                DerivPlanningJours = deriveJoursEntiers,
                 DisponibiliteRessourcesPourcentage = disponibilitePourcentage,
                 DeviationBudgetPourcentage = deviationBudget,
                 Statut = statut
