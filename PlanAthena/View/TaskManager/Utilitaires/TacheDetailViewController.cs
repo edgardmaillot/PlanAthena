@@ -23,16 +23,26 @@ namespace PlanAthena.View.TaskManager.Utilitaires
         }
 
         // Règle 2: Appliquer l'état ReadOnly à un ensemble de contrôles
-        public void ApplyReadOnlyStateToControls(Control parentControl, bool isReadOnly)
+        public void ApplyReadOnlyStateToControls(Control parentControl, bool isReadOnly, string[] exceptionsControls = null)
         {
-            // On peut rendre ça générique pour n'importe quel conteneur (UserControl, Panel...)
+            // Liste des contrôles qui doivent rester actifs (navigation)
+            var exceptions = exceptionsControls ?? new[] { "cmbLots" };
+
             foreach (Control ctrl in parentControl.Controls)
             {
-                if (ctrl is KryptonTextBox txt) txt.ReadOnly = isReadOnly;
-                else if (ctrl is KryptonNumericUpDown num) num.Enabled = !isReadOnly;
-                else if (ctrl is KryptonComboBox cmb) cmb.Enabled = !isReadOnly;
-                else if (ctrl is KryptonCheckBox chk) chk.Enabled = !isReadOnly;
-                else if (ctrl is KryptonCheckedListBox chkList) chkList.Enabled = !isReadOnly;
+                // Vérifier si ce contrôle fait partie des exceptions
+                bool isException = exceptions.Contains(ctrl.Name);
+
+                if (ctrl is KryptonTextBox txt)
+                    txt.ReadOnly = isReadOnly && !isException;
+                else if (ctrl is KryptonNumericUpDown num)
+                    num.Enabled = !isReadOnly || isException;
+                else if (ctrl is KryptonComboBox cmb)
+                    cmb.Enabled = !isReadOnly || isException;
+                else if (ctrl is KryptonCheckBox chk)
+                    chk.Enabled = !isReadOnly || isException;
+                else if (ctrl is KryptonCheckedListBox chkList)
+                    chkList.Enabled = !isReadOnly || isException;
                 // Cas spécial pour les boutons
                 else if (ctrl is KryptonButton btn && (btn.Name.Contains("Sauvegarder") || btn.Name.Contains("Supprimer")))
                 {
@@ -42,7 +52,7 @@ namespace PlanAthena.View.TaskManager.Utilitaires
                 // Appel récursif si le contrôle a des enfants (ex: GroupBox, Panel)
                 if (ctrl.Controls.Count > 0)
                 {
-                    ApplyReadOnlyStateToControls(ctrl, isReadOnly);
+                    ApplyReadOnlyStateToControls(ctrl, isReadOnly, exceptionsControls);
                 }
             }
         }

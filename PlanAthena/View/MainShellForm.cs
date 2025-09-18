@@ -6,13 +6,14 @@ using PlanAthena.Services.Infrastructure;
 using PlanAthena.Services.Usecases;
 using PlanAthena.Services.UseCases;
 using PlanAthena.Utilities;
-using PlanAthena.View.Utils;
 using PlanAthena.View.Dashboard;
 using PlanAthena.View.Planificator;
 using PlanAthena.View.Ressources;
 using PlanAthena.View.Ressources.MetierDiagram;
 using PlanAthena.View.Structure;
 using PlanAthena.View.TaskManager;
+using PlanAthena.View.TaskManager.Cockpit;
+using PlanAthena.View.Utils;
 
 namespace PlanAthena.View
 {
@@ -60,7 +61,6 @@ namespace PlanAthena.View
             kryptonManager.GlobalPaletteMode = PaletteMode.Microsoft365SilverDarkMode;
 
             _serviceProvider = serviceProvider;
-            // --- NOUVELLE ASSIGNATION ---
             _persistenceUseCase = persistenceUseCase;
             _projetService = projetService;
             _taskManagerService = taskManagerService;
@@ -75,14 +75,14 @@ namespace PlanAthena.View
             _planningExcelExportService = planningExcelExportService;
             _ganttExportService = ganttExportService;
             _userPreferencesService = userPreferencesService;
-
+            
             InitializeMenuHoverOpening();
             InitializeThemeSelector();
             NavigateToAccueil();
         }
 
         #region Logique de Navigation Principale
-
+        
 
         private void ShowView(UserControl viewToShow)
         {

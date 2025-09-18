@@ -1,7 +1,6 @@
-// Fichier: /View/TaskManager/Cockpit/Cockpit.cs Version 0.6.1
+// Fichier: /View/TaskManager/Cockpit/Cockpit.cs Version 0.6.5
 
 using Krypton.Navigator;
-using Krypton.Toolkit;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DTOs.UseCases;
 using PlanAthena.Services.Usecases;
@@ -22,12 +21,9 @@ namespace PlanAthena.View.TaskManager.Cockpit
         public CockpitView()
         {
             InitializeComponent();
-            typeof(DataGridView).InvokeMember("DoubleBuffered",
-        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.SetProperty,
-        null, kryptonTableLayoutPanel1, new object[] { true });
         }
 
-        public void Initialize(
+        public async void Initialize(
             TaskManagerService taskManagerService,
             PlanningService planningService,
             ProjetService projetService,
@@ -40,11 +36,22 @@ namespace PlanAthena.View.TaskManager.Cockpit
                 _projetService,
                 ressourceService
             );
+
             this.SuspendLayout();
-            InitializeViews();
-            AttachEvents();
-            RefreshAllData();
-            this.ResumeLayout(true); 
+            try
+            {
+                // STAThreadAttributed requirement for certain UI components
+                //await Task.Run(() => InitializeViews());
+                InitializeViews();
+                AttachEvents();
+                // Ne plus appeler RefreshAllData ici
+                await Task.Run(() => RefreshKpisAndMeteo()); // On rafraîchit seulement les KPI et la météo
+                                                             // L'onglet actif sera rafraîchi lors du premier affichage via l'événement Load
+            }
+            finally
+            {
+                this.ResumeLayout(true);
+            }
         }
 
         private void InitializeViews()
@@ -78,25 +85,68 @@ namespace PlanAthena.View.TaskManager.Cockpit
             {
                 splashPage.Controls.Add(_splashScreen);
             }
+            kryptonNavigator1.SelectedPageChanged += Navigator_SelectedPageChanged;
         }
 
         private void AttachEvents()
         {
-            this.Load += (s, e) => RefreshAllData();
+            this.Load += (s, e) =>
+            {
+                RefreshKpisAndMeteo();
+                RefreshActiveTab();
+            };
+
+            //TMP
+            //tabPageSplash.Resize += TabPageSplash_FirstResize;
 
             _kpiRefreshTimer = new System.Windows.Forms.Timer { Interval = 30000 };
-            _kpiRefreshTimer.Tick += (s, e) => RefreshKpisAndMeteo();
+            _kpiRefreshTimer.Tick += (s, e) => RefreshKpisAndMeteo(); // Only refresh KPI and meteo
             _kpiRefreshTimer.Start();
         }
+        
 
+
+
+        private void Navigator_SelectedPageChanged(object sender, EventArgs e)
+        {
+            // Rafraîchir l'onglet qui vient d'être sélectionné
+            RefreshActiveTab();
+        }
+
+        private void RefreshActiveTab()
+        {
+            if (kryptonNavigator1.SelectedPage == null) return;
+
+            Cursor = Cursors.WaitCursor;
+            try
+            {
+                switch (kryptonNavigator1.SelectedPage.Name)
+                {
+                    case "tabPageTaskList":
+                        _taskListView?.RefreshData();
+                        break;
+                    case "tabPagePlanning":
+                        _planningView?.RefreshData();
+                        break;
+                    case "tabPageEVM":
+                        _graphEVM?.RefreshData();
+                        break;
+                    case "tabPageSplash":
+                        // Rien à rafraîchir
+                        break;
+                }
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+            }
+        }
         private void RefreshAllData()
         {
             if (_useCase == null) return;
             Cursor = Cursors.WaitCursor;
-            RefreshKpisAndMeteo();
-            _taskListView?.RefreshData();
-            _planningView?.RefreshData();
-            _graphEVM?.RefreshData();
+            RefreshKpisAndMeteo(); // Toujours rafraîchir les KPI et la météo
+            RefreshActiveTab(); // Rafraîchir l'onglet actif
             Cursor = Cursors.Default;
         }
 

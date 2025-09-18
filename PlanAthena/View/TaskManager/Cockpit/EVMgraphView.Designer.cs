@@ -67,16 +67,16 @@ namespace PlanAthena.View.TaskManager.Cockpit
             formsPlotEVMCurves.Dock = DockStyle.Fill;
             formsPlotEVMCurves.Location = new Point(418, 3);
             formsPlotEVMCurves.Name = "formsPlotEVMCurves";
-            formsPlotEVMCurves.Size = new Size(499, 344);
+            formsPlotEVMCurves.Size = new Size(1235, 436);
             formsPlotEVMCurves.TabIndex = 0;
             // 
             // formsPlotEtcVsPtc
             // 
             formsPlotEtcVsPtc.DisplayScale = 1F;
             formsPlotEtcVsPtc.Dock = DockStyle.Fill;
-            formsPlotEtcVsPtc.Location = new Point(418, 353);
+            formsPlotEtcVsPtc.Location = new Point(418, 445);
             formsPlotEtcVsPtc.Name = "formsPlotEtcVsPtc";
-            formsPlotEtcVsPtc.Size = new Size(499, 344);
+            formsPlotEtcVsPtc.Size = new Size(1235, 436);
             formsPlotEtcVsPtc.TabIndex = 1;
             // 
             // kryptonPanel1
@@ -85,7 +85,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonPanel1.Dock = DockStyle.Fill;
             kryptonPanel1.Location = new Point(0, 0);
             kryptonPanel1.Name = "kryptonPanel1";
-            kryptonPanel1.Size = new Size(920, 700);
+            kryptonPanel1.Size = new Size(1656, 884);
             kryptonPanel1.TabIndex = 3;
             // 
             // kryptonTableLayoutPanel1
@@ -103,7 +103,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonTableLayoutPanel1.RowCount = 2;
             kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
             kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            kryptonTableLayoutPanel1.Size = new Size(920, 700);
+            kryptonTableLayoutPanel1.Size = new Size(1656, 884);
             kryptonTableLayoutPanel1.TabIndex = 2;
             // 
             // kpEVM
@@ -121,7 +121,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kpEVM.Dock = DockStyle.Fill;
             kpEVM.Location = new Point(3, 3);
             kpEVM.Name = "kpEVM";
-            kpEVM.Size = new Size(409, 344);
+            kpEVM.Size = new Size(409, 436);
             kpEVM.TabIndex = 4;
             // 
             // kryptonLabel5
@@ -227,9 +227,9 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kpPTC_ETC.Controls.Add(klPTClegend);
             kpPTC_ETC.Controls.Add(khPTC_ETC);
             kpPTC_ETC.Dock = DockStyle.Fill;
-            kpPTC_ETC.Location = new Point(3, 353);
+            kpPTC_ETC.Location = new Point(3, 445);
             kpPTC_ETC.Name = "kpPTC_ETC";
-            kpPTC_ETC.Size = new Size(409, 344);
+            kpPTC_ETC.Size = new Size(409, 436);
             kpPTC_ETC.TabIndex = 5;
             // 
             // kryptonWrapLabel5
@@ -304,7 +304,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             AutoScaleMode = AutoScaleMode.Font;
             Controls.Add(kryptonPanel1);
             Name = "EVMgraphView";
-            Size = new Size(920, 700);
+            Size = new Size(1656, 884);
             ((System.ComponentModel.ISupportInitialize)kryptonPanel1).EndInit();
             kryptonPanel1.ResumeLayout(false);
             kryptonTableLayoutPanel1.ResumeLayout(false);

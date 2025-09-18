@@ -83,7 +83,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            kryptonTableLayoutPanel1.Size = new Size(794, 106);
+            kryptonTableLayoutPanel1.Size = new Size(1650, 106);
             kryptonTableLayoutPanel1.TabIndex = 0;
             // 
             // kryptonTableLayoutPanel2
@@ -100,7 +100,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonTableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
             kryptonTableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             kryptonTableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
-            kryptonTableLayoutPanel2.Size = new Size(800, 600);
+            kryptonTableLayoutPanel2.Size = new Size(1656, 884);
             kryptonTableLayoutPanel2.TabIndex = 2;
             // 
             // kpCentre
@@ -110,7 +110,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kpCentre.Dock = DockStyle.Fill;
             kpCentre.Location = new Point(3, 53);
             kpCentre.Name = "kpCentre";
-            kpCentre.Size = new Size(794, 494);
+            kpCentre.Size = new Size(1650, 778);
             kpCentre.TabIndex = 0;
             // 
             // kpTop
@@ -122,7 +122,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kpTop.Dock = DockStyle.Fill;
             kpTop.Location = new Point(3, 3);
             kpTop.Name = "kpTop";
-            kpTop.Size = new Size(794, 44);
+            kpTop.Size = new Size(1650, 44);
             kpTop.TabIndex = 1;
             // 
             // klEnd
@@ -161,9 +161,9 @@ namespace PlanAthena.View.TaskManager.Cockpit
             // 
             kpBottom.Controls.Add(lblNoPlanning);
             kpBottom.Dock = DockStyle.Fill;
-            kpBottom.Location = new Point(3, 553);
+            kpBottom.Location = new Point(3, 837);
             kpBottom.Name = "kpBottom";
-            kpBottom.Size = new Size(794, 44);
+            kpBottom.Size = new Size(1650, 44);
             kpBottom.TabIndex = 2;
             // 
             // lblNoPlanning
@@ -180,7 +180,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             AutoScaleMode = AutoScaleMode.Font;
             Controls.Add(kryptonTableLayoutPanel2);
             Name = "PlanningView";
-            Size = new Size(800, 600);
+            Size = new Size(1656, 884);
             kryptonTableLayoutPanel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)kpCentre).EndInit();
             kpCentre.ResumeLayout(false);

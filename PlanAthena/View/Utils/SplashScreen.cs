@@ -1,11 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+// Fichier : SplashScreen.cs (Version corrigée et finale)
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace PlanAthena.View.Utils
@@ -15,6 +9,17 @@ namespace PlanAthena.View.Utils
         public SplashScreen()
         {
             InitializeComponent();
+            // SUPPRIMEZ les appels à DisplayDimensions d'ici.
+        }
+
+        // Cette méthode est appelée de l'extérieur (par CockpitView)
+        public void DisplayDimensions(Size size)
+        {
+            // Si lblDimensions existe, on l'utilise.
+            if (lblDimensions != null)
+            {
+                lblDimensions.Text = $"Width = {size.Width}\nHeight = {size.Height}";
+            }
         }
     }
 }

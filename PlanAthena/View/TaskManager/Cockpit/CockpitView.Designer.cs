@@ -36,7 +36,6 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonPanel0 = new KryptonPanel();
             kryptonHeader1 = new KryptonHeader();
             kryptonNavigator1 = new KryptonNavigator();
-            tabPageSplash = new KryptonPage();
             tabPageTaskList = new KryptonPage();
             tabPagePlanning = new KryptonPage();
             tabPageEVM = new KryptonPage();
@@ -79,7 +78,6 @@ namespace PlanAthena.View.TaskManager.Cockpit
             ((System.ComponentModel.ISupportInitialize)kryptonPanel0).BeginInit();
             kryptonPanel0.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)kryptonNavigator1).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)tabPageSplash).BeginInit();
             ((System.ComponentModel.ISupportInitialize)tabPageTaskList).BeginInit();
             ((System.ComponentModel.ISupportInitialize)tabPagePlanning).BeginInit();
             ((System.ComponentModel.ISupportInitialize)tabPageEVM).BeginInit();
@@ -115,7 +113,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonTableLayoutPanel1.Name = "kryptonTableLayoutPanel1";
             kryptonTableLayoutPanel1.RowCount = 1;
             kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            kryptonTableLayoutPanel1.Size = new Size(1184, 761);
+            kryptonTableLayoutPanel1.Size = new Size(1920, 965);
             kryptonTableLayoutPanel1.TabIndex = 0;
             // 
             // kryptonTableLayoutPanel2
@@ -131,7 +129,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonTableLayoutPanel2.RowCount = 2;
             kryptonTableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 43F));
             kryptonTableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            kryptonTableLayoutPanel2.Size = new Size(928, 755);
+            kryptonTableLayoutPanel2.Size = new Size(1664, 959);
             kryptonTableLayoutPanel2.TabIndex = 0;
             // 
             // kryptonPanel0
@@ -140,7 +138,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonPanel0.Dock = DockStyle.Fill;
             kryptonPanel0.Location = new Point(3, 3);
             kryptonPanel0.Name = "kryptonPanel0";
-            kryptonPanel0.Size = new Size(922, 37);
+            kryptonPanel0.Size = new Size(1658, 37);
             kryptonPanel0.TabIndex = 2;
             // 
             // kryptonHeader1
@@ -148,7 +146,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonHeader1.Dock = DockStyle.Top;
             kryptonHeader1.Location = new Point(0, 0);
             kryptonHeader1.Name = "kryptonHeader1";
-            kryptonHeader1.Size = new Size(922, 31);
+            kryptonHeader1.Size = new Size(1658, 31);
             kryptonHeader1.TabIndex = 0;
             kryptonHeader1.Values.Description = "";
             kryptonHeader1.Values.Heading = "Cockpit projet";
@@ -162,26 +160,14 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonNavigator1.NavigatorMode = NavigatorMode.BarTabGroup;
             kryptonNavigator1.Owner = null;
             kryptonNavigator1.PageBackStyle = PaletteBackStyle.PanelClient;
-            kryptonNavigator1.Pages.AddRange(new KryptonPage[] { tabPageSplash, tabPageTaskList, tabPagePlanning, tabPageEVM });
+            kryptonNavigator1.Pages.AddRange(new KryptonPage[] { tabPageTaskList, tabPagePlanning, tabPageEVM });
             kryptonNavigator1.PopupPages.AllowPopupPages = PopupPageAllow.OnlyCompatibleModes;
             kryptonNavigator1.PopupPages.Element = PopupPageElement.Item;
             kryptonNavigator1.PopupPages.Position = PopupPagePosition.ModeAppropriate;
             kryptonNavigator1.SelectedIndex = 0;
-            kryptonNavigator1.Size = new Size(922, 706);
+            kryptonNavigator1.Size = new Size(1658, 910);
             kryptonNavigator1.TabIndex = 3;
             kryptonNavigator1.Text = "kryptonNavigator1";
-            // 
-            // tabPageSplash
-            // 
-            tabPageSplash.AutoHiddenSlideSize = new Size(200, 200);
-            tabPageSplash.Flags = 65534;
-            tabPageSplash.LastVisibleSet = true;
-            tabPageSplash.MinimumSize = new Size(150, 50);
-            tabPageSplash.Name = "tabPageSplash";
-            tabPageSplash.Size = new Size(920, 679);
-            tabPageSplash.Text = "Présentation";
-            tabPageSplash.ToolTipTitle = "Page ToolTip";
-            tabPageSplash.UniqueName = "8bf706e5323e4034bd0c4ae416dc84b6";
             // 
             // tabPageTaskList
             // 
@@ -190,7 +176,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             tabPageTaskList.LastVisibleSet = true;
             tabPageTaskList.MinimumSize = new Size(150, 50);
             tabPageTaskList.Name = "tabPageTaskList";
-            tabPageTaskList.Size = new Size(920, 679);
+            tabPageTaskList.Size = new Size(1656, 883);
             tabPageTaskList.Text = "Gestionnaire des tâches";
             tabPageTaskList.TextDescription = "Mettez à jour les statuts des tâches";
             tabPageTaskList.TextTitle = "Gestionnaire des tâches";
@@ -234,7 +220,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonTableLayoutPanel3.Controls.Add(kryptonPanel4, 0, 3);
             kryptonTableLayoutPanel3.Controls.Add(kryptonPanel5, 0, 4);
             kryptonTableLayoutPanel3.Dock = DockStyle.Fill;
-            kryptonTableLayoutPanel3.Location = new Point(937, 3);
+            kryptonTableLayoutPanel3.Location = new Point(1673, 3);
             kryptonTableLayoutPanel3.Name = "kryptonTableLayoutPanel3";
             kryptonTableLayoutPanel3.RowCount = 5;
             kryptonTableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Absolute, 180F));
@@ -242,7 +228,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonTableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3333321F));
             kryptonTableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Percent, 33.3333321F));
             kryptonTableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
-            kryptonTableLayoutPanel3.Size = new Size(244, 755);
+            kryptonTableLayoutPanel3.Size = new Size(244, 959);
             kryptonTableLayoutPanel3.TabIndex = 2;
             // 
             // kryptonPanel1
@@ -346,7 +332,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonPanel2.Dock = DockStyle.Fill;
             kryptonPanel2.Location = new Point(3, 183);
             kryptonPanel2.Name = "kryptonPanel2";
-            kryptonPanel2.Size = new Size(238, 169);
+            kryptonPanel2.Size = new Size(238, 237);
             kryptonPanel2.TabIndex = 2;
             // 
             // kryptonLabel5
@@ -379,22 +365,22 @@ namespace PlanAthena.View.TaskManager.Cockpit
             // lblCpi
             // 
             lblCpi.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            lblCpi.Location = new Point(143, 111);
+            lblCpi.Location = new Point(189, 111);
             lblCpi.Name = "lblCpi";
             lblCpi.RightToLeft = RightToLeft.No;
-            lblCpi.Size = new Size(88, 20);
+            lblCpi.Size = new Size(42, 20);
             lblCpi.TabIndex = 4;
-            lblCpi.Values.Text = "kryptonLabel1";
+            lblCpi.Values.Text = "lblCpi";
             // 
             // lblSpi
             // 
             lblSpi.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            lblSpi.Location = new Point(143, 83);
+            lblSpi.Location = new Point(190, 83);
             lblSpi.Name = "lblSpi";
             lblSpi.RightToLeft = RightToLeft.No;
-            lblSpi.Size = new Size(88, 20);
+            lblSpi.Size = new Size(41, 20);
             lblSpi.TabIndex = 3;
-            lblSpi.Values.Text = "kryptonLabel2";
+            lblSpi.Values.Text = "lblSpi";
             // 
             // lblProgression
             // 
@@ -410,7 +396,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             // 
             kryptonHeaderGroup1.Dock = DockStyle.Fill;
             kryptonHeaderGroup1.Location = new Point(0, 0);
-            kryptonHeaderGroup1.Size = new Size(238, 169);
+            kryptonHeaderGroup1.Size = new Size(238, 237);
             kryptonHeaderGroup1.TabIndex = 0;
             kryptonHeaderGroup1.ValuesPrimary.Heading = "Indicateurs";
             kryptonHeaderGroup1.ValuesPrimary.Image = Properties.Resources.Ic_KPI_w;
@@ -426,9 +412,9 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonPanel3.Controls.Add(kryptonLabel1);
             kryptonPanel3.Controls.Add(kryptonHeaderGroup2);
             kryptonPanel3.Dock = DockStyle.Fill;
-            kryptonPanel3.Location = new Point(3, 358);
+            kryptonPanel3.Location = new Point(3, 426);
             kryptonPanel3.Name = "kryptonPanel3";
-            kryptonPanel3.Size = new Size(238, 169);
+            kryptonPanel3.Size = new Size(238, 237);
             kryptonPanel3.TabIndex = 3;
             // 
             // lblDerivePlanning
@@ -492,7 +478,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             // 
             kryptonHeaderGroup2.Dock = DockStyle.Fill;
             kryptonHeaderGroup2.Location = new Point(0, 0);
-            kryptonHeaderGroup2.Size = new Size(238, 169);
+            kryptonHeaderGroup2.Size = new Size(238, 237);
             kryptonHeaderGroup2.TabIndex = 0;
             kryptonHeaderGroup2.ValuesPrimary.Heading = "Risques";
             kryptonHeaderGroup2.ValuesPrimary.Image = Properties.Resources.IC_Risk_w;
@@ -508,9 +494,9 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonPanel4.Controls.Add(lblBacValue);
             kryptonPanel4.Controls.Add(kryptonHeaderGroup3);
             kryptonPanel4.Dock = DockStyle.Fill;
-            kryptonPanel4.Location = new Point(3, 533);
+            kryptonPanel4.Location = new Point(3, 669);
             kryptonPanel4.Name = "kryptonPanel4";
-            kryptonPanel4.Size = new Size(238, 169);
+            kryptonPanel4.Size = new Size(238, 237);
             kryptonPanel4.TabIndex = 4;
             // 
             // kryptonLabel12
@@ -568,7 +554,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             // 
             kryptonHeaderGroup3.Dock = DockStyle.Fill;
             kryptonHeaderGroup3.Location = new Point(0, 0);
-            kryptonHeaderGroup3.Size = new Size(238, 169);
+            kryptonHeaderGroup3.Size = new Size(238, 237);
             kryptonHeaderGroup3.TabIndex = 0;
             kryptonHeaderGroup3.ValuesPrimary.Heading = "Finance";
             kryptonHeaderGroup3.ValuesPrimary.Image = Properties.Resources.Ic_Budget;
@@ -577,7 +563,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             // kryptonPanel5
             // 
             kryptonPanel5.Dock = DockStyle.Fill;
-            kryptonPanel5.Location = new Point(3, 708);
+            kryptonPanel5.Location = new Point(3, 912);
             kryptonPanel5.Name = "kryptonPanel5";
             kryptonPanel5.Size = new Size(238, 44);
             kryptonPanel5.TabIndex = 5;
@@ -588,7 +574,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             AutoScaleMode = AutoScaleMode.Font;
             Controls.Add(kryptonTableLayoutPanel1);
             Name = "CockpitView";
-            Size = new Size(1184, 761);
+            Size = new Size(1920, 965);
             kryptonTableLayoutPanel1.ResumeLayout(false);
             kryptonTableLayoutPanel1.PerformLayout();
             kryptonTableLayoutPanel2.ResumeLayout(false);
@@ -596,7 +582,6 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonPanel0.ResumeLayout(false);
             kryptonPanel0.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)kryptonNavigator1).EndInit();
-            ((System.ComponentModel.ISupportInitialize)tabPageSplash).EndInit();
             ((System.ComponentModel.ISupportInitialize)tabPageTaskList).EndInit();
             ((System.ComponentModel.ISupportInitialize)tabPagePlanning).EndInit();
             ((System.ComponentModel.ISupportInitialize)tabPageEVM).EndInit();
@@ -668,6 +653,5 @@ namespace PlanAthena.View.TaskManager.Cockpit
         private Krypton.Toolkit.KryptonLabel kryptonLabel9;
         private Krypton.Toolkit.KryptonLabel kryptonLabel13;
         private Krypton.Navigator.KryptonPage tabPageEVM;
-        private KryptonPage tabPageSplash;
     }
 }

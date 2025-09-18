@@ -1,4 +1,4 @@
-// Fichier: /Services/Usecases/PilotageProjetUseCase.cs Version 0.6.0.2
+// Fichier: /Services/Usecases/PilotageProjetUseCase.cs Version 0.6.5
 
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
@@ -13,7 +13,7 @@ namespace PlanAthena.Services.Usecases
     /// <summary>
     /// Cas d'utilisation pour tout ce qui concerne le pilotage et le suivi du projet.
     /// Il agrège les données de plusieurs services pour les présenter aux vues du Cockpit.
-    /// Version 0.6.0 : Intègre les calculs EVM pour les KPIs du Cockpit.
+    /// Version 0.7.0 : Refactorisation pour utiliser uniquement PlanningService.GetRapportEVMComplet()
     /// </summary>
     public class PilotageProjetUseCase
     {
@@ -41,51 +41,79 @@ namespace PlanAthena.Services.Usecases
             var toutesLesTaches = _taskManagerService.ObtenirToutesLesTaches();
             var dateReference = DateTime.Today;
 
-            // --- Logique de Dérive en Jours (inchangée) ---
-            double deriveJours = toutesLesTaches
+            // --- CENTRALISATION : Un seul appel au rapport EVM complet ---
+            var evmReport = _planningService.GetRapportEVMComplet(dateReference, toutesLesTaches);
+
+            // --- Calcul des nouveaux indicateurs métier ---
+
+            // 1. Calcul de la dérive globale (pire des deux indicateurs)
+            double derivePerformancePourcentage = 0.0;
+            if (evmReport.BaselineExists)
+            {
+                double spiDeriv = (1.0 - evmReport.SchedulePerformanceIndex) * 100.0;
+                double cpiDeriv = (1.0 - evmReport.CostPerformanceIndex) * 100.0;
+                derivePerformancePourcentage = Math.Max(spiDeriv, cpiDeriv);
+            }
+
+            // 2. Calcul de la disponibilité des ressources (sur les 14 prochains jours)
+            var tensionMetier = _planningService.CalculerTensionMetierPourPeriodeFuture(dateReference, 14);
+            double disponibilitePourcentage = (1.0 - tensionMetier.TauxOccupation) * 100.0;
+
+            // 3. Comptage des tâches planifiées non démarrées (en retard de démarrage)
+            var tachesRetardDemarrage = toutesLesTaches
+                .Where(t => t.Statut == Statut.Planifiée &&
+                           t.DateDebutPlanifiee.HasValue &&
+                           t.DateDebutPlanifiee.Value.Date < dateReference.Date)
+                .Count();
+
+            // 4. Calcul du pourcentage de tâches terminées en retard
+            var tachesTerminees = toutesLesTaches.Where(t => t.Statut == Statut.Terminée).ToList();
+            double pourcentageTachesTermineesEnRetard = 0.0;
+            if (tachesTerminees.Any())
+            {
+                int tachesTermineesEnRetard = tachesTerminees
+                    .Count(t => t.DateFinReelle.HasValue &&
+                               t.DateFinPlanifiee.HasValue &&
+                               t.DateFinReelle.Value.Date > t.DateFinPlanifiee.Value.Date);
+
+                pourcentageTachesTermineesEnRetard = (tachesTermineesEnRetard * 100.0) / tachesTerminees.Count;
+            }
+
+            // 5. Fallback : calcul de la dérive temporelle classique (pour le cas sans baseline)
+            double deriveJoursClassique = toutesLesTaches
                 .Where(t => t.Statut != Statut.Terminée &&
                             t.DateFinPlanifiee.HasValue &&
                             t.DateFinPlanifiee.Value.Date < dateReference.Date)
                 .Sum(t => (dateReference.Date - t.DateFinPlanifiee.Value.Date).TotalDays);
-            int deriveJoursEntiers = (int)Math.Ceiling(deriveJours);
 
-            // --- Logique de Tension des Ressources (inchangée) ---
-            var tensionMetier = _planningService.CalculerTensionMetierPourPeriodeFuture(dateReference, 14);
-            double disponibilitePourcentage = 1.0 - tensionMetier.TauxOccupation;
+            // --- LOGIQUE DE MÉTÉO (conditions selon vos spécifications) ---
 
-            // --- Calcul des indicateurs EVM pour la Météo ---
-            var evmReport = _planningService.GetRapportEVMComplet(dateReference, toutesLesTaches);
+            ProjectWeatherStatus statut = ProjectWeatherStatus.Sunny; // Par défaut
 
-            // a) NOUVEAU : Calcul de la déviation budgétaire en pourcentage
-            double deviationBudgetPourcentage = 0.0;
-            if (evmReport.BaselineExists && evmReport.BudgetAtCompletion > 0)
+            // Test STORMY : conditions critiques (OU entre les groupes)
+            if ((derivePerformancePourcentage > 25.0 && disponibilitePourcentage < 30.0) ||  // ET dans ce groupe
+                (tachesRetardDemarrage >= 3) ||
+                (pourcentageTachesTermineesEnRetard > 30.0))
             {
-                // On recalcule l'EAC ici pour être sûr
-                double cpi = (double)(evmReport.EarnedValue/evmReport.ActualCost);
-                double eac = cpi > 0 ? (double)evmReport.BudgetAtCompletion / cpi : (double)evmReport.BudgetAtCompletion;
-                deviationBudgetPourcentage = (eac - (double)evmReport.BudgetAtCompletion) / (double)evmReport.BudgetAtCompletion;
+                statut = ProjectWeatherStatus.Stormy;
+            }
+            // Test RAINY : problèmes avérés (OU entre les groupes) 
+            else if ((derivePerformancePourcentage > 15.0 && disponibilitePourcentage < 50.0) ||  // ET dans ce groupe
+                     (tachesRetardDemarrage >= 3))  // Note: même condition que Stormy, mais testé après
+            {
+                statut = ProjectWeatherStatus.Rainy;
+            }
+            // Test CLOUDY : début de dérive (OU entre les conditions)
+            else if ((derivePerformancePourcentage > 5.0) ||
+                     (tachesRetardDemarrage >= 1))
+            {
+                statut = ProjectWeatherStatus.Cloudy;
             }
 
-            // b) NOUVEAU : Logique de Météo basée sur SPI et CPI
-            ProjectWeatherStatus statut;
-            if (evmReport.BaselineExists)
+            // Fallback si pas de baseline EVM : utiliser l'ancienne logique basée sur les jours
+            if (!evmReport.BaselineExists && statut == ProjectWeatherStatus.Sunny)
             {
-                var spi = (double)(evmReport.EarnedValue / evmReport.PlannedValue);
-                var cpi = (double)(evmReport.EarnedValue / evmReport.ActualCost);
-
-                if (spi < 0.80 || cpi < 0.80)
-                    statut = ProjectWeatherStatus.Stormy;   // Situation critique
-                else if (spi < 0.90 || cpi < 0.90)
-                    statut = ProjectWeatherStatus.Rainy;    // Problèmes à gérer
-                else if (spi < 0.95 || cpi < 0.95)
-                    statut = ProjectWeatherStatus.Cloudy;   // Orages en vue
-                else
-                    statut = ProjectWeatherStatus.Sunny;      // Tout va bien
-            }
-            else
-            {
-                // Fallback sur l'ancienne logique si pas de baseline
-                statut = ProjectWeatherStatus.Sunny;
+                int deriveJoursEntiers = (int)Math.Ceiling(deriveJoursClassique);
                 if (deriveJoursEntiers > 1) statut = ProjectWeatherStatus.Cloudy;
                 if (deriveJoursEntiers > 5) statut = ProjectWeatherStatus.Rainy;
                 if (deriveJoursEntiers > 10) statut = ProjectWeatherStatus.Stormy;
@@ -93,9 +121,9 @@ namespace PlanAthena.Services.Usecases
 
             return new ProjectWeatherData
             {
-                DerivPlanningJours = deriveJoursEntiers,
-                DisponibiliteRessourcesPourcentage = disponibilitePourcentage,
-                DeviationBudgetPourcentage = deviationBudgetPourcentage,
+                DerivPlanningJours = (int)Math.Ceiling(deriveJoursClassique),
+                DisponibiliteRessourcesPourcentage = disponibilitePourcentage / 100.0, // Gardé en ratio pour compatibilité
+                DeviationBudgetPourcentage = evmReport.DeviationBudgetPourcentage,
                 Statut = statut
             };
         }
@@ -110,11 +138,11 @@ namespace PlanAthena.Services.Usecases
                 return new CockpitKpiData { LotLePlusARisqueNom = "N/A", MetierLePlusEnTensionNom = "N/A" };
             }
 
-            // 1. Progression Globale
+            // 1. Progression Globale (logique métier inchangée)
             int nombreTerminees = tachesNonConteneurs.Count(t => t.Statut == Statut.Terminée);
             double progressionGlobale = (tachesNonConteneurs.Count > 0) ? (nombreTerminees * 100.0 / tachesNonConteneurs.Count) : 0;
 
-            // 2. Lot le plus à risque
+            // 2. Lot le plus à risque (logique métier inchangée)
             string nomLotRisque = "N/A";
             double deriveJoursRisque = 0;
             var dateReference = DateTime.Today;
@@ -136,38 +164,11 @@ namespace PlanAthena.Services.Usecases
                 deriveJoursRisque = Math.Round(lotsAvecDerive.DeriveMoyenne, 1);
             }
 
-            // 3. Métier le plus en tension
+            // 3. Métier le plus en tension (inchangé)
             var tensionMetier = _planningService.CalculerTensionMetierPourPeriodeFuture(dateReference, 14);
 
-            // --- Calcul des KPIs EVM ---
+            // --- CENTRALISATION : Un seul appel au rapport EVM complet ---
             var evmReport = _planningService.GetRapportEVMComplet(dateReference, toutesLesTaches);
-            decimal cv = 0, eac = 0;
-            double spi = 1.0, cpi = 1.0;
-            double svDays = 0.0; // NOUVEAU
-
-            if (evmReport.BaselineExists)
-            {
-                decimal sv = evmReport.EarnedValue - evmReport.PlannedValue;
-                cv = evmReport.EarnedValue - evmReport.ActualCost;
-                spi = evmReport.PlannedValue > 0 ? (double)evmReport.EarnedValue / (double)evmReport.PlannedValue : 1.0;
-                cpi = evmReport.ActualCost > 0 ? (double)evmReport.EarnedValue / (double)evmReport.ActualCost : 1.0;
-                eac = cpi > 0 ? evmReport.BudgetAtCompletion / (decimal)cpi : evmReport.BudgetAtCompletion;
-
-                // --- NOUVELLE LOGIQUE : Conversion de SV en jours ---
-                var baseline = _planningService.GetBaseline();
-                if (baseline != null)
-                {
-                    double dureePlanifieeJours = (baseline.DateFinPlanifieeInitiale - baseline.DateCreation).TotalDays;
-                    if (dureePlanifieeJours > 0 && baseline.BudgetAtCompletion > 0)
-                    {
-                        decimal coutMoyenParJour = baseline.BudgetAtCompletion / (decimal)dureePlanifieeJours;
-                        if (coutMoyenParJour > 0)
-                        {
-                            svDays = (double)(sv / coutMoyenParJour);
-                        }
-                    }
-                }
-            }
 
             return new CockpitKpiData
             {
@@ -177,13 +178,13 @@ namespace PlanAthena.Services.Usecases
                 MetierLePlusEnTensionNom = tensionMetier.NomMetier,
                 MetierLePlusEnTensionTauxOccupation = tensionMetier.TauxOccupation,
 
-                // KPIs EVM
+                // --- KPIs EVM : Utilisation directe des valeurs calculées par PlanningService ---
                 BudgetAtCompletion = evmReport.BudgetAtCompletion,
-                EstimateAtCompletion = eac,
-                ScheduleVarianceDays = svDays, // MODIFIÉ
-                CostVariance = cv,
-                SchedulePerformanceIndex = spi,
-                CostPerformanceIndex = cpi
+                EstimateAtCompletion = evmReport.EstimateAtCompletion,
+                ScheduleVarianceDays = evmReport.ScheduleVarianceDays,
+                CostVariance = evmReport.CostVariance,
+                SchedulePerformanceIndex = evmReport.SchedulePerformanceIndex,
+                CostPerformanceIndex = evmReport.CostPerformanceIndex
             };
         }
 
@@ -227,7 +228,6 @@ namespace PlanAthena.Services.Usecases
                 return new EtcVsPtcGraphData { BaselineExists = false };
             }
 
-            
             var orderedData = weeklyData.OrderBy(x => x.Key).ToList();
 
             return new EtcVsPtcGraphData

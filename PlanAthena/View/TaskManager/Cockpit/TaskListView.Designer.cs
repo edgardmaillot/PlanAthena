@@ -31,6 +31,15 @@ namespace PlanAthena.View.TaskManager.Cockpit
             DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
             kpCentre = new Krypton.Toolkit.KryptonPanel();
             kryptonDataGridView1 = new Krypton.Toolkit.KryptonDataGridView();
+            DG_TacheId = new DataGridViewTextBoxColumn();
+            DG_Tache = new DataGridViewTextBoxColumn();
+            DG_Metier = new DataGridViewTextBoxColumn();
+            DG_Ouvrier = new DataGridViewTextBoxColumn();
+            DG_Statut = new DataGridViewTextBoxColumn();
+            DG_DDP = new DataGridViewTextBoxColumn();
+            DG_DFP = new DataGridViewTextBoxColumn();
+            DG_DDR = new DataGridViewTextBoxColumn();
+            DG_DFR = new DataGridViewTextBoxColumn();
             kryptonTableLayoutPanel1 = new Krypton.Toolkit.KryptonTableLayoutPanel();
             kpTop = new Krypton.Toolkit.KryptonPanel();
             kryptonLabel4 = new Krypton.Toolkit.KryptonLabel();
@@ -43,15 +52,6 @@ namespace PlanAthena.View.TaskManager.Cockpit
             btnAControler = new Krypton.Toolkit.KryptonButton();
             btnResetFiltres = new Krypton.Toolkit.KryptonButton();
             kpBottom = new Krypton.Toolkit.KryptonPanel();
-            DG_TacheId = new DataGridViewTextBoxColumn();
-            DG_Tache = new DataGridViewTextBoxColumn();
-            DG_Metier = new DataGridViewTextBoxColumn();
-            DG_Ouvrier = new DataGridViewTextBoxColumn();
-            DG_Statut = new DataGridViewTextBoxColumn();
-            DG_DDP = new DataGridViewTextBoxColumn();
-            DG_DFP = new DataGridViewTextBoxColumn();
-            DG_DDR = new DataGridViewTextBoxColumn();
-            DG_DFR = new DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)kpCentre).BeginInit();
             kpCentre.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)kryptonDataGridView1).BeginInit();
@@ -70,7 +70,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kpCentre.Dock = DockStyle.Fill;
             kpCentre.Location = new Point(3, 53);
             kpCentre.Name = "kpCentre";
-            kpCentre.Size = new Size(1194, 494);
+            kpCentre.Size = new Size(1650, 778);
             kpCentre.TabIndex = 0;
             // 
             // kryptonDataGridView1
@@ -86,8 +86,89 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonDataGridView1.MultiSelect = false;
             kryptonDataGridView1.Name = "kryptonDataGridView1";
             kryptonDataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            kryptonDataGridView1.Size = new Size(1194, 494);
+            kryptonDataGridView1.Size = new Size(1650, 778);
             kryptonDataGridView1.TabIndex = 0;
+            // 
+            // DG_TacheId
+            // 
+            DG_TacheId.FillWeight = 50F;
+            DG_TacheId.HeaderText = "Identification";
+            DG_TacheId.MinimumWidth = 10;
+            DG_TacheId.Name = "DG_TacheId";
+            DG_TacheId.ReadOnly = true;
+            DG_TacheId.Width = 50;
+            // 
+            // DG_Tache
+            // 
+            DG_Tache.FillWeight = 80F;
+            DG_Tache.HeaderText = "Tache";
+            DG_Tache.MinimumWidth = 100;
+            DG_Tache.Name = "DG_Tache";
+            DG_Tache.ReadOnly = true;
+            DG_Tache.Width = 200;
+            // 
+            // DG_Metier
+            // 
+            DG_Metier.FillWeight = 80F;
+            DG_Metier.HeaderText = "Métier";
+            DG_Metier.MinimumWidth = 20;
+            DG_Metier.Name = "DG_Metier";
+            DG_Metier.ReadOnly = true;
+            DG_Metier.Width = 80;
+            // 
+            // DG_Ouvrier
+            // 
+            DG_Ouvrier.FillWeight = 80F;
+            DG_Ouvrier.HeaderText = "Ouvrier affecté";
+            DG_Ouvrier.MinimumWidth = 20;
+            DG_Ouvrier.Name = "DG_Ouvrier";
+            DG_Ouvrier.ReadOnly = true;
+            DG_Ouvrier.Width = 80;
+            // 
+            // DG_Statut
+            // 
+            DG_Statut.FillWeight = 80F;
+            DG_Statut.HeaderText = "Statut";
+            DG_Statut.MinimumWidth = 20;
+            DG_Statut.Name = "DG_Statut";
+            DG_Statut.ReadOnly = true;
+            DG_Statut.Width = 80;
+            // 
+            // DG_DDP
+            // 
+            dataGridViewCellStyle1.NullValue = null;
+            DG_DDP.DefaultCellStyle = dataGridViewCellStyle1;
+            DG_DDP.FillWeight = 90F;
+            DG_DDP.HeaderText = "Début Planifié";
+            DG_DDP.MinimumWidth = 120;
+            DG_DDP.Name = "DG_DDP";
+            DG_DDP.ReadOnly = true;
+            DG_DDP.Width = 120;
+            // 
+            // DG_DFP
+            // 
+            DG_DFP.FillWeight = 90F;
+            DG_DFP.HeaderText = "Fin Planifiée";
+            DG_DFP.MinimumWidth = 120;
+            DG_DFP.Name = "DG_DFP";
+            DG_DFP.ReadOnly = true;
+            DG_DFP.Width = 120;
+            // 
+            // DG_DDR
+            // 
+            DG_DDR.FillWeight = 90F;
+            DG_DDR.HeaderText = "Début Réel";
+            DG_DDR.MinimumWidth = 120;
+            DG_DDR.Name = "DG_DDR";
+            DG_DDR.Width = 120;
+            // 
+            // DG_DFR
+            // 
+            DG_DFR.FillWeight = 90F;
+            DG_DFR.HeaderText = "Fin Réel";
+            DG_DFR.MinimumWidth = 120;
+            DG_DFR.Name = "DG_DFR";
+            DG_DFR.Width = 120;
             // 
             // kryptonTableLayoutPanel1
             // 
@@ -104,7 +185,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
             kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 50F));
-            kryptonTableLayoutPanel1.Size = new Size(1200, 600);
+            kryptonTableLayoutPanel1.Size = new Size(1656, 884);
             kryptonTableLayoutPanel1.TabIndex = 1;
             // 
             // kpTop
@@ -122,7 +203,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kpTop.Dock = DockStyle.Fill;
             kpTop.Location = new Point(3, 3);
             kpTop.Name = "kpTop";
-            kpTop.Size = new Size(1194, 44);
+            kpTop.Size = new Size(1650, 44);
             kpTop.TabIndex = 1;
             // 
             // kryptonLabel4
@@ -214,93 +295,10 @@ namespace PlanAthena.View.TaskManager.Cockpit
             // kpBottom
             // 
             kpBottom.Dock = DockStyle.Fill;
-            kpBottom.Location = new Point(3, 553);
+            kpBottom.Location = new Point(3, 837);
             kpBottom.Name = "kpBottom";
-            kpBottom.Size = new Size(1194, 44);
+            kpBottom.Size = new Size(1650, 44);
             kpBottom.TabIndex = 2;
-            // 
-            // DG_TacheId
-            // 
-            DG_TacheId.FillWeight = 50F;
-            DG_TacheId.HeaderText = "Identification";
-            DG_TacheId.MinimumWidth = 10;
-            DG_TacheId.Name = "DG_TacheId";
-            DG_TacheId.ReadOnly = true;
-            DG_TacheId.Width = 50;
-            // 
-            // DG_Tache
-            // 
-            DG_Tache.FillWeight = 80F;
-            DG_Tache.HeaderText = "Tache";
-            DG_Tache.MinimumWidth = 100;
-            DG_Tache.Name = "DG_Tache";
-            DG_Tache.ReadOnly = true;
-            DG_Tache.Width = 200;
-            // 
-            // DG_Metier
-            // 
-            DG_Metier.FillWeight = 80F;
-            DG_Metier.HeaderText = "Métier";
-            DG_Metier.MinimumWidth = 20;
-            DG_Metier.Name = "DG_Metier";
-            DG_Metier.ReadOnly = true;
-            DG_Metier.Width = 80;
-            // 
-            // DG_Ouvrier
-            // 
-            DG_Ouvrier.FillWeight = 80F;
-            DG_Ouvrier.HeaderText = "Ouvrier affecté";
-            DG_Ouvrier.MinimumWidth = 20;
-            DG_Ouvrier.Name = "DG_Ouvrier";
-            DG_Ouvrier.ReadOnly = true;
-            DG_Ouvrier.Width = 80;
-            // 
-            // DG_Statut
-            // 
-            DG_Statut.FillWeight = 80F;
-            DG_Statut.HeaderText = "Statut";
-            DG_Statut.MinimumWidth = 20;
-            DG_Statut.Name = "DG_Statut";
-            DG_Statut.ReadOnly = true;
-            DG_Statut.Width = 80;
-            // 
-            // DG_DDP
-            // 
-            dataGridViewCellStyle1.NullValue = null;
-            DG_DDP.DefaultCellStyle = dataGridViewCellStyle1;
-            DG_DDP.FillWeight = 90F;
-            DG_DDP.HeaderText = "Début Planifié";
-            DG_DDP.MinimumWidth = 120;
-            DG_DDP.Name = "DG_DDP";
-            DG_DDP.ReadOnly = true;
-            DG_DDP.Width = 120;
-            // 
-            // DG_DFP
-            // 
-            DG_DFP.FillWeight = 90F;
-            DG_DFP.HeaderText = "Fin Planifiée";
-            DG_DFP.MinimumWidth = 120;
-            DG_DFP.Name = "DG_DFP";
-            DG_DFP.ReadOnly = true;
-            DG_DFP.Width = 120;
-            // 
-            // DG_DDR
-            // 
-            DG_DDR.FillWeight = 90F;
-            DG_DDR.HeaderText = "Début Réel";
-            DG_DDR.MinimumWidth = 120;
-            DG_DDR.Name = "DG_DDR";
-            DG_DDR.Width = 120;
-            // 
-            // DG_DFR
-            // 
-            DG_DFR.FillWeight = 90F;
-            DG_DFR.HeaderText = "Fin Réel";
-            DG_DFR.MinimumWidth = 120;
-            DG_DFR.Name = "DG_DFR";
-            DG_DFR.Width = 120;
-
-
             // 
             // TaskListView
             // 
@@ -308,7 +306,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             AutoScaleMode = AutoScaleMode.Font;
             Controls.Add(kryptonTableLayoutPanel1);
             Name = "TaskListView";
-            Size = new Size(1200, 600);
+            Size = new Size(1656, 884);
             ((System.ComponentModel.ISupportInitialize)kpCentre).EndInit();
             kpCentre.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)kryptonDataGridView1).EndInit();

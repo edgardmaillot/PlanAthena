@@ -294,17 +294,25 @@ namespace PlanAthenaTests.Services.Business
         public void GetRapportEVMComplet_WithBaseline_ShouldCalculateCorrectValues()
         {
             // Arrange
+            // CORRECTION: Ajouter DateCreation et DateFinPlanifieeInitiale à la baseline
+            _sampleBaseline.DateCreation = new DateTime(2023, 10, 1);
+            _sampleBaseline.DateFinPlanifieeInitiale = new DateTime(2023, 12, 31);
+            _sampleBaseline.ConsPlanningInitial = _samplePlanning; // AJOUT: nécessaire pour IsBaselineValid()
+
             _planningService.LoadPlanning(_samplePlanning, _sampleConfig, _sampleBaseline);
             var dateRef = new DateTime(2023, 10, 15);
             var taches = new List<Tache>
-            {
-                new Tache
-                {
-                    TacheId = "T1",
-                    Statut = Statut.Terminée,
-                    DateFinReelle = new DateTime(2023, 10, 10)
-                }
-            };
+    {
+        new Tache
+        {
+            TacheId = "T1",
+            ParentId = null, // CORRECTION: Tâche mère pour être éligible EVM
+            //EstJalon = false, // CORRECTION: Pas un jalon
+            Type = TypeActivite.Tache,
+            Statut = Statut.Terminée,
+            DateFinReelle = new DateTime(2023, 10, 10)
+        }
+    };
 
             // Act
             var rapport = _planningService.GetRapportEVMComplet(dateRef, taches);
@@ -321,6 +329,11 @@ namespace PlanAthenaTests.Services.Business
         public void GetRapportEVMComplet_WithFutureDate_ShouldUseLatestBaselineValue()
         {
             // Arrange
+            // CORRECTION: Compléter la baseline avec les données nécessaires
+            _sampleBaseline.DateCreation = new DateTime(2023, 10, 1);
+            _sampleBaseline.DateFinPlanifieeInitiale = new DateTime(2023, 12, 31);
+            _sampleBaseline.ConsPlanningInitial = _samplePlanning;
+
             _planningService.LoadPlanning(_samplePlanning, _sampleConfig, _sampleBaseline);
             var dateRef = new DateTime(2024, 1, 15); // Date future par rapport à la baseline
             var taches = new List<Tache>();
@@ -329,6 +342,7 @@ namespace PlanAthenaTests.Services.Business
             var rapport = _planningService.GetRapportEVMComplet(dateRef, taches);
 
             // Assert
+            Assert.IsTrue(rapport.BaselineExists, "La baseline doit être valide.");
             Assert.AreEqual(10000m, rapport.PlannedValue, "PV doit utiliser la dernière valeur de la baseline.");
         }
 
@@ -376,37 +390,29 @@ namespace PlanAthenaTests.Services.Business
         }
 
         [TestMethod]
-        public void ObtenirNombreTachesQuiDevraientEtreTerminees_CasNominal_ShouldReturnCorrectCount()
+        public void ObtenirNombreTachesQuiDevraientEtreTerminees_AvecHierarchie_FiltreCorrectementLesTachesMeres()
         {
             // Arrange
             var aujourdhui = DateTime.Today;
             var taches = new List<Tache>
-            {
-                new Tache { EstConteneur = false, DateFinPlanifiee = aujourdhui.AddDays(-2) }, // Doit compter
-                new Tache { EstConteneur = false, DateFinPlanifiee = aujourdhui },             // Doit compter
-                new Tache { EstConteneur = true,  DateFinPlanifiee = aujourdhui.AddDays(-1) }, // Ne doit pas compter (conteneur)
-                new Tache { EstConteneur = false, DateFinPlanifiee = null },                   // Ne doit pas compter (pas de date)
-                new Tache { EstConteneur = false, DateFinPlanifiee = aujourdhui.AddDays(1) }   // Ne doit pas compter (futur)
-            };
+    {
+        // --- Cas qui DOIVENT être comptés ---
+        new Tache { TacheId = "T1", ParentId = null, DateFinPlanifiee = aujourdhui.AddDays(-2), Type = TypeActivite.Tache }, // OK: Mère, passée
+        new Tache { TacheId = "T2", ParentId = "",   DateFinPlanifiee = aujourdhui,             Type = TypeActivite.Tache }, // OK: Mère (chaîne vide), aujourd'hui
+
+        // --- Cas qui NE DOIVENT PAS être comptés ---
+        new Tache { TacheId = "T1.1", ParentId = "T1", DateFinPlanifiee = aujourdhui.AddDays(-3) }, // NON: Tâche enfant, même si date est passée
+        new Tache { TacheId = "T3",   ParentId = null, DateFinPlanifiee = aujourdhui.AddDays(1) },  // NON: Tâche mère, mais dans le futur
+        new Tache { TacheId = "T4",   ParentId = null, DateFinPlanifiee = null },                   // NON: Tâche mère, mais pas de date planifiée
+        new Tache { TacheId = "J1",   ParentId = null, DateFinPlanifiee = aujourdhui.AddDays(-1), Type = TypeActivite.JalonUtilisateur } // NON: C'est un jalon, pas une tâche de travail
+    };
 
             // Act
             var resultat = _planningService.ObtenirNombreTachesQuiDevraientEtreTerminees(aujourdhui, taches);
 
             // Assert
-            Assert.AreEqual(2, resultat);
-        }
-
-        [TestMethod]
-        public void CalculerPerformanceCoutCPI_ReturnZeroForV1()
-        {
-            // Arrange
-            var taches = new List<Tache>();
-
-            // Act
-            var resultat = _planningService.CalculerPerformanceCoutCPI(taches);
-
-            // Assert
-            Assert.AreEqual(0.0, resultat, "CPI doit retourner 0 pour la version 1.");
+            // Seules T1 et T2 doivent être comptées.
+            Assert.AreEqual(2, resultat, "Le calcul doit uniquement compter les tâches mères (ParentId nul/vide) qui ne sont pas des jalons et dont la date de fin est passée ou présente.");
         }
 
         [TestMethod]
