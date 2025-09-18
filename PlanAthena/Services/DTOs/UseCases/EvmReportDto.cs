@@ -32,5 +32,30 @@ namespace PlanAthena.Services.DTOs.UseCases
         /// Coût Réel (AC) - Le coût réel du travail accompli à la date de référence.
         /// </summary>
         public decimal ActualCost { get; init; }
+
+
+    }
+    /// <summary>
+    /// DTO contenant les données pré-formatées pour l'affichage du graphique EVM.
+    /// </summary>
+    public record EvmGraphData
+    {
+        public bool BaselineExists { get; init; }
+        public List<DateTime> Dates { get; init; } = new();
+        public List<double> PlannedValues { get; init; } = new();
+        public List<double> EarnedValues { get; init; } = new();
+        public List<double> ActualCosts { get; init; } = new();
+        public decimal BudgetAtCompletion { get; init; }
+    }
+
+    /// <summary>
+    /// DTO contenant les données pré-formatées pour le graphique ETC vs PTC.
+    /// </summary>
+    public record EtcVsPtcGraphData
+    {
+        public bool BaselineExists { get; init; }
+        public List<DateTime> Dates { get; init; } = new();
+        public List<double> PlanToCompleteValues { get; init; } = new();
+        public List<double> EstimateToCompleteValues { get; init; } = new();
     }
 }

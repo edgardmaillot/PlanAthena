@@ -1,3 +1,4 @@
+using Krypton.Toolkit;
 using PlanAthena.View.Utils;
 
 namespace PlanAthena.View.TaskManager.Cockpit
@@ -32,15 +33,15 @@ namespace PlanAthena.View.TaskManager.Cockpit
         private void InitializeComponent()
         {
             kryptonTableLayoutPanel1 = new DoubleBufferedTableLayoutPanel();
-            kryptonTableLayoutPanel2 = new DoubleBufferedTableLayoutPanel();
-            kpCentre = new Krypton.Toolkit.KryptonPanel();
-            kpTop = new Krypton.Toolkit.KryptonPanel();
-            klEnd = new Krypton.Toolkit.KryptonLabel();
-            klStart = new Krypton.Toolkit.KryptonLabel();
-            resetView = new Krypton.Toolkit.KryptonButton();
-            kryptonTrackBar1 = new Krypton.Toolkit.KryptonTrackBar();
-            kpBottom = new Krypton.Toolkit.KryptonPanel();
-            lblNoPlanning = new Krypton.Toolkit.KryptonLabel();
+            kryptonTableLayoutPanel2 = new KryptonTableLayoutPanel();
+            kpCentre = new KryptonPanel();
+            kpTop = new KryptonPanel();
+            klEnd = new KryptonLabel();
+            klStart = new KryptonLabel();
+            resetView = new KryptonButton();
+            kryptonTrackBar1 = new KryptonTrackBar();
+            kpBottom = new KryptonPanel();
+            lblNoPlanning = new KryptonLabel();
             kryptonTableLayoutPanel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)kpCentre).BeginInit();
             kpCentre.SuspendLayout();
@@ -52,6 +53,8 @@ namespace PlanAthena.View.TaskManager.Cockpit
             // 
             // kryptonTableLayoutPanel1
             // 
+            kryptonTableLayoutPanel1.AutoSize = true;
+            kryptonTableLayoutPanel1.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             kryptonTableLayoutPanel1.BackColor = Color.Transparent;
             kryptonTableLayoutPanel1.CellBorderStyle = TableLayoutPanelCellBorderStyle.Single;
             kryptonTableLayoutPanel1.ColumnCount = 15;
@@ -70,10 +73,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonTableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 7.142856F));
             kryptonTableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 7.142856F));
             kryptonTableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 7.142856F));
-            kryptonTableLayoutPanel1.Dock = DockStyle.None;
             kryptonTableLayoutPanel1.Dock = DockStyle.Top;
-            kryptonTableLayoutPanel1.AutoSize = true;
-            kryptonTableLayoutPanel1.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             kryptonTableLayoutPanel1.Location = new Point(0, 0);
             kryptonTableLayoutPanel1.Margin = new Padding(0);
             kryptonTableLayoutPanel1.Name = "kryptonTableLayoutPanel1";
@@ -83,12 +83,11 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             kryptonTableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            kryptonTableLayoutPanel1.Size = new Size(794, 494);
+            kryptonTableLayoutPanel1.Size = new Size(794, 106);
             kryptonTableLayoutPanel1.TabIndex = 0;
             // 
             // kryptonTableLayoutPanel2
             // 
-            kryptonTableLayoutPanel2.BackColor = Color.Transparent;
             kryptonTableLayoutPanel2.ColumnCount = 1;
             kryptonTableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             kryptonTableLayoutPanel2.Controls.Add(kpCentre, 0, 1);
@@ -185,6 +184,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonTableLayoutPanel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)kpCentre).EndInit();
             kpCentre.ResumeLayout(false);
+            kpCentre.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)kpTop).EndInit();
             kpTop.ResumeLayout(false);
             kpTop.PerformLayout();
@@ -197,7 +197,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
         #endregion
 
         private PlanAthena.View.Utils.DoubleBufferedTableLayoutPanel kryptonTableLayoutPanel1;
-        private PlanAthena.View.Utils.DoubleBufferedTableLayoutPanel kryptonTableLayoutPanel2;
+        private Krypton.Toolkit.KryptonTableLayoutPanel kryptonTableLayoutPanel2;
         private Krypton.Toolkit.KryptonPanel kpCentre;
         private Krypton.Toolkit.KryptonPanel kpTop;
         private Krypton.Toolkit.KryptonLabel klEnd;

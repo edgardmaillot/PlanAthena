@@ -189,6 +189,58 @@ namespace PlanAthena.Services.Usecases
 
         #endregion
 
+        #region EVM Graph
+
+        public virtual EvmGraphData ObtenirDonneesGraphiqueEVM()
+        {
+            var toutesLesTaches = _taskManagerService.ObtenirToutesLesTaches();
+            var (baselineExists, pvCurve, evCurve, acCurve) = _planningService.GetCourbesEVMHistoriques(toutesLesTaches);
+
+            if (!baselineExists)
+            {
+                return new EvmGraphData { BaselineExists = false };
+            }
+
+            var datesTriees = pvCurve.Keys.OrderBy(d => d).ToList();
+
+            // On récupère le BAC depuis la baseline
+            var bac = _planningService.GetBaseline()?.BudgetAtCompletion ?? 0m;
+
+            return new EvmGraphData
+            {
+                BaselineExists = true,
+                Dates = datesTriees,
+                PlannedValues = datesTriees.Select(d => (double)pvCurve.GetValueOrDefault(d, 0)).ToList(),
+                EarnedValues = datesTriees.Select(d => (double)evCurve.GetValueOrDefault(d, 0)).ToList(),
+                ActualCosts = datesTriees.Select(d => (double)acCurve.GetValueOrDefault(d, 0)).ToList(),
+                BudgetAtCompletion = bac
+            };
+        }
+
+        public virtual EtcVsPtcGraphData ObtenirDonneesGraphiqueEtcVsPtc()
+        {
+            var toutesLesTaches = _taskManagerService.ObtenirToutesLesTaches();
+            var (baselineExists, weeklyData) = _planningService.GetEtcVsPtcHistorique(toutesLesTaches);
+
+            if (!baselineExists || !weeklyData.Any())
+            {
+                return new EtcVsPtcGraphData { BaselineExists = false };
+            }
+
+            
+            var orderedData = weeklyData.OrderBy(x => x.Key).ToList();
+
+            return new EtcVsPtcGraphData
+            {
+                BaselineExists = true,
+                Dates = orderedData.Select(kvp => kvp.Key).ToList(),
+                PlanToCompleteValues = orderedData.Select(kvp => (double)kvp.Value.Ptc).ToList(),
+                EstimateToCompleteValues = orderedData.Select(kvp => (double)kvp.Value.Etc).ToList()
+            };
+        }
+
+        #endregion
+
         #region TaskList (Gestion de la Vue "Liste de Tâches")
 
         public virtual TaskListData ObtenirDonneesPourTaskList()

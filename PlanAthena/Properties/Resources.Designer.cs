@@ -113,6 +113,16 @@ namespace PlanAthena.Properties {
         /// <summary>
         ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Ic_KPI_w {
+            get {
+                object obj = ResourceManager.GetObject("Ic_KPI_w", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Ic_Planning {
             get {
                 object obj = ResourceManager.GetObject("Ic_Planning", resourceCulture);
@@ -126,6 +136,26 @@ namespace PlanAthena.Properties {
         internal static System.Drawing.Bitmap Ic_Ressource {
             get {
                 object obj = ResourceManager.GetObject("Ic_Ressource", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap IC_Risk_w {
+            get {
+                object obj = ResourceManager.GetObject("IC_Risk_w", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Ic_Task_w {
+            get {
+                object obj = ResourceManager.GetObject("Ic_Task_w", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -186,6 +216,16 @@ namespace PlanAthena.Properties {
         internal static System.Drawing.Bitmap rainy {
             get {
                 object obj = ResourceManager.GetObject("rainy", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap SplashScreen {
+            get {
+                object obj = ResourceManager.GetObject("SplashScreen", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

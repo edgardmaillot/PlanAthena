@@ -6,6 +6,7 @@ using PlanAthena.Services.Infrastructure;
 using PlanAthena.Services.Usecases;
 using PlanAthena.Services.UseCases;
 using PlanAthena.Utilities;
+using PlanAthena.View.Utils;
 using PlanAthena.View.Dashboard;
 using PlanAthena.View.Planificator;
 using PlanAthena.View.Ressources;
@@ -35,6 +36,7 @@ namespace PlanAthena.View
         private readonly GanttExportService _ganttExportService;
         private readonly UserPreferencesService _userPreferencesService;
         private readonly PlanificationOrchestrator _planificationOrchestrator;
+        private ViewsManager _viewsManager;
 
         public MainShellForm(
             IServiceProvider serviceProvider,
@@ -178,21 +180,14 @@ namespace PlanAthena.View
 
         private void NavigateToTaskListView()
         {
-            // 1. Créer une instance du nouveau formulaire Cockpit.
-            var cockpitForm = new PlanAthena.View.TaskManager.Cockpit.Cockpit();
-
-            // 2. Appeler sa méthode d'initialisation en lui passant les services requis
-            //    qui sont déjà disponibles dans MainShellForm.
-            cockpitForm.Initialize(
+            var view = new PlanAthena.View.TaskManager.Cockpit.CockpitView();
+            view.Initialize(
                 _taskManagerService,
                 _planningService,
                 _projetService,
                 _ressourceService
             );
-
-            // 3. Afficher le formulaire en tant que fenêtre de dialogue modale.
-            //    Cela empêche l'interaction avec la fenêtre principale tant que le cockpit est ouvert.
-            cockpitForm.ShowDialog();
+            ShowView(view);
         }
         private void NavigateToPlanificator()
         {

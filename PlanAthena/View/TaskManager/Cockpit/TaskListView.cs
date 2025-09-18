@@ -1,117 +1,297 @@
-// Emplacement: /View/TaskManager/Cockpit/TaskListView.cs V0.5.0.1
+// Emplacement: /View/TaskManager/Cockpit/TaskListView.cs
+// Version: 1.0.1 (Correction des problèmes de mise à jour du DataGrid)
+
+#region Using Directives
 using Krypton.Toolkit;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
+using PlanAthena.Services.DTOs.Projet;
 using PlanAthena.Services.DTOs.UseCases;
 using PlanAthena.Services.Usecases;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
+#endregion
 
-namespace PlanAthena.View.TaskManager
+namespace PlanAthena.View.TaskManager.Cockpit
 {
     public partial class TaskListView : UserControl
     {
-        private const string FD = "dd/MM HH:mm";
+        #region Champs Privés
         private PilotageProjetUseCase _useCase;
         private List<TaskListItem> _allItems;
         private ProjetService _projetService;
         private bool _isLoading = false;
+        #endregion
 
-
+        #region Constructeur et Initialisation
         public TaskListView()
         {
             InitializeComponent();
+            typeof(DataGridView).InvokeMember("DoubleBuffered",
+        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.SetProperty,
+        null, kryptonDataGridView1, new object[] { true });
         }
 
         public void Initialize(PilotageProjetUseCase useCase, ProjetService projetService)
         {
             _useCase = useCase ?? throw new ArgumentNullException(nameof(useCase));
             _projetService = projetService ?? throw new ArgumentNullException(nameof(projetService));
+
+            ConfigureDataGridView();
             AttachEvents();
+        }
+
+        private void ConfigureDataGridView()
+        {
+            // Configuration pour permettre l'édition personnalisée
+            kryptonDataGridView1.ReadOnly = false;
+
+            // S'assurer que seules les colonnes de dates sont éditables
+            foreach (DataGridViewColumn column in kryptonDataGridView1.Columns)
+            {
+                if (column.Name == "DG_DDR" || column.Name == "DG_DFR")
+                {
+                    column.ReadOnly = false;
+                }
+                else
+                {
+                    column.ReadOnly = true;
+                }
+            }
+
+            // Configuration supplémentaire pour améliorer l'expérience utilisateur
+            kryptonDataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            kryptonDataGridView1.MultiSelect = false;
         }
 
         private void AttachEvents()
         {
+            // Désabonnement systématique
             cmbFiltreLot.SelectedIndexChanged -= FilterChanged;
             cmbFiltreMetier.SelectedIndexChanged -= FilterChanged;
             cmbFiltreStatut.SelectedIndexChanged -= FilterChanged;
             kryptonDataGridView1.CellFormatting -= DataGridView_CellFormatting;
             btnResetFiltres.Click -= BtnResetFiltres_Click;
-            kryptonDataGridView1.CellEndEdit -= DataGridView_CellEndEdit;
             btnAControler.Click -= BtnAControler_Click;
+            kryptonDataGridView1.CellBeginEdit -= DataGridView_CellBeginEdit;
+            // Ajout d'un gestionnaire pour les clics sur les cellules
+            kryptonDataGridView1.CellClick -= DataGridView_CellClick;
 
+            // Abonnement aux événements
             cmbFiltreLot.SelectedIndexChanged += FilterChanged;
             cmbFiltreMetier.SelectedIndexChanged += FilterChanged;
             cmbFiltreStatut.SelectedIndexChanged += FilterChanged;
             kryptonDataGridView1.CellFormatting += DataGridView_CellFormatting;
             btnResetFiltres.Click += BtnResetFiltres_Click;
-            kryptonDataGridView1.CellEndEdit += DataGridView_CellEndEdit;
             btnAControler.Click += BtnAControler_Click;
+            kryptonDataGridView1.CellBeginEdit += DataGridView_CellBeginEdit;
+            // Alternative avec CellClick pour plus de réactivité
+            kryptonDataGridView1.CellClick += DataGridView_CellClick;
         }
+        #endregion
 
+        #region Logique de Données et de Rafraîchissement
         public void RefreshData()
         {
             if (_useCase == null) return;
             _isLoading = true;
 
-            var data = _useCase.ObtenirDonneesPourTaskList();
-            _allItems = data.Items;
+            try
+            {
+                var data = _useCase.ObtenirDonneesPourTaskList();
+                _allItems = data.Items;
 
-            var selectedLot = cmbFiltreLot.SelectedItem?.ToString();
-            var selectedMetier = cmbFiltreMetier.SelectedItem?.ToString();
-            var selectedStatut = cmbFiltreStatut.SelectedItem?.ToString();
-            var statutsDisponibles = Enum.GetNames(typeof(Statut)).ToList();
+                var selectedLot = cmbFiltreLot.SelectedItem?.ToString();
+                var selectedMetier = cmbFiltreMetier.SelectedItem?.ToString();
+                var selectedStatut = cmbFiltreStatut.SelectedItem?.ToString();
+                var statutsDisponibles = Enum.GetNames(typeof(Statut)).ToList();
 
-            PopulateFilterComboBox(cmbFiltreLot, data.LotsDisponibles, selectedLot);
-            PopulateFilterComboBox(cmbFiltreMetier, data.MetiersDisponibles, selectedMetier);
-            PopulateFilterComboBox(cmbFiltreStatut, statutsDisponibles, selectedStatut);
+                PopulateFilterComboBox(cmbFiltreLot, data.LotsDisponibles, selectedLot);
+                PopulateFilterComboBox(cmbFiltreMetier, data.MetiersDisponibles, selectedMetier);
+                PopulateFilterComboBox(cmbFiltreStatut, statutsDisponibles, selectedStatut);
 
-            ApplyFiltersAndPopulateGrid();
-
-            _isLoading = false;
+                ApplyFiltersAndPopulateGrid();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erreur lors du rafraîchissement des données : {ex.Message}",
+                               "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                _isLoading = false;
+            }
         }
 
-        private void PopulateFilterComboBox(KryptonComboBox comboBox, List<string> items, string currentValue)
+        private void UpdateTaskDate(int rowIndex, string tacheId, string columnName, DateTime? newDate)
         {
-            comboBox.Items.Clear();
-            comboBox.Items.Add("Tous");
-            if (items != null)
+            if (rowIndex < 0 || rowIndex >= kryptonDataGridView1.RowCount) return;
+            var row = kryptonDataGridView1.Rows[rowIndex];
+            if (row.Tag is not TaskListItem item) return;
+
+            try
             {
-                comboBox.Items.AddRange(items.ToArray());
+                // Sauvegarder le contexte utilisateur
+                int firstDisplayedRowIndex = kryptonDataGridView1.FirstDisplayedScrollingRowIndex;
+                if (firstDisplayedRowIndex < 0) firstDisplayedRowIndex = 0;
+
+                var debutReel = item.DateDebutReelle; // Utiliser les valeurs de l'objet métier
+                var finReelle = item.DateFinReelle;
+
+                // Mise à jour selon la colonne modifiée
+                if (columnName == "DG_DDR")
+                {
+                    debutReel = newDate;
+                }
+                else if (columnName == "DG_DFR")
+                {
+                    finReelle = newDate;
+                }
+
+                // Mise à jour via le UseCase
+                _useCase.MettreAJourAvancementTache(tacheId, debutReel, finReelle);
+
+                // Mise à jour immédiate de la cellule pour un feedback instantané
+                if (columnName == "DG_DDR")
+                {
+                    row.Cells["DG_DDR"].Value = newDate;
+                }
+                else if (columnName == "DG_DFR")
+                {
+                    row.Cells["DG_DFR"].Value = newDate;
+                }
+
+                // Rafraîchir la ligne pour mettre à jour le formatage
+                kryptonDataGridView1.InvalidateRow(rowIndex);
+
+                // Rafraîchissement complet en arrière-plan pour garantir la cohérence
+                this.BeginInvoke((Action)(() =>
+                {
+                    RefreshData();
+
+                    // Restaurer la sélection et la position de scroll
+                    foreach (DataGridViewRow r in kryptonDataGridView1.Rows)
+                    {
+                        if ((r.Tag as TaskListItem)?.TacheId == tacheId)
+                        {
+                            r.Selected = true;
+                            try
+                            {
+                                if (kryptonDataGridView1.RowCount > firstDisplayedRowIndex)
+                                    kryptonDataGridView1.FirstDisplayedScrollingRowIndex = firstDisplayedRowIndex;
+                            }
+                            catch { /* Position de scroll invalide, ignorer */ }
+                            break;
+                        }
+                    }
+                }));
             }
-            if (!string.IsNullOrEmpty(currentValue) && items.Contains(currentValue))
+            catch (Exception ex)
             {
-                comboBox.SelectedItem = currentValue;
-            }
-            else
-            {
-                comboBox.SelectedItem = "Tous";
+                MessageBox.Show($"Erreur lors de la mise à jour de la tâche : {ex.Message}",
+                               "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        private void DataGridView_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        #endregion
+
+        #region Gestionnaires d'Événements
+
+        /// <summary>
+        /// Gestionnaire alternatif utilisant CellClick - plus réactif que CellBeginEdit
+        /// </summary>
+        private void DataGridView_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+
+            var columnName = kryptonDataGridView1.Columns[e.ColumnIndex].Name;
+            if (columnName != "DG_DDR" && columnName != "DG_DFR") return;
+
+            ShowDateTimePicker(e.RowIndex, e.ColumnIndex, columnName);
+        }
+
+        /// <summary>
+        /// Gestionnaire principal pour l'édition des dates
+        /// </summary>
+        private void DataGridView_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
         {
             if (e.RowIndex < 0) return;
 
-            var row = kryptonDataGridView1.Rows[e.RowIndex];
-            if (row.Tag is not TaskListItem item) return;
-
-            // Récupérer le style actuel pour ne modifier que ce qui est nécessaire
-            var style = e.CellStyle;
-            var font = style.Font;
-
-            // Appliquer le style conditionnel
-            if (item.Statut == Statut.EnRetard.ToString())
+            var columnName = kryptonDataGridView1.Columns[e.ColumnIndex].Name;
+            if (columnName != "DG_DDR" && columnName != "DG_DFR")
             {
-                style.ForeColor = Color.Red;
-                style.Font = new Font(font, FontStyle.Bold);
+                return;
             }
-            else if (item.Statut == Statut.Terminée.ToString())
-            {
-                style.ForeColor = Color.Gray;
-                style.Font = new Font(font, FontStyle.Italic);
-            }
-            // IMPORTANT : Pas de 'else' pour réinitialiser. Le DataGridView gère cela lui-même 
-            // en ré-appliquant le style par défaut de la ligne/colonne avant cet événement.
+
+            // Annuler l'édition standard
+            e.Cancel = true;
+
+            ShowDateTimePicker(e.RowIndex, e.ColumnIndex, columnName);
         }
+
+        /// <summary>
+        /// Méthode centralisée pour afficher le sélecteur de date
+        /// </summary>
+        private void ShowDateTimePicker(int rowIndex, int columnIndex, string columnName)
+        {
+            if (kryptonDataGridView1.Rows[rowIndex].Tag is not TaskListItem item) return;
+
+            try
+            {
+                var projetInfo = _projetService.ObtenirInformationsProjet();
+                DateTime? initialDate = null;
+
+                // Récupérer la date actuelle selon la colonne
+                if (columnName == "DG_DDR")
+                {
+                    initialDate = item.DateDebutReelle ?? item.DateDebutPlanifiee;
+                }
+                else if (columnName == "DG_DFR")
+                {
+                    initialDate = item.DateFinReelle ?? item.DateFinPlanifiee;
+                }
+
+                // Calculer la position du popup
+                Rectangle cellBounds = kryptonDataGridView1.GetCellDisplayRectangle(columnIndex, rowIndex, true);
+                Point location = kryptonDataGridView1.PointToScreen(new Point(cellBounds.Left, cellBounds.Bottom));
+
+                // Créer et afficher le popup
+                using (var popupForm = new DateTimePickerPopupForm(initialDate, projetInfo))
+                {
+                    popupForm.Location = location;
+
+                    // S'assurer que le popup reste dans l'écran
+                    var screen = Screen.FromPoint(location);
+                    if (location.X + popupForm.Width > screen.WorkingArea.Right)
+                    {
+                        location.X = screen.WorkingArea.Right - popupForm.Width;
+                    }
+                    if (location.Y + popupForm.Height > screen.WorkingArea.Bottom)
+                    {
+                        location.Y = cellBounds.Top - popupForm.Height;
+                        location = kryptonDataGridView1.PointToScreen(new Point(cellBounds.Left, location.Y));
+                    }
+                    popupForm.Location = location;
+
+                    DialogResult result = popupForm.ShowDialog(this.FindForm());
+
+                    if (result == DialogResult.OK)
+                    {
+                        UpdateTaskDate(rowIndex, item.TacheId, columnName, popupForm.SelectedValue);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erreur lors de l'affichage du sélecteur de date : {ex.Message}",
+                               "Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void FilterChanged(object sender, EventArgs e)
         {
             if (_isLoading) return;
@@ -128,57 +308,44 @@ namespace PlanAthena.View.TaskManager
             _isLoading = false;
             ApplyFiltersAndPopulateGrid();
         }
+
         private void BtnAControler_Click(object sender, EventArgs e)
         {
             if (_isLoading) return;
-
-            // Réinitialiser les filtres standards pour ne pas interférer
             _isLoading = true;
             cmbFiltreLot.SelectedItem = "Tous";
             cmbFiltreMetier.SelectedItem = "Tous";
             cmbFiltreStatut.SelectedItem = "Tous";
             _isLoading = false;
-
             ApplyAControlerFilter();
         }
 
-        private void ApplyAControlerFilter()
+        private void DataGridView_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
-            kryptonDataGridView1.Rows.Clear();
-            if (_allItems == null) return;
+            if (e.RowIndex < 0) return;
+            if (kryptonDataGridView1.Rows[e.RowIndex].Tag is not TaskListItem item) return;
 
-            var dateLimite = DateTime.Today.AddDays(1); // Aujourd'hui et demain
-            var statutsCibles = new[] { Statut.Planifiée.ToString(), Statut.EnRetard.ToString() };
+            var style = e.CellStyle;
+            var font = style.Font ?? kryptonDataGridView1.DefaultCellStyle.Font;
 
-            var filteredItems = _allItems.Where(item =>
+            // Réinitialisation du style
+            style.ForeColor = kryptonDataGridView1.DefaultCellStyle.ForeColor;
+            style.Font = font;
+
+            if (item.Statut == Statut.EnRetard.ToString())
             {
-                // Filtre a) sur la date de début planifiée
-                bool dateValide = item.DateDebutPlanifiee.HasValue && item.DateDebutPlanifiee.Value.Date <= dateLimite;
-                // Filtre b) sur le statut
-                bool statutValide = statutsCibles.Contains(item.Statut);
-
-                return dateValide && statutValide;
-            });
-
-            // CODE EN DOUBLON - À REFACTORISER
-            foreach (var item in filteredItems.OrderBy(i => i.TacheOriginale.LotId).ThenBy(i => i.TacheId))
+                style.ForeColor = Color.Red;
+                style.Font = new Font(font, FontStyle.Bold);
+            }
+            else if (item.Statut == Statut.Terminée.ToString())
             {
-                var rowIndex = kryptonDataGridView1.Rows.Add();
-                var row = kryptonDataGridView1.Rows[rowIndex];
-                row.Tag = item;
-
-                row.Cells["DG_TacheId"].Value = item.TacheId;
-                row.Cells["DG_Tache"].Value = item.NomTache;
-                row.Cells["DG_Metier"].Value = item.NomMetier;
-                row.Cells["DG_Ouvrier"].Value = item.NomsOuvriersAffectes;
-                row.Cells["DG_Statut"].Value = item.Statut;
-                row.Cells["DG_DDP"].Value = item.DateDebutPlanifiee;
-                row.Cells["DG_DFP"].Value = item.DateFinPlanifiee;
-
-                row.Cells["DG_DDR"].Value = item.DateDebutReelle;
-                row.Cells["DG_DFR"].Value = item.DateFinReelle;
+                style.ForeColor = Color.Gray;
+                style.Font = new Font(font, FontStyle.Italic);
             }
         }
+        #endregion
+
+        #region Méthodes d'Application des Filtres
         private void ApplyFiltersAndPopulateGrid()
         {
             kryptonDataGridView1.Rows.Clear();
@@ -189,8 +356,7 @@ namespace PlanAthena.View.TaskManager
             var selectedLotNom = cmbFiltreLot.SelectedItem?.ToString();
             if (!string.IsNullOrEmpty(selectedLotNom) && selectedLotNom != "Tous")
             {
-                filteredItems = filteredItems.Where(item =>
-                {
+                filteredItems = filteredItems.Where(item => {
                     var lotId = item.TacheOriginale.LotId;
                     if (string.IsNullOrEmpty(lotId)) return false;
                     var lot = _projetService.ObtenirLotParId(lotId);
@@ -210,239 +376,133 @@ namespace PlanAthena.View.TaskManager
                 filteredItems = filteredItems.Where(item => item.Statut == selectedStatut);
             }
 
-            foreach (var item in filteredItems.OrderBy(i => i.TacheOriginale.LotId).ThenBy(i => i.TacheId))
-            {
-                var rowIndex = kryptonDataGridView1.Rows.Add();
-                var row = kryptonDataGridView1.Rows[rowIndex];
-                row.Tag = item;
-
-                row.Cells["DG_TacheId"].Value = item.TacheId;
-                row.Cells["DG_Tache"].Value = item.NomTache;
-                row.Cells["DG_Metier"].Value = item.NomMetier;
-                row.Cells["DG_Ouvrier"].Value = item.NomsOuvriersAffectes;
-                row.Cells["DG_Statut"].Value = item.Statut;
-                row.Cells["DG_DDP"].Value = item.DateDebutPlanifiee;
-                row.Cells["DG_DFP"].Value = item.DateFinPlanifiee;
-
-                row.Cells["DG_DDR"].Value = item.DateDebutReelle;
-                row.Cells["DG_DFR"].Value = item.DateFinReelle;
-            }
+            PopulateGrid(filteredItems);
         }
 
-        private void DataGridView_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        private void ApplyAControlerFilter()
         {
-            if (_isLoading) return;
-            if (e.RowIndex < 0) return;
+            if (_allItems == null) return;
 
-            var row = kryptonDataGridView1.Rows[e.RowIndex];
-            if (row.Tag is not TaskListItem item) return;
+            var dateLimite = DateTime.Today.AddDays(1);
+            var statutsCibles = new[] { Statut.Planifiée.ToString(), Statut.EnRetard.ToString() };
 
-            // --- Étape 1 : Sauvegarder le contexte de l'utilisateur ---
-            string selectedTaskId = item.TacheId;
-            int firstDisplayedRowIndex = kryptonDataGridView1.FirstDisplayedScrollingRowIndex;
-            if (firstDisplayedRowIndex < 0) firstDisplayedRowIndex = 0;
+            var filteredItems = _allItems.Where(item =>
+                item.DateDebutPlanifiee.HasValue &&
+                item.DateDebutPlanifiee.Value.Date <= dateLimite &&
+                statutsCibles.Contains(item.Statut)
+            );
 
-            // --- Étape 2 : Mettre à jour les données (comme avant) ---
-            var debutReel = row.Cells["DG_DDR"].Value as DateTime?;
-            var finReelle = row.Cells["DG_DFR"].Value as DateTime?;
-
-            _useCase.MettreAJourAvancementTache(item.TacheId, debutReel, finReelle);
-
-            // --- Étape 3 : Déclencher un rafraîchissement complet de manière asynchrone ---
-            this.BeginInvoke((Action)(() =>
-            {
-                RefreshData(); // Recharge _allItems depuis la source de vérité et redessine la grille
-
-                // --- Étape 4 : Restaurer le contexte de l'utilisateur après le rafraîchissement ---
-                foreach (DataGridViewRow r in kryptonDataGridView1.Rows)
-                {
-                    if ((r.Tag as TaskListItem)?.TacheId == selectedTaskId)
-                    {
-                        r.Selected = true;
-                        // S'assurer que la ligne est visible
-                        if (kryptonDataGridView1.RowCount > firstDisplayedRowIndex)
-                        {
-                            kryptonDataGridView1.FirstDisplayedScrollingRowIndex = firstDisplayedRowIndex;
-                        }
-                        break;
-                    }
-                }
-            }));
+            PopulateGrid(filteredItems);
         }
 
-        #region Utilitaires pour DataGridView DateTimePicker (Version 0.5.0.1 - CORRIGÉE)
-
-        /// <summary>
-        /// Classe de colonne pour héberger des cellules de type DateTimePicker.
-        /// </summary>
-        public class DataGridViewDateTimePickerColumn : DataGridViewColumn
+        private void PopulateGrid(IEnumerable<TaskListItem> itemsToDisplay)
         {
-            public DataGridViewDateTimePickerColumn() : base(new DataGridViewDateTimePickerCell()) { }
+            kryptonDataGridView1.Rows.Clear();
 
-            public override DataGridViewCell CellTemplate
+            kryptonDataGridView1.SuspendLayout();
+
+            try
             {
-                get { return base.CellTemplate; }
-                set
+                foreach (var item in itemsToDisplay.OrderBy(i => i.TacheOriginale.LotId).ThenBy(i => i.TacheId))
                 {
-                    if (value != null && !value.GetType().IsAssignableFrom(typeof(DataGridViewDateTimePickerCell)))
-                    {
-                        throw new InvalidCastException("Must be a DataGridViewDateTimePickerCell");
-                    }
-                    base.CellTemplate = value;
+                    var rowIndex = kryptonDataGridView1.Rows.Add();
+                    var row = kryptonDataGridView1.Rows[rowIndex];
+                    row.Tag = item;
+
+                    row.Cells["DG_TacheId"].Value = item.TacheId;
+                    row.Cells["DG_Tache"].Value = item.NomTache;
+                    row.Cells["DG_Metier"].Value = item.NomMetier;
+                    row.Cells["DG_Ouvrier"].Value = item.NomsOuvriersAffectes;
+                    row.Cells["DG_Statut"].Value = item.Statut;
+                    row.Cells["DG_DDP"].Value = item.DateDebutPlanifiee;
+                    row.Cells["DG_DFP"].Value = item.DateFinPlanifiee;
+                    row.Cells["DG_DDR"].Value = item.DateDebutReelle;
+                    row.Cells["DG_DFR"].Value = item.DateFinReelle;
                 }
+            }
+            finally
+            {
+                kryptonDataGridView1.ResumeLayout();
             }
         }
 
-        /// <summary>
-        /// Cellule personnalisée qui gère l'affichage et l'édition avec un DateTimePicker.
-        /// </summary>
-        public class DataGridViewDateTimePickerCell : DataGridViewTextBoxCell
+        private void PopulateFilterComboBox(KryptonComboBox comboBox, List<string> items, string currentValue)
         {
-            public DataGridViewDateTimePickerCell()
+            comboBox.Items.Clear();
+            comboBox.Items.Add("Tous");
+            if (items != null)
             {
-                // CORRECTION : Utiliser le nouveau format personnalisé sans l'année.
-                this.Style.Format = FD;
+                comboBox.Items.AddRange(items.ToArray());
             }
-
-            public override void InitializeEditingControl(int rowIndex, object initialFormattedValue, DataGridViewCellStyle dataGridViewCellStyle)
+            if (!string.IsNullOrEmpty(currentValue) && comboBox.Items.Contains(currentValue))
             {
-                base.InitializeEditingControl(rowIndex, initialFormattedValue, dataGridViewCellStyle);
-                var ctl = (DataGridViewDateTimePickerEditingControl)this.DataGridView.EditingControl;
-
-                // CORRECTION : Logique d'initialisation améliorée.
-                ctl.ShowCheckBox = true;
-                if (this.Value == null || this.Value == DBNull.Value)
-                {
-                    // La cellule est vide, on cherche la date planifiée comme valeur par défaut.
-                    var item = this.DataGridView.Rows[rowIndex].Tag as TaskListItem;
-                    DateTime? plannedDate = null;
-
-                    // On détermine si on édite la date de début ou de fin pour prendre la bonne date planifiée.
-                    if (this.OwningColumn.Name == "DG_DDR")
-                    {
-                        plannedDate = item?.DateDebutPlanifiee;
-                    }
-                    else if (this.OwningColumn.Name == "DG_DFR")
-                    {
-                        plannedDate = item?.DateFinPlanifiee;
-                    }
-
-                    // Si une date planifiée existe, on l'utilise, sinon on prend maintenant.
-                    ctl.Value = plannedDate ?? DateTime.Now;
-                    ctl.Checked = false; // La case est décochée car la valeur n'est pas encore "réelle".
-                }
-                else
-                {
-                    // La cellule a déjà une valeur, on l'utilise.
-                    ctl.Value = (DateTime)this.Value;
-                    ctl.Checked = true;
-                }
+                comboBox.SelectedItem = currentValue;
             }
-
-            // Le reste de la classe (DetachEditingControl, EditType, etc.) reste inchangé.
-            public override void DetachEditingControl()
+            else
             {
-                var ctl = this.DataGridView.EditingControl as DataGridViewDateTimePickerEditingControl;
-                if (ctl != null && ctl.Visible)
-                {
-                    if (ctl.Checked == false)
-                    {
-                        this.Value = null;
-                    }
-                    else
-                    {
-                        this.Value = ctl.Value;
-                    }
-                }
-                base.DetachEditingControl();
+                comboBox.SelectedItem = "Tous";
             }
-            public override object ParseFormattedValue(object formattedValue, DataGridViewCellStyle cellStyle, System.ComponentModel.TypeConverter formattedValueTypeConverter, System.ComponentModel.TypeConverter valueTypeConverter)
-            {
-                // On retourne directement la valeur du contrôle d'édition si il existe.
-                if (this.DataGridView.EditingControl is DataGridViewDateTimePickerEditingControl ctl)
-                {
-                    return ctl.Checked ? ctl.Value : (DateTime?)null;
-                }
-
-                // Sinon, on laisse la classe de base tenter sa chance (utile pour le collage de données).
-                return base.ParseFormattedValue(formattedValue, cellStyle, formattedValueTypeConverter, valueTypeConverter);
-            }
-            public override Type EditType => typeof(DataGridViewDateTimePickerEditingControl);
-            public override Type ValueType => typeof(DateTime?);
-            public override object DefaultNewRowValue => null;
         }
+        #endregion
 
-        /// <summary>
-        /// Le contrôle DateTimePicker qui est réellement affiché dans la cellule en mode édition.
-        /// </summary>
-        public class DataGridViewDateTimePickerEditingControl : DateTimePicker, IDataGridViewEditingControl
+        #region Classe Interne pour le Formulaire Popup
+        private class DateTimePickerPopupForm : KryptonForm
         {
-            // CORRECTION : Implémentation complète et correcte de l'interface.
-            public DataGridView EditingControlDataGridView { get; set; }
-            public int EditingControlRowIndex { get; set; }
-            public bool EditingControlValueChanged { get; set; }
+            public DateTime? SelectedValue { get; private set; }
 
-            public object EditingControlFormattedValue
+            public DateTimePickerPopupForm(DateTime? initialDate, InformationsProjet projetInfo)
             {
-                // CORRECTION : Appliquer le nouveau format.
-                get { return this.Value.ToString(FD); }
-                set
+                FormBorderStyle = FormBorderStyle.None;
+                ShowInTaskbar = false;
+                StartPosition = FormStartPosition.Manual;
+                Padding = new Padding(1);
+                BackColor = Color.FromArgb(180, 180, 180);
+                TopMost = true; // S'assurer que le popup reste au premier plan
+
+                var dateTimePickerControl = new PlanAthena.View.TaskManager.Utilitaires.DateTimePicker();
+                this.Controls.Add(dateTimePickerControl);
+
+                this.Size = dateTimePickerControl.Size;
+                this.AutoSize = true;
+                this.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+
+                dateTimePickerControl.InitializeData(initialDate, projetInfo);
+
+                dateTimePickerControl.DateTimeSelected += (s, selectedDateTime) =>
                 {
-                    if (value is string s && DateTime.TryParse(s, out var dt))
+                    this.SelectedValue = selectedDateTime;
+                    this.DialogResult = DialogResult.OK;
+                    this.Close();
+                };
+
+                dateTimePickerControl.SelectionCancelled += (s, args) =>
+                {
+                    this.DialogResult = DialogResult.Cancel;
+                    this.Close();
+                };
+
+                // Gérer la fermeture avec Escape
+                this.KeyPreview = true;
+                this.KeyDown += (s, e) =>
+                {
+                    if (e.KeyCode == Keys.Escape)
                     {
-                        this.Value = dt;
+                        this.DialogResult = DialogResult.Cancel;
+                        this.Close();
                     }
-                }
+                };
             }
 
-            public DataGridViewDateTimePickerEditingControl()
+            protected override void OnDeactivate(EventArgs e)
             {
-                this.Format = DateTimePickerFormat.Custom;
-                // CORRECTION : Appliquer le nouveau format.
-                this.CustomFormat = FD;
-            }
-
-            public object GetEditingControlFormattedValue(DataGridViewDataErrorContexts context) => EditingControlFormattedValue;
-
-            public void ApplyCellStyleToEditingControl(DataGridViewCellStyle style)
-            {
-                this.Font = style.Font;
-                this.CalendarForeColor = style.ForeColor;
-                this.CalendarMonthBackground = style.BackColor;
-            }
-
-            public void PrepareEditingControlForEdit(bool selectAll) { /* Pas d'action */ }
-
-            public bool RepositionEditingControlOnValueChange => false;
-
-            public bool EditingControlWantsInputKey(Keys key, bool wantsInputKey)
-            {
-                switch (key & Keys.KeyCode)
+                base.OnDeactivate(e);
+                if (this.DialogResult == DialogResult.None)
                 {
-                    case Keys.Left:
-                    case Keys.Up:
-                    case Keys.Down:
-                    case Keys.Right:
-                    case Keys.Home:
-                    case Keys.End:
-                    case Keys.PageDown:
-                    case Keys.PageUp:
-                        return true;
-                    default:
-                        return !wantsInputKey;
+                    this.DialogResult = DialogResult.Cancel;
+                    this.Close();
                 }
-            }
-
-            public Cursor EditingPanelCursor => base.Cursor;
-
-            protected override void OnValueChanged(EventArgs eventargs)
-            {
-                this.EditingControlValueChanged = true;
-                this.EditingControlDataGridView.NotifyCurrentCellDirty(true);
-                base.OnValueChanged(eventargs);
             }
         }
-
         #endregion
     }
 }

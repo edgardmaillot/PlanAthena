@@ -1,23 +1,30 @@
-// Fichier: /View/TaskManager/Cockpit/Cockpit.cs Version 0.6.0.3
+// Fichier: /View/TaskManager/Cockpit/Cockpit.cs Version 0.6.1
 
 using Krypton.Navigator;
+using Krypton.Toolkit;
 using PlanAthena.Services.Business;
 using PlanAthena.Services.DTOs.UseCases;
 using PlanAthena.Services.Usecases;
+using PlanAthena.View.Utils;
 
 namespace PlanAthena.View.TaskManager.Cockpit
 {
-    public partial class Cockpit : Form
+    public partial class CockpitView : UserControl
     {
         private PilotageProjetUseCase _useCase;
         private ProjetService _projetService;
+        private SplashScreen _splashScreen;
         private TaskListView _taskListView;
         private PlanningView _planningView;
+        private EVMgraphView _graphEVM;
         private System.Windows.Forms.Timer _kpiRefreshTimer;
 
-        public Cockpit()
+        public CockpitView()
         {
             InitializeComponent();
+            typeof(DataGridView).InvokeMember("DoubleBuffered",
+        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.SetProperty,
+        null, kryptonTableLayoutPanel1, new object[] { true });
         }
 
         public void Initialize(
@@ -33,10 +40,11 @@ namespace PlanAthena.View.TaskManager.Cockpit
                 _projetService,
                 ressourceService
             );
-
+            this.SuspendLayout();
             InitializeViews();
             AttachEvents();
             RefreshAllData();
+            this.ResumeLayout(true); 
         }
 
         private void InitializeViews()
@@ -56,12 +64,25 @@ namespace PlanAthena.View.TaskManager.Cockpit
             {
                 planningPage.Controls.Add(_planningView);
             }
+            _graphEVM = new EVMgraphView { Dock = DockStyle.Fill };
+            _graphEVM.Initialize(_useCase);
+            var evmGraphPage = kryptonNavigator1.Pages.FirstOrDefault(p => p.Name == "tabPageEVM") as KryptonPage;
+            if (evmGraphPage != null)
+            {
+                evmGraphPage.Controls.Add(_graphEVM);
+            }
+            //on ajoute une page SplashScreen pour l'instant
+            _splashScreen = new SplashScreen { Dock = DockStyle.Fill };
+            var splashPage = kryptonNavigator1.Pages.FirstOrDefault(p => p.Name == "tabPageSplash") as KryptonPage;
+            if (splashPage != null)
+            {
+                splashPage.Controls.Add(_splashScreen);
+            }
         }
 
         private void AttachEvents()
         {
             this.Load += (s, e) => RefreshAllData();
-            kryptonButton2.Click += (s, e) => this.Close();
 
             _kpiRefreshTimer = new System.Windows.Forms.Timer { Interval = 30000 };
             _kpiRefreshTimer.Tick += (s, e) => RefreshKpisAndMeteo();
@@ -75,6 +96,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
             RefreshKpisAndMeteo();
             _taskListView?.RefreshData();
             _planningView?.RefreshData();
+            _graphEVM?.RefreshData();
             Cursor = Cursors.Default;
         }
 
@@ -118,8 +140,6 @@ namespace PlanAthena.View.TaskManager.Cockpit
 
             lblDerivePlanning.Text = $"{meteoData.DerivPlanningJours} jours";
             lblDispoRessources.Text = $"{meteoData.DisponibiliteRessourcesPourcentage:P0}";
-
-            // CORRIGÉ : Utilisation de la propriété correcte du DTO et formatage en pourcentage
             lblDeviationBudget.Text = meteoData.DeviationBudgetPourcentage.ToString("P0");
 
             switch (meteoData.Statut)
@@ -138,13 +158,6 @@ namespace PlanAthena.View.TaskManager.Cockpit
                     break;
             }
             kryptonPictureBox1.BackgroundImageLayout = ImageLayout.Stretch;
-        }
-
-        protected override void OnFormClosed(FormClosedEventArgs e)
-        {
-            _kpiRefreshTimer?.Stop();
-            _kpiRefreshTimer?.Dispose();
-            base.OnFormClosed(e);
         }
     }
 }

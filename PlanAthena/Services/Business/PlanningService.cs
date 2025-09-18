@@ -114,7 +114,7 @@ namespace PlanAthena.Services.Business
 
         #endregion
 
-        #region NOUVEAU : API pour la Gestion de la Baseline
+        #region API pour la Gestion de la Baseline
 
         /// <summary>
         /// Définit la baseline active pour le projet.
@@ -133,7 +133,7 @@ namespace PlanAthena.Services.Business
 
         #endregion
 
-        #region NOUVEAU : API pour les calculs EVM
+        #region API pour les calculs EVM
 
         /// <summary>
         /// Point d'entrée principal pour obtenir un rapport complet sur la performance du projet (EVM).
@@ -160,6 +160,117 @@ namespace PlanAthena.Services.Business
                 EarnedValue = ev,
                 ActualCost = ac
             };
+        }
+
+        #endregion
+
+        #region API pour les graphiques EVM
+
+        /// <summary>
+        /// Calcule les courbes historiques PV, EV, AC depuis le début du projet jusqu'à aujourd'hui.
+        /// </summary>
+        /// <param name="toutesLesTaches">La liste complète des tâches pour le calcul de l'EV.</param>
+        /// <returns>Un dictionnaire par courbe, avec la date en clé et la valeur cumulative en valeur.</returns>
+        public virtual (bool BaselineExists, Dictionary<DateTime, decimal> PvCurve, Dictionary<DateTime, decimal> EvCurve, Dictionary<DateTime, decimal> AcCurve)
+            GetCourbesEVMHistoriques(IReadOnlyList<Tache> toutesLesTaches)
+        {
+            if (_currentBaseline == null || _currentBaseline.ConsPlanningInitial == null)
+            {
+                return (false, new(), new(), new());
+            }
+
+            var pvCurve = new Dictionary<DateTime, decimal>();
+            var evCurve = new Dictionary<DateTime, decimal>();
+            var acCurve = new Dictionary<DateTime, decimal>();
+
+            //var dateDebut = _currentBaseline.DateCreation;
+            // --- CORRECTION : Utiliser la date de début du planning de la baseline ---
+            var dateDebut = _currentBaseline.ConsPlanningInitial.DateDebutProjet;
+
+            var dateFinProjet = _currentBaseline.DateFinPlanifieeInitiale;
+            var dateFinCalcul = (dateFinProjet < DateTime.Today) ? dateFinProjet : DateTime.Today;
+
+            // Pour la courbe PV, nous voulons la voir en entier, même dans le futur.
+            // Donc, nous utiliserons la courbe pré-calculée de la baseline.
+            if (_currentBaseline.CourbePlannedValueCumulative != null)
+            {
+                // On s'assure que la courbe est triée par date
+                foreach (var kvp in _currentBaseline.CourbePlannedValueCumulative.OrderBy(x => x.Key))
+                {
+                    pvCurve[kvp.Key.Date] = kvp.Value;
+                }
+            }
+
+            if (dateDebut.Date > dateFinCalcul.Date)
+            {
+                // Si le projet n'a pas encore commencé, on retourne la courbe PV planifiée et des courbes EV/AC vides.
+                return (true, pvCurve, evCurve, acCurve);
+            }
+
+            // Pour EV et AC, on ne calcule que jusqu'à aujourd'hui.
+            for (var date = dateDebut.Date; date <= dateFinCalcul.Date; date = date.AddDays(1))
+            {
+                // La PV est déjà remplie, on calcule le reste.
+                evCurve[date] = _CalculerValeurAcquiseCumulative(date, toutesLesTaches);
+                acCurve[date] = _SimulerCoutReelCumulatif(date);
+            }
+
+            // Il faut s'assurer que les dates de evCurve et acCurve existent dans pvCurve
+            // pour que les listes aient la même taille dans le UseCase.
+            foreach (var date in pvCurve.Keys.ToList())
+            {
+                if (!evCurve.ContainsKey(date)) evCurve[date] = evCurve.Any() ? evCurve.Last().Value : 0;
+                if (!acCurve.ContainsKey(date)) acCurve[date] = acCurve.Any() ? acCurve.Last().Value : 0;
+            }
+
+            return (true, pvCurve, evCurve, acCurve);
+        }
+
+
+        /// <summary>
+        /// Calcule les courbes historiques de reste à faire (PTC et ETC) par semaine.
+        /// </summary>
+        /// <param name="toutesLesTaches">La liste complète des tâches pour le calcul de l'EV.</param>
+        /// <returns>Un dictionnaire avec la date de fin de semaine en clé et les valeurs (PTC, ETC) en valeur.</returns>
+        public virtual (bool BaselineExists, Dictionary<DateTime, (decimal Ptc, decimal Etc)> WeeklyData)
+            GetEtcVsPtcHistorique(IReadOnlyList<Tache> toutesLesTaches)
+        {
+            if (_currentBaseline == null || _currentBaseline.ConsPlanningInitial == null)
+            {
+                return (false, new());
+            }
+
+            var weeklyData = new Dictionary<DateTime, (decimal Ptc, decimal Etc)>();
+            var bac = _currentBaseline.BudgetAtCompletion;
+            if (bac == 0) return (true, weeklyData);
+
+            //var dateDebut = _currentBaseline.DateCreation;
+            // --- CORRECTION : Utiliser la date de début du planning de la baseline ---
+            var dateDebut = _currentBaseline.ConsPlanningInitial.DateDebutProjet;
+
+            // On calcule jusqu'à la fin planifiée du projet pour avoir la courbe complète
+            var dateFin = _currentBaseline.DateFinPlanifieeInitiale;
+
+            for (var date = dateDebut.Date; date <= dateFin.Date; date = date.AddDays(1))
+            {
+                // On ne prend qu'un point par semaine (par exemple le dimanche) pour ne pas surcharger le graphique
+                if (date.DayOfWeek != DayOfWeek.Sunday && date.Date != dateFin.Date) continue;
+
+                var pv = _CalculerValeurPlanifieeCumulative(date);
+                var ev = _CalculerValeurAcquiseCumulative(date, toutesLesTaches);
+                var ac = _SimulerCoutReelCumulatif(date);
+
+                // Calcul du PTC
+                var ptc = bac - pv;
+
+                // Calcul de l'ETC
+                decimal cpi = (ac > 0) ? ev / ac : 1.0m; // Si pas de coût, on suppose une performance de 1
+                decimal etc = (cpi > 0) ? (bac - ev) / cpi : (bac - ev); // Évite la division par zéro
+
+                weeklyData[date] = (ptc < 0 ? 0 : ptc, etc < 0 ? 0 : etc); // On ne veut pas de valeurs négatives
+            }
+
+            return (true, weeklyData);
         }
 
         #endregion
@@ -344,7 +455,7 @@ namespace PlanAthena.Services.Business
 
         #endregion
 
-        #region NOUVEAU : Méthodes privées pour le calcul EVM
+        #region Méthodes privées pour le calcul EVM
 
         private decimal _CalculerValeurPlanifieeCumulative(DateTime dateRef)
         {

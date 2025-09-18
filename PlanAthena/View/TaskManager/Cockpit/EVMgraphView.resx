@@ -117,4 +117,22 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="kryptonWrapLabel1.Text" xml:space="preserve">
+    <value>La valeur Planifiée (PV) représente le coût de chaque tâche planifiée en 
+fonction des estimations de durée initiales x le coût des ressources 
+affectées par la planification. C'est une valeur fixe qui ne varie pas.
+</value>
+  </data>
+  <data name="kryptonWrapLabel2.Text" xml:space="preserve">
+    <value>La valeur Acquise (EV) augmente à chaque fois qu'une tâche est terminée,
+en prenant en compte le coût initialement estimé de cette tâche.
+Si une tâche était estimée à 8 heures, mais qu'elle a été réalisée en 10 heures
+la valeur Acquise ne prendra en compte que les 8 heures estimées</value>
+  </data>
+  <data name="kryptonWrapLabel5.Text" xml:space="preserve">
+    <value>Cette courbe représente les coûts réellement dépensés, et la projection
+probable de ces dépenses par rapport au reste à faire.
+La projection est estimée par rapport aux retards ou avances existant à date
+et par rapport au travail restant à faire</value>
+  </data>
 </root>

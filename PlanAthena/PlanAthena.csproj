@@ -39,6 +39,7 @@
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3405.78" />
     <PackageReference Include="NodaTime" Version="3.2.2" />
     <PackageReference Include="QuikGraph" Version="2.5.0" />
+    <PackageReference Include="ScottPlot.WinForms" Version="5.0.56" />
     <PackageReference Include="WinForms.DataVisualization" Version="1.10.0" />
   </ItemGroup>
 

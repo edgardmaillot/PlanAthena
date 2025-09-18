@@ -1,4 +1,4 @@
-﻿Structure du Projet - GÃ©nÃ©rÃ© le 09/16/2025 09:52:32
+﻿Structure du Projet - GÃ©nÃ©rÃ© le 09/17/2025 20:29:49
 D:.
 
     +--- Data
@@ -8,6 +8,7 @@ D:.
             Lot.cs
             Metier.cs
             Ouvrier.cs
+            PlanningBaseline.cs
             ProjetData.cs
             Statut.cs
             Tache.cs
@@ -116,6 +117,7 @@ D:.
             +--- TaskManager
                     PlanningInfoPourTache.cs
             +--- UseCases
+                    EvmReportDto.cs
                     PilotageDTOs.cs
                     PlanificationRunParams.cs
         +--- Export
@@ -174,9 +176,12 @@ D:.
                 ProjectStructureView.resx
         +--- TaskManager
             +--- Cockpit
-                    Cockpit.cs
-                    Cockpit.Designer.cs
-                    Cockpit.resx
+                    CockpitView.cs
+                    CockpitView.Designer.cs
+                    CockpitView.resx
+                    EVMgraphView.cs
+                    EVMgraphView.Designer.cs
+                    EVMgraphView.resx
                     PlanningView.cs
                     PlanningView.Designer.cs
                     PlanningView.resx

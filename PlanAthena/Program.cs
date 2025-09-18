@@ -14,6 +14,9 @@ using PlanAthena.Services.Usecases;
 using PlanAthena.Services.UseCases;
 using PlanAthena.Utilities;
 using PlanAthena.View;
+using System.Linq; // Ajouté pour .Any()
+using System;
+using System.Windows.Forms;
 
 
 namespace PlanAthena
