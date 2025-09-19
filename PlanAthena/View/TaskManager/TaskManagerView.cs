@@ -244,7 +244,16 @@ namespace PlanAthena.View.TaskManager
         private void OnTacheXLSaved(object sender, Tache tacheToSave)
         {
             if (tacheToSave == null) return;
+
+            // Sauvegarder la tâche modifiée
             _taskManagerService.ModifierTache(tacheToSave);
+
+            // NOUVEAU: Si les dates de planification ont été modifiées, 
+            // déclencher une mise à jour du PlanningService
+            // (Le TaskManagerService.InvaliderPlanification() a déjà été appelé dans TacheDetailViewXL)
+
+            // Optionnel: Recalculer immédiatement le planning si nécessaire
+            // _planningService.RecalculerPlanning(); // À décommenter si cette méthode existe
 
             // On rafraîchit tout car la vue XL peut modifier plus de choses
             // et qu'elle est indépendante du flux principal.
@@ -562,7 +571,14 @@ namespace PlanAthena.View.TaskManager
 
                 newDetailPage.Controls.Add(newDetailView);
                 newDetailView.LoadTache(tache);
-
+                newDetailPage.VisibleChanged += (s, args) =>
+                {
+                    if (!newDetailPage.Visible && _taskManagerService.ObtenirTache(tache.TacheId) == null)
+                    {
+                        // La tâche a été supprimée, fermer la fenêtre
+                        kryptonDockingManager.RemovePage(newDetailPage, true);
+                    }
+                };
                 var floatingElement = kryptonDockingManager.OfType<KryptonDockingFloating>().FirstOrDefault();
                 if (floatingElement == null)
                 {
@@ -613,13 +629,33 @@ namespace PlanAthena.View.TaskManager
 
         private void OnTacheXLDeleteRequested(object sender, Tache tache)
         {
-            OnTacheDeleteRequested(sender, tache);
+            if (tache == null) return;
 
-            string pageUniqueName = $"DetailXL_{tache.TacheId}";
-            var pageToClose = kryptonDockingManager.PageForUniqueName(pageUniqueName);
-            if (pageToClose != null)
+            if (MessageBox.Show($"Supprimer la tâche '{tache.TacheNom}' ?", "Confirmation",
+                                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
-                kryptonDockingManager.RemovePage(pageToClose, true);
+                try
+                {
+                    // 1. Sauvegarder l'état de la vue AVANT la modification
+                    var viewState = pertDiagramControl1.GetViewState();
+
+                    _taskManagerService.SupprimerTache(tache.TacheId);
+
+                    // 2. Lancer le rafraîchissement en passant l'état sauvegardé
+                    RefreshUIForActiveLot(viewState);
+
+                    // 3. Fermer la fenêtre XL après suppression
+                    string pageUniqueName = $"DetailXL_{tache.TacheId}";
+                    var pageToClose = kryptonDockingManager.PageForUniqueName(pageUniqueName);
+                    if (pageToClose != null)
+                    {
+                        kryptonDockingManager.RemovePage(pageToClose, true);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Erreur de suppression", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 

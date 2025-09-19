@@ -26,7 +26,12 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             btnDeleteOuvrier = new KryptonButton();
             btnNewOuvrier = new KryptonButton();
             gridOuvriers = new KryptonDataGridView();
+            panelSearchAndSort = new KryptonPanel();
+            groupTriMode = new KryptonGroupBox();
+            radioTriMetier = new KryptonRadioButton();
+            radioTriPatronyme = new KryptonRadioButton();
             textSearchOuvrier = new KryptonTextBox();
+            labelSearch = new KryptonLabel();
             panelRightContainer = new KryptonPanel();
             groupCompetences = new KryptonGroupBox();
             gridCompetences = new KryptonDataGridView();
@@ -58,6 +63,11 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             ((System.ComponentModel.ISupportInitialize)panelOuvrierActions).BeginInit();
             panelOuvrierActions.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)gridOuvriers).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)panelSearchAndSort).BeginInit();
+            panelSearchAndSort.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)groupTriMode).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)groupTriMode.Panel).BeginInit();
+            groupTriMode.Panel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)panelRightContainer).BeginInit();
             panelRightContainer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)groupCompetences).BeginInit();
@@ -111,7 +121,7 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             // 
             headerOuvriers.Panel.Controls.Add(panelOuvrierActions);
             headerOuvriers.Panel.Controls.Add(gridOuvriers);
-            headerOuvriers.Panel.Controls.Add(textSearchOuvrier);
+            headerOuvriers.Panel.Controls.Add(panelSearchAndSort);
             headerOuvriers.Panel.Padding = new Padding(6);
             headerOuvriers.Size = new Size(524, 726);
             headerOuvriers.StateCommon.Back.Color1 = Color.White;
@@ -164,26 +174,78 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             gridOuvriers.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             gridOuvriers.BorderStyle = BorderStyle.None;
             gridOuvriers.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            gridOuvriers.Location = new Point(6, 39);
+            gridOuvriers.Location = new Point(6, 60);
             gridOuvriers.Margin = new Padding(4, 3, 4, 3);
             gridOuvriers.MultiSelect = false;
             gridOuvriers.Name = "gridOuvriers";
             gridOuvriers.ReadOnly = true;
             gridOuvriers.RowHeadersVisible = false;
             gridOuvriers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            gridOuvriers.Size = new Size(510, 591);
+            gridOuvriers.Size = new Size(510, 570);
             gridOuvriers.TabIndex = 1;
             gridOuvriers.SelectionChanged += gridOuvriers_SelectionChanged;
             // 
+            // panelSearchAndSort
+            // 
+            panelSearchAndSort.Controls.Add(groupTriMode);
+            panelSearchAndSort.Controls.Add(textSearchOuvrier);
+            panelSearchAndSort.Controls.Add(labelSearch);
+            panelSearchAndSort.Dock = DockStyle.Top;
+            panelSearchAndSort.Location = new Point(6, 6);
+            panelSearchAndSort.Name = "panelSearchAndSort";
+            panelSearchAndSort.Size = new Size(510, 74);
+            panelSearchAndSort.TabIndex = 3;
+            // 
+            // groupTriMode
+            // 
+            groupTriMode.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            groupTriMode.Location = new Point(323, 1);
+            // 
+            // 
+            // 
+            groupTriMode.Panel.Controls.Add(radioTriMetier);
+            groupTriMode.Panel.Controls.Add(radioTriPatronyme);
+            groupTriMode.Panel.Padding = new Padding(5);
+            groupTriMode.Size = new Size(185, 47);
+            groupTriMode.TabIndex = 2;
+            groupTriMode.Values.Heading = "Trier par";
+            // 
+            // radioTriMetier
+            // 
+            radioTriMetier.Location = new Point(90, -1);
+            radioTriMetier.Name = "radioTriMetier";
+            radioTriMetier.Size = new Size(58, 20);
+            radioTriMetier.TabIndex = 1;
+            radioTriMetier.Values.Text = "Métier";
+            radioTriMetier.CheckedChanged += RadioTriMetier_CheckedChanged;
+            // 
+            // radioTriPatronyme
+            // 
+            radioTriPatronyme.Checked = true;
+            radioTriPatronyme.Location = new Point(8, -1);
+            radioTriPatronyme.Name = "radioTriPatronyme";
+            radioTriPatronyme.Size = new Size(82, 20);
+            radioTriPatronyme.TabIndex = 0;
+            radioTriPatronyme.Values.Text = "Patronyme";
+            radioTriPatronyme.CheckedChanged += RadioTriPatronyme_CheckedChanged;
+            // 
             // textSearchOuvrier
             // 
-            textSearchOuvrier.Dock = DockStyle.Top;
-            textSearchOuvrier.Location = new Point(6, 6);
+            textSearchOuvrier.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            textSearchOuvrier.Location = new Point(70, 16);
             textSearchOuvrier.Margin = new Padding(4, 3, 4, 3);
             textSearchOuvrier.Name = "textSearchOuvrier";
-            textSearchOuvrier.Size = new Size(510, 23);
+            textSearchOuvrier.Size = new Size(242, 23);
             textSearchOuvrier.TabIndex = 0;
             textSearchOuvrier.TextChanged += textSearchOuvrier_TextChanged;
+            // 
+            // labelSearch
+            // 
+            labelSearch.Location = new Point(5, 19);
+            labelSearch.Name = "labelSearch";
+            labelSearch.Size = new Size(67, 20);
+            labelSearch.TabIndex = 1;
+            labelSearch.Values.Text = "Recherche";
             // 
             // panelRightContainer
             // 
@@ -412,11 +474,17 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             ((System.ComponentModel.ISupportInitialize)kryptonSplitContainer1).EndInit();
             ((System.ComponentModel.ISupportInitialize)headerOuvriers.Panel).EndInit();
             headerOuvriers.Panel.ResumeLayout(false);
-            headerOuvriers.Panel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)headerOuvriers).EndInit();
             ((System.ComponentModel.ISupportInitialize)panelOuvrierActions).EndInit();
             panelOuvrierActions.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)gridOuvriers).EndInit();
+            ((System.ComponentModel.ISupportInitialize)panelSearchAndSort).EndInit();
+            panelSearchAndSort.ResumeLayout(false);
+            panelSearchAndSort.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)groupTriMode.Panel).EndInit();
+            groupTriMode.Panel.ResumeLayout(false);
+            groupTriMode.Panel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)groupTriMode).EndInit();
             ((System.ComponentModel.ISupportInitialize)panelRightContainer).EndInit();
             panelRightContainer.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)groupCompetences.Panel).EndInit();
@@ -441,7 +509,12 @@ namespace PlanAthena.View.Ressources.MetierDiagram
         private KryptonButton btnSupprimer;
         private KryptonSplitContainer kryptonSplitContainer1;
         private KryptonHeaderGroup headerOuvriers;
+        private KryptonPanel panelSearchAndSort;
         private KryptonTextBox textSearchOuvrier;
+        private KryptonLabel labelSearch;
+        private KryptonGroupBox groupTriMode;
+        private KryptonRadioButton radioTriMetier;
+        private KryptonRadioButton radioTriPatronyme;
         private KryptonDataGridView gridOuvriers;
         private KryptonPanel panelOuvrierActions;
         private KryptonButton btnDeleteOuvrier;

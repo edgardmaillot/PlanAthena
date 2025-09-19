@@ -186,6 +186,9 @@ namespace PlanAthena.Services.Usecases
             data.Configuration = _planningService.GetCurrentConfig();
             data.Baseline = _planningService.GetBaseline(); // << AJOUT
 
+            // CORRECTION : Synchroniser les statuts AVANT de calculer le résumé
+            _taskManagerService.SynchroniserStatutsTaches();
+
             var resumeTaches = _taskManagerService.ObtenirResumeTaches();
             data.Summary = new ProjectSummaryData
             {

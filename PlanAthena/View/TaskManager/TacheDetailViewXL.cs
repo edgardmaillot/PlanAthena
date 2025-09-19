@@ -1,4 +1,4 @@
-// Fichier: PlanAthena/View/TaskManager/TacheDetailViewXL.cs
+// Fichier: PlanAthena/View/TaskManager/TacheDetailViewXL.cs Version 0.6.6
 using Krypton.Toolkit;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
@@ -56,7 +56,20 @@ namespace PlanAthena.View.TaskManager
             _logicController = logicController;
 
             AttachEvents();
+            ConfigureUI();
             Clear();
+        }
+
+        /// <summary>
+        /// Configure les propriétés UI une seule fois après l'initialisation.
+        /// </summary>
+        private void ConfigureUI()
+        {
+            // Configuration du label de statut pour remplacer le panel StatutColor
+            lblEtat.Width = 142;
+            //lblEtat.TextAlign = ContentAlignment.MiddleCenter;
+            lblEtat.StateNormal.ShortText.TextV = PaletteRelativeAlign.Center;
+            //lblEtat.BorderStyle = BorderStyle.FixedSingle;
         }
 
         /// <summary>
@@ -65,11 +78,10 @@ namespace PlanAthena.View.TaskManager
         private void AttachEvents()
         {
             // Champs de détail de la tâche
-            cmbEtat.SelectedIndexChanged += OnDetailChanged;
             ChkOuvriersAffect.ItemCheck += OnDetailChanged;
             chkListDependances.ItemCheck += OnDetailChanged;
-            // Note: les autres champs n'ont pas besoin de lever OnDetailChanged car leur valeur
-            // est lue directement au moment de la sauvegarde.
+            debutPlanif.ModifiedChanged += OnPlanificationDateChanged;
+            finPlanif.ModifiedChanged += OnPlanificationDateChanged;
 
             // Actions principales
             btnSauvegarder.Click += BtnSauvegarder_Click;
@@ -101,13 +113,16 @@ namespace PlanAthena.View.TaskManager
             _logicController.ApplyReadOnlyStateToControls(this.kryptonPanel1, isReadOnly); // Cible le panel supérieur
             _logicController.ApplyReadOnlyStateToControls(this.kryptonPanel4, isReadOnly); // Cible le panel des boutons
             chkListDependances.Enabled = !isReadOnly; // Cible manuellement car dans un autre panel
+            debutPlanif.Enabled = !isReadOnly;
+            finPlanif.Enabled = !isReadOnly;
+
             if (isReadOnly)
                 _readOnlyTooltip.SetToolTip(this.kryptonPanel1, $"Modification impossible : la tâche est '{_currentTache.Statut}'.");
             else
                 _readOnlyTooltip.SetToolTip(this.kryptonPanel1, string.Empty);
 
             // Remplissage des champs de l'UI
-            kryptonHeader1.Values.Heading = $"Édition : tache.TacheNom";
+            kryptonHeader1.Values.Heading = $"Édition : {tache.TacheNom}";
             kryptonHeader1.Values.Description = $"ID: {tache.TacheId}";
             txtTacheNom.Text = tache.TacheNom;
             numHeuresHomme.Value = tache.HeuresHommeEstimees;
@@ -115,12 +130,17 @@ namespace PlanAthena.View.TaskManager
             heureDebut.Text = tache.DateDebutPlanifiee?.ToString("dd/MM/yy HH:mm") ?? "N/A";
             heureFin.Text = tache.DateFinPlanifiee?.ToString("dd/MM/yy HH:mm") ?? "N/A";
 
+            // Nouveaux champs de planification
+            debutPlanif.Text = tache.DateDebutPlanifiee?.ToString("dd/MM/yyyy HH:mm") ?? "";
+            finPlanif.Text = tache.DateFinPlanifiee?.ToString("dd/MM/yyyy HH:mm") ?? "";
+
             PopulateComboBoxes(); // Doit être appelé avant de définir les valeurs
             cmbBlocNom.SelectedValue = tache.BlocId ?? "";
             cmbMetier.SelectedValue = tache.MetierId ?? "";
-            cmbEtat.SelectedItem = tache.Statut;
 
-            UpdateStatutColor(tache.Statut);
+            // Mise à jour du statut avec le nouveau label
+            UpdateStatutDisplay(tache.Statut);
+
             PopulateOuvriers(tache);
             LoadDependencies(tache);
             PopulateDebugInfo(tache);
@@ -144,16 +164,17 @@ namespace PlanAthena.View.TaskManager
             chkIsJalon.Checked = false;
             cmbBlocNom.DataSource = null;
             cmbMetier.DataSource = null;
-            cmbEtat.DataSource = null;
             heureDebut.Clear();
             heureFin.Clear();
+            debutPlanif.Text = "";
+            finPlanif.Text = "";
             ChkOuvriersAffect.Items.Clear();
             chkListDependances.Items.Clear();
             kryptonRichTextBox1.Clear();
             DataGridSousTaches.Rows.Clear();
             DataGridSousTaches.Visible = false;
 
-            UpdateStatutColor(Statut.Estimée);
+            UpdateStatutDisplay(Statut.Estimée);
 
             // Assure la réactivation des contrôles
             if (_logicController != null)
@@ -204,11 +225,18 @@ namespace PlanAthena.View.TaskManager
         {
             if (_isLoading || _currentTache == null) return;
             // Pour la vue XL, les changements sont appliqués uniquement à la sauvegarde.
-            // On met juste à jour la couleur du statut si besoin.
-            if (sender == cmbEtat && cmbEtat.SelectedItem is Statut newStatut)
-            {
-                UpdateStatutColor(newStatut);
-            }
+        }
+
+        /// <summary>
+        /// Gère les modifications des dates de planification.
+        /// Déclenche une invalidation du planning via TaskManagerService.
+        /// </summary>
+        private void OnPlanificationDateChanged(object sender, EventArgs e)
+        {
+            if (_isLoading || _currentTache == null || _taskManagerService == null) return;
+
+            // Les dates de planification ont changé, il faut invalider le planning
+            _taskManagerService.InvaliderPlanification();
         }
 
         #endregion
@@ -229,10 +257,27 @@ namespace PlanAthena.View.TaskManager
             _currentTache.MetierId = cmbMetier.SelectedValue as string ?? "";
             if (chkIsJalon.Checked) _currentTache.MetierId = "";
 
-            if (cmbEtat.SelectedItem is Statut statut)
+            // Mise à jour des dates de planification
+            if (DateTime.TryParseExact(debutPlanif.Text, "dd/MM/yyyy HH:mm", null, System.Globalization.DateTimeStyles.None, out DateTime dateDebut))
             {
-                _currentTache.Statut = statut;
+                _currentTache.DateDebutPlanifiee = dateDebut;
             }
+            else if (DateTime.TryParse(debutPlanif.Text, out dateDebut))
+            {
+                _currentTache.DateDebutPlanifiee = dateDebut;
+            }
+
+            if (DateTime.TryParseExact(finPlanif.Text, "dd/MM/yyyy HH:mm", null, System.Globalization.DateTimeStyles.None, out DateTime dateFin))
+            {
+                _currentTache.DateFinPlanifiee = dateFin;
+            }
+            else if (DateTime.TryParse(finPlanif.Text, out dateFin))
+            {
+                _currentTache.DateFinPlanifiee = dateFin;
+            }
+
+            // Note: Le statut n'est plus modifiable directement dans la vue XL
+            // Il sera calculé automatiquement par le système
 
             // Mettre à jour les affectations
             _currentTache.Affectations.Clear();
@@ -275,23 +320,45 @@ namespace PlanAthena.View.TaskManager
         }
 
         /// <summary>
-        /// Met à jour la couleur du panneau en fonction du statut de la tâche.
+        /// Met à jour l'affichage du statut avec le nouveau label coloré.
+        /// Remplace la logique du panel StatutColor.
         /// </summary>
-        private void UpdateStatutColor(Statut statut)
+        private void UpdateStatutDisplay(Statut statut)
         {
+            lblEtat.Text = statut.ToString();
+
             switch (statut)
             {
-                case Statut.Estimée: StatutColor.StateCommon.Color1 = Color.LightGray; break;
-                case Statut.Planifiée: StatutColor.StateCommon.Color1 = Color.Green; break;
-                case Statut.EnCours: StatutColor.StateCommon.Color1 = Color.Orange; break;
-                case Statut.EnRetard: StatutColor.StateCommon.Color1 = Color.Red; break;
-                case Statut.Terminée: StatutColor.StateCommon.Color1 = Color.Black; break;
-                default: StatutColor.StateCommon.Color1 = Color.Transparent; break;
+                case Statut.Estimée:
+                    StatutColor.StateNormal.Color1 = Color.LightGray;
+                    StatutColor.ForeColor = Color.Black;
+                    break;
+                case Statut.Planifiée:
+                    StatutColor.StateNormal.Color1 = Color.Green;
+                    StatutColor.ForeColor = Color.White;
+                    break;
+                case Statut.EnCours:
+                    StatutColor.StateNormal.Color1 = Color.Orange;
+                    StatutColor.ForeColor = Color.Black;
+                    break;
+                case Statut.EnRetard:
+                    StatutColor.StateNormal.Color1 = Color.Red;
+                    StatutColor.ForeColor = Color.White;
+                    break;
+                case Statut.Terminée:
+                    StatutColor.StateNormal.Color1 = Color.Black;
+                    StatutColor.ForeColor = Color.White;
+                    break;
+                default:
+                    StatutColor.StateNormal.Color1 = Color.Transparent;
+                    StatutColor.ForeColor = Color.Black;
+                    break;
             }
         }
 
         /// <summary>
-        /// Remplit les listes déroulantes (Blocs, Métiers, Statuts).
+        /// Remplit les listes déroulantes (Blocs, Métiers).
+        /// Note: La liste des statuts n'est plus nécessaire.
         /// </summary>
         private void PopulateComboBoxes()
         {
@@ -304,8 +371,6 @@ namespace PlanAthena.View.TaskManager
             cmbMetier.DataSource = _ressourceService.GetAllMetiers().OrderBy(m => m.Nom).ToList();
             cmbMetier.DisplayMember = "Nom";
             cmbMetier.ValueMember = "MetierId";
-
-            cmbEtat.DataSource = Enum.GetValues(typeof(Statut));
         }
 
         /// <summary>
@@ -352,10 +417,14 @@ namespace PlanAthena.View.TaskManager
 
         /// <summary>
         /// Affiche les propriétés brutes de la tâche pour le débogage.
+        /// Note: Ces informations ne sont pas sauvegardées.
         /// </summary>
         private void PopulateDebugInfo(Tache tache)
         {
             var sb = new StringBuilder("--- Propriétés Brutes de la Tâche ---\n");
+            sb.AppendLine($"Dernière modification: {DateTime.Now:dd/MM/yy HH:mm:ss}");
+            sb.AppendLine();
+
             foreach (var prop in tache.GetType().GetProperties())
             {
                 try

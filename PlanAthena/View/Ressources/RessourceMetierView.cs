@@ -2,9 +2,9 @@ using Krypton.Toolkit;
 using PlanAthena.Data;
 using PlanAthena.Services.Business;
 using PlanAthena.View.Ressources.MetierDiagram;
+using System.ComponentModel;
 
 namespace PlanAthena.View.Ressources
-
 {
     public partial class RessourceMetierView : UserControl
     {
@@ -15,6 +15,8 @@ namespace PlanAthena.View.Ressources
         public event EventHandler<Type> NavigateToViewRequested;
 
         private bool _isLoading = false;
+        private BindingList<MetierViewModel> _metiersBindingList;
+        private BindingSource _metiersBindingSource;
 
         public RessourceMetierView(RessourceService ressourceService, ProjetService projetService)
         {
@@ -25,22 +27,101 @@ namespace PlanAthena.View.Ressources
             this.Load += RessourceMetierView_Load;
         }
 
+        #region ViewModel pour la grille
+        public class MetierViewModel : INotifyPropertyChanged
+        {
+            private string _metierId;
+            private string _nom;
+            private ChantierPhase _phases;
+
+            public string MetierId
+            {
+                get => _metierId;
+                set { _metierId = value; OnPropertyChanged(); }
+            }
+
+            public string Nom
+            {
+                get => _nom;
+                set { _nom = value; OnPropertyChanged(); }
+            }
+
+            public ChantierPhase Phases
+            {
+                get => _phases;
+                set { _phases = value; OnPropertyChanged(); }
+            }
+
+            public string PhasesDisplay => GetPhasesDisplay(_phases);
+
+            private string GetPhasesDisplay(ChantierPhase phases)
+            {
+                var phasesList = new List<string>();
+                if (phases.HasFlag(ChantierPhase.GrosOeuvre)) phasesList.Add("Gros Œuvre");
+                if (phases.HasFlag(ChantierPhase.SecondOeuvre)) phasesList.Add("Second Œuvre");
+                if (phases.HasFlag(ChantierPhase.Finition)) phasesList.Add("Finition");
+                return string.Join(", ", phasesList);
+            }
+
+            public event PropertyChangedEventHandler PropertyChanged;
+            protected virtual void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string propertyName = null)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+        #endregion
+
         private void RessourceMetierView_Load(object sender, EventArgs e)
         {
             if (DesignMode) return;
 
+            InitializeBindingList();
             SetupGrid();
             AttachEvents();
             RefreshAll();
+        }
+
+        private void InitializeBindingList()
+        {
+            _metiersBindingList = new BindingList<MetierViewModel>();
+            _metiersBindingSource = new BindingSource(_metiersBindingList, null);
+            gridMetiers.DataSource = _metiersBindingSource;
         }
 
         private void SetupGrid()
         {
             gridMetiers.AutoGenerateColumns = false;
             gridMetiers.Columns.Clear();
-            gridMetiers.Columns.Add(new KryptonDataGridViewTextBoxColumn { Name = "MetierId", HeaderText = "ID", DataPropertyName = "MetierId", FillWeight = 20, ReadOnly = true });
-            gridMetiers.Columns.Add(new KryptonDataGridViewTextBoxColumn { Name = "Nom", HeaderText = "Nom", DataPropertyName = "Nom", FillWeight = 60, ReadOnly = true });
-            gridMetiers.Columns.Add(new KryptonDataGridViewTextBoxColumn { Name = "Phases", HeaderText = "Phases", DataPropertyName = "Phases", FillWeight = 20, ReadOnly = true });
+
+            gridMetiers.Columns.Add(new KryptonDataGridViewTextBoxColumn
+            {
+                Name = "MetierId",
+                HeaderText = "ID",
+                DataPropertyName = "MetierId",
+                FillWeight = 20,
+                ReadOnly = true
+            });
+
+            gridMetiers.Columns.Add(new KryptonDataGridViewTextBoxColumn
+            {
+                Name = "Nom",
+                HeaderText = "Nom",
+                DataPropertyName = "Nom",
+                FillWeight = 50,
+                ReadOnly = true
+            });
+
+            gridMetiers.Columns.Add(new KryptonDataGridViewTextBoxColumn
+            {
+                Name = "Phases",
+                HeaderText = "Phases",
+                DataPropertyName = "PhasesDisplay",
+                FillWeight = 30,
+                ReadOnly = true
+            });
+
+            // Configuration pour que la grille prenne toute la largeur
+            gridMetiers.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         }
 
         private void AttachEvents()
@@ -56,34 +137,69 @@ namespace PlanAthena.View.Ressources
             chkSecondOeuvre.CheckedChanged += Detail_Changed;
             chkFinition.CheckedChanged += Detail_Changed;
 
-            // Attacher l'événement pour le nouveau CTA
             btnConfigurePrerequis.Click += BtnConfigurePrerequis_Click;
         }
 
-        #region Logique de rafraîchissement
+        #region Logique de rafraîchissement optimisée
 
         private void RefreshAll()
         {
             var selectedId = GetSelectedMetierId();
-            RefreshGrid();
-            SelectMetierInGrid(selectedId);
+            RebuildMetiersBindingList();
+
+            if (selectedId != null)
+            {
+                SelectMetierInGrid(selectedId);
+            }
+
             RefreshUIFromSelection();
+        }
+
+        private void RebuildMetiersBindingList()
+        {
+            _isLoading = true;
+
+            var metiers = _ressourceService.GetAllMetiers();
+
+            // Vider et reconstruire la liste
+            _metiersBindingList.Clear();
+
+            foreach (var metier in metiers)
+            {
+                _metiersBindingList.Add(CreateViewModelFromMetier(metier));
+            }
+
+            _isLoading = false;
+        }
+
+        private MetierViewModel CreateViewModelFromMetier(Metier metier)
+        {
+            return new MetierViewModel
+            {
+                MetierId = metier.MetierId,
+                Nom = metier.Nom,
+                Phases = metier.Phases
+            };
+        }
+
+        private void RefreshSingleMetierInGrid(string metierId)
+        {
+            var metier = _ressourceService.GetMetierById(metierId);
+            if (metier == null) return;
+
+            var existingViewModel = _metiersBindingList.FirstOrDefault(vm => vm.MetierId == metierId);
+            if (existingViewModel != null)
+            {
+                // Mettre à jour le ViewModel existant
+                existingViewModel.Nom = metier.Nom;
+                existingViewModel.Phases = metier.Phases;
+            }
         }
 
         private void RefreshUIFromSelection()
         {
             RefreshDetails();
             UpdateButtonStates();
-        }
-
-        private void RefreshGrid()
-        {
-            _isLoading = true;
-            // Utiliser une BindingSource améliore les performances et la gestion de la sélection
-            var metiers = _ressourceService.GetAllMetiers();
-            var bindingSource = new BindingSource { DataSource = metiers };
-            gridMetiers.DataSource = bindingSource;
-            _isLoading = false;
         }
 
         private void RefreshDetails()
@@ -103,15 +219,20 @@ namespace PlanAthena.View.Ressources
             }
             else
             {
-                textId.Clear();
-                textName.Clear();
-                textPictogram.Clear();
-                panelColor.StateCommon.Color1 = SystemColors.Control;
-                chkGrosOeuvre.Checked = false;
-                chkSecondOeuvre.Checked = false;
-                chkFinition.Checked = false;
+                ClearDetails();
             }
             _isLoading = false;
+        }
+
+        private void ClearDetails()
+        {
+            textId.Clear();
+            textName.Clear();
+            textPictogram.Clear();
+            panelColor.StateCommon.Color1 = SystemColors.Control;
+            chkGrosOeuvre.Checked = false;
+            chkSecondOeuvre.Checked = false;
+            chkFinition.Checked = false;
         }
 
         private void UpdateButtonStates()
@@ -127,9 +248,10 @@ namespace PlanAthena.View.Ressources
 
         private string GetSelectedMetierId()
         {
-            if (gridMetiers.SelectedRows.Count > 0 && gridMetiers.SelectedRows[0].DataBoundItem is Metier metier)
+            if (gridMetiers.SelectedRows.Count > 0)
             {
-                return metier.MetierId;
+                var selectedViewModel = gridMetiers.SelectedRows[0].DataBoundItem as MetierViewModel;
+                return selectedViewModel?.MetierId;
             }
             return null;
         }
@@ -143,15 +265,15 @@ namespace PlanAthena.View.Ressources
         private void SelectMetierInGrid(string metierId)
         {
             if (metierId == null) return;
+
             _isLoading = true;
-            foreach (DataGridViewRow row in gridMetiers.Rows)
+            for (int i = 0; i < _metiersBindingList.Count; i++)
             {
-                if (row.DataBoundItem is Metier metier && metier.MetierId == metierId)
+                if (_metiersBindingList[i].MetierId == metierId)
                 {
-                    row.Selected = true;
-                    gridMetiers.FirstDisplayedScrollingRowIndex = row.Index;
-                    _isLoading = false;
-                    return;
+                    gridMetiers.Rows[i].Selected = true;
+                    gridMetiers.FirstDisplayedScrollingRowIndex = i;
+                    break;
                 }
             }
             _isLoading = false;
@@ -159,7 +281,7 @@ namespace PlanAthena.View.Ressources
 
         #endregion
 
-        #region Événements des contrôles
+        #region Événements des contrôles - Version optimisée
 
         private void gridMetiers_SelectionChanged(object sender, EventArgs e)
         {
@@ -173,6 +295,7 @@ namespace PlanAthena.View.Ressources
             var metier = GetSelectedMetier();
             if (metier == null) return;
 
+            // Sauvegarder les modifications
             metier.Nom = textName.Text;
             metier.Pictogram = textPictogram.Text;
 
@@ -182,18 +305,44 @@ namespace PlanAthena.View.Ressources
             if (chkFinition.Checked) phases |= ChantierPhase.Finition;
             metier.Phases = phases;
 
-            _ressourceService.ModifierMetier(metier);
+            try
+            {
+                _ressourceService.ModifierMetier(metier);
 
-            // Rafraîchir la grille pour refléter les changements
-            gridMetiers.Refresh();
+                // Mise à jour optimisée de la grille
+                RefreshSingleMetierInGrid(metier.MetierId);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Erreur de modification", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Restaurer les valeurs précédentes en cas d'erreur
+                RefreshDetails();
+            }
         }
 
         private void btnNewMetier_Click(object sender, EventArgs e)
         {
-            var nouveauMetier = _ressourceService.CreerMetier();
-            RefreshAll();
-            SelectMetierInGrid(nouveauMetier.MetierId);
-            textName.Focus();
+            try
+            {
+                var nouveauMetier = _ressourceService.CreerMetier();
+
+                // Reconstruire la liste pour inclure le nouveau métier
+                RebuildMetiersBindingList();
+
+                // Sélectionner le nouveau métier
+                SelectMetierInGrid(nouveauMetier.MetierId);
+
+                // Forcer le rafraîchissement de l'interface utilisateur
+                RefreshUIFromSelection();
+
+                // Donner le focus au champ nom pour saisie immédiate
+                textName.Focus();
+                textName.SelectAll();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Erreur de création", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void btnDeleteMetier_Click(object sender, EventArgs e)
@@ -201,14 +350,26 @@ namespace PlanAthena.View.Ressources
             var metier = GetSelectedMetier();
             if (metier == null) return;
 
-            try
+            if (MessageBox.Show($"Supprimer le métier '{metier.Nom}' ?", "Confirmation",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
-                _ressourceService.SupprimerMetier(metier.MetierId);
-                RefreshAll();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Impossible de supprimer", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                try
+                {
+                    _ressourceService.SupprimerMetier(metier.MetierId);
+
+                    // Retirer de la BindingList
+                    var viewModel = _metiersBindingList.FirstOrDefault(vm => vm.MetierId == metier.MetierId);
+                    if (viewModel != null)
+                    {
+                        _metiersBindingList.Remove(viewModel);
+                    }
+
+                    RefreshUIFromSelection();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Impossible de supprimer", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
             }
         }
 
@@ -222,16 +383,22 @@ namespace PlanAthena.View.Ressources
                 colorDialog.Color = _ressourceService.GetDisplayColorForMetier(metier.MetierId);
                 if (colorDialog.ShowDialog() == DialogResult.OK)
                 {
-                    metier.CouleurHex = ColorTranslator.ToHtml(colorDialog.Color);
-                    _ressourceService.ModifierMetier(metier);
-                    panelColor.StateCommon.Color1 = colorDialog.Color;
+                    try
+                    {
+                        metier.CouleurHex = ColorTranslator.ToHtml(colorDialog.Color);
+                        _ressourceService.ModifierMetier(metier);
+                        panelColor.StateCommon.Color1 = colorDialog.Color;
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, "Erreur de modification", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
         }
 
         private void BtnConfigurePrerequis_Click(object sender, EventArgs e)
         {
-            // On lève un événement pour demander au Shell de naviguer
             NavigateToViewRequested?.Invoke(this, typeof(PrerequisMetierView));
         }
 

@@ -281,8 +281,14 @@ namespace PlanAthena.Services.Business
         /// Idéal pour obtenir des statistiques juste avant une sauvegarde.
         /// </summary>
         /// <returns>Un DTO contenant les comptes de tâches.</returns>
-        public virtual TachesSummaryDto ObtenirResumeTaches()
+        public virtual TachesSummaryDto ObtenirResumeTaches(bool synchroniserStatuts = true)
         {
+            // Synchroniser les statuts pour s'assurer que les données sont à jour
+            if (synchroniserStatuts)
+            {
+                SynchroniserStatutsTaches();
+            }
+
             var tachesMeres = _taches.Values.Where(t => string.IsNullOrEmpty(t.ParentId)).ToList();
 
             return new TachesSummaryDto
