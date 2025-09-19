@@ -28,7 +28,7 @@ namespace PlanAthena.View.TaskManager.Cockpit
         /// </summary>
         private void InitializeComponent()
         {
-            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
             kpCentre = new Krypton.Toolkit.KryptonPanel();
             kryptonDataGridView1 = new Krypton.Toolkit.KryptonDataGridView();
             DG_TacheId = new DataGridViewTextBoxColumn();
@@ -87,6 +87,9 @@ namespace PlanAthena.View.TaskManager.Cockpit
             kryptonDataGridView1.Name = "kryptonDataGridView1";
             kryptonDataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             kryptonDataGridView1.Size = new Size(1650, 778);
+            kryptonDataGridView1.StateCommon.BackStyle = Krypton.Toolkit.PaletteBackStyle.GridBackgroundList;
+            kryptonDataGridView1.StateCommon.HeaderColumn.Content.Font = new Font("Verdana", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            kryptonDataGridView1.StateCommon.HeaderColumn.Content.Hint = Krypton.Toolkit.PaletteTextHint.AntiAlias;
             kryptonDataGridView1.TabIndex = 0;
             // 
             // DG_TacheId
@@ -136,8 +139,8 @@ namespace PlanAthena.View.TaskManager.Cockpit
             // 
             // DG_DDP
             // 
-            dataGridViewCellStyle1.NullValue = null;
-            DG_DDP.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle3.NullValue = null;
+            DG_DDP.DefaultCellStyle = dataGridViewCellStyle3;
             DG_DDP.FillWeight = 90F;
             DG_DDP.HeaderText = "Début Planifié";
             DG_DDP.MinimumWidth = 120;

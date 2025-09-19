@@ -77,6 +77,7 @@ namespace PlanAthena.View.Ressources
 
             InitializeBindingList();
             SetupGrid();
+            InitializePictogramSelector();
             AttachEvents();
             RefreshAll();
         }
@@ -132,13 +133,108 @@ namespace PlanAthena.View.Ressources
             btnChooseColor.Click += btnChooseColor_Click;
 
             textName.TextChanged += Detail_Changed;
-            textPictogram.TextChanged += Detail_Changed;
+            // ENLEVER : textPictogram.TextChanged += Detail_Changed;
             chkGrosOeuvre.CheckedChanged += Detail_Changed;
             chkSecondOeuvre.CheckedChanged += Detail_Changed;
             chkFinition.CheckedChanged += Detail_Changed;
 
             btnConfigurePrerequis.Click += BtnConfigurePrerequis_Click;
         }
+
+        #region Gestion du sélecteur de pictogrammes
+
+        private Dictionary<string, List<string>> _pictogramCategories = new Dictionary<string, List<string>>
+        {
+            ["Par défaut"] = new List<string> {"⛏", "🧱", "⚒", "⛺", "▤", "💧", "🚪", "⛲", "⚡", "❄", "▥", "🎨", "▦", "▧", "♲"},
+            ["Outils et équipements"] = new List<string> { "🔨", "🔧", "⚙", "🪓", "🪚", "📏", "📐", "⚖", "🔩", "⛓", "🪣", "🧰", "🪜", "🔗", "⚰", "🗜", "⛴", "⚓", "🎯", "📡" },
+            ["Techniques et industriels"] = new List<string> { "⨌", "⧥", "✇", "⚞", "⚟", "⚡", "🔌", "💻", "📊", "📈", "⚆", "⚇", "⚈", "⚉", "⊕", "⊗", "⊙", "⊚", "⊛", "⊜", "⊝", "⊞", "⊟", "⊠", "⊡", "⌘", "⌬", "⌭", "⌮", "⌯" },
+            ["Bâtiment"] = new List<string> { "🏠", "🏢", "🏗", "🏘", "🏚", "🏛", "⚒", "🔨", "🔧", "⚙", "🧱", "🚧", "⛏", "🪓", "📐", "📏" },
+            ["Engins de chantier"] = new List<string> { "⛟", "⛜", "🚚", "🚛", "🚜", "🏗", "🚧", "⛽", "🚐", "🚌", "🚂", "🚆", "⛴", "⚓" },
+            ["Transport"] = new List<string> { "🚗", "🚙", "🚐", "🚛", "🚜", "🏍", "🚲", "✈", "🚁", "⛵", "🚤", "🚢", "🚂", "🚆", "🚇", "🚌" },
+            ["Sécurité"] = new List<string> { "☢", "☣", "⚠", "🛡", "🦺", "⛑", "🚨", "🔒", "🔓", "🗝", "⚞", "⚟" },
+            ["Laboratoire/Mesure"] = new List<string> { "🧪", "⚗", "🧬", "🌡", "💉", "🔬", "🧲", "⚛", "⚖", "📊", "📈", "💻" },
+            ["Électricité/Énergie"] = new List<string> { "⚡", "🔌", "🔋", "💡", "⨌", "⧥", "✇", "⚆", "⚇", "⚈", "⚉" },
+            ["Géométrie et mesure"] = new List<string> { "△", "▲", "▴", "▵", "▶", "▷", "▸", "▹", "►", "▻", "◀", "◁", "◂", "◃", "◄", "◅", "◆", "◇", "◈", "◉", "◊", "○", "◌", "◍", "◎", "●", "◐", "◑", "◒", "◓", "◔", "◕", "◖", "◗", "◘", "◙", "◚", "◛", "◜", "◝"},
+            ["Symboles"] = new List<string> { "⚒", "⚓", "⚔", "⚕", "⚖", "⚗", "⚘", "⚙", "⚚", "⚛", "⚜", "⚝", "⚞", "⚟", "⚠", "⚡", "⚢", "⚣", "⚤", "⚥", "⚦", "⚧", "⚨", "⚩", "⚪", "⚫", "⚬", "⚭", "⚮", "⚯" }
+        };
+
+        private void InitializePictogramSelector()
+        {
+            // Remplir la combo des catégories
+            comboPictogramCategory.Items.Clear();
+            comboPictogramCategory.Items.Add("(Sélectionner une catégorie)");
+            foreach (var category in _pictogramCategories.Keys)
+            {
+                comboPictogramCategory.Items.Add(category);
+            }
+            comboPictogramCategory.SelectedIndex = 0;
+
+            // Vider la grille au début
+            flowPictogramGrid.Controls.Clear();
+        }
+
+        private void ComboPictogramCategory_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            flowPictogramGrid.Controls.Clear();
+
+            if (comboPictogramCategory.SelectedIndex <= 0) return;
+
+            var selectedCategory = comboPictogramCategory.SelectedItem.ToString();
+            if (!_pictogramCategories.ContainsKey(selectedCategory)) return;
+
+            var pictograms = _pictogramCategories[selectedCategory];
+
+            foreach (var pictogram in pictograms)
+            {
+                var btn = new Button
+                {
+                    Text = pictogram,
+                    Font = new Font("Segoe UI Symbol", 16F),
+                    Size = new Size(35, 35),
+                    Margin = new Padding(2),
+                    FlatStyle = FlatStyle.Standard,
+                    BackColor = Color.White,
+                    UseVisualStyleBackColor = true
+                };
+
+                btn.Click += (s, args) =>
+                {
+                    SetSelectedPictogram(pictogram);
+                };
+
+                flowPictogramGrid.Controls.Add(btn);
+            }
+        }
+
+        private void SetSelectedPictogram(string pictogram)
+        {
+            lblPictogramPreview.Values.Text = pictogram;
+            lblPictogramPreview.Text = pictogram;
+
+            // Sauvegarder si un métier est sélectionné
+            var metier = GetSelectedMetier();
+            if (metier != null && !_isLoading)
+            {
+                metier.Pictogram = pictogram;
+                try
+                {
+                    _ressourceService.ModifierMetier(metier);
+                    RefreshSingleMetierInGrid(metier.MetierId);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Erreur de modification", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    RefreshDetails();
+                }
+            }
+        }
+
+        private void BtnClearPictogram_Click(object sender, EventArgs e)
+        {
+            SetSelectedPictogram("");
+        }
+
+        #endregion
 
         #region Logique de rafraîchissement optimisée
 
@@ -210,7 +306,7 @@ namespace PlanAthena.View.Ressources
             {
                 textId.Text = metier.MetierId;
                 textName.Text = metier.Nom;
-                textPictogram.Text = metier.Pictogram;
+                lblPictogramPreview.Values.Text = metier.Pictogram ?? ""; // MODIFIER cette ligne
                 panelColor.StateCommon.Color1 = _ressourceService.GetDisplayColorForMetier(metier.MetierId);
 
                 chkGrosOeuvre.Checked = metier.Phases.HasFlag(ChantierPhase.GrosOeuvre);
@@ -228,11 +324,15 @@ namespace PlanAthena.View.Ressources
         {
             textId.Clear();
             textName.Clear();
-            textPictogram.Clear();
+            lblPictogramPreview.Values.Text = ""; // MODIFIER cette ligne
             panelColor.StateCommon.Color1 = SystemColors.Control;
             chkGrosOeuvre.Checked = false;
             chkSecondOeuvre.Checked = false;
             chkFinition.Checked = false;
+
+            // Réinitialiser le sélecteur
+            comboPictogramCategory.SelectedIndex = 0;
+            flowPictogramGrid.Controls.Clear();
         }
 
         private void UpdateButtonStates()
@@ -297,7 +397,7 @@ namespace PlanAthena.View.Ressources
 
             // Sauvegarder les modifications
             metier.Nom = textName.Text;
-            metier.Pictogram = textPictogram.Text;
+            // ENLEVER : metier.Pictogram = textPictogram.Text;
 
             ChantierPhase phases = ChantierPhase.None;
             if (chkGrosOeuvre.Checked) phases |= ChantierPhase.GrosOeuvre;
@@ -308,14 +408,11 @@ namespace PlanAthena.View.Ressources
             try
             {
                 _ressourceService.ModifierMetier(metier);
-
-                // Mise à jour optimisée de la grille
                 RefreshSingleMetierInGrid(metier.MetierId);
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Erreur de modification", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                // Restaurer les valeurs précédentes en cas d'erreur
                 RefreshDetails();
             }
         }

@@ -28,7 +28,7 @@ namespace PlanAthena.View.Ressources.MetierDiagram
         {
             // L'ID du nœud dans le graphe MSAGL doit être unique et correspondre au MetierId
             var node = new Node(metier.MetierId);
-
+            node.Label.FontName = _settings.MetierFontName;
             node.LabelText = GetNodeLabel(metier);
             ApplyNodeStyle(node, metier);
 

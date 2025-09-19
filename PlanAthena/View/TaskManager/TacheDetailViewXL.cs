@@ -110,20 +110,20 @@ namespace PlanAthena.View.TaskManager
 
             // Délégation des règles métier au contrôleur
             bool isReadOnly = _logicController.IsTacheReadOnly(_currentTache);
-            _logicController.ApplyReadOnlyStateToControls(this.kryptonPanel1, isReadOnly); // Cible le panel supérieur
-            _logicController.ApplyReadOnlyStateToControls(this.kryptonPanel4, isReadOnly); // Cible le panel des boutons
+            _logicController.ApplyReadOnlyStateToControls(this.kpBackLeft, isReadOnly); // Cible le panel supérieur
+            _logicController.ApplyReadOnlyStateToControls(this.kpBackRight, isReadOnly); // Cible le panel des boutons
             chkListDependances.Enabled = !isReadOnly; // Cible manuellement car dans un autre panel
             debutPlanif.Enabled = !isReadOnly;
             finPlanif.Enabled = !isReadOnly;
+            heureDebut.Enabled = !isReadOnly;
+            heureFin.Enabled = !isReadOnly;
 
             if (isReadOnly)
-                _readOnlyTooltip.SetToolTip(this.kryptonPanel1, $"Modification impossible : la tâche est '{_currentTache.Statut}'.");
+                _readOnlyTooltip.SetToolTip(this.kpBackLeft, $"Modification impossible : la tâche est '{_currentTache.Statut}'.");
             else
-                _readOnlyTooltip.SetToolTip(this.kryptonPanel1, string.Empty);
+                _readOnlyTooltip.SetToolTip(this.kpBackLeft, string.Empty);
 
             // Remplissage des champs de l'UI
-            kryptonHeader1.Values.Heading = $"Édition : {tache.TacheNom}";
-            kryptonHeader1.Values.Description = $"ID: {tache.TacheId}";
             txtTacheNom.Text = tache.TacheNom;
             numHeuresHomme.Value = tache.HeuresHommeEstimees;
             chkIsJalon.Checked = tache.EstJalon;
@@ -157,8 +157,6 @@ namespace PlanAthena.View.TaskManager
             _isLoading = true;
             _currentTache = null;
 
-            kryptonHeader1.Values.Heading = "Détail de la tâche";
-            kryptonHeader1.Values.Description = "Aucune tâche sélectionnée";
             txtTacheNom.Clear();
             numHeuresHomme.Value = 0;
             chkIsJalon.Checked = false;
@@ -170,7 +168,7 @@ namespace PlanAthena.View.TaskManager
             finPlanif.Text = "";
             ChkOuvriersAffect.Items.Clear();
             chkListDependances.Items.Clear();
-            kryptonRichTextBox1.Clear();
+            krtbDetail.Clear();
             DataGridSousTaches.Rows.Clear();
             DataGridSousTaches.Visible = false;
 
@@ -180,7 +178,7 @@ namespace PlanAthena.View.TaskManager
             if (_logicController != null)
             {
                 _logicController.ApplyReadOnlyStateToControls(this, false);
-                _readOnlyTooltip.SetToolTip(this.kryptonPanel1, string.Empty);
+                _readOnlyTooltip.SetToolTip(this.kpBackLeft, string.Empty);
             }
             _isLoading = false;
         }
@@ -438,7 +436,7 @@ namespace PlanAthena.View.TaskManager
                 }
                 catch { /* Ignorer */ }
             }
-            kryptonRichTextBox1.Text = sb.ToString();
+            krtbDetail.Text = sb.ToString();
         }
 
         /// <summary>

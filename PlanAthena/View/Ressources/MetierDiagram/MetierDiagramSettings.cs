@@ -49,7 +49,7 @@ namespace PlanAthena.View.Ressources.MetierDiagram
         // {0}: Nom du métier, {1}: ID du métier, {2}: Pictogramme, {3}: Phases
         public string MetierLabelFormat { get; set; } = "{0}\n {2}\nID: {1}\n {3}";
         //public string MetierFontName { get; set; } = "Material Symbols Outlined Medium";
-        public string MetierFontName { get; set; } = "Segoe UI";
+        public string MetierFontName { get; set; } = "Segoe UI Symbol";
 
         #endregion
 

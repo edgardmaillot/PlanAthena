@@ -124,8 +124,6 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             headerOuvriers.Panel.Controls.Add(panelSearchAndSort);
             headerOuvriers.Panel.Padding = new Padding(6);
             headerOuvriers.Size = new Size(524, 726);
-            headerOuvriers.StateCommon.Back.Color1 = Color.White;
-            headerOuvriers.StateCommon.Back.Color2 = Color.White;
             headerOuvriers.TabIndex = 0;
             headerOuvriers.ValuesPrimary.Heading = "Liste des Ouvriers";
             headerOuvriers.ValuesPrimary.Image = null;
@@ -182,6 +180,8 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             gridOuvriers.RowHeadersVisible = false;
             gridOuvriers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             gridOuvriers.Size = new Size(510, 570);
+            gridOuvriers.StateCommon.BackStyle = PaletteBackStyle.GridBackgroundList;
+            gridOuvriers.StateCommon.HeaderColumn.Content.Hint = PaletteTextHint.AntiAlias;
             gridOuvriers.TabIndex = 1;
             gridOuvriers.SelectionChanged += gridOuvriers_SelectionChanged;
             // 
@@ -286,6 +286,8 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             gridCompetences.RowHeadersVisible = false;
             gridCompetences.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             gridCompetences.Size = new Size(821, 504);
+            gridCompetences.StateCommon.BackStyle = PaletteBackStyle.GridBackgroundList;
+            gridCompetences.StateCommon.HeaderColumn.Content.Hint = PaletteTextHint.AntiAlias;
             gridCompetences.TabIndex = 0;
             // 
             // groupDetails

@@ -550,7 +550,7 @@ namespace PlanAthena.View.TaskManager
                 var newDetailPage = new KryptonPage()
                 {
                     Text = tache.TacheNom,
-                    TextTitle = tache.TacheNom,
+                    TextTitle = $"Edition de la tâche : {tache.TacheNom} - ({tache.TacheId})",
                     UniqueName = pageUniqueName,
                     Dock = DockStyle.Fill
                 };
@@ -589,8 +589,8 @@ namespace PlanAthena.View.TaskManager
                 kryptonDockingManager.AddFloatingWindow(
                     floatingElement.Name,
                     new[] { newDetailPage },
-                    new Point(200, 200),
-                    new Size(800, 650)
+                    new Point(224, 80),
+                    new Size(800, 628)
                 );
             }
         }

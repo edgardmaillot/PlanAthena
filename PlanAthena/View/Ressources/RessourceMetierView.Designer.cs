@@ -29,13 +29,21 @@ namespace PlanAthena.View.Ressources
             btnDeleteMetier = new KryptonButton();
             btnNewMetier = new KryptonButton();
             gridMetiers = new KryptonDataGridView();
+            ID = new DataGridViewTextBoxColumn();
+            Nom = new DataGridViewTextBoxColumn();
+            Phases = new DataGridViewTextBoxColumn();
             groupDetails = new KryptonGroupBox();
             groupPhases = new KryptonGroupBox();
             chkFinition = new KryptonCheckBox();
             chkSecondOeuvre = new KryptonCheckBox();
             chkGrosOeuvre = new KryptonCheckBox();
-            textPictogram = new KryptonTextBox();
-            labelPictogram = new KryptonLabel();
+            groupPictogram = new KryptonGroupBox();
+            flowPictogramGrid = new FlowLayoutPanel();
+            comboPictogramCategory = new KryptonComboBox();
+            labelCategory = new KryptonLabel();
+            btnChoosePictogram = new KryptonButton();
+            panelPictogramPreview = new KryptonPanel();
+            lblPictogramPreview = new KryptonLabel();
             btnChooseColor = new KryptonButton();
             panelColor = new KryptonPanel();
             labelColor = new KryptonLabel();
@@ -45,9 +53,6 @@ namespace PlanAthena.View.Ressources
             labelId = new KryptonLabel();
             panelGlobalActions = new KryptonPanel();
             btnConfigurePrerequis = new KryptonButton();
-            ID = new DataGridViewTextBoxColumn();
-            Nom = new DataGridViewTextBoxColumn();
-            Phases = new DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)kryptonPanelMain).BeginInit();
             kryptonPanelMain.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)kryptonSplitContainer1).BeginInit();
@@ -67,6 +72,12 @@ namespace PlanAthena.View.Ressources
             ((System.ComponentModel.ISupportInitialize)groupPhases).BeginInit();
             ((System.ComponentModel.ISupportInitialize)groupPhases.Panel).BeginInit();
             groupPhases.Panel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)groupPictogram).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)groupPictogram.Panel).BeginInit();
+            groupPictogram.Panel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)comboPictogramCategory).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)panelPictogramPreview).BeginInit();
+            panelPictogramPreview.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)panelColor).BeginInit();
             ((System.ComponentModel.ISupportInitialize)panelGlobalActions).BeginInit();
             panelGlobalActions.SuspendLayout();
@@ -157,10 +168,10 @@ namespace PlanAthena.View.Ressources
             gridMetiers.AllowUserToAddRows = false;
             gridMetiers.AllowUserToDeleteRows = false;
             gridMetiers.AllowUserToResizeRows = false;
+            gridMetiers.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             gridMetiers.BorderStyle = BorderStyle.None;
             gridMetiers.Columns.AddRange(new DataGridViewColumn[] { ID, Nom, Phases });
             gridMetiers.Dock = DockStyle.Fill;
-            gridMetiers.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             gridMetiers.Location = new Point(6, 6);
             gridMetiers.Margin = new Padding(4, 3, 4, 3);
             gridMetiers.MultiSelect = false;
@@ -169,7 +180,34 @@ namespace PlanAthena.View.Ressources
             gridMetiers.RowHeadersVisible = false;
             gridMetiers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             gridMetiers.Size = new Size(510, 682);
+            gridMetiers.StateCommon.BackStyle = PaletteBackStyle.GridBackgroundList;
+            gridMetiers.StateCommon.HeaderColumn.Content.ColorAlign = PaletteRectangleAlign.Control;
+            gridMetiers.StateCommon.HeaderColumn.Content.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            gridMetiers.StateCommon.HeaderColumn.Content.Hint = PaletteTextHint.AntiAlias;
             gridMetiers.TabIndex = 0;
+            // 
+            // ID
+            // 
+            ID.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+            ID.HeaderText = "Identifiant métier";
+            ID.MinimumWidth = 80;
+            ID.Name = "ID";
+            ID.ReadOnly = true;
+            ID.Width = 127;
+            // 
+            // Nom
+            // 
+            Nom.HeaderText = "Nom";
+            Nom.MinimumWidth = 120;
+            Nom.Name = "Nom";
+            Nom.ReadOnly = true;
+            // 
+            // Phases
+            // 
+            Phases.HeaderText = "Phases";
+            Phases.MinimumWidth = 150;
+            Phases.Name = "Phases";
+            Phases.ReadOnly = true;
             // 
             // groupDetails
             // 
@@ -180,8 +218,7 @@ namespace PlanAthena.View.Ressources
             // 
             // 
             groupDetails.Panel.Controls.Add(groupPhases);
-            groupDetails.Panel.Controls.Add(textPictogram);
-            groupDetails.Panel.Controls.Add(labelPictogram);
+            groupDetails.Panel.Controls.Add(groupPictogram);
             groupDetails.Panel.Controls.Add(btnChooseColor);
             groupDetails.Panel.Controls.Add(panelColor);
             groupDetails.Panel.Controls.Add(labelColor);
@@ -234,22 +271,78 @@ namespace PlanAthena.View.Ressources
             chkGrosOeuvre.TabIndex = 0;
             chkGrosOeuvre.Values.Text = "Gros Œuvre";
             // 
-            // textPictogram
+            // groupPictogram
             // 
-            textPictogram.Location = new Point(152, 121);
-            textPictogram.Margin = new Padding(4, 3, 4, 3);
-            textPictogram.Name = "textPictogram";
-            textPictogram.Size = new Size(272, 23);
-            textPictogram.TabIndex = 8;
+            groupPictogram.Location = new Point(15, 280);
+            groupPictogram.Margin = new Padding(4, 3, 4, 3);
             // 
-            // labelPictogram
             // 
-            labelPictogram.Location = new Point(15, 121);
-            labelPictogram.Margin = new Padding(4, 3, 4, 3);
-            labelPictogram.Name = "labelPictogram";
-            labelPictogram.Size = new Size(72, 20);
-            labelPictogram.TabIndex = 7;
-            labelPictogram.Values.Text = "Pictogram :";
+            // 
+            groupPictogram.Panel.Controls.Add(flowPictogramGrid);
+            groupPictogram.Panel.Controls.Add(comboPictogramCategory);
+            groupPictogram.Panel.Controls.Add(labelCategory);
+            groupPictogram.Panel.Controls.Add(btnChoosePictogram);
+            groupPictogram.Panel.Controls.Add(panelPictogramPreview);
+            groupPictogram.Size = new Size(408, 306);
+            groupPictogram.TabIndex = 10;
+            groupPictogram.Values.Heading = "Pictogramme";
+            // 
+            // flowPictogramGrid
+            // 
+            flowPictogramGrid.AutoScroll = true;
+            flowPictogramGrid.BorderStyle = BorderStyle.FixedSingle;
+            flowPictogramGrid.Location = new Point(15, 135);
+            flowPictogramGrid.Name = "flowPictogramGrid";
+            flowPictogramGrid.Size = new Size(370, 130);
+            flowPictogramGrid.TabIndex = 5;
+            // 
+            // comboPictogramCategory
+            // 
+            comboPictogramCategory.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboPictogramCategory.Location = new Point(90, 105);
+            comboPictogramCategory.Name = "comboPictogramCategory";
+            comboPictogramCategory.Size = new Size(200, 22);
+            comboPictogramCategory.TabIndex = 4;
+            comboPictogramCategory.SelectedIndexChanged += ComboPictogramCategory_SelectedIndexChanged;
+            // 
+            // labelCategory
+            // 
+            labelCategory.Location = new Point(15, 105);
+            labelCategory.Name = "labelCategory";
+            labelCategory.Size = new Size(69, 20);
+            labelCategory.TabIndex = 3;
+            labelCategory.Values.Text = "Catégorie :";
+            // 
+            // btnChoosePictogram
+            // 
+            btnChoosePictogram.Location = new Point(110, 25);
+            btnChoosePictogram.Name = "btnChoosePictogram";
+            btnChoosePictogram.Size = new Size(100, 30);
+            btnChoosePictogram.TabIndex = 2;
+            btnChoosePictogram.Values.DropDownArrowColor = Color.Empty;
+            btnChoosePictogram.Values.Text = "Effacer";
+            btnChoosePictogram.Click += BtnClearPictogram_Click;
+            // 
+            // panelPictogramPreview
+            // 
+            panelPictogramPreview.Controls.Add(lblPictogramPreview);
+            panelPictogramPreview.Location = new Point(15, 10);
+            panelPictogramPreview.Name = "panelPictogramPreview";
+            panelPictogramPreview.Size = new Size(80, 80);
+            panelPictogramPreview.StateCommon.Color1 = Color.FromArgb(64, 64, 64);
+            panelPictogramPreview.StateCommon.ColorStyle = PaletteColorStyle.SolidAllLine;
+            panelPictogramPreview.TabIndex = 0;
+            // 
+            // lblPictogramPreview
+            // 
+            lblPictogramPreview.Location = new Point(0, 0);
+            lblPictogramPreview.Name = "lblPictogramPreview";
+            lblPictogramPreview.Size = new Size(76, 76);
+            lblPictogramPreview.StateNormal.ShortText.ColorAlign = PaletteRectangleAlign.Form;
+            lblPictogramPreview.StateNormal.ShortText.ColorStyle = PaletteColorStyle.SolidAllLine;
+            lblPictogramPreview.StateNormal.ShortText.Font = new Font("Segoe UI Symbol", 38F);
+            lblPictogramPreview.TabIndex = 1;
+            lblPictogramPreview.Values.Text = "🏠";
             // 
             // btnChooseColor
             // 
@@ -337,31 +430,6 @@ namespace PlanAthena.View.Ressources
             btnConfigurePrerequis.Values.Text = "Configurer les Prérequis";
             btnConfigurePrerequis.Click += BtnConfigurePrerequis_Click;
             // 
-            // ID
-            // 
-            ID.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
-            ID.HeaderText = "Identifiant métier";
-            ID.MinimumWidth = 80;
-            ID.Name = "ID";
-            ID.ReadOnly = true;
-            ID.Width = 127;
-            // 
-            // Nom
-            // 
-            Nom.HeaderText = "Nom";
-            Nom.MinimumWidth = 120;
-            Nom.Name = "Nom";
-            Nom.ReadOnly = true;
-            Nom.Width = 120;
-            // 
-            // Phases
-            // 
-            Phases.HeaderText = "Phases";
-            Phases.MinimumWidth = 150;
-            Phases.Name = "Phases";
-            Phases.ReadOnly = true;
-            Phases.Width = 200;
-            // 
             // RessourceMetierView
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -392,6 +460,14 @@ namespace PlanAthena.View.Ressources
             groupPhases.Panel.ResumeLayout(false);
             groupPhases.Panel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)groupPhases).EndInit();
+            ((System.ComponentModel.ISupportInitialize)groupPictogram.Panel).EndInit();
+            groupPictogram.Panel.ResumeLayout(false);
+            groupPictogram.Panel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)groupPictogram).EndInit();
+            ((System.ComponentModel.ISupportInitialize)comboPictogramCategory).EndInit();
+            ((System.ComponentModel.ISupportInitialize)panelPictogramPreview).EndInit();
+            panelPictogramPreview.ResumeLayout(false);
+            panelPictogramPreview.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)panelColor).EndInit();
             ((System.ComponentModel.ISupportInitialize)panelGlobalActions).EndInit();
             panelGlobalActions.ResumeLayout(false);
@@ -426,5 +502,13 @@ namespace PlanAthena.View.Ressources
         private DataGridViewTextBoxColumn ID;
         private DataGridViewTextBoxColumn Nom;
         private DataGridViewTextBoxColumn Phases;
+
+        private KryptonGroupBox groupPictogram;
+        private KryptonPanel panelPictogramPreview;
+        private KryptonLabel lblPictogramPreview;
+        private KryptonButton btnChoosePictogram;
+        private KryptonComboBox comboPictogramCategory;
+        private KryptonLabel labelCategory;
+        private FlowLayoutPanel flowPictogramGrid;
     }
 }
