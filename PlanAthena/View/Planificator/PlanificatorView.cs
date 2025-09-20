@@ -220,27 +220,40 @@ namespace PlanAthena.View.Planificator
 
             navigatorResultats.Visible = true;
 
-            // Un échec n'est pas seulement une "Erreur", mais aussi un solveur qui retourne "Infeasible".
-            bool hasCriticalErrors = runResult.RawResult?.Messages.Any(m => m.Type == TypeMessageValidation.Erreur) ?? false;
-            bool isSolverInfeasible = runResult.RawResult?.OptimisationResultat?.Status == OptimizationStatus.Infeasible;
-
-            bool isFailureState = hasCriticalErrors || isSolverInfeasible;
-            // --- FIN MODIFICATION ---
-
+            // Déterminer le mode de traitement selon le type de résultat
             bool isAnalysisMode = cmbTypeDeSortie.SelectedItem?.ToString() == "Analyse et Estimation";
 
-            if (isFailureState)
-            {
-                // On passe tous les messages, y compris les avertissements qui expliquent l'échec.
-                DisplayErrorState(runResult.RawResult.Messages);
-            }
-            else if (isAnalysisMode && runResult.MetierTensionReport != null)
+            // L'analyse rapide a toujours priorité si elle contient des données
+            if (isAnalysisMode && runResult.MetierTensionReport != null)
             {
                 DisplayAnalysisState(runResult);
             }
+            // Sinon, traiter selon le statut du solveur
+            else if (runResult.RawResult?.OptimisationResultat != null)
+            {
+                var status = runResult.RawResult.OptimisationResultat.Status;
+
+                switch (status)
+                {
+                    case OptimizationStatus.Optimal:
+                    case OptimizationStatus.Feasible:
+                        DisplayOptimizationState(runResult);
+                        break;
+
+                    case OptimizationStatus.Infeasible:
+                    case OptimizationStatus.Unknown:
+                    case OptimizationStatus.Aborted:
+                    case OptimizationStatus.ModelInvalid:
+                        // Tous les échecs passent par DisplayErrorState
+                        DisplayErrorState(runResult.RawResult.Messages);
+                        break;
+                }
+            }
+            // Si pas d'optimisation et pas d'analyse, c'est une erreur
             else
             {
-                DisplayOptimizationState(runResult);
+                var messages = runResult.RawResult?.Messages ?? new List<MessageValidationDto>();
+                DisplayErrorState(messages);
             }
 
             AfficherResultatDansLog(runResult);
@@ -249,22 +262,58 @@ namespace PlanAthena.View.Planificator
 
         private void DisplayErrorState(IReadOnlyList<MessageValidationDto> messages)
         {
+            // Déterminer le type d'erreur principal pour adapter l'affichage
+            var errorType = _lastRunResult?.ErrorType ?? "UNKNOWN";
+
             SetupNotificationBanner(
-                "ERREUR CRITIQUE",
-                "Planification impossible",
-                Color.FromArgb(192, 0, 0), // Rouge foncé
-                null // Mettre une icône depuis les ressources si disponible
+                GetErrorTitle(errorType),
+                GetErrorSubtitle(errorType),
+                GetErrorColor(errorType),
+                null
             );
 
             rtbNotification.Clear();
             var boldFont = new Font(rtbNotification.Font, FontStyle.Bold);
-            foreach (var msg in messages.Where(m => m.Type == TypeMessageValidation.Erreur))
+
+            // Afficher le message utilisateur personnalisé si disponible
+            if (!string.IsNullOrEmpty(_lastRunResult?.UserMessage))
             {
                 rtbNotification.SelectionFont = boldFont;
-                rtbNotification.AppendText("• ");
+                rtbNotification.AppendText("DIAGNOSTIC ET RECOMMANDATIONS :\n\n");
                 rtbNotification.SelectionFont = rtbNotification.Font;
-                string elementInfo = !string.IsNullOrEmpty(msg.ElementId) ? $" (Élément: {msg.ElementId})" : "";
-                rtbNotification.AppendText($"{msg.Message}{elementInfo}{Environment.NewLine}");
+                rtbNotification.AppendText(_lastRunResult.UserMessage);
+                rtbNotification.AppendText("\n\n");
+            }
+
+            // Afficher les messages techniques en détail
+            if (messages.Any())
+            {
+                rtbNotification.SelectionFont = boldFont;
+                rtbNotification.AppendText("DÉTAILS TECHNIQUES :\n");
+                rtbNotification.SelectionFont = rtbNotification.Font;
+
+                foreach (var msg in messages.Where(m => m.Type == TypeMessageValidation.Erreur))
+                {
+                    rtbNotification.SelectionFont = boldFont;
+                    rtbNotification.AppendText("• ");
+                    rtbNotification.SelectionFont = rtbNotification.Font;
+                    string elementInfo = !string.IsNullOrEmpty(msg.ElementId) ? $" (Élément: {msg.ElementId})" : "";
+                    rtbNotification.AppendText($"{msg.Message}{elementInfo}\n");
+                }
+
+                // Afficher aussi les avertissements importants
+                var avertissementsImportants = messages.Where(m => m.Type == TypeMessageValidation.Avertissement).ToList();
+                if (avertissementsImportants.Any())
+                {
+                    rtbNotification.SelectionFont = boldFont;
+                    rtbNotification.AppendText("\nAVERTISSEMENTS :\n");
+                    rtbNotification.SelectionFont = rtbNotification.Font;
+
+                    foreach (var warning in avertissementsImportants)
+                    {
+                        rtbNotification.AppendText($"⚠ {warning.Message}\n");
+                    }
+                }
             }
 
             kryptonPanelKpis.Visible = false; // Masquer les KPIs car invalides
@@ -272,24 +321,64 @@ namespace PlanAthena.View.Planificator
 
         private void DisplayAnalysisState(PlanificationRunResult runResult)
         {
+            // Vérifier s'il y a des erreurs critiques dans l'analyse rapide
+            var messagesErreur = runResult.RawResult?.Messages?.Where(m =>
+                m.Type == TypeMessageValidation.Erreur ||
+                m.CodeMessage.Contains("INFEASIBLE") ||
+                m.Message.Contains("infaisable")).ToList() ?? new List<MessageValidationDto>();
+
+            if (messagesErreur.Any())
+            {
+                // L'analyse rapide a échoué, traiter comme une erreur mais avec un titre spécifique
+                SetupNotificationBanner(
+                    "ANALYSE RAPIDE - PLANNING IMPOSSIBLE",
+                    "L'estimation préliminaire indique que le projet est infaisable",
+                    Color.FromArgb(255, 140, 0), // Orange pour différencier d'une erreur technique
+                    null
+                );
+
+                rtbNotification.Clear();
+                var boldFont = new Font(rtbNotification.Font, FontStyle.Bold);
+
+                // Analyser les causes spécifiquement pour l'analyse rapide
+                var analyseCauses = AnalyserCausesInfaisabiliteAnalyseRapide(runResult.RawResult.Messages);
+
+                rtbNotification.SelectionFont = boldFont;
+                rtbNotification.AppendText("DIAGNOSTIC PRÉLIMINAIRE :\n\n");
+                rtbNotification.SelectionFont = rtbNotification.Font;
+                rtbNotification.AppendText(analyseCauses);
+                rtbNotification.AppendText("\n\n");
+
+                rtbNotification.SelectionFont = boldFont;
+                rtbNotification.AppendText("RECOMMANDATION :\n");
+                rtbNotification.SelectionFont = rtbNotification.Font;
+                rtbNotification.AppendText("Ajustez les paramètres ci-dessus, puis relancez une analyse rapide pour confirmer la faisabilité avant d'optimiser.");
+
+                kryptonPanelKpis.Visible = false;
+                return;
+            }
+
+            // Analyse rapide réussie - affichage normal
             SetupNotificationBanner(
                 "Synthèse de l'Analyse Rapide",
                 "Recommandations basées sur les données du projet",
                 Color.FromArgb(0, 102, 204), // Bleu informatif
-                null // Mettre une icône depuis les ressources si disponible
+                null
             );
 
             rtbNotification.Clear();
-            var boldFont = new Font(rtbNotification.Font, FontStyle.Bold);
+            var boldFontSuccess = new Font(rtbNotification.Font, FontStyle.Bold);
 
-            rtbNotification.SelectionFont = boldFont;
+            // 1. Conclusion sur la tension des métiers
+            rtbNotification.SelectionFont = boldFontSuccess;
             rtbNotification.AppendText("Conclusion : ");
             rtbNotification.SelectionFont = rtbNotification.Font;
-            rtbNotification.AppendText($"{runResult.MetierTensionReport.Conclusion}{Environment.NewLine}");
+            rtbNotification.AppendText($"{runResult.MetierTensionReport.Conclusion}{Environment.NewLine}{Environment.NewLine}");
 
+            // 2. Répartition suggérée des métiers clés
             if (runResult.MetierTensionReport.Repartition.Any())
             {
-                rtbNotification.SelectionFont = boldFont;
+                rtbNotification.SelectionFont = boldFontSuccess;
                 rtbNotification.AppendText($"Répartition suggérée des métiers clés :{Environment.NewLine}");
                 rtbNotification.SelectionFont = rtbNotification.Font;
                 foreach (var repartition in runResult.MetierTensionReport.Repartition)
@@ -297,10 +386,89 @@ namespace PlanAthena.View.Planificator
                     var nomMetier = _ressourceService.GetMetierById(repartition.MetierId)?.Nom ?? repartition.MetierId;
                     rtbNotification.AppendText($"  - {nomMetier} : {repartition.Count} ouvrier(s){Environment.NewLine}");
                 }
+                rtbNotification.AppendText(Environment.NewLine);
+            }
+
+            // 3. Calcul et affichage de la date de fin recommandée
+            var dateFinRecommandee = CalculerDateFinRecommandee(runResult);
+            if (dateFinRecommandee.HasValue)
+            {
+                rtbNotification.SelectionFont = boldFontSuccess;
+                rtbNotification.AppendText("Planification temporelle recommandée :");
+                rtbNotification.SelectionFont = rtbNotification.Font;
+                rtbNotification.AppendText(Environment.NewLine);
+
+                var dureeEstimeeHeures = runResult.RawResult.AnalyseStatiqueResultat?.DureeTotaleEstimeeEnSlots ?? 0;
+                var heuresTravailParJour = (int)numHeuresTravail.Value;
+                var joursEstimes = Math.Ceiling((double)dureeEstimeeHeures / heuresTravailParJour);
+
+                rtbNotification.AppendText($"  - Durée estimée : {dureeEstimeeHeures} heures ({joursEstimes:F0} jours de travail){Environment.NewLine}");
+                rtbNotification.AppendText($"  - Date de début : {dtpDateDebut.Value:dddd dd MMMM yyyy}{Environment.NewLine}");
+                rtbNotification.AppendText($"  - Date de fin recommandée : {dateFinRecommandee.Value:dddd dd MMMM yyyy}{Environment.NewLine}");
+
+                // Vérifier si la date recommandée dépasse la date de fin actuelle
+                if (dateFinRecommandee.Value > dtpDateFin.Value)
+                {
+                    var ecartJours = (dateFinRecommandee.Value - dtpDateFin.Value).Days;
+                    rtbNotification.SelectionFont = boldFontSuccess;
+                    rtbNotification.AppendText($"  ⚠ Attention : ");
+                    rtbNotification.SelectionFont = rtbNotification.Font;
+                    rtbNotification.AppendText($"La date de fin actuelle ({dtpDateFin.Value:dd/MM/yyyy}) est trop courte de {ecartJours} jours.{Environment.NewLine}");
+                    rtbNotification.AppendText($"     Modifiez la date de fin à {dateFinRecommandee.Value:dd/MM/yyyy} pour garantir la faisabilité.{Environment.NewLine}");
+                }
+                else
+                {
+                    rtbNotification.SelectionFont = boldFontSuccess;
+                    rtbNotification.AppendText($"  ✓ ");
+                    rtbNotification.SelectionFont = rtbNotification.Font;
+                    rtbNotification.AppendText($"La date de fin actuelle laisse une marge suffisante.{Environment.NewLine}");
+                }
             }
 
             kryptonPanelKpis.Visible = true;
             UpdateKpisForAnalysis(runResult);
+        }
+
+        private string AnalyserCausesInfaisabiliteAnalyseRapide(IReadOnlyList<MessageValidationDto> messages)
+        {
+            var problemes = new List<string>();
+
+            // Analyser spécifiquement pour l'analyse rapide
+            var capaciteMessage = messages.FirstOrDefault(m => m.CodeMessage == "WARN_CAPACITY_OVERLOAD");
+            if (capaciteMessage != null)
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(capaciteMessage.Message, @"(\d+)h requises vs ~(\d+)h disponibles");
+                if (match.Success)
+                {
+                    var heuresRequises = int.Parse(match.Groups[1].Value);
+                    var heuresDisponibles = int.Parse(match.Groups[2].Value);
+                    var ratioSurcharge = (double)heuresRequises / heuresDisponibles;
+
+                    problemes.Add($"📊 CHARGE DE TRAVAIL : {heuresRequises}h requises vs {heuresDisponibles}h disponibles");
+                    problemes.Add($"   Surcharge de {ratioSurcharge:P0} - Le planning est {(ratioSurcharge > 1.5 ? "très" : "")} contraint");
+
+                    var extensionJours = Math.Ceiling((double)(heuresRequises - heuresDisponibles) / 7); // 7h par jour
+                    problemes.Add($"   💡 SOLUTION : Prolonger le planning d'au moins {extensionJours} jours ouvrés");
+                }
+            }
+
+            var insuffisantMessages = messages.Where(m => m.CodeMessage == "WARN_INSUFFICIENT_WORKERS").ToList();
+            if (insuffisantMessages.Any())
+            {
+                problemes.Add($"\n👷 GOULOTS D'ÉTRANGLEMENT : {insuffisantMessages.Count} métier(s) en tension");
+                foreach (var msg in insuffisantMessages.Take(3))
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(msg.Message, @"Métier '([^']+)'");
+                    if (match.Success)
+                    {
+                        problemes.Add($"   • {match.Groups[1].Value} : Ressource critique");
+                    }
+                }
+                problemes.Add("   💡 SOLUTION : Recruter des ouvriers supplémentaires ou étaler le travail");
+            }
+
+            return problemes.Any() ? string.Join("\n", problemes) :
+                   "Le projet semble infaisable avec les contraintes actuelles. Vérifiez les délais et les ressources.";
         }
 
         private void DisplayOptimizationState(PlanificationRunResult runResult)
@@ -367,10 +535,13 @@ namespace PlanAthena.View.Planificator
         {
             khgSolverStatus.Visible = !string.IsNullOrEmpty(status);
             if (string.IsNullOrEmpty(status)) return;
+
             var defaultBackColor = SystemColors.ControlDark;
             var optimalColor = Color.FromArgb(0, 150, 0);
             var feasibleColor = Color.FromArgb(204, 132, 0);
             var infeasibleColor = Color.FromArgb(192, 0, 0);
+            var timeoutColor = Color.FromArgb(255, 140, 0);
+            var abortedColor = Color.FromArgb(128, 128, 128);
 
             switch (status.ToUpperInvariant())
             {
@@ -379,21 +550,37 @@ namespace PlanAthena.View.Planificator
                     khgSolverStatus.StateCommon.HeaderPrimary.Back.Color1 = optimalColor;
                     lblStatutExplication.Text = "La meilleure solution\npossible a été trouvée.";
                     break;
+
                 case "FEASIBLE":
                     khgSolverStatus.ValuesPrimary.Heading = "FAISABLE";
                     khgSolverStatus.StateCommon.HeaderPrimary.Back.Color1 = feasibleColor;
                     lblStatutExplication.Text = "Une solution a été trouvée,\nmais elle n'est peut-être pas la meilleure.\nLe temps de calcul était peut-être insuffisant.";
                     break;
+
                 case "INFEASIBLE":
                     khgSolverStatus.ValuesPrimary.Heading = "IMPOSSIBLE";
                     khgSolverStatus.StateCommon.HeaderPrimary.Back.Color1 = infeasibleColor;
-                    lblStatutExplication.Text = "Aucune solution possible.\nAccordez plus de délai à l'IA.";
+                    lblStatutExplication.Text = "Aucune solution possible\navec les contraintes actuelles.\nVoir les recommandations ci-dessus.";
                     break;
+
+                case "UNKNOWN":
+                    khgSolverStatus.ValuesPrimary.Heading = "TEMPS INSUFFISANT";
+                    khgSolverStatus.StateCommon.HeaderPrimary.Back.Color1 = timeoutColor;
+                    lblStatutExplication.Text = "Le solveur n'a pas eu\nassez de temps pour explorer\ntoutes les possibilités.\nAugmentez le temps de calcul.";
+                    break;
+
+                case "ABORTED":
+                    khgSolverStatus.ValuesPrimary.Heading = "INTERROMPU";
+                    khgSolverStatus.StateCommon.HeaderPrimary.Back.Color1 = abortedColor;
+                    lblStatutExplication.Text = "La planification a été\ninterrompue avant la fin.\nRelancez le calcul.";
+                    break;
+
                 case "ANALYSE":
                     khgSolverStatus.ValuesPrimary.Heading = "ANALYSE";
                     khgSolverStatus.StateCommon.HeaderPrimary.Back.Color1 = Color.FromArgb(0, 102, 204);
                     lblStatutExplication.Text = "Mode analyse rapide.\nAucune optimisation effectuée.";
                     break;
+
                 default:
                     khgSolverStatus.ValuesPrimary.Heading = status.ToUpperInvariant();
                     khgSolverStatus.StateCommon.HeaderPrimary.Back.Color1 = defaultBackColor;
@@ -452,18 +639,29 @@ namespace PlanAthena.View.Planificator
         #region Exports et États
         private void UpdateExportButtonsState()
         {
-            // --- MODIFICATION : Condition d'export beaucoup plus stricte ---
             bool hasReport = _lastRunResult?.AnalysisReport != null;
             var status = _lastRunResult?.RawResult?.OptimisationResultat?.Status;
 
             // L'export n'est possible QUE si un rapport existe ET que le statut est Optimal ou Faisable.
             bool isSuccessfulStatus = (status == OptimizationStatus.Optimal || status == OptimizationStatus.Feasible);
-
             bool canExport = hasReport && isSuccessfulStatus;
-            // --- FIN MODIFICATION ---
 
             btnExportPlanningExcel.Enabled = canExport;
             btnExportGantt.Enabled = canExport;
+
+            // Mettre à jour les tooltips pour expliquer pourquoi l'export n'est pas disponible
+            if (!canExport)
+            {
+                string reason = !hasReport ? "Aucun planning valide généré" :
+                               !isSuccessfulStatus ? $"Statut du solveur : {status}" : "Export non disponible";
+                kryptonToolTip.SetToolTip(btnExportPlanningExcel, $"Export indisponible : {reason}");
+                kryptonToolTip.SetToolTip(btnExportGantt, $"Export indisponible : {reason}");
+            }
+            else
+            {
+                kryptonToolTip.SetToolTip(btnExportPlanningExcel, "Exporter le planning au format Excel");
+                kryptonToolTip.SetToolTip(btnExportGantt, "Exporter le planning vers GanttProject");
+            }
         }
 
         private async void btnExportPlanningExcel_Click(object sender, EventArgs e)
@@ -639,6 +837,121 @@ namespace PlanAthena.View.Planificator
                 }
             }
             Log(sb.ToString());
+        }
+        private string GetErrorTitle(string errorType)
+        {
+            return errorType switch
+            {
+                "INFEASIBLE" => "PLANNING IMPOSSIBLE",
+                "TIMEOUT_EXPLORATION" => "TEMPS DE CALCUL INSUFFISANT",
+                "ABORTED" => "PLANIFICATION INTERROMPUE",
+                "MODEL_ERROR" => "ERREUR DE MODÈLE",
+                _ => "ERREUR CRITIQUE"
+            };
+        }
+        private string GetErrorSubtitle(string errorType)
+        {
+            return errorType switch
+            {
+                "INFEASIBLE" => "Les contraintes ne permettent aucune solution",
+                "TIMEOUT_EXPLORATION" => "Le solveur n'a pas eu assez de temps",
+                "ABORTED" => "Le calcul a été arrêté prématurément",
+                "MODEL_ERROR" => "Problème technique dans les données",
+                _ => "Une erreur est survenue pendant la planification"
+            };
+        }
+
+        private Color GetErrorColor(string errorType)
+        {
+            return errorType switch
+            {
+                "INFEASIBLE" => Color.FromArgb(192, 0, 0),           // Rouge vif - problème utilisateur
+                "TIMEOUT_EXPLORATION" => Color.FromArgb(255, 140, 0), // Orange - action simple requise
+                "ABORTED" => Color.FromArgb(128, 128, 128),          // Gris - interruption
+                "MODEL_ERROR" => Color.FromArgb(128, 0, 128),        // Violet - problème technique
+                _ => Color.FromArgb(192, 0, 0)                       // Rouge par défaut
+            };
+        }
+
+        /// <summary>
+        /// Calcule la date de fin recommandée basée sur la durée estimée du chantier
+        /// avec une marge de sécurité et alignement sur la fin de semaine
+        /// </summary>
+        private DateTime? CalculerDateFinRecommandee(PlanificationRunResult runResult)
+        {
+            try
+            {
+                // Récupérer les données nécessaires
+                var dureeEstimeeHeures = runResult.RawResult?.AnalyseStatiqueResultat?.DureeTotaleEstimeeEnSlots;
+                if (!dureeEstimeeHeures.HasValue || dureeEstimeeHeures.Value <= 0)
+                    return null;
+
+                var dateDebut = dtpDateDebut.Value.Date;
+                var heuresTravailParJour = (int)numHeuresTravail.Value;
+
+                if (heuresTravailParJour <= 0)
+                    return null;
+
+                // Obtenir les jours ouvrés de la configuration
+                var joursOuvres = new List<DayOfWeek>();
+                for (int i = 0; i < chkListJoursOuvres.Items.Count; i++)
+                {
+                    if (chkListJoursOuvres.GetItemChecked(i))
+                    {
+                        joursOuvres.Add((DayOfWeek)chkListJoursOuvres.Items[i]);
+                    }
+                }
+
+                if (!joursOuvres.Any())
+                {
+                    // Fallback : jours ouvrés standard (lundi à vendredi)
+                    joursOuvres = new List<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday };
+                }
+
+                // 1. Calculer le nombre de jours de travail nécessaires (avec marge de 5%)
+                var joursNecessaires = Math.Ceiling((double)dureeEstimeeHeures.Value / heuresTravailParJour);
+                var joursAvecMarge = Math.Ceiling(joursNecessaires * 1.05); // Marge de 5%
+
+                // 2. Calculer la date de fin en comptant uniquement les jours ouvrés
+                var dateActuelle = dateDebut;
+                var joursComptes = 0;
+
+                while (joursComptes < joursAvecMarge)
+                {
+                    if (joursOuvres.Contains(dateActuelle.DayOfWeek))
+                    {
+                        joursComptes++;
+                    }
+
+                    if (joursComptes < joursAvecMarge) // Éviter d'ajouter un jour de trop
+                    {
+                        dateActuelle = dateActuelle.AddDays(1);
+                    }
+                }
+
+                // 3. Arrondir à la fin de la semaine suivante si on n'est pas déjà en fin de semaine
+                var dateFin = dateActuelle;
+
+                // Trouver le dernier jour ouvré de la semaine
+                var dernierJourOuvre = joursOuvres.OrderByDescending(j => (int)j).First();
+
+                // Si on n'est pas sur le dernier jour ouvré de la semaine, avancer jusqu'au vendredi suivant
+                if (dateFin.DayOfWeek != dernierJourOuvre)
+                {
+                    while (dateFin.DayOfWeek != dernierJourOuvre)
+                    {
+                        dateFin = dateFin.AddDays(1);
+                    }
+                }
+
+                return dateFin;
+            }
+            catch (Exception ex)
+            {
+                // En cas d'erreur, ne pas planter l'interface
+                Log($"Erreur lors du calcul de la date de fin recommandée : {ex.Message}");
+                return null;
+            }
         }
         private void SolverTimer_Tick(object sender, EventArgs e)
         {

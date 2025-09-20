@@ -5,7 +5,7 @@ skinparam linetype ortho
 skinparam ranksep 80
 skinparam nodesep 100
 
-title Architecture Globale de PlanAthena.core
+title Architecture Globale de PlanAthena.core v1.1\n<size:12><i>Avec couches de validation renforcées</i></size>
 
 package "Facade" <<Layer>> {
   class PlanAthenaCoreFacade {
@@ -18,6 +18,8 @@ package "Application" <<Layer>> {
     package "UseCases" {
         class ProcessChantierUseCase {
           + ExecuteAsync(...)
+          + ValiderEtCreerChantierAsync(...)
+          + InterpretarResultatSolveur(...)
         }
     }
     
@@ -26,42 +28,78 @@ package "Application" <<Layer>> {
         interface IChantierSetupInputMapper
         interface IConstructeurProblemeOrTools
         interface ISolutionInterpreterService
-        ' ... et autres interfaces de services
+        interface IChantierValidationService
+        interface ICapacityValidationService
+        interface ICrossReferenceValidationService
+        interface IInitialFeasibilityAnalysisService
     }
     
     package "Services" {
         class ChantierSetupInputMapper
-        class ChantierValidationService
-        ' ...
+        class ChantierValidationService {
+          + ValiderChantierCompletAsync(...)
+          - ValidateTaskCycles(...)
+        }
+        class InitialFeasibilityAnalysisService {
+          + AnalyserFaisabiliteAsync(...)
+        }
+        class CapacityValidationService {
+          + ValidateCapacityConstraintsAsync(...)
+          - ValidateGlobalWorkload(...)
+          - ValidateBlocCapacities(...)
+          - ValidateSkillConstraints(...)
+        }
+        class CrossReferenceValidationService {
+          + ValidateCrossReferencesAsync(...)
+        }
     }
     
     package "Validation" {
         class ChantierSetupInputDtoValidator
+        class OptimizationConfigDtoValidator
+        class TacheDtoValidator
+        class OuvrierDtoValidator
     }
 }
-note top: Orchestre les actions.\nDéfinit les contrats (interfaces)\nentre les couches.
+note top: Orchestre les actions.\nValidation en 6 couches.\nDéfinit les contrats entre couches.
 
 package "Domain" <<Layer>> {
-    class Chantier
-    class Tache
-    class Ouvrier
-    class Metier
-    class "ValueObjects" as VOs
+    class Chantier {
+      + ObtenirToutesLesTaches()
+      + AppliquerConfigurationOptimisation(...)
+    }
+    class Tache {
+      + Type: TypeActivite
+      + Dependencies: IReadOnlySet<TacheId>
+    }
+    class Ouvrier {
+      + Nom: string
+      + Competences: IReadOnlyDictionary<...>
+    }
+    class BlocTravail {
+      + CapaciteMaxOuvriers: int
+    }
+    class "ValueObjects" as VOs {
+      + TacheId
+      + MetierId
+      + DureeHeuresHomme
+    }
+    class DependencyGraph {
+      + DetectCycles(): IReadOnlyList<...>
+    }
 }
 note bottom: Le cœur du métier.\nContient la logique et les\nrègles métier pures.\nNe dépend de rien.
 
 package "Infrastructure" <<Layer>> {
     package "Services.OrTools" {
         class ConstructeurProblemeOrTools
-        class TacheModelBuilder
-        class CoutModelBuilder
         class SolutionInterpreterService
     }
     package "Services" {
         class CalendrierService
     }
 }
-note right: Implémentations "techniques".\nCommunication avec les\nlibrairies externes (OR-Tools).\nDépend des interfaces de l'Application.
+note right: Implémentations techniques.\nCommunication avec OR-Tools.\nDépend des interfaces Application.
 
 package "Bibliothèques Externes" {
     class "Google.OrTools.Sat" as OrTools
@@ -69,32 +107,37 @@ package "Bibliothèques Externes" {
 }
 
 
-' --- Dépendances ---
+
+' --- Dépendances principales ---
 PlanAthenaCoreFacade --> IProcessChantierUseCase
 
 ProcessChantierUseCase --> IChantierSetupInputMapper
+ProcessChantierUseCase --> IChantierValidationService
+ProcessChantierUseCase --> ICapacityValidationService
+ProcessChantierUseCase --> ICrossReferenceValidationService
+ProcessChantierUseCase --> IInitialFeasibilityAnalysisService
 ProcessChantierUseCase --> IConstructeurProblemeOrTools
 ProcessChantierUseCase --> ISolutionInterpreterService
-ProcessChantierUseCase ..> Chantier : "<<manipule>>"
 
+' --- Implémentations ---
 ChantierSetupInputMapper --|> IChantierSetupInputMapper
-ChantierSetupInputMapper --> ICalendrierService
+ChantierValidationService --|> IChantierValidationService
+CapacityValidationService --|> ICapacityValidationService
+CrossReferenceValidationService --|> ICrossReferenceValidationService
+InitialFeasibilityAnalysisService --|> IInitialFeasibilityAnalysisService
 
 ChantierSetupInputDtoValidator --|> FluentVal.AbstractValidator
+CapacityValidationService ..> Chantier : "<<filtre ouvriers virtuels>>"
+ChantierValidationService ..> DependencyGraph : "<<utilise>>"
 
 ConstructeurProblemeOrTools --|> IConstructeurProblemeOrTools
-ConstructeurProblemeOrTools ..> TacheModelBuilder : "<<délègue à>>"
-ConstructeurProblemeOrTools ..> CoutModelBuilder : "<<délègue à>>"
-TacheModelBuilder ..> OrTools.CpModel : "<<construit pour>>"
-CoutModelBuilder ..> OrTools.CpModel : "<<construit pour>>"
-
 SolutionInterpreterService --|> ISolutionInterpreterService
-SolutionInterpreterService ..> OrTools.CpSolver : "<<lit depuis>>"
-
 CalendrierService --|> ICalendrierService
 
-' Toutes les couches peuvent dépendre du Domaine
-Application ..> Domain
-Infrastructure ..> Domain
+' --- Relations vers le domaine ---
+Application ..> Domain : "<<manipule>>"
+Infrastructure ..> Domain : "<<utilise>>"
+Infrastructure ..> OrTools : "<<dépend>>"
+
 
 @enduml

@@ -20,6 +20,7 @@ namespace PlanAthena.View
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainShellForm));
             menuStrip = new MenuStrip();
             menuAccueil = new ToolStripMenuItem();
             menuFichier = new ToolStripMenuItem();
@@ -28,16 +29,16 @@ namespace PlanAthena.View
             menuSauvegarderProjet = new ToolStripMenuItem();
             menuStructure = new ToolStripMenuItem();
             menuStructureListe = new ToolStripMenuItem();
-            menuStructureDiagramme = new ToolStripMenuItem();
             menuRessources = new ToolStripMenuItem();
             menuRessourcesMetiers = new ToolStripMenuItem();
             menuRessourcesOuvriers = new ToolStripMenuItem();
             menuTaches = new ToolStripMenuItem();
             menuTachesDiagramme = new ToolStripMenuItem();
+            toolStripSeparator1 = new ToolStripSeparator();
             menuTachesListe = new ToolStripMenuItem();
-            menuPreferences = new System.Windows.Forms.ToolStripMenuItem();
-            this.menuSaveLayout = new System.Windows.Forms.ToolStripMenuItem();
-            this.menuLoadLayout = new System.Windows.Forms.ToolStripMenuItem();
+            menuPreferences = new ToolStripMenuItem();
+            menuSaveLayout = new ToolStripMenuItem();
+            menuLoadLayout = new ToolStripMenuItem();
             toolStripComboBoxThemes = new KryptonToolStripComboBox();
             kryptonManager = new KryptonManager(components);
             panelContent = new KryptonPanel();
@@ -53,14 +54,17 @@ namespace PlanAthena.View
             menuStrip.Location = new Point(0, 0);
             menuStrip.Name = "menuStrip";
             menuStrip.Padding = new Padding(7, 2, 0, 2);
-            menuStrip.Size = new Size(1487, 29);
+            menuStrip.Size = new Size(1503, 32);
             menuStrip.TabIndex = 0;
             menuStrip.Text = "menuStrip1";
             // 
             // menuAccueil
             // 
+            menuAccueil.ForeColor = SystemColors.ActiveCaptionText;
+            menuAccueil.Image = Properties.Resources.Ic_Immeuble_b;
+            menuAccueil.ImageScaling = ToolStripItemImageScaling.None;
             menuAccueil.Name = "menuAccueil";
-            menuAccueil.Size = new Size(58, 25);
+            menuAccueil.Size = new Size(82, 28);
             menuAccueil.Text = "Accueil";
             menuAccueil.Click += menuAccueil_Click;
             // 
@@ -68,56 +72,50 @@ namespace PlanAthena.View
             // 
             menuFichier.DropDownItems.AddRange(new ToolStripItem[] { menuNouveauProjet, menuChargerProjet, menuSauvegarderProjet });
             menuFichier.Name = "menuFichier";
-            menuFichier.Size = new Size(54, 25);
-            menuFichier.Text = "Fichier";
+            menuFichier.Size = new Size(69, 28);
+            menuFichier.Text = "💾 Fichier";
             // 
             // menuNouveauProjet
             // 
             menuNouveauProjet.Name = "menuNouveauProjet";
             menuNouveauProjet.Size = new Size(173, 22);
             menuNouveauProjet.Text = "Nouveau Projet";
-            menuNouveauProjet.Click += new System.EventHandler(this.menuNouveauProjet_Click);
+            menuNouveauProjet.Click += menuNouveauProjet_Click;
             // 
             // menuChargerProjet
             // 
             menuChargerProjet.Name = "menuChargerProjet";
             menuChargerProjet.Size = new Size(173, 22);
             menuChargerProjet.Text = "Charger Projet";
-            menuChargerProjet.Click += new System.EventHandler(this.menuChargerProjet_Click);
+            menuChargerProjet.Click += menuChargerProjet_Click;
             // 
             // menuSauvegarderProjet
             // 
             menuSauvegarderProjet.Name = "menuSauvegarderProjet";
             menuSauvegarderProjet.Size = new Size(173, 22);
             menuSauvegarderProjet.Text = "Sauvegarder Projet";
-            menuSauvegarderProjet.Click += new System.EventHandler(this.menuSauvegarderProjet_Click);
+            menuSauvegarderProjet.Click += menuSauvegarderProjet_Click;
             // 
             // menuStructure
             // 
-            menuStructure.DropDownItems.AddRange(new ToolStripItem[] { menuStructureListe, menuStructureDiagramme });
+            menuStructure.DropDownItems.AddRange(new ToolStripItem[] { menuStructureListe });
             menuStructure.Name = "menuStructure";
-            menuStructure.Size = new Size(67, 25);
-            menuStructure.Text = "Structure";
+            menuStructure.Size = new Size(82, 28);
+            menuStructure.Text = "📐 Structure";
             // 
             // menuStructureListe
             // 
             menuStructureListe.Name = "menuStructureListe";
-            menuStructureListe.Size = new Size(136, 22);
+            menuStructureListe.Size = new Size(98, 22);
             menuStructureListe.Text = "Liste";
             menuStructureListe.Click += menuStructureListe_Click;
-            // 
-            // menuStructureDiagramme
-            // 
-            menuStructureDiagramme.Name = "menuStructureDiagramme";
-            menuStructureDiagramme.Size = new Size(136, 22);
-            menuStructureDiagramme.Text = "Diagramme";
             // 
             // menuRessources
             // 
             menuRessources.DropDownItems.AddRange(new ToolStripItem[] { menuRessourcesMetiers, menuRessourcesOuvriers });
             menuRessources.Name = "menuRessources";
-            menuRessources.Size = new Size(77, 25);
-            menuRessources.Text = "Ressources";
+            menuRessources.Size = new Size(92, 28);
+            menuRessources.Text = "👥 Ressources";
             // 
             // menuRessourcesMetiers
             // 
@@ -135,10 +133,10 @@ namespace PlanAthena.View
             // 
             // menuTaches
             // 
-            menuTaches.DropDownItems.AddRange(new ToolStripItem[] { menuTachesDiagramme, menuTachesListe });
+            menuTaches.DropDownItems.AddRange(new ToolStripItem[] { menuTachesDiagramme, toolStripSeparator1, menuTachesListe });
             menuTaches.Name = "menuTaches";
-            menuTaches.Size = new Size(55, 25);
-            menuTaches.Text = "Tâches";
+            menuTaches.Size = new Size(70, 28);
+            menuTaches.Text = "📝 Tâches";
             // 
             // menuTachesDiagramme
             // 
@@ -147,79 +145,80 @@ namespace PlanAthena.View
             menuTachesDiagramme.Text = "Diagramme";
             menuTachesDiagramme.Click += menuTachesDiagramme_Click;
             // 
-            // menuTachesDiagramme
+            // toolStripSeparator1
+            // 
+            toolStripSeparator1.Name = "toolStripSeparator1";
+            toolStripSeparator1.Size = new Size(133, 6);
+            // 
+            // menuTachesListe
             // 
             menuTachesListe.Name = "menuTachesListe";
             menuTachesListe.Size = new Size(136, 22);
-            menuTachesListe.Text = "Liste";
+            menuTachesListe.Text = "Cockpit";
             menuTachesListe.Click += menuTachesListe_Click;
             // 
             // menuPreferences
             // 
-            this.menuPreferences.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-    this.menuSaveLayout,
-    this.menuLoadLayout});
-            this.menuPreferences.Name = "menuPreferences";
-            this.menuPreferences.Size = new System.Drawing.Size(80, 25);
-            this.menuPreferences.Text = "Préférences";
+            menuPreferences.DropDownItems.AddRange(new ToolStripItem[] { menuSaveLayout, menuLoadLayout });
+            menuPreferences.Name = "menuPreferences";
+            menuPreferences.Size = new Size(95, 28);
+            menuPreferences.Text = "⚙️ Préférences";
             // 
             // menuSaveLayout
             // 
-
-            this.menuSaveLayout.Name = "menuSaveLayout";
-            this.menuSaveLayout.Size = new System.Drawing.Size(205, 22);
-            this.menuSaveLayout.Text = "Sauvegarder la disposition";
-            this.menuSaveLayout.Click += new System.EventHandler(this.menuSaveLayout_Click);
+            menuSaveLayout.Name = "menuSaveLayout";
+            menuSaveLayout.Size = new Size(212, 22);
+            menuSaveLayout.Text = "Sauvegarder la disposition";
+            menuSaveLayout.Click += menuSaveLayout_Click;
             // 
             // menuLoadLayout
             // 
-
-            this.menuLoadLayout.Name = "menuLoadLayout";
-            this.menuLoadLayout.Size = new System.Drawing.Size(205, 22);
-            this.menuLoadLayout.Text = "Charger la disposition";
-            this.menuLoadLayout.Click += new System.EventHandler(this.menuLoadLayout_Click);
+            menuLoadLayout.Name = "menuLoadLayout";
+            menuLoadLayout.Size = new Size(212, 22);
+            menuLoadLayout.Text = "Charger la disposition";
+            menuLoadLayout.Click += menuLoadLayout_Click;
             // 
             // toolStripComboBoxThemes
             // 
+            toolStripComboBoxThemes.Alignment = ToolStripItemAlignment.Right;
             toolStripComboBoxThemes.AutoSize = false;
             // 
             // toolStripComboBoxThemes
             // 
             toolStripComboBoxThemes.KryptonComboBoxControl.AccessibleName = "toolStripComboBoxThemes";
             toolStripComboBoxThemes.KryptonComboBoxControl.DropDownWidth = 121;
-            toolStripComboBoxThemes.KryptonComboBoxControl.Location = new Point(618, 3);
+            toolStripComboBoxThemes.KryptonComboBoxControl.Location = new Point(1353, 5);
             toolStripComboBoxThemes.KryptonComboBoxControl.Name = "kryptonToolStripComboBox1";
+            toolStripComboBoxThemes.KryptonComboBoxControl.Size = new Size(150, 22);
             toolStripComboBoxThemes.KryptonComboBoxControl.StateCommon.ComboBox.Content.TextH = PaletteRelativeAlign.Near;
             toolStripComboBoxThemes.KryptonComboBoxControl.TabIndex = 1;
             toolStripComboBoxThemes.KryptonComboBoxControl.Text = "Thème";
             toolStripComboBoxThemes.Name = "toolStripComboBoxThemes";
-            this.toolStripComboBoxThemes.Size = new Size(150, 25);
-
-            // AJOUTE CETTE LIGNE
-            this.toolStripComboBoxThemes.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            toolStripComboBoxThemes.Size = new Size(150, 22);
             toolStripComboBoxThemes.Text = "Thème";
             // 
             // panelContent
             // 
             panelContent.Dock = DockStyle.Fill;
-            panelContent.Location = new Point(0, 29);
+            panelContent.Location = new Point(0, 32);
             panelContent.Margin = new Padding(4, 3, 4, 3);
             panelContent.Name = "panelContent";
             panelContent.PaletteMode = PaletteMode.Office2010SilverDarkMode;
-            panelContent.Size = new Size(1487, 813);
+            panelContent.Size = new Size(1503, 762);
             panelContent.TabIndex = 1;
             // 
             // MainShellForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1487, 842);
+            ClientSize = new Size(1503, 794);
             Controls.Add(panelContent);
             Controls.Add(menuStrip);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = menuStrip;
             Margin = new Padding(4, 3, 4, 3);
             Name = "MainShellForm";
-            Text = "PlanAthena v0.5";
+            Text = "PlanAthena v0.7.0";
             WindowState = FormWindowState.Maximized;
             menuStrip.ResumeLayout(false);
             menuStrip.PerformLayout();
@@ -243,7 +242,6 @@ namespace PlanAthena.View
         private System.Windows.Forms.ToolStripMenuItem menuChargerProjet;
         private System.Windows.Forms.ToolStripMenuItem menuSauvegarderProjet;
         private System.Windows.Forms.ToolStripMenuItem menuStructureListe;
-        private System.Windows.Forms.ToolStripMenuItem menuStructureDiagramme;
         private System.Windows.Forms.ToolStripMenuItem menuRessourcesMetiers;
         private System.Windows.Forms.ToolStripMenuItem menuRessourcesOuvriers;
         private System.Windows.Forms.ToolStripMenuItem menuTachesDiagramme;
@@ -252,5 +250,6 @@ namespace PlanAthena.View
         private System.Windows.Forms.ToolStripMenuItem menuSaveLayout;
         private System.Windows.Forms.ToolStripMenuItem menuLoadLayout;
         private KryptonToolStripComboBox toolStripComboBoxThemes;
+        private ToolStripSeparator toolStripSeparator1;
     }
 }

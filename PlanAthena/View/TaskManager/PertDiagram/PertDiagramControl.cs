@@ -23,8 +23,8 @@ namespace PlanAthena.View.TaskManager.PertDiagram
         private List<Tache> _taches = new List<Tache>();
 
         // Zoom management
-        public double ZoomFacteur => _viewer?.ZoomF ?? 1.0;
-        private double _lastKnownZoomFactor = 1.0;
+        public double ZoomFacteur => _viewer?.ZoomF ?? 0.8;
+        private double _lastKnownZoomFactor = 0.8;
 
         // Tooltip management 
         private System.Windows.Forms.Timer tooltipTimer;
@@ -337,13 +337,38 @@ namespace PlanAthena.View.TaskManager.PertDiagram
         public void ZoomToutAjuster()
         {
             if (_viewer?.Graph == null) return;
-            _viewer.ZoomF = 1.0;
+            _viewer.ZoomF = 0.8;
             _viewer.Invalidate();
 
             // On notifie aussi ici
             ZoomChanged?.Invoke(this, new ZoomChangedEventArgs(1.0));
         }
+        /// <summary>
+        /// Déplace la vue du diagramme d'une quantité spécifiée en pixels d'écran.
+        /// La méthode ajuste le déplacement en fonction du niveau de zoom actuel.
+        /// </summary>
+        /// <param name="deltaX">Déplacement horizontal en pixels.</param>
+        /// <param name="deltaY">Déplacement vertical en pixels.</param>
+        public void Pan(int deltaX, int deltaY)
+        {
+            if (_viewer == null || _viewer.Graph == null) return;
 
+            // On convertit les pixels d'écran en unités du "monde" du graphe.
+            // Un déplacement de 10 pixels à l'écran correspond à un plus petit
+            // déplacement dans le graphe si on est très zoomé.
+            double dx = deltaX / _viewer.ZoomF;
+            double dy = deltaY / _viewer.ZoomF;
+
+            // Le système de coordonnées de MSAGL a l'axe Y pointant vers le haut.
+            // Le système de coordonnées de l'écran a l'axe Y pointant vers le bas.
+            // Il faut donc inverser le déplacement vertical.
+            _viewer.Pan(dx, dy);
+            //_viewer.Translate(dx, -dy);
+
+
+            // Forcer le redessin du contrôle pour afficher le changement.
+            _viewer.Invalidate();
+        }
         #endregion
 
         #region Génération du Diagramme

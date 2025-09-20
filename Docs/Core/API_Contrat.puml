@@ -6,18 +6,22 @@ skinparam linetype ortho
 skinparam ranksep 60
 skinparam nodesep 60
 skinparam shadowing false
-title Contrat de Service API - PlanAthena.Core v1.0\nsize:12<i>Documentation complète des DTOs d'entrée et de sortie</i></size>
+title Contrat de Service API - PlanAthena.Core v1.1\n<size:12><i>Documentation complète avec couches de validation renforcées</i></size>
+
 package "Point d'Entrée" {
 class "PlanAthenaCoreFacade" as Facade {
 + ProcessChantierAsync(input: ChantierSetupInputDto): Task<ProcessChantierResultDto>
 }
 }
+
 package "Contrat d'Entrée (Input DTOs)" <<Rectangle>> {
 class ChantierSetupInputDto {
 + ChantierId: string
 + Description: string
 + DateDebutSouhaitee: DateTime?
 + DateFinSouhaitee: DateTime?
++ FlexibiliteDebut: FlexibiliteDate
++ FlexibiliteFin: FlexibiliteDate
 --
 + CalendrierTravail: CalendrierTravailDefinitionDto
 + Blocs: IReadOnlyList<BlocTravailDto>
@@ -26,50 +30,39 @@ class ChantierSetupInputDto {
 + Ouvriers: IReadOnlyList<OuvrierDto>
 + Metiers: IReadOnlyList<MetierDto>
 + OptimizationConfig: OptimizationConfigDto?
++ ConfigurationCdC: ConfigurationChefChantierDto?
 }
-class CalendrierTravailDefinitionDto{
-+ JoursOuvres: IReadOnlyList<DayOfWeek>
-+ HeureDebutJournee: int
-+ HeuresTravailEffectifParJour: int
-}
+
 class TacheDto {
 + TacheId: string
-+ TacheNom: string
-+ HeuresHommeEstimees: double
++ Nom: string
++ Type: TypeActivite
++ BlocId: string
++ HeuresHommeEstimees: int
 + MetierId: string
 + Dependencies: IReadOnlyList<string>
-+ BlocId: string
-+ TypeActivite: TypeActivite
 }
-class OuvrierDto {
-+ OuvrierId: string
-+ Nom: string
-+ Prenom: string
-+ CoutJournalier: long
-+ Competences: IReadOnlyList<CompetenceDto>
-}
+note right of TacheDto: Les dates individuelles par tâche\nne sont pas supportées.\nLes contraintes temporelles sont\ngérées au niveau du chantier.
+
 class OptimizationConfigDto {
 + TypeDeSortie: string
++ DureeJournaliereStandardHeures: int
 + PenaliteChangementOuvrierPourcentage: decimal
-+ CoutIndirectJournalierAbsolu: long
-+ DureeCalculMaxMinutes: int
++ CoutIndirectJournalier: decimal
++ DureeCalculMaxSecondes: int
 }
 }
+
 package "Contrat de Sortie (Output DTOs)" <<Cloud>> {
-class "ProcessChantierResultDto" as ProcessResult <<(M,Lime) Modified>> {
+class "ProcessChantierResultDto" as ProcessResult {
 + ChantierId: string
 + Etat: EtatTraitementInput
 + Messages: IReadOnlyList<MessageValidationDto>
 --
 + OptimisationResultat: PlanningOptimizationResultDto?
-..
-+ AnalyseStatiqueResultat: AnalyseRessourcesResultatDto?>
++ AnalyseStatiqueResultat: AnalyseRessourcesResultatDto?
 }
-note right of ProcessResult
-<b>Modification Majeure :</b>
-Vérifier les données sorties par la DLL
-et le retour de l'analyse rapide.
-end note
+
 class PlanningOptimizationResultDto {
 + ChantierId: string
 + Status: OptimizationStatus
@@ -79,32 +72,71 @@ class PlanningOptimizationResultDto {
 + DureeTotaleEnSlots: long?
 + Affectations: IReadOnlyList<AffectationDto>
 }
+
+class MessageValidationDto {
++ Type: TypeMessageValidation
++ CodeMessage: string
++ Message: string
++ ProprieteConcernee: string?
+}
+note bottom of MessageValidationDto: Types de validation :\n• Erreur : Bloque l'exécution\n• Avertissement : Signale un risque\n• Suggestion : Information utile
+
 class AffectationDto {
 + TacheId: string
-+ TacheNom: string
 + OuvrierId: string
-+ OuvrierNom: string
 + BlocId: string
 + DateDebut: DateTime
 + DureeHeures: double
 + DateFin: DateTime
 + TypeActivite: TypeActivite
-}
-class MessageValidationDto {
-+ Type: TypeMessageValidation
-+ CodeMessage: string
-+ Message: string
-+ ElementId: string?
++ EstJalon: bool
 }
 }
+
+package "Couches de Validation" <<Frame>> {
+note as ValidationLayers
+<b>Validation en 6 Couches</b>
+1. <b>FluentValidation</b> - Format et structure
+2. <b>Références Croisées</b> - Cohérence des IDs
+3. <b>Mapping DTO→Domain</b> - Conversion
+4. <b>Cycles de Dépendances</b> - Logique métier
+5. <b>Capacités & Ressources</b> - Faisabilité
+6. <b>OR-Tools</b> - Optimisation mathématique
+end note
+}
+
+package "Statuts de Traitement" <<Database>> {
+enum OptimizationStatus {
+Optimal : Solution optimale trouvée
+Feasible : Solution réalisable (non optimale)
+Infeasible : Aucune solution possible
+Aborted : Interrompu (timeout)
+ModelInvalid : Erreur de modèle
+Unknown : Statut indéterminé
+}
+
+enum EtatTraitementInput {
+Succes : Traitement réussi
+SuccesAvecAvertissements : Réussi avec alertes
+EchecValidation : Échec en validation
+}
+}
+
 ' --- Relations de Contrat ---
 Facade .up.> ChantierSetupInputDto : "<<accepte>>"
 Facade .down.> ProcessResult : "<<retourne>>"
-ChantierSetupInputDto "1" *-down- "1" CalendrierTravailDefinitionDto
+
+ChantierSetupInputDto "1" *-down- "1..*" TacheDto
 ChantierSetupInputDto "1" *-down- "0..1" OptimizationConfigDto
-ChantierSetupInputDto "1" -down- "0.." TacheDto
-ChantierSetupInputDto "1" -down- "0.." OuvrierDto
+
 ProcessResult "1" *-down- "0..1" PlanningOptimizationResultDto
-PlanningOptimizationResultDto "1" -down- "0.." AffectationDto
-ProcessResult "1" -down- "0.." MessageValidationDto
+ProcessResult "1" -down- "0..*" MessageValidationDto
+PlanningOptimizationResultDto "1" -down- "0..*" AffectationDto
+PlanningOptimizationResultDto -down- OptimizationStatus
+
+ProcessResult -down- EtatTraitementInput
+
+ValidationLayers .up.> ChantierSetupInputDto : "<<valide>>"
+ValidationLayers .down.> MessageValidationDto : "<<produit>>"
+
 @enduml

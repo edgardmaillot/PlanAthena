@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>Resources\PlanAthena.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +24,7 @@
     <Content Include="Resources\DefaultMetiersConfig.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Resources\PlanAthena.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -56,12 +58,6 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
-    <Compile Update="View\Utils\ImportMappingView.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="View\Utils\ImportWarningsView.cs">
-      <SubType>Form</SubType>
     </Compile>
   </ItemGroup>
 

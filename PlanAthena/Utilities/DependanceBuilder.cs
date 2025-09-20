@@ -222,7 +222,6 @@ namespace PlanAthena.Utilities
                 successeurs.Add(successeurId);
 
                 // Exploration récursive des successeurs du successeur
-                // L'ordre des paramètres est maintenant correct : (..., successeurs, visite)
                 ExploreerSuccesseurs(graphe, successeurId, successeurs, visite);
             }
         }

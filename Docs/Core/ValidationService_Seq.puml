@@ -1,64 +1,91 @@
 @startuml
-title Diagramme de Séquence : Validation et Création du Modèle de Domaine (Corrigé)
+title Diagramme de Séquence : Validation Renforcée en 6 Couches
 
 participant ProcessChantierUseCase as UseCase
-participant "validator: IValidator<...>" as FluentValidator
+participant "fluentValidator: IValidator<...>" as FluentValidator
+participant "crossRefValidator: ICrossReferenceValidationService" as CrossRefValidator
 participant "mapper: IChantierSetupInputMapper" as Mapper
-participant "calendrier: ICalendrierService" as CalendrierSvc
-participant "validator: IChantierValidationService" as DomainValidator
-participant "graph: DependencyGraph" as DepGraph
+participant "chantierValidator: IChantierValidationService" as ChantierValidator
+participant "capacityValidator: ICapacityValidationService" as CapacityValidator
+participant "feasibilityService: IInitialFeasibilityAnalysisService" as FeasibilityService
 
 activate UseCase
+
+' === COUCHE 1: FluentValidation ===
+note over UseCase : **Couche 1: Validation Structure & Format**
 UseCase -> FluentValidator : ValidateAsync(inputDto)
 activate FluentValidator
-' Note: FluentValidator effectue de nombreuses vérifications internes sur les DTOs
+note right of FluentValidator : • Format des données\n• Règles métier de base\n• Unicité des IDs\n• Cohérence des dates
 FluentValidator --> UseCase : validationResult
 deactivate FluentValidator
 
 alt validationResult is NOT valid
-    note right: Validation DTO échouée
-    UseCase -->: return (null, messages)
+    note right: **ÉCHEC COUCHE 1**\nFormat ou structure invalide
+    UseCase --> : return (null, errorMessages)
     deactivate UseCase
 end
 
+' === COUCHE 2: Références Croisées ===
+note over UseCase : **Couche 2: Validation Références Croisées**
+UseCase -> CrossRefValidator : ValidateCrossReferencesAsync(inputDto, null)
+activate CrossRefValidator
+note right of CrossRefValidator : • BlocId dans Taches existent\n• MetierId dans Taches existent\n• Dependencies valides\n• Compétences ouvriers cohérentes
+CrossRefValidator --> UseCase : crossRefMessages
+deactivate CrossRefValidator
+
+alt crossRefMessages contient des erreurs
+    note right: **ÉCHEC COUCHE 2**\nRéférences invalides
+    UseCase --> : return (null, allMessages)
+    deactivate UseCase
+end
+
+' === COUCHE 3: Mapping ===
+note over UseCase : **Couche 3: Mapping DTO → Domain**
 UseCase -> Mapper : MapToDomainAsync(inputDto)
 activate Mapper
-Mapper -> CalendrierSvc : CreerCalendrierOuvreChantier(...)
-activate CalendrierSvc
-CalendrierSvc --> Mapper : calendrierOuvre
-deactivate CalendrierSvc
-note right of Mapper : Mappe DTOs vers Entités Domaine\nInjecte Métier/Ouvriers virtuels pour les jalons
+note right of Mapper : • Conversion vers entités\n• Création ouvriers virtuels (jalons)\n• Validation des Value Objects
 Mapper --> UseCase : (chantier, mappingMessages)
 deactivate Mapper
 
 alt chantier is null
-    note right: Erreur de mapping
-    UseCase -->: return (null, messages)
+    note right: **ÉCHEC COUCHE 3**\nErreur de mapping
+    UseCase --> : return (null, allMessages)
     deactivate UseCase
 end
 
-UseCase -> DomainValidator : ValiderChantierCompletAsync(inputDto, chantier)
-activate DomainValidator
-loop pour chaque BlocTravail du chantier
-    DomainValidator -> DepGraph : new(tachesDuBloc)
-    activate DepGraph
-    DepGraph --> DomainValidator : graph
-    deactivate DepGraph
+' === COUCHE 4: Cycles de Dépendances ===
+note over UseCase : **Couche 4: Validation Logique Métier**
+UseCase -> ChantierValidator : ValiderChantierCompletAsync(inputDto, chantier)
+activate ChantierValidator
+note right of ChantierValidator : • Détection cycles dépendances\n• Cohérence des blocs\n• Règles métier domaine
+ChantierValidator --> UseCase : cycleMessages
+deactivate ChantierValidator
 
-    DomainValidator -> DepGraph : DetectCycles()
-    activate DepGraph
-    DepGraph --> DomainValidator : cycles
-    deactivate DepGraph
-end
-DomainValidator --> UseCase : cycleMessages
-deactivate DomainValidator
+' === COUCHE 5: Capacités et Ressources ===
+note over UseCase : **Couche 5: Validation Capacités & Faisabilité**
+UseCase -> CapacityValidator : ValidateCapacityConstraintsAsync(inputDto, chantier)
+activate CapacityValidator
+note right of CapacityValidator : • Charge vs capacité globale\n• Capacités des blocs\n• Goulots d'étranglement\n• **Filtrage ouvriers virtuels**
+CapacityValidator --> UseCase : capacityMessages
+deactivate CapacityValidator
 
-alt Des erreurs de cycle ont été trouvées
-    note right: Cycles de dépendances détectés
-    UseCase -->: return (null, messages)
+' === COUCHE 6: Analyse de Faisabilité Initiale ===
+note over UseCase : **Couche 6: Analyse Métiers & Compétences**
+UseCase -> FeasibilityService : AnalyserFaisabiliteAsync(chantier)
+activate FeasibilityService
+note right of FeasibilityService : • Couverture métiers requis\n• Ouvriers compétents disponibles\n• **Exclusion des jalons**
+FeasibilityService --> UseCase : feasibilityMessages
+deactivate FeasibilityService
+
+' === RÉSULTAT FINAL ===
+alt allMessages contient des erreurs critiques
+    note right: **ÉCHEC VALIDATION**\nErreurs bloquantes détectées
+    UseCase --> : return (null, allMessages)
+    deactivate UseCase
+else Validation réussie (avec/sans avertissements)
+    note right: **SUCCÈS VALIDATION**\nPrêt pour OR-Tools
+    UseCase --> : return (chantier, allMessages)
     deactivate UseCase
 end
 
-UseCase --> : return (chantier, allMessages)
-deactivate UseCase
 @enduml

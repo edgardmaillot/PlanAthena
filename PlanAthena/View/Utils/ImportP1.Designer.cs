@@ -120,6 +120,9 @@ namespace PlanAthena.View.Utils
             kDataGrid_P1.Name = "kDataGrid_P1";
             kDataGrid_P1.ReadOnly = true;
             kDataGrid_P1.Size = new Size(768, 401);
+            kDataGrid_P1.StateCommon.BackStyle = Krypton.Toolkit.PaletteBackStyle.GridBackgroundList;
+            kDataGrid_P1.StateCommon.HeaderColumn.Content.Font = new Font("Arial", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            kDataGrid_P1.StateCommon.HeaderColumn.Content.Hint = Krypton.Toolkit.PaletteTextHint.AntiAlias;
             kDataGrid_P1.TabIndex = 1;
             // 
             // Column1

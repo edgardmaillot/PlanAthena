@@ -38,13 +38,14 @@ namespace PlanAthena.View.Planificator
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
-            DataGridViewCellStyle dataGridViewCellStyle4 = new DataGridViewCellStyle();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Title title2 = new System.Windows.Forms.DataVisualization.Charting.Title();
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Title title1 = new System.Windows.Forms.DataVisualization.Charting.Title();
             kryptonPanelMain = new KryptonPanel();
+            chkReinitialiserBaseline = new KryptonCheckBox();
             SolverProgressBar = new KryptonProgressBar();
             navigatorResultats = new KryptonNavigator();
             tabPageSynthese = new KryptonPage();
@@ -109,9 +110,9 @@ namespace PlanAthena.View.Planificator
             numDureeOuverture = new KryptonNumericUpDown();
             label9 = new KryptonLabel();
             numHeuresTravail = new KryptonNumericUpDown();
+            kryptonPictureBox1 = new KryptonPictureBox();
             planningTimer = new System.Windows.Forms.Timer(components);
             kryptonToolTip = new ToolTip(components);
-            chkReinitialiserBaseline = new KryptonCheckBox();
             ((System.ComponentModel.ISupportInitialize)kryptonPanelMain).BeginInit();
             kryptonPanelMain.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)navigatorResultats).BeginInit();
@@ -162,6 +163,7 @@ namespace PlanAthena.View.Planificator
             ((System.ComponentModel.ISupportInitialize)groupCalendrier).BeginInit();
             ((System.ComponentModel.ISupportInitialize)groupCalendrier.Panel).BeginInit();
             groupCalendrier.Panel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)kryptonPictureBox1).BeginInit();
             SuspendLayout();
             // 
             // kryptonPanelMain
@@ -170,25 +172,35 @@ namespace PlanAthena.View.Planificator
             kryptonPanelMain.Controls.Add(SolverProgressBar);
             kryptonPanelMain.Controls.Add(navigatorResultats);
             kryptonPanelMain.Controls.Add(groupConfig);
+            kryptonPanelMain.Controls.Add(kryptonPictureBox1);
             kryptonPanelMain.Dock = DockStyle.Fill;
             kryptonPanelMain.Location = new Point(0, 0);
             kryptonPanelMain.Margin = new Padding(4, 3, 4, 3);
             kryptonPanelMain.Name = "kryptonPanelMain";
             kryptonPanelMain.Padding = new Padding(12);
-            kryptonPanelMain.Size = new Size(1000, 800);
+            kryptonPanelMain.Size = new Size(1297, 800);
             kryptonPanelMain.TabIndex = 0;
+            // 
+            // chkReinitialiserBaseline
+            // 
+            chkReinitialiserBaseline.Location = new Point(466, 138);
+            chkReinitialiserBaseline.Name = "chkReinitialiserBaseline";
+            chkReinitialiserBaseline.Size = new Size(208, 36);
+            chkReinitialiserBaseline.TabIndex = 4;
+            chkReinitialiserBaseline.Values.Text = "Réinitialiser les rapports financiers\r\navec ce nouveau planning";
             // 
             // SolverProgressBar
             // 
-            SolverProgressBar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            SolverProgressBar.Location = new Point(128, 241);
+            SolverProgressBar.Location = new Point(198, 241);
             SolverProgressBar.Name = "SolverProgressBar";
-            SolverProgressBar.Size = new Size(770, 21);
+            SolverProgressBar.Size = new Size(787, 21);
             SolverProgressBar.StateCommon.Back.Color1 = Color.Green;
             SolverProgressBar.StateDisabled.Back.ColorStyle = PaletteColorStyle.OneNote;
             SolverProgressBar.StateNormal.Back.ColorStyle = PaletteColorStyle.OneNote;
             SolverProgressBar.TabIndex = 3;
             SolverProgressBar.Text = "Calcul en cours";
+            SolverProgressBar.TextBackdropColor = Color.Empty;
+            SolverProgressBar.TextShadowColor = Color.Empty;
             SolverProgressBar.Values.Text = "Calcul en cours";
             SolverProgressBar.Visible = false;
             // 
@@ -207,13 +219,14 @@ namespace PlanAthena.View.Planificator
             navigatorResultats.Button.PreviousButtonAction = DirectionButtonAction.ModeAppropriateAction;
             navigatorResultats.Button.PreviousButtonDisplay = ButtonDisplay.Logic;
             navigatorResultats.ControlKryptonFormFeatures = false;
-            navigatorResultats.Location = new Point(12, 279);
+            navigatorResultats.Location = new Point(12, 273);
+            navigatorResultats.MaximumSize = new Size(976, 510);
             navigatorResultats.NavigatorMode = NavigatorMode.BarTabGroup;
             navigatorResultats.Owner = null;
             navigatorResultats.PageBackStyle = PaletteBackStyle.PanelClient;
             navigatorResultats.Pages.AddRange(new KryptonPage[] { tabPageSynthese, tabPageRessources, tabPageJournal });
             navigatorResultats.SelectedIndex = 0;
-            navigatorResultats.Size = new Size(976, 559);
+            navigatorResultats.Size = new Size(976, 507);
             navigatorResultats.TabIndex = 2;
             navigatorResultats.Text = "navigatorResultats";
             // 
@@ -227,7 +240,7 @@ namespace PlanAthena.View.Planificator
             tabPageSynthese.MinimumSize = new Size(50, 50);
             tabPageSynthese.Name = "tabPageSynthese";
             tabPageSynthese.Padding = new Padding(10);
-            tabPageSynthese.Size = new Size(974, 532);
+            tabPageSynthese.Size = new Size(974, 480);
             tabPageSynthese.Text = "Synthèse";
             tabPageSynthese.ToolTipTitle = "Page ToolTip";
             tabPageSynthese.UniqueName = "1D744655612F4462B15591322051E959";
@@ -240,9 +253,9 @@ namespace PlanAthena.View.Planificator
             kryptonPanelKpis.Controls.Add(kryptonHeaderGroup2);
             kryptonPanelKpis.Controls.Add(kryptonHeaderGroup1);
             kryptonPanelKpis.Dock = DockStyle.Fill;
-            kryptonPanelKpis.Location = new Point(10, 154);
+            kryptonPanelKpis.Location = new Point(10, 301);
             kryptonPanelKpis.Name = "kryptonPanelKpis";
-            kryptonPanelKpis.Size = new Size(954, 368);
+            kryptonPanelKpis.Size = new Size(954, 169);
             kryptonPanelKpis.TabIndex = 6;
             // 
             // khgSolverStatus
@@ -402,11 +415,12 @@ namespace PlanAthena.View.Planificator
             // 
             khgNotification.Dock = DockStyle.Top;
             khgNotification.Location = new Point(10, 10);
+            khgNotification.MaximumSize = new Size(955, 291);
             // 
             // 
             // 
             khgNotification.Panel.Controls.Add(rtbNotification);
-            khgNotification.Size = new Size(954, 144);
+            khgNotification.Size = new Size(954, 291);
             khgNotification.StateCommon.HeaderPrimary.Content.ShortText.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             khgNotification.TabIndex = 5;
             khgNotification.ValuesPrimary.Heading = "Titre de la Notification";
@@ -420,7 +434,7 @@ namespace PlanAthena.View.Planificator
             rtbNotification.Location = new Point(0, 0);
             rtbNotification.Name = "rtbNotification";
             rtbNotification.ReadOnly = true;
-            rtbNotification.Size = new Size(952, 94);
+            rtbNotification.Size = new Size(952, 241);
             rtbNotification.StateCommon.Back.Color1 = SystemColors.Control;
             rtbNotification.TabIndex = 0;
             rtbNotification.Text = "";
@@ -470,6 +484,9 @@ namespace PlanAthena.View.Planificator
             dgvAnalyseOuvriers.RowHeadersVisible = false;
             dgvAnalyseOuvriers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvAnalyseOuvriers.Size = new Size(977, 200);
+            dgvAnalyseOuvriers.StateCommon.BackStyle = PaletteBackStyle.GridBackgroundList;
+            dgvAnalyseOuvriers.StateCommon.HeaderColumn.Content.Font = new Font("Arial", 9.5F);
+            dgvAnalyseOuvriers.StateCommon.HeaderColumn.Content.Hint = PaletteTextHint.AntiAlias;
             dgvAnalyseOuvriers.TabIndex = 0;
             // 
             // colOuvrier
@@ -490,8 +507,8 @@ namespace PlanAthena.View.Planificator
             // colTauxOccupation
             // 
             colTauxOccupation.DataPropertyName = "TauxOccupation";
-            dataGridViewCellStyle3.Format = "P1";
-            colTauxOccupation.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle1.Format = "P1";
+            colTauxOccupation.DefaultCellStyle = dataGridViewCellStyle1;
             colTauxOccupation.HeaderText = "Taux Occupation (%)";
             colTauxOccupation.Name = "colTauxOccupation";
             colTauxOccupation.ReadOnly = true;
@@ -499,8 +516,8 @@ namespace PlanAthena.View.Planificator
             // colTauxFragmentation
             // 
             colTauxFragmentation.DataPropertyName = "TauxFragmentation";
-            dataGridViewCellStyle4.Format = "P1";
-            colTauxFragmentation.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle2.Format = "P1";
+            colTauxFragmentation.DefaultCellStyle = dataGridViewCellStyle2;
             colTauxFragmentation.HeaderText = "Taux Fragmentation (%)";
             colTauxFragmentation.Name = "colTauxFragmentation";
             colTauxFragmentation.ReadOnly = true;
@@ -521,27 +538,27 @@ namespace PlanAthena.View.Planificator
             // 
             // chartChargeJournaliere
             // 
-            chartArea2.AxisX.MajorGrid.LineColor = Color.LightGray;
-            chartArea2.AxisY.MajorGrid.LineColor = Color.LightGray;
-            chartArea2.Name = "ChartArea1";
-            chartChargeJournaliere.ChartAreas.Add(chartArea2);
+            chartArea1.AxisX.MajorGrid.LineColor = Color.LightGray;
+            chartArea1.AxisY.MajorGrid.LineColor = Color.LightGray;
+            chartArea1.Name = "ChartArea1";
+            chartChargeJournaliere.ChartAreas.Add(chartArea1);
             chartChargeJournaliere.Dock = DockStyle.Fill;
-            legend2.Enabled = false;
-            legend2.Name = "Legend1";
-            chartChargeJournaliere.Legends.Add(legend2);
+            legend1.Enabled = false;
+            legend1.Name = "Legend1";
+            chartChargeJournaliere.Legends.Add(legend1);
             chartChargeJournaliere.Location = new Point(0, 0);
             chartChargeJournaliere.Name = "chartChargeJournaliere";
-            series2.ChartArea = "ChartArea1";
-            series2.Legend = "Legend1";
-            series2.Name = "Series1";
-            chartChargeJournaliere.Series.Add(series2);
+            series1.ChartArea = "ChartArea1";
+            series1.Legend = "Legend1";
+            series1.Name = "Series1";
+            chartChargeJournaliere.Series.Add(series1);
             chartChargeJournaliere.Size = new Size(977, 219);
             chartChargeJournaliere.TabIndex = 0;
             chartChargeJournaliere.Text = "chart1";
-            title2.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold);
-            title2.Name = "Title1";
-            title2.Text = "Charge Journalière (Nombre d'Ouvriers)";
-            chartChargeJournaliere.Titles.Add(title2);
+            title1.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold);
+            title1.Name = "Title1";
+            title1.Text = "Charge Journalière (Nombre d'Ouvriers)";
+            chartChargeJournaliere.Titles.Add(title1);
             // 
             // tabPageJournal
             // 
@@ -574,6 +591,7 @@ namespace PlanAthena.View.Planificator
             groupConfig.Dock = DockStyle.Top;
             groupConfig.Location = new Point(12, 12);
             groupConfig.Margin = new Padding(4, 3, 4, 3);
+            groupConfig.MaximumSize = new Size(976, 261);
             // 
             // 
             // 
@@ -788,10 +806,10 @@ namespace PlanAthena.View.Planificator
             // 
             // btnLaunch
             // 
-            btnLaunch.Location = new Point(222, 173);
+            btnLaunch.Location = new Point(164, 173);
             btnLaunch.Margin = new Padding(4, 3, 4, 3);
             btnLaunch.Name = "btnLaunch";
-            btnLaunch.Size = new Size(383, 40);
+            btnLaunch.Size = new Size(440, 40);
             btnLaunch.TabIndex = 3;
             btnLaunch.Values.DropDownArrowColor = Color.Empty;
             btnLaunch.Values.Text = "LANCER LA PLANIFICATION";
@@ -932,13 +950,17 @@ namespace PlanAthena.View.Planificator
             numHeuresTravail.TabIndex = 5;
             numHeuresTravail.Value = new decimal(new int[] { 0, 0, 0, 0 });
             // 
-            // chkReinitialiserBaseline
+            // kryptonPictureBox1
             // 
-            chkReinitialiserBaseline.Location = new Point(466, 138);
-            chkReinitialiserBaseline.Name = "chkReinitialiserBaseline";
-            chkReinitialiserBaseline.Size = new Size(208, 36);
-            chkReinitialiserBaseline.TabIndex = 4;
-            chkReinitialiserBaseline.Values.Text = "Réinitialiser les rapports financiers\r\navec ce nouveau planning";
+            kryptonPictureBox1.BorderStyle = BorderStyle.Fixed3D;
+            kryptonPictureBox1.Image = Properties.Resources.SplashScreen;
+            kryptonPictureBox1.InitialImage = null;
+            kryptonPictureBox1.Location = new Point(61, 120);
+            kryptonPictureBox1.Name = "kryptonPictureBox1";
+            kryptonPictureBox1.Size = new Size(888, 660);
+            kryptonPictureBox1.SizeMode = PictureBoxSizeMode.CenterImage;
+            kryptonPictureBox1.TabIndex = 5;
+            kryptonPictureBox1.TabStop = false;
             // 
             // PlanificatorView
             // 
@@ -947,7 +969,7 @@ namespace PlanAthena.View.Planificator
             Controls.Add(kryptonPanelMain);
             Margin = new Padding(4, 3, 4, 3);
             Name = "PlanificatorView";
-            Size = new Size(1000, 800);
+            Size = new Size(1297, 800);
             ((System.ComponentModel.ISupportInitialize)kryptonPanelMain).EndInit();
             kryptonPanelMain.ResumeLayout(false);
             kryptonPanelMain.PerformLayout();
@@ -1007,6 +1029,7 @@ namespace PlanAthena.View.Planificator
             groupCalendrier.Panel.ResumeLayout(false);
             groupCalendrier.Panel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)groupCalendrier).EndInit();
+            ((System.ComponentModel.ISupportInitialize)kryptonPictureBox1).EndInit();
             ResumeLayout(false);
 
         }
@@ -1080,5 +1103,6 @@ namespace PlanAthena.View.Planificator
         private KryptonButton btnExportPlanningExcel;
         private ToolTip kryptonToolTip;
         private KryptonCheckBox chkReinitialiserBaseline;
+        private KryptonPictureBox kryptonPictureBox1;
     }
 }

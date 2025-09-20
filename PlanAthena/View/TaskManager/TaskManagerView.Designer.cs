@@ -106,9 +106,10 @@ namespace PlanAthena.View.TaskManager
             panUp.Margin = new Padding(1, 0, 0, 0);
             panUp.Name = "panUp";
             panUp.Size = new Size(19, 20);
-            panUp.StateNormal.ShortText.Font = new Font("Segoe UI Emoji", 10F, FontStyle.Bold);
+            panUp.StateNormal.ShortText.Font = new Font("Segoe UI Emoji", 12F);
+            panUp.StateNormal.ShortText.Hint = PaletteTextHint.AntiAlias;
             panUp.TabIndex = 0;
-            panUp.Values.Text = "⇧";
+            panUp.Values.Text = "↑";
             // 
             // panLeft
             // 
@@ -116,9 +117,10 @@ namespace PlanAthena.View.TaskManager
             panLeft.Margin = new Padding(0);
             panLeft.Name = "panLeft";
             panLeft.Size = new Size(20, 20);
-            panLeft.StateNormal.ShortText.Font = new Font("Segoe UI Emoji", 10F, FontStyle.Bold);
+            panLeft.StateNormal.ShortText.Font = new Font("Segoe UI Emoji", 12F);
+            panLeft.StateNormal.ShortText.Hint = PaletteTextHint.AntiAlias;
             panLeft.TabIndex = 1;
-            panLeft.Values.Text = "⇦";
+            panLeft.Values.Text = "←";
             // 
             // panRight
             // 
@@ -126,9 +128,10 @@ namespace PlanAthena.View.TaskManager
             panRight.Margin = new Padding(0);
             panRight.Name = "panRight";
             panRight.Size = new Size(21, 20);
-            panRight.StateNormal.ShortText.Font = new Font("Segoe UI Emoji", 10F, FontStyle.Bold);
+            panRight.StateNormal.ShortText.Font = new Font("Segoe UI Emoji", 12F);
+            panRight.StateNormal.ShortText.Hint = PaletteTextHint.AntiAlias;
             panRight.TabIndex = 2;
-            panRight.Values.Text = "⇨";
+            panRight.Values.Text = "→";
             // 
             // panDown
             // 
@@ -136,17 +139,22 @@ namespace PlanAthena.View.TaskManager
             panDown.Margin = new Padding(1, 0, 0, 0);
             panDown.Name = "panDown";
             panDown.Size = new Size(19, 20);
-            panDown.StateNormal.ShortText.Font = new Font("Segoe UI Emoji", 10F, FontStyle.Bold);
+            panDown.StateNormal.ShortText.Font = new Font("Segoe UI Emoji", 12F);
+            panDown.StateNormal.ShortText.Hint = PaletteTextHint.AntiAlias;
             panDown.TabIndex = 3;
-            panDown.Values.Text = "⇩";
+            panDown.Values.Text = "↓";
             // 
             // panCenter
             // 
             panCenter.Location = new Point(20, 20);
-            panCenter.Margin = new Padding(0, 0, 2, 0);
+            panCenter.Margin = new Padding(0);
             panCenter.Name = "panCenter";
-            panCenter.Size = new Size(18, 20);
-            panCenter.StateNormal.ShortText.Font = new Font("Segoe UI Emoji", 10F);
+            panCenter.Size = new Size(20, 20);
+            panCenter.StateNormal.Padding = new Padding(0);
+            panCenter.StateNormal.ShortText.Font = new Font("Segoe UI Emoji", 12F);
+            panCenter.StateNormal.ShortText.Hint = PaletteTextHint.AntiAlias;
+            panCenter.StateNormal.ShortText.TextH = PaletteRelativeAlign.Center;
+            panCenter.StateNormal.ShortText.TextV = PaletteRelativeAlign.Center;
             panCenter.TabIndex = 4;
             panCenter.Values.Text = "●";
             // 

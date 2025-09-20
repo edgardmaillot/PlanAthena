@@ -11,6 +11,8 @@ namespace PlanAthena.View.TaskManager.Utilitaires
     /// Représente un élément affiché dans la liste de dépendances,
     /// encapsulant les données brutes et l'état de la case à cocher.
     /// </summary>
+    // Dans le fichier DependanceDisplayItem.cs
+
     public class DependanceDisplayItem
     {
         public DependanceAffichage OriginalData { get; }
@@ -22,9 +24,29 @@ namespace PlanAthena.View.TaskManager.Utilitaires
 
         public override string ToString()
         {
-            // Le texte affiché dans la CheckedListBox.
-            string type = OriginalData.EstHeritee ? "(Héritée) " : "(Directe) ";
-            return $"{type}{OriginalData.TachePredecesseur.TacheNom}";
+            string picto;
+
+            switch (OriginalData.Etat)
+            {
+                case EtatDependance.Suggeree:
+                    picto = "✓ "; // Un check simple pour la suggestion
+                    break;
+
+                case EtatDependance.Exclue:
+                    picto = "✗ "; // Un 'X' pour l'exclusion
+                    break;
+
+                // Pour les choix manuels et les neutres, on n'ajoute pas de picto.
+                // On ajoute des espaces pour l'alignement vertical du texte.
+                case EtatDependance.Stricte:
+                case EtatDependance.Neutre:
+                default:
+                    picto = "  "; // Deux espaces pour aligner avec les pictogrammes
+                    break;
+            }
+
+            // On retourne la chaîne formatée
+            return $"{picto}{OriginalData.TachePredecesseur.TacheNom}";
         }
     }
 }

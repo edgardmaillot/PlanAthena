@@ -35,6 +35,14 @@ namespace PlanAthena.View.TaskManager
 
         private bool _suppressPlanningWarning = false;
 
+        //Gestion du Pan 
+        private const int SINGLE_PAN_STEP = 40;     // Pixels pour un simple clic ('Y')
+        private const int CONTINUOUS_PAN_STEP = 15; // Pixels par tick du timer ('X')
+        private const int PAN_TIMER_INTERVAL = 50;  // Millisecondes entre chaque déplacement continu
+        private System.Windows.Forms.Timer _panTimer;
+        private Point _panDirection;
+        private bool _isContinuousPanning; // Pour différencier un clic d'un appui long
+
         // État de la vue
         private string _activeLotId;
         public event EventHandler<Type> NavigateToViewRequested;
@@ -66,13 +74,22 @@ namespace PlanAthena.View.TaskManager
         private void TaskManagerView_Load(object sender, EventArgs e)
         {
             if (DesignMode) return;
-
+            SuspendLayout();
+            InitializePanControls();
             InitializeServicesForControls();
             InitializeDockingLayout();
             AttachEvents();
+            ResumeLayout();
             RefreshAll();
         }
-
+        /// <summary>
+        /// Initialise le timer et la logique pour les boutons de navigation.
+        /// </summary>
+        private void InitializePanControls()
+        {
+            _panTimer = new System.Windows.Forms.Timer { Interval = PAN_TIMER_INTERVAL };
+            _panTimer.Tick += PanTimer_Tick;
+        }
         /// <summary>
         /// Injecte les services nécessaires dans les UserControls enfants.
         /// </summary>
@@ -173,6 +190,26 @@ namespace PlanAthena.View.TaskManager
 
             zoomTrackBar.ValueChanged += zoomTrackBar_ValueChanged;
             pertDiagramControl1.ZoomChanged += PertDiagramControl1_ZoomChanged;
+
+            // Événement générique pour arrêter le timer
+            var panMouseUpHandler = new MouseEventHandler(Pan_MouseUp);
+            panUp.MouseUp += panMouseUpHandler;
+            panDown.MouseUp += panMouseUpHandler;
+            panLeft.MouseUp += panMouseUpHandler;
+            panRight.MouseUp += panMouseUpHandler;
+
+            // Événements spécifiques pour chaque direction
+            panUp.MouseDown += PanUp_MouseDown;
+            panUp.Click += PanUp_Click;
+
+            panDown.MouseDown += PanDown_MouseDown;
+            panDown.Click += PanDown_Click;
+
+            panLeft.MouseDown += PanLeft_MouseDown;
+            panLeft.Click += PanLeft_Click;
+
+            panRight.MouseDown += PanRight_MouseDown;
+            panRight.Click += PanRight_Click;
 
             btnPlanificator.Click += (s, e) => NavigateToViewRequested?.Invoke(this, typeof(PlanificatorView));
         }
@@ -287,6 +324,88 @@ namespace PlanAthena.View.TaskManager
                 {
                     MessageBox.Show(ex.Message, "Erreur de suppression", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
+            }
+        }
+
+        #endregion
+
+        #region Gestionnaires de Navigation (Pan)
+
+        private void PanTimer_Tick(object sender, EventArgs e)
+        {
+            // Indique qu'un déplacement continu a eu lieu.
+            _isContinuousPanning = true;
+            pertDiagramControl1.Pan(_panDirection.X, _panDirection.Y);
+        }
+
+        private void Pan_MouseUp(object sender, MouseEventArgs e)
+        {
+            // Arrête le déplacement continu dès que le bouton est relâché.
+            _panTimer.Stop();
+        }
+
+        // --- Handlers pour Pan UP ---
+        private void PanUp_MouseDown(object sender, MouseEventArgs e)
+        {
+            _isContinuousPanning = false; // Réinitialiser le flag
+            _panDirection = new Point(0, -CONTINUOUS_PAN_STEP);
+            _panTimer.Start();
+        }
+
+        private void PanUp_Click(object sender, EventArgs e)
+        {
+            // Si le timer n'a pas eu le temps de se déclencher, c'est un clic simple.
+            if (!_isContinuousPanning)
+            {
+                pertDiagramControl1.Pan(0, -SINGLE_PAN_STEP);
+            }
+        }
+
+        // --- Handlers pour Pan DOWN ---
+        private void PanDown_MouseDown(object sender, MouseEventArgs e)
+        {
+            _isContinuousPanning = false;
+            _panDirection = new Point(0, CONTINUOUS_PAN_STEP);
+            _panTimer.Start();
+        }
+
+        private void PanDown_Click(object sender, EventArgs e)
+        {
+            if (!_isContinuousPanning)
+            {
+                pertDiagramControl1.Pan(0, SINGLE_PAN_STEP);
+            }
+        }
+
+        // --- Handlers pour Pan LEFT ---
+        private void PanLeft_MouseDown(object sender, MouseEventArgs e)
+        {
+            _isContinuousPanning = false;
+            _panDirection = new Point(-CONTINUOUS_PAN_STEP, 0);
+            _panTimer.Start();
+        }
+
+        private void PanLeft_Click(object sender, EventArgs e)
+        {
+            if (!_isContinuousPanning)
+            {
+                pertDiagramControl1.Pan(-SINGLE_PAN_STEP, 0);
+            }
+        }
+
+        // --- Handlers pour Pan RIGHT ---
+        private void PanRight_MouseDown(object sender, MouseEventArgs e)
+        {
+            _isContinuousPanning = false;
+            _panDirection = new Point(CONTINUOUS_PAN_STEP, 0);
+            _panTimer.Start();
+        }
+
+        private void PanRight_Click(object sender, EventArgs e)
+        {
+            if (!_isContinuousPanning)
+            {
+                pertDiagramControl1.Pan(SINGLE_PAN_STEP, 0);
             }
         }
 

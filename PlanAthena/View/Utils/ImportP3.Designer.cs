@@ -28,7 +28,6 @@ namespace PlanAthena.View.Utils
         /// </summary>
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ImportP3));
             kryptonTableLayoutPanel1 = new Krypton.Toolkit.KryptonTableLayoutPanel();
             kryptonTableLayoutPanel2 = new Krypton.Toolkit.KryptonTableLayoutPanel();
@@ -42,7 +41,6 @@ namespace PlanAthena.View.Utils
             kryptonPanel1 = new Krypton.Toolkit.KryptonPanel();
             kryptonPanel4 = new Krypton.Toolkit.KryptonPanel();
             khInstructions = new Krypton.Toolkit.KryptonHeaderGroup();
-
             kryptonTableLayoutPanel1.SuspendLayout();
             kryptonTableLayoutPanel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)kDataGrid_P3).BeginInit();
@@ -54,7 +52,6 @@ namespace PlanAthena.View.Utils
             kryptonPanel4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)khInstructions).BeginInit();
             ((System.ComponentModel.ISupportInitialize)khInstructions.Panel).BeginInit();
-
             SuspendLayout();
             // 
             // kryptonTableLayoutPanel1
@@ -112,6 +109,9 @@ namespace PlanAthena.View.Utils
             kDataGrid_P3.Location = new Point(3, 45);
             kDataGrid_P3.Name = "kDataGrid_P3";
             kDataGrid_P3.Size = new Size(768, 381);
+            kDataGrid_P3.StateCommon.BackStyle = Krypton.Toolkit.PaletteBackStyle.GridBackgroundList;
+            kDataGrid_P3.StateCommon.HeaderColumn.Content.Font = new Font("Arial", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            kDataGrid_P3.StateCommon.HeaderColumn.Content.Hint = Krypton.Toolkit.PaletteTextHint.AntiAlias;
             kDataGrid_P3.TabIndex = 1;
             // 
             // kryptonPanel3
@@ -219,7 +219,6 @@ namespace PlanAthena.View.Utils
             kryptonPanel4.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)khInstructions.Panel).EndInit();
             ((System.ComponentModel.ISupportInitialize)khInstructions).EndInit();
-
             ResumeLayout(false);
         }
 

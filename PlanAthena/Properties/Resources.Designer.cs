@@ -103,6 +103,26 @@ namespace PlanAthena.Properties {
         /// <summary>
         ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Ic_Immeuble_b {
+            get {
+                object obj = ResourceManager.GetObject("Ic_Immeuble_b", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Ic_Immeuble_w {
+            get {
+                object obj = ResourceManager.GetObject("Ic_Immeuble_w", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap ic_Instructions {
             get {
                 object obj = ResourceManager.GetObject("ic_Instructions", resourceCulture);

@@ -181,6 +181,7 @@ namespace PlanAthena.View.Ressources.MetierDiagram
             gridOuvriers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             gridOuvriers.Size = new Size(510, 570);
             gridOuvriers.StateCommon.BackStyle = PaletteBackStyle.GridBackgroundList;
+            gridOuvriers.StateCommon.HeaderColumn.Content.Font = new Font("Arial", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             gridOuvriers.StateCommon.HeaderColumn.Content.Hint = PaletteTextHint.AntiAlias;
             gridOuvriers.TabIndex = 1;
             gridOuvriers.SelectionChanged += gridOuvriers_SelectionChanged;

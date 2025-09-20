@@ -34,6 +34,9 @@ namespace PlanAthena.View.TaskManager
             numHeuresHomme = new KryptonNumericUpDown();
             kryptonTableLayoutPanel1 = new KryptonTableLayoutPanel();
             kryptonPanel2 = new KryptonPanel();
+            lblStatutPicto = new KryptonLabel();
+            lblStatutValeur = new KryptonLabel();
+            lblStatut = new KryptonLabel();
             kryptonHeader2 = new KryptonHeader();
             lblBlocNom = new KryptonLabel();
             cmbBlocNom = new KryptonComboBox();
@@ -43,9 +46,6 @@ namespace PlanAthena.View.TaskManager
             lblHeures = new KryptonLabel();
             lblTacheNom = new KryptonLabel();
             kryptonPanel3 = new KryptonPanel();
-            lblStatut = new KryptonLabel();
-            lblStatutValeur = new KryptonLabel();
-            lblStatutPicto = new KryptonLabel();
             ((System.ComponentModel.ISupportInitialize)panelActions).BeginInit();
             panelActions.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)cmbLots).BeginInit();
@@ -114,6 +114,7 @@ namespace PlanAthena.View.TaskManager
             chkListDependances.Margin = new Padding(4, 3, 4, 3);
             chkListDependances.Name = "chkListDependances";
             chkListDependances.Size = new Size(282, 338);
+            chkListDependances.StateCommon.Item.Content.ShortText.Font = new Font("Segoe UI Emoji", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             chkListDependances.TabIndex = 20;
             // 
             // cmbLots
@@ -219,6 +220,33 @@ namespace PlanAthena.View.TaskManager
             kryptonPanel2.Size = new Size(277, 165);
             kryptonPanel2.TabIndex = 21;
             // 
+            // lblStatutPicto
+            // 
+            lblStatutPicto.Location = new Point(66, 117);
+            lblStatutPicto.MaximumSize = new Size(32, 22);
+            lblStatutPicto.MinimumSize = new Size(32, 22);
+            lblStatutPicto.Name = "lblStatutPicto";
+            lblStatutPicto.Size = new Size(32, 22);
+            lblStatutPicto.StateNormal.ShortText.Font = new Font("Segoe UI Symbol", 14F);
+            lblStatutPicto.TabIndex = 46;
+            lblStatutPicto.Values.Text = "";
+            // 
+            // lblStatutValeur
+            // 
+            lblStatutValeur.Location = new Point(103, 117);
+            lblStatutValeur.Name = "lblStatutValeur";
+            lblStatutValeur.Size = new Size(56, 20);
+            lblStatutValeur.TabIndex = 45;
+            lblStatutValeur.Values.Text = "Planifiée";
+            // 
+            // lblStatut
+            // 
+            lblStatut.Location = new Point(11, 117);
+            lblStatut.Name = "lblStatut";
+            lblStatut.Size = new Size(49, 20);
+            lblStatut.TabIndex = 44;
+            lblStatut.Values.Text = "Statut :";
+            // 
             // kryptonHeader2
             // 
             kryptonHeader2.Dock = DockStyle.Bottom;
@@ -311,33 +339,6 @@ namespace PlanAthena.View.TaskManager
             kryptonPanel3.Name = "kryptonPanel3";
             kryptonPanel3.Size = new Size(282, 338);
             kryptonPanel3.TabIndex = 27;
-            // 
-            // lblStatut
-            // 
-            lblStatut.Location = new Point(11, 117);
-            lblStatut.Name = "lblStatut";
-            lblStatut.Size = new Size(49, 20);
-            lblStatut.TabIndex = 44;
-            lblStatut.Values.Text = "Statut :";
-            // 
-            // lblStatutValeur
-            // 
-            lblStatutValeur.Location = new Point(103, 117);
-            lblStatutValeur.Name = "lblStatutValeur";
-            lblStatutValeur.Size = new Size(56, 20);
-            lblStatutValeur.TabIndex = 45;
-            lblStatutValeur.Values.Text = "Planifiée";
-            // 
-            // lblStatutPicto
-            // 
-            lblStatutPicto.Location = new Point(66, 117);
-            lblStatutPicto.MaximumSize = new Size(32, 22);
-            lblStatutPicto.MinimumSize = new Size(32, 22);
-            lblStatutPicto.Name = "lblStatutPicto";
-            lblStatutPicto.Size = new Size(32, 22);
-            lblStatutPicto.StateNormal.ShortText.Font = new Font("Segoe UI Symbol", 14F);
-            lblStatutPicto.TabIndex = 46;
-            lblStatutPicto.Values.Text = "";
             // 
             // TacheDetailView
             // 

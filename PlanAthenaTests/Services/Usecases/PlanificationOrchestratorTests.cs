@@ -3,6 +3,7 @@
 using Moq;
 using PlanAthena.Core.Application.Interfaces;
 using PlanAthena.Core.Facade;
+using PlanAthena.Core.Facade.Dto.Enums;
 using PlanAthena.Core.Facade.Dto.Input;
 using PlanAthena.Core.Facade.Dto.Output;
 using PlanAthena.Data;
@@ -89,7 +90,18 @@ namespace PlanAthenaTests.Services.Usecases
             _mockRessourceService.Setup(r => r.GetAllMetiers()).Returns(sampleMetiers);
             _mockRessourceService.Setup(r => r.GetAllOuvriers()).Returns(sampleOuvriers);
 
-            var rawResult = new ProcessChantierResultDto { OptimisationResultat = new PlanningOptimizationResultDto() };
+            // ✅ CORRECTION : Créer un résultat avec un statut de SUCCÈS
+            var rawResult = new ProcessChantierResultDto
+            {
+                OptimisationResultat = new PlanningOptimizationResultDto
+                {
+                    Status = OptimizationStatus.Optimal, // ← Statut de succès explicite
+                    ChantierId = "TEST_CHANTIER",
+                    CoutTotalEstime = 50000,
+                    DureeTotaleEnSlots = 100,
+                    Affectations = new List<AffectationDto>()
+                }
+            };
             _mockFacade.Setup(f => f.ProcessChantierAsync(It.IsAny<ChantierSetupInputDto>())).ReturnsAsync(rawResult);
 
             var preparationResult = new PreparationResult
@@ -113,16 +125,13 @@ namespace PlanAthenaTests.Services.Usecases
                 It.IsAny<AnalysisService.JoursOuvresCalculator>()))
                 .Returns(analysisReport);
 
-            // Setup pour la nouvelle méthode MettreAJourApresPlanification
             _mockTaskManagerService.Setup(t => t.MettreAJourApresPlanification(
                 It.IsAny<PlanningService>(),
                 It.IsAny<PreparationResult>()));
 
-            // Setup pour les nouvelles méthodes liées à la baseline
-            _mockPlanningService.Setup(p => p.GetBaseline()).Returns((PlanningBaseline)null); // Pas de baseline existante
+            _mockPlanningService.Setup(p => p.GetBaseline()).Returns((PlanningBaseline)null);
             _mockPlanningService.Setup(p => p.GetNombreJoursOuvres(It.IsAny<DateTime>(), It.IsAny<DateTime>())).Returns(20);
 
-            // Setup pour les méthodes d'analyse de baseline
             _mockAnalysisService.Setup(a => a.CalculerBudgetTotal(
                 It.IsAny<ConsolidatedPlanning>(),
                 It.IsAny<IReadOnlyList<Ouvrier>>(),
@@ -147,17 +156,13 @@ namespace PlanAthenaTests.Services.Usecases
 
             // --- ASSERT ---
             _mockPlanningService.Verify(p => p.UpdatePlanning(consolidatedPlanning, config), Times.Once);
-
-            // Vérifier que la nouvelle méthode de mise à jour après planification est bien appelée
             _mockTaskManagerService.Verify(t => t.MettreAJourApresPlanification(
                 _mockPlanningService.Object,
                 preparationResult), Times.Once);
 
-            // Vérifier que la baseline est créée (car GetBaseline retourne null)
             _mockPlanningService.Verify(p => p.GetBaseline(), Times.Once);
             _mockPlanningService.Verify(p => p.SetBaseline(It.IsAny<PlanningBaseline>()), Times.Once);
 
-            // Vérifier les appels aux méthodes d'analyse pour la baseline
             _mockAnalysisService.Verify(a => a.CalculerBudgetTotal(
                 consolidatedPlanning,
                 sampleOuvriers,
@@ -173,6 +178,8 @@ namespace PlanAthenaTests.Services.Usecases
 
             Assert.IsNotNull(result.AnalysisReport);
             Assert.AreSame(rawResult, result.RawResult);
+            // ✅ NOUVELLE ASSERTION : Vérifier que c'est un succès
+            Assert.IsTrue(result.Success);
         }
 
         [TestMethod]
@@ -187,7 +194,15 @@ namespace PlanAthenaTests.Services.Usecases
             _mockRessourceService.Setup(r => r.GetAllMetiers()).Returns(sampleMetiers);
             _mockRessourceService.Setup(r => r.GetAllOuvriers()).Returns(sampleOuvriers);
 
-            var rawResult = new ProcessChantierResultDto { OptimisationResultat = new PlanningOptimizationResultDto() };
+            // ✅ CORRECTION : Résultat de succès
+            var rawResult = new ProcessChantierResultDto
+            {
+                OptimisationResultat = new PlanningOptimizationResultDto
+                {
+                    Status = OptimizationStatus.Feasible, // ← Statut de succès
+                    ChantierId = "TEST_CHANTIER"
+                }
+            };
             _mockFacade.Setup(f => f.ProcessChantierAsync(It.IsAny<ChantierSetupInputDto>())).ReturnsAsync(rawResult);
 
             var preparationResult = new PreparationResult
@@ -202,12 +217,10 @@ namespace PlanAthenaTests.Services.Usecases
             _mockConsolidationService.Setup(c => c.Process(It.IsAny<ProcessChantierResultDto>(), It.IsAny<ConfigurationPlanification>()))
                 .Returns(consolidatedPlanning);
 
-            // Setup avec une baseline existante
             var existingBaseline = new PlanningBaseline { DateCreation = DateTime.Now.AddDays(-10) };
             _mockPlanningService.Setup(p => p.GetBaseline()).Returns(existingBaseline);
             _mockPlanningService.Setup(p => p.GetNombreJoursOuvres(It.IsAny<DateTime>(), It.IsAny<DateTime>())).Returns(20);
 
-            // Setup pour les méthodes d'analyse
             _mockAnalysisService.Setup(a => a.CalculerBudgetTotal(It.IsAny<ConsolidatedPlanning>(), It.IsAny<IReadOnlyList<Ouvrier>>(), It.IsAny<ConfigurationPlanification>(), It.IsAny<AnalysisService.JoursOuvresCalculator>())).Returns(100000m);
             _mockAnalysisService.Setup(a => a.CalculerCourbePlannedValueCumulative(It.IsAny<ConsolidatedPlanning>(), It.IsAny<IReadOnlyList<Ouvrier>>(), It.IsAny<ConfigurationPlanification>())).Returns(new Dictionary<DateTime, decimal>());
             _mockAnalysisService.Setup(a => a.CalculerBudgetParTache(It.IsAny<ConsolidatedPlanning>(), It.IsAny<IReadOnlyList<Ouvrier>>(), It.IsAny<ConfigurationPlanification>())).Returns(new Dictionary<string, decimal>());
@@ -217,8 +230,8 @@ namespace PlanAthenaTests.Services.Usecases
             var result = await _orchestrator.ExecuteAsync(config, reinitialiserBaseline);
 
             // --- ASSERT ---
-            // La baseline doit être réinitialisée même s'il y en avait une existante
             _mockPlanningService.Verify(p => p.SetBaseline(It.IsAny<PlanningBaseline>()), Times.Once);
+            Assert.IsTrue(result.Success);
         }
 
         [TestMethod]
@@ -233,7 +246,15 @@ namespace PlanAthenaTests.Services.Usecases
             _mockRessourceService.Setup(r => r.GetAllMetiers()).Returns(sampleMetiers);
             _mockRessourceService.Setup(r => r.GetAllOuvriers()).Returns(sampleOuvriers);
 
-            var rawResult = new ProcessChantierResultDto { OptimisationResultat = new PlanningOptimizationResultDto() };
+            // ✅ CORRECTION : Résultat de succès pour qu'une baseline puisse être créée
+            var rawResult = new ProcessChantierResultDto
+            {
+                OptimisationResultat = new PlanningOptimizationResultDto
+                {
+                    Status = OptimizationStatus.Optimal, // ← Statut de succès requis
+                    ChantierId = "TEST_CHANTIER"
+                }
+            };
             _mockFacade.Setup(f => f.ProcessChantierAsync(It.IsAny<ChantierSetupInputDto>())).ReturnsAsync(rawResult);
 
             var preparationResult = new PreparationResult
@@ -265,6 +286,105 @@ namespace PlanAthenaTests.Services.Usecases
 
             // Les méthodes de calcul de baseline ne doivent pas être appelées
             _mockAnalysisService.Verify(a => a.CalculerBudgetTotal(It.IsAny<ConsolidatedPlanning>(), It.IsAny<IReadOnlyList<Ouvrier>>(), It.IsAny<ConfigurationPlanification>(), It.IsAny<AnalysisService.JoursOuvresCalculator>()), Times.Never);
+
+            Assert.IsTrue(result.Success);
+        }
+
+        // ✅ NOUVEAUX TESTS pour les cas d'échec
+        [TestMethod]
+        public async Task ExecuteAsync_WhenSolverReturnsInfeasible_ShouldReturnFailureResult()
+        {
+            // --- ARRANGE ---
+            var config = new ConfigurationPlanification();
+            bool reinitialiserBaseline = false;
+
+            var rawResult = new ProcessChantierResultDto
+            {
+                OptimisationResultat = new PlanningOptimizationResultDto
+                {
+                    Status = OptimizationStatus.Infeasible,
+                    ChantierId = "TEST_CHANTIER"
+                }
+            };
+            _mockFacade.Setup(f => f.ProcessChantierAsync(It.IsAny<ChantierSetupInputDto>())).ReturnsAsync(rawResult);
+
+            _mockPreparationService.Setup(p => p.PreparerPourSolveur(It.IsAny<IReadOnlyList<Tache>>(), It.IsAny<ConfigurationPlanification>()))
+                .Returns(new PreparationResult { TachesPreparees = new List<Tache>(), ParentIdParSousTacheId = new Dictionary<string, string>() });
+
+            // --- ACT ---
+            var result = await _orchestrator.ExecuteAsync(config, reinitialiserBaseline);
+
+            // --- ASSERT ---
+            Assert.IsFalse(result.Success);
+            Assert.AreEqual("INFEASIBLE", result.ErrorType);
+            Assert.IsNotNull(result.UserMessage);
+            Assert.IsNull(result.AnalysisReport);
+
+            // Aucune consolidation ne doit avoir lieu
+            _mockConsolidationService.Verify(c => c.Process(It.IsAny<ProcessChantierResultDto>(), It.IsAny<ConfigurationPlanification>()), Times.Never);
+            _mockPlanningService.Verify(p => p.UpdatePlanning(It.IsAny<ConsolidatedPlanning>(), It.IsAny<ConfigurationPlanification>()), Times.Never);
+            _mockPlanningService.Verify(p => p.SetBaseline(It.IsAny<PlanningBaseline>()), Times.Never);
+        }
+
+        [TestMethod]
+        public async Task ExecuteAsync_WhenSolverReturnsAborted_ShouldReturnTimeoutResult()
+        {
+            // --- ARRANGE ---
+            var config = new ConfigurationPlanification();
+            bool reinitialiserBaseline = false;
+
+            var rawResult = new ProcessChantierResultDto
+            {
+                OptimisationResultat = new PlanningOptimizationResultDto
+                {
+                    Status = OptimizationStatus.Aborted,
+                    ChantierId = "TEST_CHANTIER"
+                }
+            };
+            _mockFacade.Setup(f => f.ProcessChantierAsync(It.IsAny<ChantierSetupInputDto>())).ReturnsAsync(rawResult);
+
+            _mockPreparationService.Setup(p => p.PreparerPourSolveur(It.IsAny<IReadOnlyList<Tache>>(), It.IsAny<ConfigurationPlanification>()))
+                .Returns(new PreparationResult { TachesPreparees = new List<Tache>(), ParentIdParSousTacheId = new Dictionary<string, string>() });
+
+            // --- ACT ---
+            var result = await _orchestrator.ExecuteAsync(config, reinitialiserBaseline);
+
+            // --- ASSERT ---
+            Assert.IsFalse(result.Success);
+            Assert.AreEqual("TIMEOUT", result.ErrorType);
+            Assert.IsTrue(result.UserMessage.Contains("temps de calcul"));
+
+            // Aucune consolidation ne doit avoir lieu
+            _mockConsolidationService.Verify(c => c.Process(It.IsAny<ProcessChantierResultDto>(), It.IsAny<ConfigurationPlanification>()), Times.Never);
+        }
+
+        [TestMethod]
+        public async Task ExecuteAsync_WhenSolverReturnsUnknown_ShouldReturnUnknownResult()
+        {
+            // --- ARRANGE ---
+            var config = new ConfigurationPlanification();
+            bool reinitialiserBaseline = false;
+
+            var rawResult = new ProcessChantierResultDto
+            {
+                OptimisationResultat = new PlanningOptimizationResultDto
+                {
+                    Status = OptimizationStatus.Unknown,
+                    ChantierId = "TEST_CHANTIER"
+                }
+            };
+            _mockFacade.Setup(f => f.ProcessChantierAsync(It.IsAny<ChantierSetupInputDto>())).ReturnsAsync(rawResult);
+
+            _mockPreparationService.Setup(p => p.PreparerPourSolveur(It.IsAny<IReadOnlyList<Tache>>(), It.IsAny<ConfigurationPlanification>()))
+                .Returns(new PreparationResult { TachesPreparees = new List<Tache>(), ParentIdParSousTacheId = new Dictionary<string, string>() });
+
+            // --- ACT ---
+            var result = await _orchestrator.ExecuteAsync(config, reinitialiserBaseline);
+
+            // --- ASSERT ---
+            Assert.IsFalse(result.Success);
+            Assert.AreEqual("UNKNOWN", result.ErrorType);
+            Assert.IsTrue(result.UserMessage.Contains("Statut de résolution inconnu"));
         }
 
         [TestMethod]

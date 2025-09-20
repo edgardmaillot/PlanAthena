@@ -6,6 +6,7 @@ using NodaTime;
 using PlanAthena.core.Application;
 using PlanAthena.core.Application.InternalDto;
 using PlanAthena.Core.Application.Interfaces;
+using PlanAthena.Core.Application.Services;
 using PlanAthena.Core.Domain;
 using PlanAthena.Core.Domain.ValueObjects;
 using PlanAthena.Core.Facade.Dto.Enums;
@@ -26,6 +27,8 @@ namespace PlanAthena.Core.Application.UseCases
         private readonly IConstructeurProblemeOrTools _problemeBuilder;
         private readonly ISolutionInterpreterService _solutionInterpreter;
         private readonly SolverSettings _solverSettings;
+        private readonly ICapacityValidationService _capacityValidationService;
+        private readonly ICrossReferenceValidationService _crossReferenceValidationService;
 
         public ProcessChantierUseCase(
             IValidator<ChantierSetupInputDto> fluentValidator,
@@ -36,7 +39,9 @@ namespace PlanAthena.Core.Application.UseCases
             ICalendrierService calendrierService,
             IConstructeurProblemeOrTools problemeBuilder,
             ISolutionInterpreterService solutionInterpreter,
-            SolverSettings solverSettings)
+            SolverSettings solverSettings,
+            ICapacityValidationService capacityValidationService,
+    ICrossReferenceValidationService crossReferenceValidationService)
         {
             _fluentValidator = fluentValidator;
             _inputMapper = inputMapper;
@@ -47,6 +52,8 @@ namespace PlanAthena.Core.Application.UseCases
             _problemeBuilder = problemeBuilder;
             _solutionInterpreter = solutionInterpreter;
             _solverSettings = solverSettings;
+            _capacityValidationService = capacityValidationService;
+            _crossReferenceValidationService = crossReferenceValidationService;
         }
 
         public async Task<ProcessChantierResultDto> ExecuteAsync(ChantierSetupInputDto inputDto)
@@ -114,6 +121,7 @@ namespace PlanAthena.Core.Application.UseCases
             var allMessages = new List<MessageValidationDto>();
             Debug.WriteLine($"[DEBUG_TRACE] Validation Chantier Usecase");
 
+            // 1. Validation FluentValidation (structure et format)
             var fluentValidationResult = await _fluentValidator.ValidateAsync(inputDto);
             if (!fluentValidationResult.IsValid)
             {
@@ -123,6 +131,16 @@ namespace PlanAthena.Core.Application.UseCases
             }
             Debug.WriteLine("[DEBUG_TRACE] 2a. Validation FluentValidation OK.");
 
+            // 2. Validation des références croisées (avant mapping)
+            var crossRefMessages = await _crossReferenceValidationService.ValidateCrossReferencesAsync(inputDto, null);
+            allMessages.AddRange(crossRefMessages);
+            if (allMessages.Any(m => m.Type == TypeMessageValidation.Erreur))
+            {
+                Debug.WriteLine("[DEBUG_TRACE] 2b. Erreurs de références croisées détectées.");
+                return (null, allMessages);
+            }
+
+            // 3. Mapping vers le domaine
             var (chantier, mappingMessages) = await _inputMapper.MapToDomainAsync(inputDto);
             allMessages.AddRange(mappingMessages);
             if (chantier == null)
@@ -132,9 +150,14 @@ namespace PlanAthena.Core.Application.UseCases
             }
             Debug.WriteLine("[DEBUG_TRACE] 3. Mapping du DTO vers le domaine OK.");
 
+            // 4. Validations métier avancées
             var cycleMessages = await _chantierValidationService.ValiderChantierCompletAsync(inputDto, chantier);
             allMessages.AddRange(cycleMessages);
 
+            var capacityMessages = await _capacityValidationService.ValidateCapacityConstraintsAsync(inputDto, chantier);
+            allMessages.AddRange(capacityMessages);
+
+            // Vérifier s'il y a des erreurs critiques (pas seulement des avertissements)
             if (allMessages.Any(m => m.Type == TypeMessageValidation.Erreur))
             {
                 Debug.WriteLine("[DEBUG_TRACE] 4a. Des erreurs ont été détectées durant les validations.");
@@ -184,54 +207,8 @@ namespace PlanAthena.Core.Application.UseCases
 
                 Debug.WriteLine($"[DEBUG_TRACE] Solveur terminé avec statut : {solverStatus}");
 
-                // 5. Interprétation des résultats
-                var resultatStatus = solverStatus switch
-                {
-                    CpSolverStatus.Optimal => OptimizationStatus.Optimal,
-                    CpSolverStatus.Feasible => OptimizationStatus.Feasible,
-                    _ => OptimizationStatus.Infeasible
-                };
-
-                if (resultatStatus == OptimizationStatus.Optimal || resultatStatus == OptimizationStatus.Feasible)
-                {
-                    var affectations = _solutionInterpreter.InterpreterLaSolution(solver, modeleCpSat, probleme);
-                    long coutTotalValue = solver.Value(modeleCpSat.CoutTotal);
-                    long coutRhValue = solver.Value(modeleCpSat.CoutRh);
-                    long coutIndirectValue = solver.Value(modeleCpSat.CoutIndirect);
-
-                    planningResult = new PlanningOptimizationResultDto
-                    {
-                        ChantierId = chantier.Id.Value,
-                        Status = resultatStatus,
-                        CoutTotalEstime = coutTotalValue,
-                        CoutTotalRhEstime = coutRhValue,
-                        CoutTotalIndirectEstime = coutIndirectValue,
-                        DureeTotaleEnSlots = solver.Value(modeleCpSat.Makespan),
-                        Affectations = affectations
-                    };
-
-                    allMessages.Add(new MessageValidationDto
-                    {
-                        Type = TypeMessageValidation.Suggestion,
-                        CodeMessage = "INFO_SOLVEUR_OK",
-                        Message = $"Résolution réussie (statut solveur: {solverStatus})."
-                    });
-                }
-                else
-                {
-                    planningResult = new PlanningOptimizationResultDto
-                    {
-                        ChantierId = chantier.Id.Value,
-                        Status = resultatStatus
-                    };
-
-                    allMessages.Add(new MessageValidationDto
-                    {
-                        Type = TypeMessageValidation.Avertissement,
-                        CodeMessage = "WARN_SOLVEUR_FAIL",
-                        Message = "Impossible de trouver une solution dans le temps imparti. Le chantier est peut-être infaisable ou très contraint."
-                    });
-                }
+                // === 5. INTERPRÉTATION REFACTORISÉE DES RÉSULTATS ===
+                planningResult = InterpretarResultatSolveur(solver, modeleCpSat, probleme, solverStatus, chantier.Id.Value, allMessages);
 
                 // 6. Analyses statiques complémentaires (uniquement pour l'analyse rapide)
                 if (includeAnalyseStatique)
@@ -255,9 +232,7 @@ namespace PlanAthena.Core.Application.UseCases
                 };
             }
 
-            var finalEtat = allMessages.Any(m => m.Type == TypeMessageValidation.Erreur) ? EtatTraitementInput.EchecValidation :
-                            allMessages.Any(m => m.Type == TypeMessageValidation.Avertissement) ? EtatTraitementInput.SuccesAvecAvertissements :
-                            EtatTraitementInput.Succes;
+            var finalEtat = DeterminerEtatFinal(allMessages);
 
             return new ProcessChantierResultDto
             {
@@ -267,6 +242,136 @@ namespace PlanAthena.Core.Application.UseCases
                 OptimisationResultat = planningResult,
                 AnalyseStatiqueResultat = analyseStatiqueResult
             };
+        }
+
+        /// <summary>
+        /// Interprète le résultat du solveur OR-Tools de manière claire et structurée
+        /// </summary>
+        private PlanningOptimizationResultDto InterpretarResultatSolveur(
+            CpSolver solver,
+            dynamic modeleCpSat, // Remplacez par le type exact si disponible
+            ProblemeOptimisation probleme,
+            CpSolverStatus solverStatus,
+            string chantierId,
+            List<MessageValidationDto> messages)
+        {
+            var optimizationStatus = ConvertirStatutSolveur(solverStatus);
+
+            return optimizationStatus switch
+            {
+                OptimizationStatus.Optimal => CreerResultatAvecSolution(solver, modeleCpSat, probleme, chantierId, optimizationStatus, messages, "Résolution optimale trouvée."),
+
+                OptimizationStatus.Feasible => CreerResultatAvecSolution(solver, modeleCpSat, probleme, chantierId, optimizationStatus, messages, "Solution réalisable trouvée (non optimale)."),
+
+                OptimizationStatus.Infeasible => CreerResultatSansolution(chantierId, optimizationStatus, messages,
+                    "WARN_SOLVEUR_INFEASIBLE",
+                    "Aucune solution trouvée. Le chantier est infaisable avec les contraintes actuelles."),
+
+                OptimizationStatus.Aborted => CreerResultatSansolution(chantierId, optimizationStatus, messages,
+                    "WARN_SOLVEUR_TIMEOUT",
+                    "Le solveur n'a pas pu trouver de solution dans le délai imparti. Essayez d'augmenter le temps de calcul ou de simplifier les contraintes."),
+
+                OptimizationStatus.ModelInvalid => CreerResultatSansolution(chantierId, optimizationStatus, messages,
+                    "ERR_SOLVEUR_MODEL_INVALID",
+                    "Le modèle mathématique est invalide. Contactez le support technique."),
+
+                _ => CreerResultatSansolution(chantierId, optimizationStatus, messages,
+                    "ERR_SOLVEUR_UNKNOWN",
+                    $"Statut de solveur inconnu: {solverStatus}. Contactez le support technique.")
+            };
+        }
+
+        /// <summary>
+        /// Convertit le statut OR-Tools vers notre enum métier
+        /// </summary>
+        private static OptimizationStatus ConvertirStatutSolveur(CpSolverStatus solverStatus)
+        {
+            return solverStatus switch
+            {
+                CpSolverStatus.Optimal => OptimizationStatus.Optimal,
+                CpSolverStatus.Feasible => OptimizationStatus.Feasible,
+                CpSolverStatus.Infeasible => OptimizationStatus.Infeasible,
+                CpSolverStatus.ModelInvalid => OptimizationStatus.ModelInvalid,
+                CpSolverStatus.Unknown => OptimizationStatus.Unknown,
+                _ => OptimizationStatus.Aborted // Pour tous les autres cas (timeout, etc.)
+            };
+        }
+
+        /// <summary>
+        /// Crée un résultat avec solution (cas Optimal/Feasible)
+        /// </summary>
+        private PlanningOptimizationResultDto CreerResultatAvecSolution(
+            CpSolver solver,
+            dynamic modeleCpSat,
+            ProblemeOptimisation probleme,
+            string chantierId,
+            OptimizationStatus status,
+            List<MessageValidationDto> messages,
+            string messageSucces)
+        {
+            var affectations = _solutionInterpreter.InterpreterLaSolution(solver, modeleCpSat, probleme);
+            long coutTotalValue = solver.Value(modeleCpSat.CoutTotal);
+            long coutRhValue = solver.Value(modeleCpSat.CoutRh);
+            long coutIndirectValue = solver.Value(modeleCpSat.CoutIndirect);
+            long makespan = solver.Value(modeleCpSat.Makespan);
+
+            messages.Add(new MessageValidationDto
+            {
+                Type = TypeMessageValidation.Suggestion,
+                CodeMessage = "INFO_SOLVEUR_SUCCESS",
+                Message = messageSucces
+            });
+
+            return new PlanningOptimizationResultDto
+            {
+                ChantierId = chantierId,
+                Status = status,
+                CoutTotalEstime = coutTotalValue,
+                CoutTotalRhEstime = coutRhValue,
+                CoutTotalIndirectEstime = coutIndirectValue,
+                DureeTotaleEnSlots = makespan,
+                Affectations = affectations
+            };
+        }
+
+        /// <summary>
+        /// Crée un résultat sans solution (cas d'échec)
+        /// </summary>
+        private static PlanningOptimizationResultDto CreerResultatSansolution(
+            string chantierId,
+            OptimizationStatus status,
+            List<MessageValidationDto> messages,
+            string codeMessage,
+            string messageTexte)
+        {
+            var typeMessage = status == OptimizationStatus.ModelInvalid ? TypeMessageValidation.Erreur : TypeMessageValidation.Avertissement;
+
+            messages.Add(new MessageValidationDto
+            {
+                Type = typeMessage,
+                CodeMessage = codeMessage,
+                Message = messageTexte
+            });
+
+            return new PlanningOptimizationResultDto
+            {
+                ChantierId = chantierId,
+                Status = status
+            };
+        }
+
+        /// <summary>
+        /// Détermine l'état final du traitement basé sur les messages
+        /// </summary>
+        private static EtatTraitementInput DeterminerEtatFinal(IReadOnlyList<MessageValidationDto> messages)
+        {
+            if (messages.Any(m => m.Type == TypeMessageValidation.Erreur))
+                return EtatTraitementInput.EchecValidation;
+
+            if (messages.Any(m => m.Type == TypeMessageValidation.Avertissement))
+                return EtatTraitementInput.SuccesAvecAvertissements;
+
+            return EtatTraitementInput.Succes;
         }
 
         private ConfigurationOptimisation CreerConfigurationFromDto(OptimizationConfigDto config)

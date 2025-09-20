@@ -1,4 +1,4 @@
-﻿Structure du Projet - GÃ©nÃ©rÃ© le 09/17/2025 20:29:49
+﻿Structure du Projet - GÃ©nÃ©rÃ© le 09/20/2025 13:58:02
 D:.
 
     +--- Data
@@ -49,14 +49,19 @@ D:.
             Ic_garden_cart_24.png
             Ic_handyman_24.png
             Ic_heat_pump_24.png
+            Ic_Immeuble_b.png
+            Ic_Immeuble_w.png
             ic_Instructions.png
             Ic_KPI_24.png
+            Ic_KPI_w.png
             Ic_paint_24.png
             Ic_plumbing_24.png
             Ic_power_24.png
+            IC_Risk_w.png
             Ic_roller_24.png
             Ic_roofing_24.png
             Ic_speed_camera_24.png
+            Ic_Task_w.png
             Ic_valve_24.png
             Ic_worker.png
             image_immeuble.png
@@ -65,10 +70,12 @@ D:.
             Jalon.jpg
             MaterialSymbolsOutlined.ttf
             office-layout-example-1.jpg
+            PlanAthena.ico
             PlanBoutique.jpg
             PlanBoutiqueGO.jpg
             PlanBoutiqueSE.jpg
             rainy.png
+            SplashScreen.png
             stormy.png
             sunny.png
             Tache.jpg
@@ -200,10 +207,6 @@ D:.
                     DateTimePicker.resx
                     DependanceDisplayItem.cs
                     TacheDetailViewController.cs
-            +--- WebPertDiagram
-                    AffichagePert.cs
-                    AffichagePert.Designer.cs
-                    AffichagePert.resx
                 CreationToolboxView.cs
                 CreationToolboxView.Designer.cs
                 CreationToolboxView.resx
@@ -221,15 +224,6 @@ D:.
                 TaskManagerView.resx
         +--- Utils
                 DoubleBufferedTableLayoutPanel.cs
-                ImportMapOuvrierP1.cs
-                ImportMapOuvrierP1.Designer.cs
-                ImportMapOuvrierP1.resx
-                ImportMapOuvrierP2.cs
-                ImportMapOuvrierP2.Designer.cs
-                ImportMapOuvrierP2.resx
-                ImportMappingView.cs
-                ImportMappingView.Designer.cs
-                ImportMappingView.resx
                 ImportP1.cs
                 ImportP1.Designer.cs
                 ImportP1.resx
@@ -239,19 +233,13 @@ D:.
                 ImportP3.cs
                 ImportP3.Designer.cs
                 ImportP3.resx
-                ImportWarningsView.cs
-                ImportWarningsView.Designer.cs
-                ImportWarningsView.resx
+                SplashScreen.cs
+                SplashScreen.Designer.cs
+                SplashScreen.resx
+                ViewsManager.cs
             MainShellForm.cs
             MainShellForm.Designer.cs
             MainShellForm.resx
-    +--- WebAssets
-            cytoscape-dagre.js
-            cytoscape.min.js
-            dagre.js
-            index.html
-            main.js
-            style.css
         App.config
         ClassDiagramPlanAthena.cd
         file.txt

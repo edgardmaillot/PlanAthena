@@ -26,5 +26,10 @@ namespace PlanAthena.Services.Business.DTOs
         /// Sera null après un run d'optimisation.
         /// </summary>
         public MetierTensionReport? MetierTensionReport { get; init; }
+
+        // Nouvelles propriétés pour une meilleure gestion des échecs
+        public bool Success { get; set; } = true;
+        public string ErrorType { get; set; }
+        public string UserMessage { get; set; }
     }
 }
